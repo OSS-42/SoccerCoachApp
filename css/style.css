@@ -18,6 +18,44 @@ body.dark-mode {
     color: #e0e0e0;
 }
 
+/* Message Ribbon */
+.message-ribbon {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 12px 20px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.message-ribbon.error {
+    background-color: #f44336;
+}
+
+.message-ribbon.success {
+    background-color: #4caf50;
+}
+
+.message-ribbon.hidden {
+    transform: translateY(-100%);
+}
+
+.message-ribbon .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 0 0 15px;
+}
+
 body.dark-mode #app {
     background-color: #1e1e1e;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);

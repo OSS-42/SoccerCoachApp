@@ -34,6 +34,30 @@ function applyDarkMode(enabled) {
     }
 }
 
+// Message functions
+function showMessage(message, type = 'error') {
+    const ribbon = document.getElementById('message-ribbon');
+    const messageText = document.getElementById('message-text');
+    
+    messageText.textContent = message;
+    ribbon.className = `message-ribbon ${type}`;
+    
+    // Show message
+    setTimeout(() => {
+        ribbon.classList.remove('hidden');
+    }, 10);
+    
+    // Auto-hide after 5 seconds
+    if (type === 'success') {
+        setTimeout(hideMessage, 5000);
+    }
+}
+
+function hideMessage() {
+    const ribbon = document.getElementById('message-ribbon');
+    ribbon.classList.add('hidden');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved data if available
     loadAppData();
