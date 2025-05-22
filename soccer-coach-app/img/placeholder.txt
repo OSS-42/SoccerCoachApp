@@ -1,1 +1,0 @@
-This folder contains app icons for PWA support. Add your custom icons here.
