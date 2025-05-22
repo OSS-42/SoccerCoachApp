@@ -218,11 +218,11 @@
             <div class="dialog-content">
                 <h2>Record Action for <span id="action-player-name"></span></h2>
                 <div class="action-buttons">
-                    <button class="action-btn" onclick="recordAction('goal')">
+                    <button class="action-btn" onclick="handleGoalAction()">
                         <span class="material-icons">sports_score</span>
                         Goal
                     </button>
-                    <button class="action-btn" onclick="recordAction('assist')">
+                    <button class="action-btn" onclick="handleAssistAction()">
                         <span class="material-icons">front_hand</span>
                         Assist
                     </button>
@@ -237,6 +237,36 @@
                 </div>
                 <div class="dialog-buttons">
                     <button class="secondary-btn" onclick="closePlayerActionDialog()">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assist Selection Dialog -->
+        <div id="assist-selection-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Was there an assist?</h2>
+                <div class="players-selection-grid" id="assist-players-grid">
+                    <!-- Players will be added here -->
+                </div>
+                <button class="secondary-btn full-width-btn" onclick="completeGoalWithoutAssist()">
+                    <span class="material-icons">close</span>
+                    No Assist
+                </button>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeAssistSelectionDialog()">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goal Scorer Selection Dialog -->
+        <div id="scorer-selection-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Who scored the goal?</h2>
+                <div class="players-selection-grid" id="scorer-players-grid">
+                    <!-- Players will be added here -->
+                </div>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeScorerSelectionDialog()">Cancel</button>
                 </div>
             </div>
         </div>

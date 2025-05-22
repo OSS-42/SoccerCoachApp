@@ -390,10 +390,141 @@ function closePlayerActionDialog() {
     appState.currentPlayer = null;
 }
 
-function recordAction(actionType) {
-    if (!appState.currentPlayer || !appState.currentGame) return;
+// Goal with possible assist handling
+function handleGoalAction() {
+    if (!appState.currentPlayer) return;
     
-    const playerId = appState.currentPlayer.id;
+    // Record the current player as the scorer
+    appState.goalScorer = appState.currentPlayer;
+    
+    // Close the player action dialog
+    closePlayerActionDialog();
+    
+    // Show the assist selection dialog
+    openAssistSelectionDialog();
+}
+
+function openAssistSelectionDialog() {
+    const dialog = document.getElementById('assist-selection-dialog');
+    const playersGrid = document.getElementById('assist-players-grid');
+    
+    // Clear previous content
+    playersGrid.innerHTML = '';
+    
+    // Get active players excluding the goal scorer
+    const activePlayers = appState.players.filter(p => p.active && p.id !== appState.goalScorer.id);
+    
+    // Add players to the grid
+    activePlayers.forEach(player => {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-select-item';
+        playerItem.innerHTML = `
+            <div class="player-select-number">${player.jerseyNumber}</div>
+            <div>${player.name}</div>
+        `;
+        playerItem.addEventListener('click', () => {
+            completeGoalWithAssist(player.id);
+        });
+        playersGrid.appendChild(playerItem);
+    });
+    
+    dialog.style.display = 'flex';
+}
+
+function closeAssistSelectionDialog() {
+    document.getElementById('assist-selection-dialog').style.display = 'none';
+    appState.goalScorer = null;
+}
+
+function completeGoalWithAssist(assistPlayerId) {
+    if (!appState.goalScorer || !assistPlayerId) return;
+    
+    // Record the goal for the scorer
+    recordAction('goal', appState.goalScorer.id);
+    
+    // Record the assist for the assisting player
+    recordAction('assist', assistPlayerId);
+    
+    // Close the dialog
+    closeAssistSelectionDialog();
+}
+
+function completeGoalWithoutAssist() {
+    if (!appState.goalScorer) return;
+    
+    // Record just the goal with no assist
+    recordAction('goal', appState.goalScorer.id);
+    
+    // Close the dialog
+    closeAssistSelectionDialog();
+}
+
+// Assist with goal scorer handling
+function handleAssistAction() {
+    if (!appState.currentPlayer) return;
+    
+    // Record the current player as the assister
+    appState.assister = appState.currentPlayer;
+    
+    // Close the player action dialog
+    closePlayerActionDialog();
+    
+    // Show the goal scorer selection dialog
+    openScorerSelectionDialog();
+}
+
+function openScorerSelectionDialog() {
+    const dialog = document.getElementById('scorer-selection-dialog');
+    const playersGrid = document.getElementById('scorer-players-grid');
+    
+    // Clear previous content
+    playersGrid.innerHTML = '';
+    
+    // Get active players excluding the assister
+    const activePlayers = appState.players.filter(p => p.active && p.id !== appState.assister.id);
+    
+    // Add players to the grid
+    activePlayers.forEach(player => {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-select-item';
+        playerItem.innerHTML = `
+            <div class="player-select-number">${player.jerseyNumber}</div>
+            <div>${player.name}</div>
+        `;
+        playerItem.addEventListener('click', () => {
+            completeAssistWithScorer(player.id);
+        });
+        playersGrid.appendChild(playerItem);
+    });
+    
+    dialog.style.display = 'flex';
+}
+
+function closeScorerSelectionDialog() {
+    document.getElementById('scorer-selection-dialog').style.display = 'none';
+    appState.assister = null;
+}
+
+function completeAssistWithScorer(scorerId) {
+    if (!appState.assister || !scorerId) return;
+    
+    // Record the assist for the assisting player
+    recordAction('assist', appState.assister.id);
+    
+    // Record the goal for the scorer
+    recordAction('goal', scorerId);
+    
+    // Close the dialog
+    closeScorerSelectionDialog();
+}
+
+function recordAction(actionType, specificPlayerId = null) {
+    if (!appState.currentGame) return;
+    
+    // Use the specified player ID or the current player's ID
+    const playerId = specificPlayerId || (appState.currentPlayer ? appState.currentPlayer.id : null);
+    if (!playerId) return;
+    
     const playerIndex = appState.players.findIndex(p => p.id === playerId);
     
     const action = {
