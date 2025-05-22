@@ -10,6 +10,12 @@ let appState = {
         interval: null,
         isRunning: false
     },
+    gameTimer: {
+        elapsed: 0, // total seconds elapsed in the game
+        interval: null,
+        isRunning: false,
+        startTime: null  // used to calculate elapsed time
+    },
     settings: {
         language: 'en',
         darkMode: false,
@@ -19,6 +25,15 @@ let appState = {
 };
 
 // Initialize the app
+// Apply dark mode based on settings
+function applyDarkMode(enabled) {
+    if (enabled) {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved data if available
     loadAppData();
@@ -26,6 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate UI with existing data
     renderPlayersList();
     updateTeamNameUI();
+    
+    // Apply dark mode if enabled
+    applyDarkMode(appState.settings.darkMode);
     
     // Add demo players if none exist
     if (appState.players.length === 0) {
@@ -268,6 +286,7 @@ function startGame() {
         };
     });
     
+    // Create the new game
     appState.currentGame = {
         id: Date.now().toString(),
         date: gameDate,
@@ -278,13 +297,20 @@ function startGame() {
         endTime: null,
         actions: [],
         activePlayers: [...appState.players.filter(p => p.active).map(p => p.id)],
-        isCompleted: false
+        isCompleted: false,
+        totalGameTime: 0 // Track total game time in seconds
     };
     
-    // Setup timer
+    // Setup substitution timer
     appState.timer.duration = parseInt(substitutionTime) * 60;
     appState.timer.timeLeft = appState.timer.duration;
     updateTimerDisplay();
+    
+    // Reset and setup game timer
+    appState.gameTimer.elapsed = 0;
+    appState.gameTimer.isRunning = false;
+    appState.gameTimer.startTime = null;
+    updateGameTimeDisplay();
     
     // Update opponent name in UI
     document.getElementById('opponent-team-name').textContent = opponentName;
@@ -336,6 +362,7 @@ function updateTimerDisplay() {
     const timerValue = timerDisplay.querySelector('.timer-value');
     
     timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('sub-time').textContent = `Substitution: ${minutes}:${seconds.toString().padStart(2, '0')}`;
     
     // Add alert styling if timer is at zero
     if (appState.timer.timeLeft === 0) {
@@ -343,6 +370,12 @@ function updateTimerDisplay() {
     } else {
         timerDisplay.classList.remove('timer-alert');
     }
+}
+
+function updateGameTimeDisplay() {
+    const minutes = Math.floor(appState.gameTimer.elapsed / 60);
+    const seconds = appState.gameTimer.elapsed % 60;
+    document.getElementById('game-time').textContent = `Game Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function startTimer() {
@@ -357,18 +390,48 @@ function startTimer() {
                 appState.timer.isRunning = false;
             }
         }, 1000);
+        
+        // Also start the game timer if not already running
+        startGameTimer();
     }
 }
 
 function pauseTimer() {
     clearInterval(appState.timer.interval);
     appState.timer.isRunning = false;
+    
+    // We don't pause the game timer when the substitution timer is paused
+    // The game continues even if substitutions are paused
 }
 
 function resetTimer() {
     pauseTimer();
     appState.timer.timeLeft = appState.timer.duration;
     updateTimerDisplay();
+}
+
+function startGameTimer() {
+    if (!appState.gameTimer.isRunning) {
+        appState.gameTimer.isRunning = true;
+        appState.gameTimer.startTime = new Date();
+        
+        appState.gameTimer.interval = setInterval(() => {
+            appState.gameTimer.elapsed++;
+            updateGameTimeDisplay();
+            
+            // Update the current game's total time
+            if (appState.currentGame) {
+                appState.currentGame.totalGameTime = appState.gameTimer.elapsed;
+            }
+        }, 1000);
+    }
+}
+
+function pauseGameTimer() {
+    if (appState.gameTimer.isRunning) {
+        clearInterval(appState.gameTimer.interval);
+        appState.gameTimer.isRunning = false;
+    }
 }
 
 // Player Actions
@@ -612,8 +675,9 @@ function endGame() {
     const finishedGameId = appState.currentGame.id;
     appState.games.push({...appState.currentGame});
     
-    // Stop the timer
+    // Stop both timers
     pauseTimer();
+    pauseGameTimer();
     
     // Save data before showing report
     saveAppData();
@@ -812,12 +876,8 @@ function saveSettings() {
     appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
     
-    // Apply dark mode if selected
-    if (darkMode) {
-        document.body.classList.add('dark-mode');
-    } else {
-        document.body.classList.remove('dark-mode');
-    }
+    // Apply dark mode immediately
+    applyDarkMode(darkMode);
     
     saveAppData();
     alert('Settings saved successfully');
