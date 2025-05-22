@@ -42,84 +42,205 @@ function applyDarkMode(enabled) {
 
 // Apply language to all UI elements
 function applyLanguage(language) {
-    // Update app title
-    document.querySelector('.app-header h1').textContent = translate('appTitle', language);
-    
-    // Main menu buttons
-    document.querySelector('button[onclick="showScreen(\'team-setup\')"]').childNodes[2].textContent = translate('teamSetup', language);
-    document.querySelector('button[onclick="showScreen(\'game-setup\')"]').childNodes[2].textContent = translate('startNewGame', language);
-    document.querySelector('button[onclick="showScreen(\'reports\')"]').childNodes[2].textContent = translate('reports', language);
-    document.querySelector('button[onclick="showScreen(\'settings\')"]').childNodes[2].textContent = translate('settings', language);
-    
-    // Team setup screen
-    document.querySelector('#team-setup .app-header h1').textContent = translate('teamSetupTitle', language);
-    document.querySelector('.team-name-section h2').textContent = translate('teamName', language);
-    document.querySelector('#team-name-input').placeholder = translate('enterTeamName', language);
-    document.querySelector('button[onclick="saveTeamName()"]').textContent = translate('save', language);
-    document.querySelector('#team-setup h2:nth-of-type(2)').textContent = translate('players', language);
-    
-    // Add player dialog
-    document.querySelector('#add-player-dialog h2').textContent = translate('addPlayer', language);
-    document.querySelector('label[for="player-name"]').textContent = translate('firstName', language);
-    document.querySelector('#player-name').placeholder = translate('enterPlayerName', language);
-    document.querySelector('label[for="jersey-number"]').textContent = translate('jerseyNumber', language);
-    document.querySelector('#add-player-dialog .dialog-buttons button:first-child').textContent = translate('cancel', language);
-    document.querySelector('#add-player-dialog .dialog-buttons button:last-child').textContent = translate('add', language);
-    
-    // Game setup screen
-    document.querySelector('#game-setup .app-header h1').textContent = translate('newGame', language);
-    document.querySelector('label[for="opponent-name"]').textContent = translate('opponentTeamName', language);
-    document.querySelector('#opponent-name').placeholder = translate('enterOpponentName', language);
-    document.querySelector('label[for="game-date"]').textContent = translate('gameDate', language);
-    document.querySelector('label[for="substitution-time"]').textContent = translate('substitutionTimer', language);
-    document.querySelector('button[onclick="startGame()"]').textContent = translate('startGame', language);
-    
-    // Game tracking screen
-    document.querySelector('#game-time').textContent = translate('gameTime', language) + ' 00:00';
-    document.querySelector('#sub-time').textContent = translate('substitution', language) + ' 06:00';
-    document.querySelector('.end-game-btn').textContent = translate('endGame', language);
-    document.querySelector('.timer-controls button:nth-child(1)').textContent = translate('start', language);
-    document.querySelector('.timer-controls button:nth-child(2)').textContent = translate('pause', language);
-    document.querySelector('.timer-controls button:nth-child(3)').textContent = translate('reset', language);
-    
-    // Player action dialog
-    document.querySelector('#player-action-dialog h2').childNodes[0].textContent = translate('recordAction', language) + ' ';
-    document.querySelector('button[onclick="handleGoalAction()"] span:last-child').textContent = translate('goal', language);
-    document.querySelector('button[onclick="handleAssistAction()"] span:last-child').textContent = translate('assist', language);
-    document.querySelector('button[onclick="recordAction(\'save\')"] span:last-child').textContent = translate('save', language);
-    document.querySelector('button[onclick="recordAction(\'goal_allowed\')"] span:last-child').textContent = translate('goalAllowed', language);
-    document.querySelector('#player-action-dialog .dialog-buttons button').textContent = translate('cancel', language);
-    
-    // Assist selection dialog
-    document.querySelector('#assist-selection-dialog h2').textContent = translate('wasThereAssist', language);
-    document.querySelector('.no-assist-btn span:last-child').textContent = translate('noAssist', language);
-    document.querySelector('#assist-selection-dialog .dialog-buttons button').textContent = translate('cancel', language);
-    
-    // Goal scorer dialog
-    document.querySelector('#scorer-selection-dialog h2').textContent = translate('whoScored', language);
-    document.querySelector('#scorer-selection-dialog .dialog-buttons button').textContent = translate('cancel', language);
-    
-    // End game dialog
-    document.querySelector('#end-game-dialog h2').textContent = translate('endGameConfirm', language);
-    document.querySelector('#end-game-dialog p').textContent = translate('endGamePrompt', language);
-    document.querySelector('#end-game-dialog .dialog-buttons button:first-child').textContent = translate('cancel', language);
-    document.querySelector('#end-game-dialog .dialog-buttons button:last-child').textContent = translate('endGameConfirm', language);
-    
-    // Reports screen
-    document.querySelector('#reports .app-header h1').textContent = translate('gameReports', language);
-    
-    // Settings screen
-    document.querySelector('#settings .app-header h1').textContent = translate('settingsTitle', language);
-    document.querySelector('#settings .settings-group:nth-of-type(1) h2').textContent = translate('language', language);
-    document.querySelector('#settings .settings-group:nth-of-type(2) h2').textContent = translate('display', language);
-    document.querySelector('.toggle-container span:first-child').textContent = translate('light', language);
-    document.querySelector('.toggle-container span:last-child').textContent = translate('dark', language);
-    document.querySelector('#settings .settings-group:nth-of-type(3) h2').textContent = translate('defaultTimer', language);
-    document.querySelector('label[for="default-timer"]').textContent = translate('defaultTimerSetting', language);
-    document.querySelector('#settings .settings-group:nth-of-type(4) h2').textContent = translate('dataManagement', language);
-    document.querySelector('button[onclick="exportTeamData()"] span:last-child').textContent = translate('exportTeamData', language);
-    document.querySelector('button[onclick="importTeamData()"] span:last-child').textContent = translate('importTeamData', language);
-    document.querySelector('button[onclick="saveSettings()"]').textContent = translate('saveSettings', language);
+    try {
+        // Main menu screen elements
+        const mainHeaders = document.querySelectorAll('.app-header h1');
+        mainHeaders.forEach(header => {
+            if (header.textContent.includes('Soccer') || header.textContent.includes('Suivi')) {
+                header.textContent = translate('appTitle', language);
+            }
+        });
+        
+        // Main menu buttons
+        const teamSetupBtn = document.querySelector('button[onclick="showScreen(\'team-setup\')"]');
+        if (teamSetupBtn) teamSetupBtn.innerHTML = `<span class="material-icons">people</span>${translate('teamSetup', language)}`;
+        
+        const gameSetupBtn = document.querySelector('button[onclick="showScreen(\'game-setup\')"]');
+        if (gameSetupBtn) gameSetupBtn.innerHTML = `<span class="material-icons">sports_soccer</span>${translate('startNewGame', language)}`;
+        
+        const reportsBtn = document.querySelector('button[onclick="showScreen(\'reports\')"]');
+        if (reportsBtn) reportsBtn.innerHTML = `<span class="material-icons">assessment</span>${translate('reports', language)}`;
+        
+        const settingsBtn = document.querySelector('button[onclick="showScreen(\'settings\')"]');
+        if (settingsBtn) settingsBtn.innerHTML = `<span class="material-icons">settings</span>${translate('settings', language)}`;
+        
+        // Update all headers with correct text
+        document.querySelectorAll('.app-header h1').forEach(header => {
+            // Match header to appropriate screen
+            if (header.closest('#team-setup')) {
+                header.textContent = translate('teamSetupTitle', language);
+            } else if (header.closest('#game-setup')) {
+                header.textContent = translate('newGame', language);
+            } else if (header.closest('#reports')) {
+                header.textContent = translate('gameReports', language);
+            } else if (header.closest('#settings')) {
+                header.textContent = translate('settingsTitle', language);
+            } else if (header.closest('#main-screen')) {
+                header.textContent = translate('appTitle', language);
+            }
+        });
+        
+        const teamNameHeading = document.querySelector('.team-name-section h2');
+        if (teamNameHeading) teamNameHeading.textContent = translate('teamName', language);
+        
+        const teamNameInput = document.querySelector('#team-name-input');
+        if (teamNameInput) teamNameInput.placeholder = translate('enterTeamName', language);
+        
+        const saveTeamBtn = document.querySelector('button[onclick="saveTeamName()"]');
+        if (saveTeamBtn) saveTeamBtn.textContent = translate('save', language);
+        
+        const playersHeading = document.querySelector('#team-setup h2:nth-of-type(2)');
+        if (playersHeading) playersHeading.textContent = translate('players', language);
+        
+        // Add player dialog
+        const addPlayerHeading = document.querySelector('#add-player-dialog h2');
+        if (addPlayerHeading) addPlayerHeading.textContent = translate('addPlayer', language);
+        
+        const firstNameLabel = document.querySelector('label[for="player-name"]');
+        if (firstNameLabel) firstNameLabel.textContent = translate('firstName', language);
+        
+        const playerNameInput = document.querySelector('#player-name');
+        if (playerNameInput) playerNameInput.placeholder = translate('enterPlayerName', language);
+        
+        const jerseyNumberLabel = document.querySelector('label[for="jersey-number"]');
+        if (jerseyNumberLabel) jerseyNumberLabel.textContent = translate('jerseyNumber', language);
+        
+        const cancelAddPlayerBtn = document.querySelector('#add-player-dialog .dialog-buttons button:first-child');
+        if (cancelAddPlayerBtn) cancelAddPlayerBtn.textContent = translate('cancel', language);
+        
+        const addPlayerBtn = document.querySelector('#add-player-dialog .dialog-buttons button:last-child');
+        if (addPlayerBtn) addPlayerBtn.textContent = translate('add', language);
+        
+        // Game setup screen
+        // Game setup header already handled in the main header update
+        
+        const opponentLabel = document.querySelector('label[for="opponent-name"]');
+        if (opponentLabel) opponentLabel.textContent = translate('opponentTeamName', language);
+        
+        const opponentInput = document.querySelector('#opponent-name');
+        if (opponentInput) opponentInput.placeholder = translate('enterOpponentName', language);
+        
+        const gameDateLabel = document.querySelector('label[for="game-date"]');
+        if (gameDateLabel) gameDateLabel.textContent = translate('gameDate', language);
+        
+        const subTimerLabel = document.querySelector('label[for="substitution-time"]');
+        if (subTimerLabel) subTimerLabel.textContent = translate('substitutionTimer', language);
+        
+        const startGameBtn = document.querySelector('button[onclick="startGame()"]');
+        if (startGameBtn) startGameBtn.textContent = translate('startGame', language);
+        
+        // Game tracking screen
+        const gameTimeDisplay = document.querySelector('#game-time');
+        if (gameTimeDisplay) {
+            const time = gameTimeDisplay.textContent.split(':')[1]?.trim() || '00:00';
+            gameTimeDisplay.textContent = `${translate('gameTime', language)} ${time}`;
+        }
+        
+        const subTimeDisplay = document.querySelector('#sub-time');
+        if (subTimeDisplay) {
+            const time = subTimeDisplay.textContent.split(':')[1]?.trim() || '06:00';
+            subTimeDisplay.textContent = `${translate('substitution', language)} ${time}`;
+        }
+        
+        const endGameBtn = document.querySelector('.end-game-btn');
+        if (endGameBtn) endGameBtn.textContent = translate('endGame', language);
+        
+        const startTimerBtn = document.querySelector('.timer-controls button:nth-child(1)');
+        if (startTimerBtn) startTimerBtn.textContent = translate('start', language);
+        
+        const pauseTimerBtn = document.querySelector('.timer-controls button:nth-child(2)');
+        if (pauseTimerBtn) pauseTimerBtn.textContent = translate('pause', language);
+        
+        const resetTimerBtn = document.querySelector('.timer-controls button:nth-child(3)');
+        if (resetTimerBtn) resetTimerBtn.textContent = translate('reset', language);
+        
+        // Player action dialog
+        const playerActionDialogHeading = document.querySelector('#player-action-dialog h2');
+        if (playerActionDialogHeading) {
+            const playerName = document.getElementById('action-player-name')?.textContent || '';
+            playerActionDialogHeading.textContent = `${translate('recordAction', language)} ${playerName}`;
+        }
+        
+        const goalActionBtn = document.querySelector('button[onclick="handleGoalAction()"] span:last-child');
+        if (goalActionBtn) goalActionBtn.textContent = translate('goal', language);
+        
+        const assistActionBtn = document.querySelector('button[onclick="handleAssistAction()"] span:last-child');
+        if (assistActionBtn) assistActionBtn.textContent = translate('assist', language);
+        
+        const saveActionBtn = document.querySelector('button[onclick="recordAction(\'save\')"] span:last-child');
+        if (saveActionBtn) saveActionBtn.textContent = translate('save', language);
+        
+        const goalAllowedBtn = document.querySelector('button[onclick="recordAction(\'goal_allowed\')"] span:last-child');
+        if (goalAllowedBtn) goalAllowedBtn.textContent = translate('goalAllowed', language);
+        
+        const cancelActionBtn = document.querySelector('#player-action-dialog .dialog-buttons button');
+        if (cancelActionBtn) cancelActionBtn.textContent = translate('cancel', language);
+        
+        // Assist selection dialog
+        const assistSelectionHeading = document.querySelector('#assist-selection-dialog h2');
+        if (assistSelectionHeading) assistSelectionHeading.textContent = translate('wasThereAssist', language);
+        
+        const noAssistBtn = document.querySelector('.no-assist-btn span:last-child');
+        if (noAssistBtn) noAssistBtn.textContent = translate('noAssist', language);
+        
+        const cancelAssistBtn = document.querySelector('#assist-selection-dialog .dialog-buttons button');
+        if (cancelAssistBtn) cancelAssistBtn.textContent = translate('cancel', language);
+        
+        // Goal scorer dialog
+        const scorerSelectionHeading = document.querySelector('#scorer-selection-dialog h2');
+        if (scorerSelectionHeading) scorerSelectionHeading.textContent = translate('whoScored', language);
+        
+        const cancelScorerBtn = document.querySelector('#scorer-selection-dialog .dialog-buttons button');
+        if (cancelScorerBtn) cancelScorerBtn.textContent = translate('cancel', language);
+        
+        // End game dialog
+        const endGameHeading = document.querySelector('#end-game-dialog h2');
+        if (endGameHeading) endGameHeading.textContent = translate('endGameConfirm', language);
+        
+        const endGamePrompt = document.querySelector('#end-game-dialog p');
+        if (endGamePrompt) endGamePrompt.textContent = translate('endGamePrompt', language);
+        
+        const cancelEndGameBtn = document.querySelector('#end-game-dialog .dialog-buttons button:first-child');
+        if (cancelEndGameBtn) cancelEndGameBtn.textContent = translate('cancel', language);
+        
+        const confirmEndGameBtn = document.querySelector('#end-game-dialog .dialog-buttons button:last-child');
+        if (confirmEndGameBtn) confirmEndGameBtn.textContent = translate('endGameConfirm', language);
+        
+        // Reports screen
+        // Reports and Settings headers already handled in the main header update
+        
+        const languageHeading = document.querySelector('#settings .settings-group:nth-of-type(1) h2');
+        if (languageHeading) languageHeading.textContent = translate('language', language);
+        
+        const displayHeading = document.querySelector('#settings .settings-group:nth-of-type(2) h2');
+        if (displayHeading) displayHeading.textContent = translate('display', language);
+        
+        const lightLabel = document.querySelector('.toggle-container span:first-child');
+        if (lightLabel) lightLabel.textContent = translate('light', language);
+        
+        const darkLabel = document.querySelector('.toggle-container span:last-child');
+        if (darkLabel) darkLabel.textContent = translate('dark', language);
+        
+        const timerHeading = document.querySelector('#settings .settings-group:nth-of-type(3) h2');
+        if (timerHeading) timerHeading.textContent = translate('defaultTimer', language);
+        
+        const defaultTimerLabel = document.querySelector('label[for="default-timer"]');
+        if (defaultTimerLabel) defaultTimerLabel.textContent = translate('defaultTimerSetting', language);
+        
+        const dataHeading = document.querySelector('#settings .settings-group:nth-of-type(4) h2');
+        if (dataHeading) dataHeading.textContent = translate('dataManagement', language);
+        
+        const exportBtn = document.querySelector('button[onclick="exportTeamData()"] span:last-child');
+        if (exportBtn) exportBtn.textContent = translate('exportTeamData', language);
+        
+        const importBtn = document.querySelector('button[onclick="importTeamData()"] span:last-child');
+        if (importBtn) importBtn.textContent = translate('importTeamData', language);
+        
+        const saveSettingsBtn = document.querySelector('button[onclick="saveSettings()"]');
+        if (saveSettingsBtn) saveSettingsBtn.textContent = translate('saveSettings', language);
+    } catch (error) {
+        console.error('Error applying translations:', error);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

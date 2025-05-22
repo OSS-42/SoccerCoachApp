@@ -89,7 +89,8 @@ const translations = {
         'dataManagement': 'Data Management',
         'exportTeamData': 'Export Team Data',
         'importTeamData': 'Import Team Data',
-        'saveSettings': 'Save Settings'
+        'saveSettings': 'Save Settings',
+        'settingsSaved': 'Settings saved successfully'
     },
     
     // French translations
@@ -181,99 +182,8 @@ const translations = {
         'dataManagement': 'Gestion des Données',
         'exportTeamData': 'Exporter les Données d\'Équipe',
         'importTeamData': 'Importer les Données d\'Équipe',
-        'saveSettings': 'Enregistrer les Paramètres'
-    },
-    
-    // Spanish translations
-    'es': {
-        // Main menu
-        'appTitle': 'Seguimiento de Entrenador de Fútbol',
-        'teamSetup': 'Configuración del Equipo',
-        'startNewGame': 'Iniciar Nuevo Partido',
-        'reports': 'Informes',
-        'settings': 'Ajustes',
-        
-        // Team setup
-        'teamSetupTitle': 'Configuración del Equipo',
-        'teamName': 'Nombre del Equipo',
-        'players': 'Jugadores',
-        'enterTeamName': 'Ingrese el nombre del equipo',
-        'save': 'Guardar',
-        'addPlayer': 'Añadir Jugador',
-        'firstName': 'Nombre:',
-        'jerseyNumber': 'Número de Camiseta:',
-        'enterPlayerName': 'Ingrese el nombre del jugador',
-        'cancel': 'Cancelar',
-        'add': 'Añadir',
-        'edit': 'Editar',
-        'delete': 'Eliminar',
-        'teamNameSaved': 'Nombre del equipo guardado con éxito',
-        'pleaseEnterTeamName': 'Por favor, ingrese un nombre de equipo',
-        'fillAllFields': 'Por favor complete todos los campos requeridos',
-        'duplicateJersey': 'Ya existe un jugador con este número de camiseta',
-        
-        // Game setup
-        'newGame': 'Nuevo Partido',
-        'opponentTeamName': 'Nombre del Equipo Contrario:',
-        'enterOpponentName': 'Ingrese el nombre del equipo contrario',
-        'gameDate': 'Fecha del Partido:',
-        'substitutionTimer': 'Temporizador de Sustitución (minutos):',
-        'startGame': 'Iniciar Partido',
-        
-        // Game tracking
-        'gameTime': 'Tiempo de Juego:',
-        'substitution': 'Sustitución:',
-        'endGame': 'Finalizar Partido',
-        'start': 'Iniciar',
-        'pause': 'Pausar',
-        'reset': 'Reiniciar',
-        
-        // Player actions
-        'recordAction': 'Registrar Acción para',
-        'goal': 'Gol',
-        'assist': 'Asistencia',
-        'save': 'Atajada',
-        'goalAllowed': 'Gol Concedido',
-        
-        // Goal/Assist dialogs
-        'wasThereAssist': '¿Hubo una asistencia?',
-        'noAssist': 'Sin Asistencia',
-        'whoScored': '¿Quién marcó el gol?',
-        
-        // End game
-        'endGameConfirm': 'Finalizar Partido',
-        'endGamePrompt': '¿Está seguro de que desea finalizar el partido actual?',
-        
-        // Reports
-        'gameReports': 'Informes de Partidos',
-        'noGames': 'Aún no hay partidos completados',
-        'vs': 'vs',
-        'viewReport': 'Ver',
-        'exportAs': 'Exportar como',
-        'gameReport': 'Informe del Partido',
-        'gameDetails': 'Detalles del Partido',
-        'date': 'Fecha:',
-        'opponent': 'Oponente:',
-        'finalScore': 'Resultado Final:',
-        'playerStats': 'Estadísticas de Jugadores',
-        'goals': 'Goles',
-        'assists': 'Asistencias',
-        'saves': 'Atajadas',
-        'goalsAllowed': 'Goles Concedidos',
-        'close': 'Cerrar',
-        
-        // Settings
-        'settingsTitle': 'Ajustes',
-        'language': 'Idioma',
-        'display': 'Pantalla',
-        'light': 'Claro',
-        'dark': 'Oscuro',
-        'defaultTimer': 'Temporizador Predeterminado',
-        'defaultTimerSetting': 'Tiempo de Sustitución Predeterminado (minutos):',
-        'dataManagement': 'Gestión de Datos',
-        'exportTeamData': 'Exportar Datos del Equipo',
-        'importTeamData': 'Importar Datos del Equipo',
-        'saveSettings': 'Guardar Ajustes'
+        'saveSettings': 'Enregistrer les Paramètres',
+        'settingsSaved': 'Paramètres enregistrés avec succès'
     }
 };
 
