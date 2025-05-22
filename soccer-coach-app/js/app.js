@@ -740,6 +740,9 @@ function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
     
+    // Store current report game for export functions
+    appState.currentReportGame = gameId;
+    
     // Create a report dialog if it doesn't exist
     let reportDialog = document.getElementById('detailed-report-dialog');
     if (!reportDialog) {
@@ -763,46 +766,128 @@ function viewReport(gameId) {
         gameDuration = `${durationMins} minutes`;
     }
 
-    // Get player actions from the game
-    const playerActions = {};
-    
-    // Initialize player actions
-    game.activePlayers.forEach(playerId => {
-        const player = appState.players.find(p => p.id === playerId);
-        if (player) {
-            playerActions[playerId] = {
-                name: player.name,
-                jerseyNumber: player.jerseyNumber,
-                goals: 0,
-                assists: 0,
-                saves: 0,
-                goalsAllowed: 0
-            };
-        }
-    });
-    
-    // Count actions
-    game.actions.forEach(action => {
-        if (playerActions[action.playerId]) {
-            switch (action.actionType) {
-                case 'goal':
-                    playerActions[action.playerId].goals++;
-                    break;
-                case 'assist':
-                    playerActions[action.playerId].assists++;
-                    break;
-                case 'save':
-                    playerActions[action.playerId].saves++;
-                    break;
-                case 'goal_allowed':
-                    playerActions[action.playerId].goalsAllowed++;
-                    break;
+    // Choose report format based on settings
+    if (appState.settings.recordGameTime) {
+        // TIME-BASED REPORT FORMAT
+        // Create a timeline of actions
+        const timeline = [];
+        
+        // Group actions by game minute
+        game.actions.forEach(action => {
+            const player = appState.players.find(p => p.id === action.playerId);
+            if (!player) return;
+            
+            const minute = action.gameMinute || 0;
+            
+            // Create minute entry if it doesn't exist
+            if (!timeline[minute]) {
+                timeline[minute] = [];
             }
-        }
-    });
-    
-    // Build player stats table
-    let playerStatsHTML = '';
+            
+            // Add action to timeline
+            timeline[minute].push({
+                playerName: player.name,
+                jerseyNumber: player.jerseyNumber,
+                actionType: action.actionType,
+                timestamp: action.timestamp
+            });
+        });
+        
+        // Build timeline HTML
+        let timelineHTML = '';
+        timeline.forEach((actions, minute) => {
+            if (actions && actions.length > 0) {
+                timelineHTML += `<div class="minute-section">
+                    <h3>Minute ${minute}</h3>
+                    <ul class="action-list">`;
+                
+                actions.forEach(action => {
+                    let actionText = '';
+                    switch(action.actionType) {
+                        case 'goal':
+                            actionText = `⚽ #${action.jerseyNumber} ${action.playerName} scored a goal`;
+                            break;
+                        case 'assist':
+                            actionText = `👟 #${action.jerseyNumber} ${action.playerName} made an assist`;
+                            break;
+                        case 'save':
+                            actionText = `🧤 #${action.jerseyNumber} ${action.playerName} made a save`;
+                            break;
+                        case 'goal_allowed':
+                            actionText = `😞 #${action.jerseyNumber} ${action.playerName} allowed a goal`;
+                            break;
+                    }
+                    timelineHTML += `<li>${actionText}</li>`;
+                });
+                
+                timelineHTML += `</ul></div>`;
+            }
+        });
+        
+        // Set report HTML for time-based format
+        reportDialog.innerHTML = `
+            <div class="dialog-content wide-dialog">
+                <h2>Game Report - ${gameDate} ${gameTime}</h2>
+                <div class="report-header">
+                    <p><strong>Team:</strong> ${appState.teamName}</p>
+                    <p><strong>Opponent:</strong> ${game.opponent}</p>
+                    <p><strong>Duration:</strong> ${gameDuration}</p>
+                </div>
+                <div class="report-body timeline-format">
+                    <h3>Game Timeline</h3>
+                    ${timelineHTML || '<p>No recorded actions for this game.</p>'}
+                </div>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeDetailedReport()">Close</button>
+                    <div class="export-buttons">
+                        <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
+                        <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // PLAYER-BASED REPORT FORMAT (Original)
+        // Get player actions from the game
+        const playerActions = {};
+        
+        // Initialize player actions
+        game.activePlayers.forEach(playerId => {
+            const player = appState.players.find(p => p.id === playerId);
+            if (player) {
+                playerActions[playerId] = {
+                    name: player.name,
+                    jerseyNumber: player.jerseyNumber,
+                    goals: 0,
+                    assists: 0,
+                    saves: 0,
+                    goalsAllowed: 0
+                };
+            }
+        });
+        
+        // Count actions
+        game.actions.forEach(action => {
+            if (playerActions[action.playerId]) {
+                switch (action.actionType) {
+                    case 'goal':
+                        playerActions[action.playerId].goals++;
+                        break;
+                    case 'assist':
+                        playerActions[action.playerId].assists++;
+                        break;
+                    case 'save':
+                        playerActions[action.playerId].saves++;
+                        break;
+                    case 'goal_allowed':
+                        playerActions[action.playerId].goalsAllowed++;
+                        break;
+                }
+            }
+        });
+        
+        // Build player stats table
+        let playerStatsHTML = '';
     Object.values(playerActions)
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
         .forEach(playerStat => {
