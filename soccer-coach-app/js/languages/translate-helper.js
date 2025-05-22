@@ -107,6 +107,35 @@ function translateElements() {
     if (importBtn) {
         importBtn.innerHTML = `<span class="material-icons">file_upload</span>${translate('importTeamData', currentLanguage)}`;
     }
+    
+    // Player action buttons in game screen
+    const goalBtn = document.querySelector('button[onclick="handleGoalAction()"]');
+    if (goalBtn) {
+        const iconEl = goalBtn.querySelector('.material-icons');
+        const iconHtml = iconEl ? iconEl.outerHTML : '<span class="material-icons">sports_score</span>';
+        goalBtn.innerHTML = `${iconHtml}${translate('goal', currentLanguage)}`;
+    }
+    
+    const assistBtn = document.querySelector('button[onclick="handleAssistAction()"]');
+    if (assistBtn) {
+        const iconEl = assistBtn.querySelector('.material-icons');
+        const iconHtml = iconEl ? iconEl.outerHTML : '<span class="material-icons">front_hand</span>';
+        assistBtn.innerHTML = `${iconHtml}${translate('assist', currentLanguage)}`;
+    }
+    
+    const saveBtn = document.querySelector('button[onclick="recordAction(\'save\')"]');
+    if (saveBtn) {
+        const iconEl = saveBtn.querySelector('.material-icons');
+        const iconHtml = iconEl ? iconEl.outerHTML : '<span class="material-icons">back_hand</span>';
+        saveBtn.innerHTML = `${iconHtml}${translate('block', currentLanguage)}`;
+    }
+    
+    const goalAllowedBtn = document.querySelector('button[onclick="recordAction(\'goal_allowed\')"]');
+    if (goalAllowedBtn) {
+        const iconEl = goalAllowedBtn.querySelector('.material-icons');
+        const iconHtml = iconEl ? iconEl.outerHTML : '<span class="material-icons">sports_soccer</span>';
+        goalAllowedBtn.innerHTML = `${iconHtml}${translate('goalAllowed', currentLanguage)}`;
+    }
 }
 
 // Export the function

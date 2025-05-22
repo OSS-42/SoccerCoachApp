@@ -596,7 +596,10 @@ function updateTimerDisplay() {
     const timerValue = timerDisplay.querySelector('.timer-value');
     
     timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    document.getElementById('sub-time').textContent = `Substitution: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Get translated label with current language
+    const currentLanguage = appState.settings.language || 'fr';
+    document.getElementById('sub-time').textContent = `${translate('substitution', currentLanguage)} ${minutes}:${seconds.toString().padStart(2, '0')}`;
     
     // Add alert styling if timer is at zero
     if (appState.timer.timeLeft === 0) {
@@ -609,7 +612,11 @@ function updateTimerDisplay() {
 function updateGameTimeDisplay() {
     const minutes = Math.floor(appState.gameTimer.elapsed / 60);
     const seconds = appState.gameTimer.elapsed % 60;
-    document.getElementById('game-time').textContent = `Game Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const formattedTime = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Get translated label with current language
+    const currentLanguage = appState.settings.language || 'fr';
+    document.getElementById('game-time').textContent = `${translate('gameTime', currentLanguage)} ${formattedTime}`;
 }
 
 function startTimer() {
