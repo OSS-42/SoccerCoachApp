@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soccer Coach Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Main Menu Screen -->
+        <div id="main-screen" class="screen active">
+            <div class="app-header">
+                <h1>Soccer Coach Tracker</h1>
+            </div>
+            <div class="main-menu">
+                <button class="menu-btn" onclick="showScreen('team-setup')">
+                    <span class="material-icons">people</span>
+                    Team Setup
+                </button>
+                <button class="menu-btn" onclick="showScreen('game-setup')">
+                    <span class="material-icons">sports_soccer</span>
+                    Start New Game
+                </button>
+                <button class="menu-btn" onclick="showScreen('reports')">
+                    <span class="material-icons">assessment</span>
+                    Reports
+                </button>
+                <button class="menu-btn" onclick="showScreen('settings')">
+                    <span class="material-icons">settings</span>
+                    Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Team Setup Screen -->
+        <div id="team-setup" class="screen">
+            <div class="app-header">
+                <button class="back-btn" onclick="showScreen('main-screen')">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1>Team Setup</h1>
+                <button class="action-btn" onclick="openAddPlayerDialog()">
+                    <span class="material-icons">add</span>
+                </button>
+            </div>
+            <div class="content">
+                <div id="players-list" class="players-list">
+                    <!-- Players will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Setup Screen -->
+        <div id="game-setup" class="screen">
+            <div class="app-header">
+                <button class="back-btn" onclick="showScreen('main-screen')">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1>New Game</h1>
+            </div>
+            <div class="content">
+                <div class="form-group">
+                    <label for="opponent-name">Opponent Team Name:</label>
+                    <input type="text" id="opponent-name" placeholder="Enter opponent team name">
+                </div>
+                <div class="form-group">
+                    <label for="game-date">Game Date:</label>
+                    <input type="date" id="game-date">
+                </div>
+                <div class="form-group">
+                    <label for="substitution-time">Substitution Timer (minutes):</label>
+                    <input type="number" id="substitution-time" value="6" min="1" max="20">
+                </div>
+                <button class="primary-btn" onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Game Tracking Screen (Landscape) -->
+        <div id="game-tracking" class="screen landscape">
+            <div class="game-header">
+                <div class="team-score">
+                    <span class="team-name">My Team</span>
+                    <span class="score" id="home-score">0</span>
+                </div>
+                <div class="game-time" id="game-time">00:00</div>
+                <div class="team-score">
+                    <span class="score" id="away-score">0</span>
+                    <span class="team-name" id="opponent-team-name">Opponent</span>
+                </div>
+                <button class="end-game-btn" onclick="confirmEndGame()">End Game</button>
+            </div>
+            <div class="game-content">
+                <div class="timer-container">
+                    <div class="substitution-timer" id="substitution-timer">
+                        <div class="timer-value">6:00</div>
+                        <div class="timer-controls">
+                            <button onclick="startTimer()">Start</button>
+                            <button onclick="pauseTimer()">Pause</button>
+                            <button onclick="resetTimer()">Reset</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-grid" id="player-grid">
+                    <!-- Players on the field will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Screen -->
+        <div id="reports" class="screen">
+            <div class="app-header">
+                <button class="back-btn" onclick="showScreen('main-screen')">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1>Game Reports</h1>
+            </div>
+            <div class="content" id="reports-list">
+                <!-- Game reports will be listed here -->
+                <div class="empty-state">No completed games yet</div>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings" class="screen">
+            <div class="app-header">
+                <button class="back-btn" onclick="showScreen('main-screen')">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1>Settings</h1>
+            </div>
+            <div class="content">
+                <div class="settings-group">
+                    <h2>Language</h2>
+                    <div class="setting-option">
+                        <label>
+                            <input type="radio" name="language" value="en" checked> English
+                        </label>
+                    </div>
+                    <div class="setting-option">
+                        <label>
+                            <input type="radio" name="language" value="es"> Spanish
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h2>Display</h2>
+                    <div class="setting-option">
+                        <label>
+                            <input type="checkbox" id="dark-mode"> Dark Mode
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h2>Default Timer</h2>
+                    <div class="setting-option">
+                        <label for="default-timer">Default Substitution Time (minutes):</label>
+                        <input type="number" id="default-timer" value="6" min="1" max="20">
+                    </div>
+                </div>
+
+                <button class="primary-btn" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Add Player Dialog -->
+        <div id="add-player-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Add Player</h2>
+                <div class="form-group">
+                    <label for="player-name">Name:</label>
+                    <input type="text" id="player-name" placeholder="Enter player name">
+                </div>
+                <div class="form-group">
+                    <label for="jersey-number">Jersey Number:</label>
+                    <input type="number" id="jersey-number" min="1" max="99">
+                </div>
+                <div class="form-group">
+                    <label for="player-position">Position:</label>
+                    <select id="player-position">
+                        <option value="Forward">Forward</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                    </select>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeAddPlayerDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="addPlayer()">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Action Dialog -->
+        <div id="player-action-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Record Action for <span id="action-player-name"></span></h2>
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="recordAction('goal')">
+                        <span class="material-icons">sports_score</span>
+                        Goal
+                    </button>
+                    <button class="action-btn" onclick="recordAction('assist')">
+                        <span class="material-icons">front_hand</span>
+                        Assist
+                    </button>
+                    <button class="action-btn" onclick="recordAction('save')" id="save-btn" style="display: none;">
+                        <span class="material-icons">back_hand</span>
+                        Save
+                    </button>
+                    <button class="action-btn" onclick="recordAction('yellow')">
+                        <span class="material-icons yellow-card">square</span>
+                        Yellow Card
+                    </button>
+                    <button class="action-btn" onclick="recordAction('red')">
+                        <span class="material-icons red-card">square</span>
+                        Red Card
+                    </button>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closePlayerActionDialog()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Game Confirmation Dialog -->
+        <div id="end-game-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>End Game</h2>
+                <p>Are you sure you want to end the current game?</p>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeEndGameDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="endGame()">End Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
