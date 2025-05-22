@@ -386,14 +386,17 @@ input:checked + .slider:before {
     color: white;
 }
 
-.game-times {
+.team-scores {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    text-align: center;
+    gap: 5px;
+    margin-right: auto;
+}
+
+.game-time-container {
+    display: flex;
     flex: 1;
+    justify-content: center;
 }
 
 /* Player Stats Icons */
@@ -457,6 +460,11 @@ input:checked + .slider:before {
     border-radius: 4px;
     padding: 15px;
     text-align: center;
+}
+
+.timer-label {
+    font-size: 14px;
+    margin-bottom: 5px;
 }
 
 .timer-value {
