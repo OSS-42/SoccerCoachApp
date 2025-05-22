@@ -466,6 +466,16 @@ input:checked + .slider:before {
     font-weight: 500;
 }
 
+.stat-emoji {
+    font-size: clamp(14px, 4vw, 22px);
+}
+
+.stat-value {
+    font-size: clamp(14px, 3.5vw, 20px);
+    margin-left: 2px;
+    font-weight: bold;
+}
+
 .team-name {
     text-transform: uppercase;
     font-weight: bold;
