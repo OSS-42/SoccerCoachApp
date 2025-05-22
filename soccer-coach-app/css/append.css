@@ -20,3 +20,109 @@ body.dark-mode .no-assist-btn {
 body.dark-mode .version-number {
     color: rgba(255, 255, 255, 0.6);
 }
+
+/* Danger button styling */
+.danger-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background-color 0.3s;
+}
+
+.danger-btn:hover {
+    background-color: #d32f2f;
+}
+
+body.dark-mode .danger-btn {
+    background-color: #c62828;
+}
+
+body.dark-mode .danger-btn:hover {
+    background-color: #b71c1c;
+}
+
+/* Remove borders from action icons in live game */
+.player-grid-item .stats-container {
+    border: none;
+    background-color: transparent;
+}
+
+.player-grid-item .stat {
+    border: none;
+    background-color: transparent;
+    padding: 2px;
+}
+
+/* Improve responsiveness */
+@media (max-width: 768px) {
+    .main-menu {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-management-buttons {
+        flex-direction: column;
+    }
+    
+    .data-management-buttons button {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-height: 600px) {
+    .screen {
+        padding: 10px;
+    }
+    
+    .app-header {
+        padding: 8px 15px;
+    }
+    
+    .app-header h1 {
+        font-size: 1.4rem;
+    }
+    
+    .main-menu {
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .settings-screen .settings-group {
+        margin-bottom: 15px;
+    }
+}
+
+/* Responsive game grid for different screen ratios */
+@media (max-height: 500px) and (orientation: landscape) {
+    .player-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+    }
+    
+    .player-grid-item {
+        padding: 5px;
+    }
+    
+    .player-grid-item h3 {
+        font-size: 1rem;
+        margin: 3px 0;
+    }
+}
+
+/* Confirm dialog for data reset */
+#reset-data-dialog .dialog-content {
+    max-width: 300px;
+}
+
+#reset-data-dialog .dialog-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}

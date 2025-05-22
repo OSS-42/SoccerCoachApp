@@ -191,6 +191,20 @@
                 </div>
                 
                 <div class="settings-group">
+                    <h2>Game Reports Format</h2>
+                    <div class="setting-option">
+                        <div class="toggle-container">
+                            <span>By Player</span>
+                            <label class="switch">
+                                <input type="checkbox" id="record-game-time">
+                                <span class="slider round"></span>
+                            </label>
+                            <span>By Minute</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
                     <h2>Data Management</h2>
                     <div class="setting-option data-management-buttons">
                         <button class="secondary-btn" onclick="exportTeamData()">
@@ -200,6 +214,10 @@
                         <button class="secondary-btn" onclick="importTeamData()">
                             <span class="material-icons">file_upload</span>
                             Import Team Data
+                        </button>
+                        <button class="danger-btn" onclick="confirmResetData()">
+                            <span class="material-icons">delete_forever</span>
+                            Reset All Data
                         </button>
                     </div>
                     <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleFileImport(event)">
@@ -294,6 +312,18 @@
                 <div class="dialog-buttons">
                     <button class="secondary-btn" onclick="closeEndGameDialog()">Cancel</button>
                     <button class="primary-btn" onclick="endGame()">End Game</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reset Data Confirmation Dialog -->
+        <div id="reset-data-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Reset All Data</h2>
+                <p>This will delete all players, game history, and reports. This action cannot be undone!</p>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeResetDataDialog()">Cancel</button>
+                    <button class="danger-btn" onclick="resetAllData()">Reset All Data</button>
                 </div>
             </div>
         </div>
