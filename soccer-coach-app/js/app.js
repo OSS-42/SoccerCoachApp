@@ -369,13 +369,19 @@ function renderPlayerGrid() {
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
         playerGridItem.innerHTML = `
-            <div class="player-number">${player.jerseyNumber}</div>
-            <div class="player-name">${player.name}</div>
+            <div class="player-header">
+                <span class="player-number">${player.jerseyNumber}</span>
+                <span class="player-name">${player.name}</span>
+            </div>
             <div class="player-stats-icons">
-                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
-                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
-                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
+                <div class="stats-row">
+                    <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+                    <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+                    <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🔴 ${player.stats.goalsAllowed}</span>
+                </div>
             </div>
         `;
         playerGridItem.addEventListener('click', () => {
@@ -669,10 +675,14 @@ function updatePlayerGridItem(playerId) {
     const statsIcons = gridItem.querySelector('.player-stats-icons');
     if (statsIcons) {
         statsIcons.innerHTML = `
-            <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
-            <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
-            <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-            <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
+            <div class="stats-row">
+                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+            </div>
+            <div class="stats-row">
+                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🔴 ${player.stats.goalsAllowed}</span>
+            </div>
         `;
     }
 }

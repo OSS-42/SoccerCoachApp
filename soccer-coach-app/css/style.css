@@ -466,16 +466,22 @@ body.dark-mode .player-action-btn:hover {
 /* Player Stats Icons */
 .player-stats-icons {
     display: flex;
-    justify-content: space-around;
+    flex-direction: column;
+    justify-content: center;
     margin-top: 8px;
     font-size: 12px;
+    gap: 4px;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
 }
 
 .stat-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(33, 150, 243, 0.1);
     border-radius: 4px;
     padding: 3px 5px;
     margin: 0 2px;
@@ -521,11 +527,14 @@ body.dark-mode .player-action-btn:hover {
 }
 
 .substitution-timer {
-    background-color: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 15px;
     text-align: center;
+}
+
+body:not(.dark-mode) .substitution-timer {
+    background-color: white;
 }
 
 .timer-value {
@@ -570,9 +579,16 @@ body.dark-mode .player-action-btn:hover {
     border: 2px solid #2196f3;
 }
 
+.player-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    justify-content: center;
+}
+
 .player-number {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     background-color: #2196f3;
     color: white;
     border-radius: 50%;
@@ -580,7 +596,12 @@ body.dark-mode .player-action-btn:hover {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    margin: 0 auto 8px;
+    margin-right: 5px;
+}
+
+.player-header .player-name {
+    font-weight: bold;
+    margin-left: 5px;
 }
 
 /* Dialog Styles */
