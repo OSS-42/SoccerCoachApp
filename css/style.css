@@ -467,17 +467,26 @@ input:checked + .slider:before {
 
 .timer-controls {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 10px;
 }
 
 .timer-controls button {
-    padding: 10px;
+    width: 40px;
+    height: 40px;
     border: none;
-    background-color: #2196f3;
-    color: white;
-    border-radius: 4px;
+    background: none;
+    color: black;
+    border-radius: 50%;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.dark-mode .timer-controls button {
+    color: white;
 }
 
 .player-grid {
@@ -612,7 +621,7 @@ input:checked + .slider:before {
 }
 
 .no-assist-btn {
-    background-color: #2196f3;
+    background-color: #4caf50;
     color: white;
 }
 
