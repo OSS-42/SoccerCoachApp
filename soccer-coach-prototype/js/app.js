@@ -695,6 +695,7 @@ function saveSettings() {
 // Data persistence (using localStorage in the prototype)
 function saveAppData() {
     localStorage.setItem('soccerCoachApp', JSON.stringify({
+        teamName: appState.teamName,
         players: appState.players,
         games: appState.games,
         settings: appState.settings
@@ -705,6 +706,7 @@ function loadAppData() {
     const savedData = localStorage.getItem('soccerCoachApp');
     if (savedData) {
         const data = JSON.parse(savedData);
+        appState.teamName = data.teamName || "My Team";
         appState.players = data.players || [];
         appState.games = data.games || [];
         appState.settings = data.settings || appState.settings;
@@ -714,6 +716,87 @@ function loadAppData() {
             document.body.classList.add('dark-mode');
         }
     }
+}
+
+// Export/Import functions for moving data between devices
+function exportTeamData() {
+    // Prepare data for export
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        appVersion: "1.0.0",
+        teamName: appState.teamName,
+        players: appState.players,
+        games: appState.games,
+        settings: appState.settings
+    };
+    
+    // Convert to JSON string
+    const dataStr = JSON.stringify(exportData, null, 2);
+    
+    // Create download link
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    // Create a temporary link element
+    const exportFileDefaultName = `${appState.teamName.replace(/\s+/g, '_')}_data.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.style.display = 'none';
+    
+    // Add to document, click, and remove
+    document.body.appendChild(linkElement);
+    linkElement.click();
+    document.body.removeChild(linkElement);
+}
+
+function importTeamData() {
+    // Trigger file input click
+    document.getElementById('import-file').click();
+}
+
+function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Validate imported data has required fields
+            if (!importedData.teamName || !Array.isArray(importedData.players)) {
+                throw new Error('Invalid data format');
+            }
+            
+            // Confirm data import
+            if (confirm('This will replace your current team data. Continue?')) {
+                // Update app state with imported data
+                appState.teamName = importedData.teamName;
+                appState.players = importedData.players;
+                appState.games = importedData.games || [];
+                if (importedData.settings) {
+                    appState.settings = importedData.settings;
+                }
+                
+                // Save to local storage
+                saveAppData();
+                
+                // Update UI
+                updateTeamNameUI();
+                renderPlayersList();
+                
+                alert('Team data imported successfully!');
+            }
+        } catch (error) {
+            alert('Error importing data. Please check the file format.');
+            console.error('Import error:', error);
+        }
+        
+        // Reset file input
+        event.target.value = '';
+    };
+    
+    reader.readAsText(file);
 }
 
 // Add demo players for testing

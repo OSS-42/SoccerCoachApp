@@ -416,6 +416,18 @@ body {
     padding: 10px 0;
 }
 
+.data-management-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.data-management-buttons button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 /* Timer Alert */
 .timer-alert {
     animation: blink 1s infinite;
