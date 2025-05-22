@@ -47,6 +47,8 @@ const enTranslations = {
     'goal': 'Goal',
     'assist': 'Assist',
     'save': 'Save',
+    'block': 'Save', // For the blocking action during the game
+    'saveChanges': 'Save', // For saving changes in forms
     'goalAllowed': 'Goal Allowed',
     
     // Goal/Assist dialogs

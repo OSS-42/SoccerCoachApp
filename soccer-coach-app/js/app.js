@@ -625,6 +625,11 @@ function startTimer() {
             }
         }, 1000);
         
+        // Apply translations to keep labels in correct language
+        if (typeof translateElements === 'function') {
+            translateElements();
+        }
+        
         // Also start the game timer if not already running
         startGameTimer();
     }

@@ -47,8 +47,8 @@ const frTranslations = {
     'recordAction': 'Enregistrer une Action pour',
     'goal': 'But',
     'assist': 'Passe Décisive',
-    'save': 'Arrêt',
-    'saveAction': 'Arrêt',  // For the action menu
+    'save': 'Enregistrer',
+    'block': 'Arrêt',  // For the blocking action during the game (renamed from save)
     'saveChanges': 'Enregistrer', // For saving changes in forms
     'goalAllowed': 'But Encaissé',
     

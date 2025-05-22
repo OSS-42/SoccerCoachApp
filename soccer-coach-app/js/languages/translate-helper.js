@@ -1,6 +1,8 @@
 // Helper function to apply translations to specific selectors
 function translateElements() {
-    const currentLanguage = appState.settings.language || 'fr';
+    // Always get the current language from app state, fallback to French
+    const currentLanguage = (appState && appState.settings && appState.settings.language) ? 
+                               appState.settings.language : 'fr';
     
     // Team Management screen buttons - direct fix for "Save"/"Enregistrer" button
     try {
