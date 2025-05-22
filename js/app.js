@@ -146,13 +146,13 @@ function addPlayer() {
     const jerseyNumber = document.getElementById('jersey-number').value;
     
     if (!name || !jerseyNumber) {
-        alert('Please fill in all required fields');
+        showMessage('Please fill in all required fields', 'error');
         return;
     }
     
     // Check for duplicate jersey numbers
     if (appState.players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
-        alert('A player with this jersey number already exists');
+        showMessage('A player with this jersey number already exists', 'error');
         return;
     }
     
@@ -256,18 +256,18 @@ function savePlayerEdit(playerId) {
     const newJerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
     
     if (!newName) {
-        alert('Please enter a name for the player');
+        showMessage('Please enter a name for the player', 'error');
         return;
     }
     
     if (!newJerseyNumber || newJerseyNumber < 1 || newJerseyNumber > 99) {
-        alert('Please enter a valid jersey number between 1 and 99');
+        showMessage('Please enter a valid jersey number between 1 and 99', 'error');
         return;
     }
     
     // Check for duplicate jersey numbers (excluding this player)
     if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
-        alert('Another player already has this jersey number');
+        showMessage('Another player already has this jersey number', 'error');
         return;
     }
     
