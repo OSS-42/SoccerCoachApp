@@ -1,5 +1,6 @@
 // Application State
 let appState = {
+    teamName: "My Team",
     players: [],
     games: [],
     currentGame: null,
@@ -24,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Populate UI with existing data
     renderPlayersList();
+    updateTeamNameUI();
     
     // Add demo players if none exist
     if (appState.players.length === 0) {
@@ -34,6 +36,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('game-date').value = today;
 });
+
+// Team Name functions
+function updateTeamNameUI() {
+    // Update team name in the input field
+    const teamNameInput = document.getElementById('team-name-input');
+    if (teamNameInput) {
+        teamNameInput.value = appState.teamName;
+    }
+    
+    // Update team name in game screen
+    const teamNameElements = document.querySelectorAll('.team-name');
+    teamNameElements.forEach(element => {
+        if (element.id !== 'opponent-team-name') {
+            element.textContent = appState.teamName;
+        }
+    });
+}
+
+function saveTeamName() {
+    const teamNameInput = document.getElementById('team-name-input');
+    const newTeamName = teamNameInput.value.trim();
+    
+    if (newTeamName) {
+        appState.teamName = newTeamName;
+        saveAppData();
+        updateTeamNameUI();
+        alert('Team name saved successfully');
+    } else {
+        alert('Please enter a team name');
+    }
+}
 
 // Screen Navigation
 function showScreen(screenId) {
@@ -280,6 +313,12 @@ function renderPlayerGrid() {
         playerGridItem.innerHTML = `
             <div class="player-number">${player.jerseyNumber}</div>
             <div class="player-name">${player.name}</div>
+            <div class="player-stats-icons">
+                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
+            </div>
         `;
         playerGridItem.addEventListener('click', () => {
             openPlayerActionDialog(player);
@@ -394,9 +433,22 @@ function recordAction(actionType) {
 }
 
 function updatePlayerGridItem(playerId) {
-    // Since we no longer show stats in the game view, this function doesn't need to update anything
-    // But we'll keep it for future functionality
-    return;
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const gridItem = document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`);
+    if (!gridItem) return;
+    
+    // Update the stats icons
+    const statsIcons = gridItem.querySelector('.player-stats-icons');
+    if (statsIcons) {
+        statsIcons.innerHTML = `
+            <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+            <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+            <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+            <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
+        `;
+    }
 }
 
 function calculateGameMinute() {
