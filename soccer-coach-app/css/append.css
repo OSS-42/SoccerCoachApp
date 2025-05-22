@@ -1,0 +1,22 @@
+.version-number {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    position: absolute;
+    bottom: 5px;
+    right: 15px;
+}
+
+/* Ensure No Assist button is orange */
+.no-assist-btn {
+    background-color: #ff9800 !important;
+    color: white !important;
+}
+
+body.dark-mode .no-assist-btn {
+    background-color: #e65100 !important;
+}
+
+/* Dark mode version number */
+body.dark-mode .version-number {
+    color: rgba(255, 255, 255, 0.6);
+}

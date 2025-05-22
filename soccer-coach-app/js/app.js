@@ -32,6 +32,12 @@ function applyDarkMode(enabled) {
     } else {
         document.body.classList.remove('dark-mode');
     }
+    
+    // Ensure the toggle reflects the current state
+    const darkModeToggle = document.getElementById('dark-mode');
+    if (darkModeToggle) {
+        darkModeToggle.checked = enabled;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
