@@ -1,6 +1,6 @@
 // Application State
 let appState = {
-    teamName: "My Team",
+    teamName: "Mon Équipe",
     players: [],
     games: [],
     currentGame: null,
@@ -17,7 +17,7 @@ let appState = {
         startTime: null  // used to calculate elapsed time
     },
     settings: {
-        language: 'en',
+        language: 'fr', // Set French as default language
         darkMode: false,
         defaultTimer: 6
     },
@@ -40,6 +40,88 @@ function applyDarkMode(enabled) {
     }
 }
 
+// Apply language to all UI elements
+function applyLanguage(language) {
+    // Update app title
+    document.querySelector('.app-header h1').textContent = translate('appTitle', language);
+    
+    // Main menu buttons
+    document.querySelector('button[onclick="showScreen(\'team-setup\')"]').childNodes[2].textContent = translate('teamSetup', language);
+    document.querySelector('button[onclick="showScreen(\'game-setup\')"]').childNodes[2].textContent = translate('startNewGame', language);
+    document.querySelector('button[onclick="showScreen(\'reports\')"]').childNodes[2].textContent = translate('reports', language);
+    document.querySelector('button[onclick="showScreen(\'settings\')"]').childNodes[2].textContent = translate('settings', language);
+    
+    // Team setup screen
+    document.querySelector('#team-setup .app-header h1').textContent = translate('teamSetupTitle', language);
+    document.querySelector('.team-name-section h2').textContent = translate('teamName', language);
+    document.querySelector('#team-name-input').placeholder = translate('enterTeamName', language);
+    document.querySelector('button[onclick="saveTeamName()"]').textContent = translate('save', language);
+    document.querySelector('#team-setup h2:nth-of-type(2)').textContent = translate('players', language);
+    
+    // Add player dialog
+    document.querySelector('#add-player-dialog h2').textContent = translate('addPlayer', language);
+    document.querySelector('label[for="player-name"]').textContent = translate('firstName', language);
+    document.querySelector('#player-name').placeholder = translate('enterPlayerName', language);
+    document.querySelector('label[for="jersey-number"]').textContent = translate('jerseyNumber', language);
+    document.querySelector('#add-player-dialog .dialog-buttons button:first-child').textContent = translate('cancel', language);
+    document.querySelector('#add-player-dialog .dialog-buttons button:last-child').textContent = translate('add', language);
+    
+    // Game setup screen
+    document.querySelector('#game-setup .app-header h1').textContent = translate('newGame', language);
+    document.querySelector('label[for="opponent-name"]').textContent = translate('opponentTeamName', language);
+    document.querySelector('#opponent-name').placeholder = translate('enterOpponentName', language);
+    document.querySelector('label[for="game-date"]').textContent = translate('gameDate', language);
+    document.querySelector('label[for="substitution-time"]').textContent = translate('substitutionTimer', language);
+    document.querySelector('button[onclick="startGame()"]').textContent = translate('startGame', language);
+    
+    // Game tracking screen
+    document.querySelector('#game-time').textContent = translate('gameTime', language) + ' 00:00';
+    document.querySelector('#sub-time').textContent = translate('substitution', language) + ' 06:00';
+    document.querySelector('.end-game-btn').textContent = translate('endGame', language);
+    document.querySelector('.timer-controls button:nth-child(1)').textContent = translate('start', language);
+    document.querySelector('.timer-controls button:nth-child(2)').textContent = translate('pause', language);
+    document.querySelector('.timer-controls button:nth-child(3)').textContent = translate('reset', language);
+    
+    // Player action dialog
+    document.querySelector('#player-action-dialog h2').childNodes[0].textContent = translate('recordAction', language) + ' ';
+    document.querySelector('button[onclick="handleGoalAction()"] span:last-child').textContent = translate('goal', language);
+    document.querySelector('button[onclick="handleAssistAction()"] span:last-child').textContent = translate('assist', language);
+    document.querySelector('button[onclick="recordAction(\'save\')"] span:last-child').textContent = translate('save', language);
+    document.querySelector('button[onclick="recordAction(\'goal_allowed\')"] span:last-child').textContent = translate('goalAllowed', language);
+    document.querySelector('#player-action-dialog .dialog-buttons button').textContent = translate('cancel', language);
+    
+    // Assist selection dialog
+    document.querySelector('#assist-selection-dialog h2').textContent = translate('wasThereAssist', language);
+    document.querySelector('.no-assist-btn span:last-child').textContent = translate('noAssist', language);
+    document.querySelector('#assist-selection-dialog .dialog-buttons button').textContent = translate('cancel', language);
+    
+    // Goal scorer dialog
+    document.querySelector('#scorer-selection-dialog h2').textContent = translate('whoScored', language);
+    document.querySelector('#scorer-selection-dialog .dialog-buttons button').textContent = translate('cancel', language);
+    
+    // End game dialog
+    document.querySelector('#end-game-dialog h2').textContent = translate('endGameConfirm', language);
+    document.querySelector('#end-game-dialog p').textContent = translate('endGamePrompt', language);
+    document.querySelector('#end-game-dialog .dialog-buttons button:first-child').textContent = translate('cancel', language);
+    document.querySelector('#end-game-dialog .dialog-buttons button:last-child').textContent = translate('endGameConfirm', language);
+    
+    // Reports screen
+    document.querySelector('#reports .app-header h1').textContent = translate('gameReports', language);
+    
+    // Settings screen
+    document.querySelector('#settings .app-header h1').textContent = translate('settingsTitle', language);
+    document.querySelector('#settings .settings-group:nth-of-type(1) h2').textContent = translate('language', language);
+    document.querySelector('#settings .settings-group:nth-of-type(2) h2').textContent = translate('display', language);
+    document.querySelector('.toggle-container span:first-child').textContent = translate('light', language);
+    document.querySelector('.toggle-container span:last-child').textContent = translate('dark', language);
+    document.querySelector('#settings .settings-group:nth-of-type(3) h2').textContent = translate('defaultTimer', language);
+    document.querySelector('label[for="default-timer"]').textContent = translate('defaultTimerSetting', language);
+    document.querySelector('#settings .settings-group:nth-of-type(4) h2').textContent = translate('dataManagement', language);
+    document.querySelector('button[onclick="exportTeamData()"] span:last-child').textContent = translate('exportTeamData', language);
+    document.querySelector('button[onclick="importTeamData()"] span:last-child').textContent = translate('importTeamData', language);
+    document.querySelector('button[onclick="saveSettings()"]').textContent = translate('saveSettings', language);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved data if available
     loadAppData();
@@ -52,6 +134,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show only the main screen
     document.getElementById('main-screen').classList.add('active');
+    
+    // Apply the current language
+    applyLanguage(appState.settings.language);
     
     // Populate UI with existing data
     renderPlayersList();
@@ -887,12 +972,20 @@ function saveSettings() {
     const darkMode = document.getElementById('dark-mode').checked;
     const defaultTimer = document.getElementById('default-timer').value;
     
+    // Store old language to check if it changed
+    const oldLanguage = appState.settings.language;
+    
     appState.settings.language = language;
     appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
     
     // Apply dark mode immediately
     applyDarkMode(darkMode);
+    
+    // Apply language changes if language changed
+    if (oldLanguage !== language) {
+        applyLanguage(language);
+    }
     
     saveAppData();
     alert('Settings saved successfully');
