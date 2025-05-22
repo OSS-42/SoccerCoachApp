@@ -441,8 +441,8 @@ input:checked + .slider:before {
 .player-stats-icons {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    font-size: 12px;
+    gap: 10px;
+    font-size: 14px;
 }
 
 .stats-row {
@@ -457,7 +457,17 @@ input:checked + .slider:before {
     border-radius: 4px;
     padding: 3px 5px;
     margin: 0 2px;
-    cursor: default;
+}
+
+.team-name {
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.red-soccer-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
 }
 
 .team-score {
@@ -562,13 +572,15 @@ body.dark-mode .timer-controls button:hover {
     background-color: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 10px;
+    padding: 12px;
     text-align: center;
     cursor: pointer;
     aspect-ratio: 1/1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    max-width: 120px;
+    height: auto;
 }
 
 .player-grid-item.active {
@@ -579,16 +591,20 @@ body.dark-mode .timer-controls button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 .player-number {
     font-weight: bold;
     margin-right: 5px;
-    font-size: 16px;
+    font-size: 20px;
     color: #2196f3;
+}
+
+.player-name {
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 /* Dialog Styles */

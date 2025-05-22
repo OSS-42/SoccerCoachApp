@@ -94,7 +94,7 @@ function updateTeamNameUI() {
     const teamNameElements = document.querySelectorAll('.team-name');
     teamNameElements.forEach(element => {
         if (element.id !== 'opponent-team-name') {
-            element.textContent = appState.teamName;
+            element.textContent = appState.teamName.toUpperCase();
         }
     });
 }
