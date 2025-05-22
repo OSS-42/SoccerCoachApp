@@ -408,7 +408,6 @@ input:checked + .slider:before {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(33, 150, 243, 0.1);
     border-radius: 4px;
     padding: 3px 5px;
     margin: 0 2px;
@@ -454,9 +453,8 @@ input:checked + .slider:before {
 }
 
 .substitution-timer {
-    background-color: white;
+    border: 2px solid white;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 15px;
     text-align: center;
 }
@@ -614,7 +612,7 @@ input:checked + .slider:before {
 }
 
 .no-assist-btn {
-    background-color: #ff5722;
+    background-color: #2196f3;
     color: white;
 }
 
