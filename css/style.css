@@ -442,12 +442,15 @@ input:checked + .slider:before {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    font-size: 14px;
+    font-size: clamp(12px, 2vw, 14px);
+    width: 100%;
 }
 
 .stats-row {
     display: flex;
     justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 2px;
 }
 
 .stat-icon {
@@ -455,8 +458,8 @@ input:checked + .slider:before {
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    padding: 3px 5px;
-    margin: 0 2px;
+    padding: 3px;
+    white-space: nowrap;
 }
 
 .team-name {
@@ -465,8 +468,8 @@ input:checked + .slider:before {
 }
 
 .red-soccer-icon {
-    width: 20px;
-    height: 20px;
+    width: clamp(16px, 3vw, 20px);
+    height: clamp(16px, 3vw, 20px);
     vertical-align: middle;
 }
 
@@ -563,7 +566,7 @@ body.dark-mode .timer-controls button:hover {
 .player-grid {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     grid-gap: 12px;
     padding: 10px;
 }
@@ -572,15 +575,21 @@ body.dark-mode .timer-controls button:hover {
     background-color: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 12px;
+    padding: 8px;
     text-align: center;
     cursor: pointer;
     aspect-ratio: 1/1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    max-width: 120px;
+    width: 100%;
     height: auto;
+    transition: transform 0.2s ease;
+}
+
+.player-grid-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .player-grid-item.active {
@@ -592,19 +601,22 @@ body.dark-mode .timer-controls button:hover {
     align-items: center;
     justify-content: center;
     margin-bottom: 5px;
+    flex-wrap: wrap;
 }
 
 .player-number {
     font-weight: bold;
     margin-right: 5px;
-    font-size: 20px;
+    font-size: clamp(16px, 3vw, 20px);
     color: #2196f3;
 }
 
 .player-name {
-    font-size: 18px;
+    font-size: clamp(14px, 2.5vw, 18px);
     font-weight: bold;
     text-transform: uppercase;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 /* Dialog Styles */
