@@ -579,11 +579,16 @@ body.dark-mode .timer-controls button:hover {
     align-items: center;
     justify-content: center;
     padding: 15px;
-    background-color: white;
-    border: 1px solid #ddd;
+    background-color: transparent;
+    border: 2px solid #444;
     border-radius: 4px;
     gap: 10px;
     color: #333;
+}
+
+body.dark-mode .action-btn {
+    border-color: #ddd;
+    color: #eee;
 }
 
 /* Player Selection Grid */

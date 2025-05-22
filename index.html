@@ -88,17 +88,18 @@
         <!-- Game Tracking Screen (Landscape) -->
         <div id="game-tracking" class="screen landscape">
             <div class="game-header">
-                <div class="team-score">
-                    <span class="team-name">My Team</span>
-                    <span class="score" id="home-score">0</span>
+                <div class="team-scores">
+                    <div class="team-score">
+                        <span class="team-name">My Team</span>
+                        <span class="score" id="home-score">0</span>
+                    </div>
+                    <div class="team-score">
+                        <span class="team-name" id="opponent-team-name">Opponent</span>
+                        <span class="score" id="away-score">0</span>
+                    </div>
                 </div>
-                <div class="game-times">
-                    <div class="game-time" id="game-time">Game Time: 00:00</div>
-                    <div class="sub-time" id="sub-time">Substitution: 06:00</div>
-                </div>
-                <div class="team-score">
-                    <span class="score" id="away-score">0</span>
-                    <span class="team-name" id="opponent-team-name">Opponent</span>
+                <div class="game-time-container">
+                    <div class="game-time" id="game-time">Time: 00:00</div>
                 </div>
                 <button class="end-game-btn" onclick="confirmEndGame()">End Game</button>
             </div>
@@ -223,7 +224,7 @@
                 <h2>Record Action for <span id="action-player-name"></span></h2>
                 <div class="action-buttons">
                     <button class="action-btn" onclick="handleGoalAction()">
-                        <span class="material-icons">sports_score</span>
+                        <span class="material-icons">sports_soccer</span>
                         Goal
                     </button>
                     <button class="action-btn" onclick="handleAssistAction()">
