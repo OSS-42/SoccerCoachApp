@@ -579,21 +579,16 @@ body.dark-mode .timer-controls button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
 }
 
 .player-number {
     font-weight: bold;
     margin-right: 5px;
-    height: 40px;
-    background-color: #2196f3;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    margin: 0 auto 8px;
+    font-size: 16px;
+    color: #2196f3;
 }
 
 /* Dialog Styles */
