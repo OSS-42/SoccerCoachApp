@@ -43,6 +43,11 @@ function applyDarkMode(enabled) {
 // Apply language to all UI elements
 function applyLanguage(language) {
     try {
+        // Call the direct translation helper
+        if (typeof translateElements === 'function') {
+            translateElements();
+        }
+        
         // Main menu screen elements
         const mainHeaders = document.querySelectorAll('.app-header h1');
         mainHeaders.forEach(header => {
@@ -256,20 +261,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show only the main screen
     document.getElementById('main-screen').classList.add('active');
     
-    // Apply the current language
-    applyLanguage(appState.settings.language);
-    
-    // Populate UI with existing data
-    renderPlayersList();
-    updateTeamNameUI();
-    
-    // Apply dark mode if enabled
-    applyDarkMode(appState.settings.darkMode);
-    
-    // Add demo players if none exist
-    if (appState.players.length === 0) {
-        addDemoPlayers();
-    }
+    // Make sure we have translations loaded
+    setTimeout(() => {
+        // Apply the current language
+        applyLanguage(appState.settings.language);
+        
+        // Populate UI with existing data
+        renderPlayersList();
+        updateTeamNameUI();
+        
+        // Apply dark mode if enabled
+        applyDarkMode(appState.settings.darkMode);
+        
+        // Add demo players if none exist
+        if (appState.players.length === 0) {
+            addDemoPlayers();
+        }
+    }, 100);
     
     // Set today's date as the default
     const today = new Date().toISOString().split('T')[0];
@@ -317,6 +325,11 @@ function showScreen(screenId) {
     
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
+    
+    // Apply translations to the newly shown screen
+    if (typeof translateElements === 'function') {
+        translateElements();
+    }
     
     // Special handling for specific screens
     if (screenId === 'reports') {
