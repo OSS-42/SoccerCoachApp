@@ -630,8 +630,9 @@ body.dark-mode .timer-controls button:hover {
     gap: 5px;
 }
 
-.no-assist-btn {
-    background-color: #4caf50;
+.primary-btn.no-assist-btn,
+button.no-assist-btn {
+    background-color: #4caf50 !important;
     color: white;
 }
 
