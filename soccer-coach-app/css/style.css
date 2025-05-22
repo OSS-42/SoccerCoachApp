@@ -360,6 +360,27 @@ input:checked + .slider:before {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Success message styling */
+.success-message {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    display: none;
+    animation: fadeOut 3s forwards;
+    animation-delay: 2s;
+}
+
+body.dark-mode .success-message {
+    background-color: #388E3C;
+}
+
+@keyframes fadeOut {
+    from {opacity: 1;}
+    to {opacity: 0;}
+}
+
 .jersey-number {
     width: 40px;
     height: 40px;
@@ -375,11 +396,14 @@ input:checked + .slider:before {
 
 .player-info {
     flex: 1;
+    display: flex;
+    align-items: center;
 }
 
 .player-name {
     font-weight: bold;
     font-size: 16px;
+    margin-left: 5px;
 }
 
 .player-position {

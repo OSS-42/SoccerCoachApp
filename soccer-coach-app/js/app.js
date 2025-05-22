@@ -80,7 +80,15 @@ function saveTeamName() {
         appState.teamName = newTeamName;
         saveAppData();
         updateTeamNameUI();
-        alert('Team name saved successfully');
+        
+        // Show the success message
+        const successMsg = document.getElementById('team-name-success');
+        successMsg.style.display = 'block';
+        
+        // Hide the success message after animation completes
+        setTimeout(() => {
+            successMsg.style.display = 'none';
+        }, 5000);
     } else {
         alert('Please enter a team name');
     }
@@ -152,20 +160,19 @@ function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
     
-    const activePlayers = appState.players.filter(p => p.active);
-    
-    if (activePlayers.length === 0) {
+    // Show all players instead of just active ones
+    if (appState.players.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
     }
     
-    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item';
         playerItem.innerHTML = `
             <div class="jersey-number">${player.jerseyNumber}</div>
             <div class="player-info">
-                <div class="player-name">${player.name}</div>
+                <span class="player-name">${player.name}</span>
             </div>
             <div class="player-actions">
                 <button class="player-action-btn" onclick="editPlayer('${player.id}')">
