@@ -66,7 +66,6 @@ function closeAddPlayerDialog() {
 function addPlayer() {
     const name = document.getElementById('player-name').value.trim();
     const jerseyNumber = document.getElementById('jersey-number').value;
-    const position = document.getElementById('player-position').value;
     
     if (!name || !jerseyNumber) {
         alert('Please fill in all required fields');
@@ -83,14 +82,12 @@ function addPlayer() {
         id: Date.now().toString(),
         name,
         jerseyNumber: Number(jerseyNumber),
-        position,
         active: true,
         stats: {
             goals: 0,
             assists: 0,
             saves: 0,
-            yellowCards: 0,
-            redCards: 0
+            goalsAllowed: 0
         }
     };
     
@@ -118,7 +115,6 @@ function renderPlayersList() {
             <div class="jersey-number">${player.jerseyNumber}</div>
             <div class="player-info">
                 <div class="player-name">${player.name}</div>
-                <div class="player-position">${player.position}</div>
             </div>
             <div class="player-actions">
                 <button class="player-action-btn" onclick="editPlayer('${player.id}')">
@@ -209,7 +205,8 @@ function renderPlayerGrid() {
             <div class="player-stats">
                 <div>Goals: 0</div>
                 <div>Assists: 0</div>
-                ${player.position === 'Goalkeeper' ? '<div>Saves: 0</div>' : ''}
+                <div>Saves: 0</div>
+                <div>Goals Allowed: 0</div>
             </div>
         `;
         playerGridItem.addEventListener('click', () => {
@@ -269,16 +266,10 @@ function openPlayerActionDialog(player) {
     
     const dialog = document.getElementById('player-action-dialog');
     const playerNameSpan = document.getElementById('action-player-name');
-    const saveButton = document.getElementById('save-btn');
     
     playerNameSpan.textContent = player.name;
     
-    // Show/hide goalkeeper specific actions
-    if (player.position === 'Goalkeeper') {
-        saveButton.style.display = 'block';
-    } else {
-        saveButton.style.display = 'none';
-    }
+    // All actions are now available for all players
     
     dialog.style.display = 'flex';
 }
@@ -316,11 +307,10 @@ function recordAction(actionType) {
         case 'save':
             appState.players[playerIndex].stats.saves++;
             break;
-        case 'yellow':
-            appState.players[playerIndex].stats.yellowCards++;
-            break;
-        case 'red':
-            appState.players[playerIndex].stats.redCards++;
+        case 'goal_allowed':
+            appState.players[playerIndex].stats.goalsAllowed++;
+            appState.currentGame.awayScore++;
+            document.getElementById('away-score').textContent = appState.currentGame.awayScore;
             break;
     }
     
@@ -342,7 +332,8 @@ function updatePlayerGridItem(playerId) {
     statsDiv.innerHTML = `
         <div>Goals: ${player.stats.goals}</div>
         <div>Assists: ${player.stats.assists}</div>
-        ${player.position === 'Goalkeeper' ? `<div>Saves: ${player.stats.saves}</div>` : ''}
+        <div>Saves: ${player.stats.saves}</div>
+        <div>Goals Allowed: ${player.stats.goalsAllowed}</div>
     `;
 }
 
@@ -473,12 +464,12 @@ function loadAppData() {
 // Add demo players for testing
 function addDemoPlayers() {
     const demoPlayers = [
-        { id: '1', name: 'Alex Smith', jerseyNumber: 1, position: 'Goalkeeper', active: true, stats: { goals: 0, assists: 0, saves: 0, yellowCards: 0, redCards: 0 } },
-        { id: '2', name: 'Jordan Lee', jerseyNumber: 4, position: 'Defender', active: true, stats: { goals: 0, assists: 0, saves: 0, yellowCards: 0, redCards: 0 } },
-        { id: '3', name: 'Casey Kim', jerseyNumber: 6, position: 'Defender', active: true, stats: { goals: 0, assists: 0, saves: 0, yellowCards: 0, redCards: 0 } },
-        { id: '4', name: 'Riley Johnson', jerseyNumber: 8, position: 'Midfielder', active: true, stats: { goals: 0, assists: 0, saves: 0, yellowCards: 0, redCards: 0 } },
-        { id: '5', name: 'Taylor Brown', jerseyNumber: 10, position: 'Forward', active: true, stats: { goals: 0, assists: 0, saves: 0, yellowCards: 0, redCards: 0 } },
-        { id: '6', name: 'Sam Wilson', jerseyNumber: 11, position: 'Forward', active: true, stats: { goals: 0, assists: 0, saves: 0, yellowCards: 0, redCards: 0 } }
+        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
     ];
     
     appState.players = demoPlayers;

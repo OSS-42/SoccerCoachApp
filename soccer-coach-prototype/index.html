@@ -140,6 +140,11 @@
                     </div>
                     <div class="setting-option">
                         <label>
+                            <input type="radio" name="language" value="fr"> French
+                        </label>
+                    </div>
+                    <div class="setting-option">
+                        <label>
                             <input type="radio" name="language" value="es"> Spanish
                         </label>
                     </div>
@@ -171,21 +176,12 @@
             <div class="dialog-content">
                 <h2>Add Player</h2>
                 <div class="form-group">
-                    <label for="player-name">Name:</label>
-                    <input type="text" id="player-name" placeholder="Enter player name">
+                    <label for="player-name">First Name:</label>
+                    <input type="text" id="player-name" placeholder="Enter player's first name">
                 </div>
                 <div class="form-group">
                     <label for="jersey-number">Jersey Number:</label>
                     <input type="number" id="jersey-number" min="1" max="99">
-                </div>
-                <div class="form-group">
-                    <label for="player-position">Position:</label>
-                    <select id="player-position">
-                        <option value="Forward">Forward</option>
-                        <option value="Midfielder">Midfielder</option>
-                        <option value="Defender">Defender</option>
-                        <option value="Goalkeeper">Goalkeeper</option>
-                    </select>
                 </div>
                 <div class="dialog-buttons">
                     <button class="secondary-btn" onclick="closeAddPlayerDialog()">Cancel</button>
@@ -207,17 +203,13 @@
                         <span class="material-icons">front_hand</span>
                         Assist
                     </button>
-                    <button class="action-btn" onclick="recordAction('save')" id="save-btn" style="display: none;">
+                    <button class="action-btn" onclick="recordAction('save')">
                         <span class="material-icons">back_hand</span>
                         Save
                     </button>
-                    <button class="action-btn" onclick="recordAction('yellow')">
-                        <span class="material-icons yellow-card">square</span>
-                        Yellow Card
-                    </button>
-                    <button class="action-btn" onclick="recordAction('red')">
-                        <span class="material-icons red-card">square</span>
-                        Red Card
+                    <button class="action-btn" onclick="recordAction('goal_allowed')">
+                        <span class="material-icons">sports_soccer</span>
+                        Goal Allowed
                     </button>
                 </div>
                 <div class="dialog-buttons">
