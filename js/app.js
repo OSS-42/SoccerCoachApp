@@ -340,7 +340,7 @@ function startGame() {
     updateGameTimeDisplay();
     
     // Update opponent name in UI
-    document.getElementById('opponent-team-name').textContent = opponentName;
+    document.getElementById('opponent-team-name').textContent = opponentName.toUpperCase();
     
     // Reset scores
     document.getElementById('home-score').textContent = '0';
