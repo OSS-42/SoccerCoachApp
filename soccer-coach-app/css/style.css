@@ -372,6 +372,13 @@ input:checked + .slider:before {
     animation-delay: 2s;
 }
 
+.error-message {
+    color: #f44336;
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
 body.dark-mode .success-message {
     background-color: #388E3C;
 }
@@ -422,6 +429,19 @@ body.dark-mode .success-message {
     color: #666;
     cursor: pointer;
     padding: 5px;
+    box-shadow: none;
+}
+
+.player-action-btn:hover {
+    color: #2196f3;
+}
+
+body.dark-mode .player-action-btn {
+    color: #aaa;
+}
+
+body.dark-mode .player-action-btn:hover {
+    color: #64b5f6;
 }
 
 /* Game Tracking Styles */

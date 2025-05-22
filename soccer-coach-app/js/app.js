@@ -133,7 +133,18 @@ function addPlayer() {
     
     // Check for duplicate jersey numbers
     if (appState.players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
-        alert('A player with this jersey number already exists');
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = 'A player with this jersey number already exists';
+        
+        // Add error message to dialog
+        const formGroup = document.querySelector('#add-player-dialog .form-group:nth-child(2)');
+        // Remove any existing error message
+        const existingError = formGroup.querySelector('.error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        formGroup.appendChild(errorMessage);
         return;
     }
     
@@ -141,6 +152,7 @@ function addPlayer() {
         id: Date.now().toString(),
         name,
         jerseyNumber: Number(jerseyNumber),
+        // All players are active by default, no toggle needed
         active: true,
         stats: {
             goals: 0,
@@ -204,8 +216,8 @@ function editPlayer(playerId) {
         <div class="dialog-content">
             <h2>Edit Player</h2>
             <div class="form-group">
-                <label for="edit-player-name">First Name:</label>
-                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's first name">
+                <label for="edit-player-name">Player Name:</label>
+                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's name">
             </div>
             <div class="form-group">
                 <label for="edit-jersey-number">Jersey Number:</label>
@@ -246,8 +258,20 @@ function savePlayerEdit(playerId) {
     }
     
     // Check for duplicate jersey numbers (excluding this player)
-    if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
-        alert('Another player already has this jersey number');
+    if (appState.players.some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
+        // Show error inline instead of an alert
+        const formGroup = document.querySelector('#edit-player-dialog .form-group:nth-child(2)');
+        // Remove any existing error message
+        const existingError = formGroup.querySelector('.error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add new error message
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'error-message';
+        errorMessage.textContent = 'Another player already has this jersey number';
+        formGroup.appendChild(errorMessage);
         return;
     }
     
@@ -263,9 +287,10 @@ function savePlayerEdit(playerId) {
 
 function deletePlayer(playerId) {
     if (confirm('Are you sure you want to remove this player?')) {
+        // Instead of setting active to false, completely remove the player from the array
         const playerIndex = appState.players.findIndex(p => p.id === playerId);
         if (playerIndex !== -1) {
-            appState.players[playerIndex].active = false;
+            appState.players.splice(playerIndex, 1);
             saveAppData();
             renderPlayersList();
         }
