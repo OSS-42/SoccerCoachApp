@@ -157,6 +157,16 @@ function startGame() {
         return;
     }
     
+    // Reset player stats for this new game
+    appState.players.forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        };
+    });
+    
     appState.currentGame = {
         id: Date.now().toString(),
         date: gameDate,
@@ -363,13 +373,29 @@ function endGame() {
     appState.currentGame.endTime = new Date().toISOString();
     appState.currentGame.isCompleted = true;
     
+    // Store the game in our games array
+    const finishedGameId = appState.currentGame.id;
     appState.games.push({...appState.currentGame});
-    appState.currentGame = null;
     
+    // Stop the timer
     pauseTimer();
+    
+    // Save data before showing report
     saveAppData();
+    
+    // Close the dialog
     closeEndGameDialog();
-    showScreen('main-screen');
+    
+    // Show the reports screen
+    showScreen('reports');
+    
+    // Generate and show the detailed report for this game
+    setTimeout(() => {
+        viewReport(finishedGameId);
+    }, 300);
+    
+    // Clear current game
+    appState.currentGame = null;
 }
 
 // Reports
@@ -405,9 +431,134 @@ function renderReportsList() {
 }
 
 function viewReport(gameId) {
-    // This would navigate to a detailed report view
-    // For the prototype, we'll just show an alert
-    alert('Detailed report view would be shown here');
+    const game = appState.games.find(g => g.id === gameId);
+    if (!game) return;
+    
+    // Create a report dialog if it doesn't exist
+    let reportDialog = document.getElementById('detailed-report-dialog');
+    if (!reportDialog) {
+        reportDialog = document.createElement('div');
+        reportDialog.id = 'detailed-report-dialog';
+        reportDialog.className = 'dialog';
+        document.getElementById('app').appendChild(reportDialog);
+    }
+    
+    // Format date
+    const gameDate = new Date(game.date).toLocaleDateString();
+    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    
+    // Calculate game duration
+    let gameDuration = '';
+    if (game.startTime && game.endTime) {
+        const start = new Date(game.startTime);
+        const end = new Date(game.endTime);
+        const durationMs = end - start;
+        const durationMins = Math.floor(durationMs / 60000);
+        gameDuration = `${durationMins} minutes`;
+    }
+
+    // Get player actions from the game
+    const playerActions = {};
+    
+    // Initialize player actions
+    game.activePlayers.forEach(playerId => {
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            playerActions[playerId] = {
+                name: player.name,
+                jerseyNumber: player.jerseyNumber,
+                goals: 0,
+                assists: 0,
+                saves: 0,
+                goalsAllowed: 0
+            };
+        }
+    });
+    
+    // Count actions
+    game.actions.forEach(action => {
+        if (playerActions[action.playerId]) {
+            switch (action.actionType) {
+                case 'goal':
+                    playerActions[action.playerId].goals++;
+                    break;
+                case 'assist':
+                    playerActions[action.playerId].assists++;
+                    break;
+                case 'save':
+                    playerActions[action.playerId].saves++;
+                    break;
+                case 'goal_allowed':
+                    playerActions[action.playerId].goalsAllowed++;
+                    break;
+            }
+        }
+    });
+    
+    // Build player stats table
+    let playerStatsHTML = '';
+    Object.values(playerActions)
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+        .forEach(playerStat => {
+            playerStatsHTML += `
+                <tr>
+                    <td>${playerStat.jerseyNumber}</td>
+                    <td>${playerStat.name}</td>
+                    <td>${playerStat.goals}</td>
+                    <td>${playerStat.assists}</td>
+                    <td>${playerStat.saves}</td>
+                    <td>${playerStat.goalsAllowed}</td>
+                </tr>
+            `;
+        });
+    
+    // Generate report HTML
+    reportDialog.innerHTML = `
+        <div class="dialog-content report-dialog">
+            <h2>Game Report</h2>
+            <div class="report-header-info">
+                <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
+                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
+                <div><strong>Duration:</strong> ${gameDuration}</div>
+            </div>
+            
+            <h3>Player Statistics</h3>
+            <div class="report-table-container">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Goals</th>
+                            <th>Assists</th>
+                            <th>Saves</th>
+                            <th>Goals Allowed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${playerStatsHTML}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="report-actions">
+                <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
+                <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
+                <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    // Show the dialog
+    reportDialog.style.display = 'flex';
+}
+
+function closeDetailedReport() {
+    const reportDialog = document.getElementById('detailed-report-dialog');
+    if (reportDialog) {
+        reportDialog.style.display = 'none';
+    }
 }
 
 function exportReport(gameId, format) {

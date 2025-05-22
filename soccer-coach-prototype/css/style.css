@@ -403,6 +403,54 @@ body {
     font-style: italic;
 }
 
+/* Report Dialog */
+.report-dialog {
+    max-width: 800px;
+    width: 90%;
+}
+
+.report-header-info {
+    margin: 15px 0;
+    line-height: 1.6;
+}
+
+.report-dialog h3 {
+    margin: 20px 0 10px;
+}
+
+.report-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+}
+
+.report-table th {
+    background-color: #f5f5f5;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.report-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.report-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.report-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
 /* Responsive Design */
 @media screen and (min-width: 768px) {
     #app {
