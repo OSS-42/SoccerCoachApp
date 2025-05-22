@@ -68,10 +68,18 @@ function saveTeamName() {
         appState.teamName = teamNameInput.value.trim();
         updateTeamNameUI();
         saveAppData();
-        // Show success message
-        alert(t('teamNameSaved'));
+        // Show success message - check if translation function exists
+        if (typeof t === 'function') {
+            alert(t('teamNameSaved'));
+        } else {
+            alert('Team name saved successfully');
+        }
     } else {
-        alert(t('pleaseEnterTeamName'));
+        if (typeof t === 'function') {
+            alert(t('pleaseEnterTeamName'));
+        } else {
+            alert('Please enter a team name');
+        }
     }
 }
 
@@ -114,13 +122,21 @@ function addPlayer() {
     const jerseyNumber = document.getElementById('jersey-number').value.trim();
     
     if (!playerName || !jerseyNumber) {
-        alert(t('fillAllFields'));
+        if (typeof t === 'function') {
+            alert(t('fillAllFields'));
+        } else {
+            alert('Please fill in all required fields');
+        }
         return;
     }
     
     // Check if jersey number already exists
     if (appState.players.some(player => player.jerseyNumber === jerseyNumber)) {
-        alert(t('duplicateJersey'));
+        if (typeof t === 'function') {
+            alert(t('duplicateJersey'));
+        } else {
+            alert('A player with this jersey number already exists');
+        }
         return;
     }
     
@@ -167,10 +183,15 @@ function renderPlayersList() {
 function editPlayer(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (player) {
-        document.getElementById('edit-player-id').value = player.id;
-        document.getElementById('edit-player-name').value = player.name;
-        document.getElementById('edit-jersey-number').value = player.jerseyNumber;
-        document.getElementById('edit-player-dialog').style.display = 'block';
+        const editIdInput = document.getElementById('edit-player-id');
+        const editNameInput = document.getElementById('edit-player-name');
+        const editJerseyInput = document.getElementById('edit-jersey-number');
+        const editDialog = document.getElementById('edit-player-dialog');
+        
+        if (editIdInput) editIdInput.value = player.id;
+        if (editNameInput) editNameInput.value = player.name;
+        if (editJerseyInput) editJerseyInput.value = player.jerseyNumber;
+        if (editDialog) editDialog.style.display = 'block';
     }
 }
 
@@ -277,7 +298,24 @@ function startGame() {
 // Render player grid for game tracking
 function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
+    if (!playerGrid) return;
+    
     playerGrid.innerHTML = '';
+    
+    // Create safe translation function
+    const safeT = (key) => {
+        if (typeof t === 'function') {
+            return t(key);
+        }
+        // Fallback translations for critical terms
+        const fallback = {
+            'goals': 'Goals',
+            'assists': 'Assists',
+            'saves': 'Saves',
+            'goalsAllowed': 'Goals Allowed'
+        };
+        return fallback[key] || key;
+    };
     
     appState.players.forEach(player => {
         const playerCard = document.createElement('div');
@@ -289,19 +327,19 @@ function renderPlayerGrid() {
                 <span class="player-name">${player.name}</span>
             </div>
             <div class="player-stats">
-                <div class="stat-item" title="${t('goals')}">
+                <div class="stat-item" title="${safeT('goals')}">
                     <span class="material-icons">sports_score</span>
                     <span class="stat-count" id="goals-${player.id}">0</span>
                 </div>
-                <div class="stat-item" title="${t('assists')}">
+                <div class="stat-item" title="${safeT('assists')}">
                     <span class="material-icons">front_hand</span>
                     <span class="stat-count" id="assists-${player.id}">0</span>
                 </div>
-                <div class="stat-item" title="${t('saves')}">
+                <div class="stat-item" title="${safeT('saves')}">
                     <span class="material-icons">back_hand</span>
                     <span class="stat-count" id="saves-${player.id}">0</span>
                 </div>
-                <div class="stat-item" title="${t('goalsAllowed')}">
+                <div class="stat-item" title="${safeT('goalsAllowed')}">
                     <span class="material-icons">sports_soccer</span>
                     <span class="stat-count" id="goals-allowed-${player.id}">0</span>
                 </div>
@@ -940,22 +978,43 @@ function addDemoPlayers() {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    // Load saved data
-    loadAppData();
-    
-    // Initialize date picker with today's date
-    const today = new Date().toISOString().slice(0, 10);
-    document.getElementById('game-date').value = today;
-    
-    // Set default substitution timer from settings
-    document.getElementById('substitution-time').value = appState.settings.defaultTimer;
-    
-    // Show main screen
-    showScreen('main-screen');
-    
-    // Add event listeners for file import
-    document.getElementById('import-file').addEventListener('change', handleFileImport);
-    
-    // DEBUG: Add double-click on app title to add demo players
-    document.querySelector('.app-title').addEventListener('dblclick', addDemoPlayers);
+    try {
+        // Load saved data
+        loadAppData();
+        
+        // Initialize date picker with today's date
+        const today = new Date().toISOString().slice(0, 10);
+        const gameDateInput = document.getElementById('game-date');
+        if (gameDateInput) {
+            gameDateInput.value = today;
+        }
+        
+        // Set default substitution timer from settings
+        const subTimeInput = document.getElementById('substitution-time');
+        if (subTimeInput) {
+            subTimeInput.value = appState.settings.defaultTimer;
+        }
+        
+        // Show main screen
+        showScreen('main-screen');
+        
+        // Add event listeners for file import
+        const importFileInput = document.getElementById('import-file');
+        if (importFileInput) {
+            importFileInput.addEventListener('change', handleFileImport);
+        }
+        
+        // DEBUG: Add double-click on app title to add demo players
+        const appTitle = document.querySelector('.app-title');
+        if (appTitle) {
+            appTitle.addEventListener('dblclick', addDemoPlayers);
+        }
+        
+        // Run initial translations
+        if (typeof applyTranslations === 'function') {
+            applyTranslations();
+        }
+    } catch (err) {
+        console.error('Error during initialization:', err);
+    }
 });

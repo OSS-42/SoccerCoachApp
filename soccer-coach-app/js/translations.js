@@ -208,7 +208,11 @@ function t(key) {
 function setLanguage(lang) {
     if (lang === 'en' || lang === 'fr') {
         currentLanguage = lang;
-        applyTranslations();
+        
+        // Only apply translations if DOM is ready
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            applyTranslations();
+        }
     }
 }
 
