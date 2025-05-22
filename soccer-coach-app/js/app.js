@@ -19,7 +19,8 @@ let appState = {
     settings: {
         language: 'en',
         darkMode: false,
-        defaultTimer: 6
+        defaultTimer: 6,
+        recordGameTime: false
     },
     currentPlayer: null
 };
@@ -877,10 +878,12 @@ function saveSettings() {
     const language = document.querySelector('input[name="language"]:checked').value;
     const darkMode = document.getElementById('dark-mode').checked;
     const defaultTimer = document.getElementById('default-timer').value;
+    const recordGameTime = document.getElementById('record-game-time').checked;
     
     appState.settings.language = language;
     appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
+    appState.settings.recordGameTime = recordGameTime;
     
     // Apply dark mode immediately
     applyDarkMode(darkMode);
