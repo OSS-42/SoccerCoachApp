@@ -476,17 +476,27 @@ input:checked + .slider:before {
     width: 40px;
     height: 40px;
     border: none;
-    background: none;
+    background: rgba(0, 0, 0, 0.1);
     color: black;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.timer-controls button:hover {
+    background: rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .timer-controls button {
     color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .timer-controls button:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .player-grid {
