@@ -107,9 +107,9 @@ function saveTeamName() {
         appState.teamName = newTeamName;
         saveAppData();
         updateTeamNameUI();
-        alert('Team name saved successfully');
+        showMessage('Team name saved successfully', 'success');
     } else {
-        alert('Please enter a team name');
+        showMessage('Please enter a team name', 'error');
     }
 }
 
@@ -299,7 +299,7 @@ function startGame() {
     const substitutionTime = document.getElementById('substitution-time').value;
     
     if (!opponentName) {
-        alert('Please enter the opponent team name');
+        showMessage('Please enter the opponent team name', 'error');
         return;
     }
     
@@ -894,7 +894,7 @@ function closeDetailedReport() {
 function exportReport(gameId, format) {
     // This would generate and export the report
     // For the prototype, we'll just show an alert
-    alert(`Report would be exported as ${format.toUpperCase()}`);
+    showMessage(`Report would be exported as ${format.toUpperCase()}`, 'success');
 }
 
 // Settings
@@ -911,7 +911,7 @@ function saveSettings() {
     applyDarkMode(darkMode);
     
     saveAppData();
-    alert('Settings saved successfully');
+    showMessage('Settings saved successfully', 'success');
 }
 
 // Data persistence (using localStorage in the prototype)
