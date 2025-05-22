@@ -32,6 +32,12 @@ function applyDarkMode(enabled) {
     } else {
         document.body.classList.remove('dark-mode');
     }
+    
+    // Ensure the toggle reflects the current state
+    const darkModeToggle = document.getElementById('dark-mode');
+    if (darkModeToggle) {
+        darkModeToggle.checked = enabled;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -80,15 +86,7 @@ function saveTeamName() {
         appState.teamName = newTeamName;
         saveAppData();
         updateTeamNameUI();
-        
-        // Show the success message
-        const successMsg = document.getElementById('team-name-success');
-        successMsg.style.display = 'block';
-        
-        // Hide the success message after animation completes
-        setTimeout(() => {
-            successMsg.style.display = 'none';
-        }, 5000);
+        alert('Team name saved successfully');
     } else {
         alert('Please enter a team name');
     }
@@ -133,18 +131,7 @@ function addPlayer() {
     
     // Check for duplicate jersey numbers
     if (appState.players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'error-message';
-        errorMessage.textContent = 'A player with this jersey number already exists';
-        
-        // Add error message to dialog
-        const formGroup = document.querySelector('#add-player-dialog .form-group:nth-child(2)');
-        // Remove any existing error message
-        const existingError = formGroup.querySelector('.error-message');
-        if (existingError) {
-            existingError.remove();
-        }
-        formGroup.appendChild(errorMessage);
+        alert('A player with this jersey number already exists');
         return;
     }
     
@@ -152,7 +139,6 @@ function addPlayer() {
         id: Date.now().toString(),
         name,
         jerseyNumber: Number(jerseyNumber),
-        // All players are active by default, no toggle needed
         active: true,
         stats: {
             goals: 0,
@@ -172,19 +158,20 @@ function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
     
-    // Show all players instead of just active ones
-    if (appState.players.length === 0) {
+    const activePlayers = appState.players.filter(p => p.active);
+    
+    if (activePlayers.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
     }
     
-    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item';
         playerItem.innerHTML = `
             <div class="jersey-number">${player.jerseyNumber}</div>
             <div class="player-info">
-                <span class="player-name">${player.name}</span>
+                <div class="player-name">${player.name}</div>
             </div>
             <div class="player-actions">
                 <button class="player-action-btn" onclick="editPlayer('${player.id}')">
@@ -216,8 +203,8 @@ function editPlayer(playerId) {
         <div class="dialog-content">
             <h2>Edit Player</h2>
             <div class="form-group">
-                <label for="edit-player-name">Player Name:</label>
-                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's name">
+                <label for="edit-player-name">First Name:</label>
+                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's first name">
             </div>
             <div class="form-group">
                 <label for="edit-jersey-number">Jersey Number:</label>
@@ -258,20 +245,8 @@ function savePlayerEdit(playerId) {
     }
     
     // Check for duplicate jersey numbers (excluding this player)
-    if (appState.players.some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
-        // Show error inline instead of an alert
-        const formGroup = document.querySelector('#edit-player-dialog .form-group:nth-child(2)');
-        // Remove any existing error message
-        const existingError = formGroup.querySelector('.error-message');
-        if (existingError) {
-            existingError.remove();
-        }
-        
-        // Add new error message
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'error-message';
-        errorMessage.textContent = 'Another player already has this jersey number';
-        formGroup.appendChild(errorMessage);
+    if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
+        alert('Another player already has this jersey number');
         return;
     }
     
@@ -287,10 +262,9 @@ function savePlayerEdit(playerId) {
 
 function deletePlayer(playerId) {
     if (confirm('Are you sure you want to remove this player?')) {
-        // Instead of setting active to false, completely remove the player from the array
         const playerIndex = appState.players.findIndex(p => p.id === playerId);
         if (playerIndex !== -1) {
-            appState.players.splice(playerIndex, 1);
+            appState.players[playerIndex].active = false;
             saveAppData();
             renderPlayersList();
         }
@@ -369,19 +343,13 @@ function renderPlayerGrid() {
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
         playerGridItem.innerHTML = `
-            <div class="player-header">
-                <span class="player-number">${player.jerseyNumber}</span>
-                <span class="player-name">${player.name}</span>
-            </div>
+            <div class="player-number">${player.jerseyNumber}</div>
+            <div class="player-name">${player.name}</div>
             <div class="player-stats-icons">
-                <div class="stats-row">
-                    <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
-                    <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
-                </div>
-                <div class="stats-row">
-                    <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-                    <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🔴 ${player.stats.goalsAllowed}</span>
-                </div>
+                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
             </div>
         `;
         playerGridItem.addEventListener('click', () => {
@@ -675,14 +643,10 @@ function updatePlayerGridItem(playerId) {
     const statsIcons = gridItem.querySelector('.player-stats-icons');
     if (statsIcons) {
         statsIcons.innerHTML = `
-            <div class="stats-row">
-                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
-                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
-            </div>
-            <div class="stats-row">
-                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🔴 ${player.stats.goalsAllowed}</span>
-            </div>
+            <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+            <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+            <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+            <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
         `;
     }
 }

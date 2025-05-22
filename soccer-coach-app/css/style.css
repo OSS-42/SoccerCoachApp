@@ -360,34 +360,6 @@ input:checked + .slider:before {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Success message styling */
-.success-message {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    display: none;
-    animation: fadeOut 3s forwards;
-    animation-delay: 2s;
-}
-
-.error-message {
-    color: #f44336;
-    font-size: 14px;
-    margin-top: 5px;
-    display: block;
-}
-
-body.dark-mode .success-message {
-    background-color: #388E3C;
-}
-
-@keyframes fadeOut {
-    from {opacity: 1;}
-    to {opacity: 0;}
-}
-
 .jersey-number {
     width: 40px;
     height: 40px;
@@ -403,14 +375,11 @@ body.dark-mode .success-message {
 
 .player-info {
     flex: 1;
-    display: flex;
-    align-items: center;
 }
 
 .player-name {
     font-weight: bold;
     font-size: 16px;
-    margin-left: 5px;
 }
 
 .player-position {
@@ -429,19 +398,6 @@ body.dark-mode .success-message {
     color: #666;
     cursor: pointer;
     padding: 5px;
-    box-shadow: none;
-}
-
-.player-action-btn:hover {
-    color: #2196f3;
-}
-
-body.dark-mode .player-action-btn {
-    color: #aaa;
-}
-
-body.dark-mode .player-action-btn:hover {
-    color: #64b5f6;
 }
 
 /* Game Tracking Styles */
@@ -466,22 +422,16 @@ body.dark-mode .player-action-btn:hover {
 /* Player Stats Icons */
 .player-stats-icons {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    justify-content: space-around;
     margin-top: 8px;
     font-size: 12px;
-    gap: 4px;
-}
-
-.stats-row {
-    display: flex;
-    justify-content: space-around;
 }
 
 .stat-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    background-color: rgba(33, 150, 243, 0.1);
     border-radius: 4px;
     padding: 3px 5px;
     margin: 0 2px;
@@ -527,14 +477,11 @@ body.dark-mode .player-action-btn:hover {
 }
 
 .substitution-timer {
+    background-color: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     padding: 15px;
     text-align: center;
-}
-
-body:not(.dark-mode) .substitution-timer {
-    background-color: white;
 }
 
 .timer-value {
@@ -579,16 +526,9 @@ body:not(.dark-mode) .substitution-timer {
     border: 2px solid #2196f3;
 }
 
-.player-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    justify-content: center;
-}
-
 .player-number {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     background-color: #2196f3;
     color: white;
     border-radius: 50%;
@@ -596,12 +536,7 @@ body:not(.dark-mode) .substitution-timer {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    margin-right: 5px;
-}
-
-.player-header .player-name {
-    font-weight: bold;
-    margin-left: 5px;
+    margin: 0 auto 8px;
 }
 
 /* Dialog Styles */
