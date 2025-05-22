@@ -440,9 +440,14 @@ input:checked + .slider:before {
 /* Player Stats Icons */
 .player-stats-icons {
     display: flex;
-    justify-content: space-around;
-    margin-top: 8px;
+    flex-direction: column;
+    gap: 8px;
     font-size: 12px;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
 }
 
 .stat-icon {
@@ -560,14 +565,26 @@ body.dark-mode .timer-controls button:hover {
     padding: 10px;
     text-align: center;
     cursor: pointer;
+    aspect-ratio: 1/1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .player-grid-item.active {
     border: 2px solid #2196f3;
 }
 
+.player-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+
 .player-number {
-    width: 40px;
+    font-weight: bold;
+    margin-right: 5px;
     height: 40px;
     background-color: #2196f3;
     color: white;

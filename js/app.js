@@ -364,13 +364,19 @@ function renderPlayerGrid() {
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
         playerGridItem.innerHTML = `
-            <div class="player-number">${player.jerseyNumber}</div>
-            <div class="player-name">${player.name}</div>
+            <div class="player-header">
+                <div class="player-number">${player.jerseyNumber}</div>
+                <div class="player-name">${player.name}</div>
+            </div>
             <div class="player-stats-icons">
-                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
-                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
-                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed" width="16" height="16"> ${player.stats.goalsAllowed}</span>
+                <div class="stats-row">
+                    <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+                    <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+                </div>
+                <div class="stats-row">
+                    <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+                    <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed" width="16" height="16"> ${player.stats.goalsAllowed}</span>
+                </div>
             </div>
         `;
         playerGridItem.addEventListener('click', () => {
