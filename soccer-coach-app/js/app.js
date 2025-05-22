@@ -44,6 +44,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved data if available
     loadAppData();
     
+    // Hide all screens first
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(screen => {
+        screen.classList.remove('active');
+    });
+    
+    // Show only the main screen
+    document.getElementById('main-screen').classList.add('active');
+    
     // Populate UI with existing data
     renderPlayersList();
     updateTeamNameUI();
