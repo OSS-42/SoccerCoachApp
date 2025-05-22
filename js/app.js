@@ -346,7 +346,7 @@ function renderPlayerGrid() {
                 <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
                 <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
                 <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
+                <span class="stat-icon goal-allowed-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">⚽ ${player.stats.goalsAllowed}</span>
             </div>
         `;
         playerGridItem.addEventListener('click', () => {
@@ -364,8 +364,9 @@ function updateTimerDisplay() {
     const timerDisplay = document.getElementById('substitution-timer');
     const timerValue = timerDisplay.querySelector('.timer-value');
     
-    timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    document.getElementById('sub-time').textContent = `Substitution: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    if (timerValue) {
+        timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
     
     // Add alert styling if timer is at zero
     if (appState.timer.timeLeft === 0) {
@@ -378,7 +379,10 @@ function updateTimerDisplay() {
 function updateGameTimeDisplay() {
     const minutes = Math.floor(appState.gameTimer.elapsed / 60);
     const seconds = appState.gameTimer.elapsed % 60;
-    document.getElementById('game-time').textContent = `Game Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const gameTimeElement = document.getElementById('game-time');
+    if (gameTimeElement) {
+        gameTimeElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
 }
 
 function startTimer() {

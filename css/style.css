@@ -653,6 +653,10 @@ button.no-assist-btn {
     color: #ffc107;
 }
 
+.goal-allowed-icon {
+    color: #f44336;
+}
+
 .red-card {
     color: #f44336;
 }
