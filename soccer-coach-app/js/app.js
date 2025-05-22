@@ -905,21 +905,19 @@ function viewReport(gameId) {
     
     // Generate report HTML
     reportDialog.innerHTML = `
-        <div class="dialog-content report-dialog">
-            <h2>Game Report</h2>
-            <div class="report-header-info">
-                <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
-                <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
-                <div><strong>Duration:</strong> ${gameDuration}</div>
+        <div class="dialog-content wide-dialog">
+            <h2>Game Report - ${gameDate} ${gameTime}</h2>
+            <div class="report-header">
+                <p><strong>Team:</strong> ${appState.teamName}</p>
+                <p><strong>Opponent:</strong> ${game.opponent || 'Unknown'}</p>
+                <p><strong>Duration:</strong> ${gameDuration}</p>
             </div>
-            
-            <h3>Player Statistics</h3>
-            <div class="report-table-container">
-                <table class="report-table">
+            <div class="report-body">
+                <h3>Player Stats</h3>
+                <table class="stats-table">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th>Number</th>
                             <th>Name</th>
                             <th>Goals</th>
                             <th>Assists</th>
@@ -932,11 +930,12 @@ function viewReport(gameId) {
                     </tbody>
                 </table>
             </div>
-            
-            <div class="report-actions">
-                <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
-                <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
-                <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeDetailedReport()">Close</button>
+                <div class="export-buttons">
+                    <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
+                    <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
+                </div>
             </div>
         </div>
     `;
@@ -1098,4 +1097,61 @@ function addDemoPlayers() {
     appState.players = demoPlayers;
     saveAppData();
     renderPlayersList();
+}
+
+// Reset Data functions
+function confirmResetData() {
+    // Show reset confirmation dialog
+    document.getElementById('reset-data-dialog').style.display = 'flex';
+}
+
+function closeResetDataDialog() {
+    document.getElementById('reset-data-dialog').style.display = 'none';
+}
+
+function resetAllData() {
+    // Reset to default state
+    appState = {
+        teamName: "My Team",
+        players: [],
+        games: [],
+        currentGame: null,
+        timer: {
+            duration: 6 * 60, // Reset to default 6 minutes
+            timeLeft: 6 * 60,
+            interval: null,
+            isRunning: false
+        },
+        gameTimer: {
+            elapsed: 0,
+            interval: null,
+            isRunning: false,
+            startTime: null
+        },
+        settings: {
+            language: 'en',
+            darkMode: appState.settings.darkMode, // Keep current dark mode setting
+            defaultTimer: 6,
+            recordGameTime: appState.settings.recordGameTime // Keep current recording preference
+        },
+        currentPlayer: null
+    };
+    
+    // Save to local storage
+    saveAppData();
+    
+    // Update UI elements if they exist
+    updateTeamNameUI();
+    if (document.getElementById('players-list')) {
+        renderPlayersList();
+    }
+    if (document.getElementById('reports-list')) {
+        renderReportsList();
+    }
+    
+    // Close dialog
+    closeResetDataDialog();
+    
+    // Show confirmation
+    alert('All data has been reset');
 }
