@@ -1,0 +1,40 @@
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Android App"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "android_app"
+
+[[workflows.workflow]]
+name = "Android App"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./gradlew assembleDebug && cd app/build/outputs/apk/debug && python -m http.server 5000"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "android_app"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./gradlew :app:installDebug && adb shell am start -n com.soccercoach.tracker/.MainActivity"
+
+[deployment]
+run = ["sh", "-c", "./gradlew assembleDebug && cd app/build/outputs/apk/debug && python -m http.server 5000"]
