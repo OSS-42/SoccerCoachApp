@@ -370,7 +370,7 @@ function renderPlayerGrid() {
                 <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
                 <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
                 <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><span style="color: #f44336;">⚽</span> ${player.stats.goalsAllowed}</span>
+                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed" width="16" height="16"> ${player.stats.goalsAllowed}</span>
             </div>
         `;
         playerGridItem.addEventListener('click', () => {
@@ -671,7 +671,7 @@ function updatePlayerGridItem(playerId) {
             <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
             <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
             <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
-            <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><span style="color: #f44336;">⚽</span> ${player.stats.goalsAllowed}</span>
+            <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed" width="16" height="16"> ${player.stats.goalsAllowed}</span>
         `;
     }
 }
