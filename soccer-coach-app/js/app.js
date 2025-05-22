@@ -19,8 +19,7 @@ let appState = {
     settings: {
         language: 'en',
         darkMode: false,
-        defaultTimer: 6,
-        recordGameTime: false
+        defaultTimer: 6
     },
     currentPlayer: null
 };
@@ -33,36 +32,57 @@ function applyDarkMode(enabled) {
     } else {
         document.body.classList.remove('dark-mode');
     }
-    
-    // Ensure the toggle reflects the current state
-    const darkModeToggle = document.getElementById('dark-mode');
-    if (darkModeToggle) {
-        darkModeToggle.checked = enabled;
-    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved data if available
     loadAppData();
     
-    // Apply dark mode based on settings
+    // Populate UI with existing data
+    renderPlayersList();
+    updateTeamNameUI();
+    
+    // Apply dark mode if enabled
     applyDarkMode(appState.settings.darkMode);
+    
+    // Add demo players if none exist
+    if (appState.players.length === 0) {
+        addDemoPlayers();
+    }
+    
+    // Set today's date as the default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('game-date').value = today;
 });
 
-// Team Name Management
+// Team Name functions
 function updateTeamNameUI() {
+    // Update team name in the input field
+    const teamNameInput = document.getElementById('team-name-input');
+    if (teamNameInput) {
+        teamNameInput.value = appState.teamName;
+    }
+    
+    // Update team name in game screen
     const teamNameElements = document.querySelectorAll('.team-name');
     teamNameElements.forEach(element => {
-        element.textContent = appState.teamName;
+        if (element.id !== 'opponent-team-name') {
+            element.textContent = appState.teamName;
+        }
     });
 }
 
 function saveTeamName() {
-    const newName = document.getElementById('team-name-input').value.trim();
-    if (newName) {
-        appState.teamName = newName;
-        updateTeamNameUI();
+    const teamNameInput = document.getElementById('team-name-input');
+    const newTeamName = teamNameInput.value.trim();
+    
+    if (newTeamName) {
+        appState.teamName = newTeamName;
         saveAppData();
+        updateTeamNameUI();
+        alert('Team name saved successfully');
+    } else {
+        alert('Please enter a team name');
     }
 }
 
@@ -75,33 +95,10 @@ function showScreen(screenId) {
     });
     
     // Show the selected screen
-    const screenToShow = document.getElementById(`${screenId}-screen`);
-    if (screenToShow) {
-        screenToShow.classList.add('active');
-    }
+    document.getElementById(screenId).classList.add('active');
     
-    // Special handling for different screens
-    if (screenId === 'team-setup') {
-        renderPlayersList();
-    } else if (screenId === 'game-setup') {
-        // Set current date as default
-        const today = new Date().toISOString().split('T')[0];
-        const dateInput = document.getElementById('game-date');
-        if (dateInput) {
-            dateInput.value = today;
-        }
-    } else if (screenId === 'settings') {
-        // Update settings UI with current values
-        document.getElementById('dark-mode').checked = appState.settings.darkMode;
-        document.getElementById('default-timer').value = appState.settings.defaultTimer;
-        document.getElementById('record-game-time').checked = appState.settings.recordGameTime;
-        
-        // Set language radio based on settings
-        const langRadio = document.querySelector(`input[name="language"][value="${appState.settings.language}"]`);
-        if (langRadio) {
-            langRadio.checked = true;
-        }
-    } else if (screenId === 'reports') {
+    // Special handling for specific screens
+    if (screenId === 'reports') {
         renderReportsList();
     }
 }
@@ -109,39 +106,43 @@ function showScreen(screenId) {
 // Player Management
 function openAddPlayerDialog() {
     document.getElementById('add-player-dialog').style.display = 'flex';
-    document.getElementById('player-name').value = '';
-    document.getElementById('jersey-number').value = '';
 }
 
 function closeAddPlayerDialog() {
     document.getElementById('add-player-dialog').style.display = 'none';
+    document.getElementById('player-name').value = '';
+    document.getElementById('jersey-number').value = '';
 }
 
 function addPlayer() {
-    const playerName = document.getElementById('player-name').value.trim();
-    const jerseyNumber = document.getElementById('jersey-number').value.trim();
+    const name = document.getElementById('player-name').value.trim();
+    const jerseyNumber = document.getElementById('jersey-number').value;
     
-    if (!playerName || !jerseyNumber) {
-        alert('Please enter both name and jersey number');
+    if (!name || !jerseyNumber) {
+        alert('Please fill in all required fields');
         return;
     }
     
-    // Check if jersey number is already in use
-    const jerseyExists = appState.players.some(player => player.jerseyNumber === jerseyNumber);
-    if (jerseyExists) {
-        alert('This jersey number is already in use');
+    // Check for duplicate jersey numbers
+    if (appState.players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
+        alert('A player with this jersey number already exists');
         return;
     }
     
-    // Add player
-    const newPlayer = {
-        id: Date.now().toString(), // Simple ID generation
-        name: playerName,
-        jerseyNumber,
-        active: true // Players are active by default
+    const player = {
+        id: Date.now().toString(),
+        name,
+        jerseyNumber: Number(jerseyNumber),
+        active: true,
+        stats: {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        }
     };
     
-    appState.players.push(newPlayer);
+    appState.players.push(player);
     saveAppData();
     renderPlayersList();
     closeAddPlayerDialog();
@@ -149,218 +150,236 @@ function addPlayer() {
 
 function renderPlayersList() {
     const playersList = document.getElementById('players-list');
-    if (!playersList) return;
-    
     playersList.innerHTML = '';
     
-    if (appState.players.length === 0) {
-        playersList.innerHTML = '<div class="empty-state">No players added yet. Add players to get started.</div>';
+    const activePlayers = appState.players.filter(p => p.active);
+    
+    if (activePlayers.length === 0) {
+        playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
     }
     
-    // Sort players by jersey number
-    appState.players
-        .sort((a, b) => parseInt(a.jerseyNumber) - parseInt(b.jerseyNumber))
-        .forEach(player => {
-            const playerItem = document.createElement('div');
-            playerItem.className = `player-item ${player.active ? 'active' : 'inactive'}`;
-            
-            playerItem.innerHTML = `
-                <div class="player-info">
-                    <div class="jersey-number">#${player.jerseyNumber}</div>
-                    <div class="player-name">${player.name}</div>
-                </div>
-                <div class="player-actions">
-                    <button class="icon-btn" onclick="editPlayer('${player.id}')">
-                        <span class="material-icons">edit</span>
-                    </button>
-                    <label class="switch small">
-                        <input type="checkbox" ${player.active ? 'checked' : ''} onchange="togglePlayerActive('${player.id}', this.checked)">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            `;
-            
-            playersList.appendChild(playerItem);
-        });
-}
-
-function togglePlayerActive(playerId, isActive) {
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
-    if (playerIndex >= 0) {
-        appState.players[playerIndex].active = isActive;
-        saveAppData();
-    }
+    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item';
+        playerItem.innerHTML = `
+            <div class="jersey-number">${player.jerseyNumber}</div>
+            <div class="player-info">
+                <div class="player-name">${player.name}</div>
+            </div>
+            <div class="player-actions">
+                <button class="player-action-btn" onclick="editPlayer('${player.id}')">
+                    <span class="material-icons">edit</span>
+                </button>
+                <button class="player-action-btn" onclick="deletePlayer('${player.id}')">
+                    <span class="material-icons">delete</span>
+                </button>
+            </div>
+        `;
+        playersList.appendChild(playerItem);
+    });
 }
 
 function editPlayer(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // Set up edit dialog
-    document.getElementById('edit-player-name').value = player.name;
-    document.getElementById('edit-jersey-number').value = player.jerseyNumber;
-    document.getElementById('edit-player-id').value = player.id;
+    // Create edit player dialog if it doesn't exist
+    let editDialog = document.getElementById('edit-player-dialog');
+    if (!editDialog) {
+        editDialog = document.createElement('div');
+        editDialog.id = 'edit-player-dialog';
+        editDialog.className = 'dialog';
+        document.getElementById('app').appendChild(editDialog);
+    }
     
-    // Show dialog
-    document.getElementById('edit-player-dialog').style.display = 'flex';
+    editDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Edit Player</h2>
+            <div class="form-group">
+                <label for="edit-player-name">First Name:</label>
+                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's first name">
+            </div>
+            <div class="form-group">
+                <label for="edit-jersey-number">Jersey Number:</label>
+                <input type="number" id="edit-jersey-number" value="${player.jerseyNumber}" min="1" max="99">
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeEditPlayerDialog()">Cancel</button>
+                <button class="primary-btn" onclick="savePlayerEdit('${player.id}')">Save</button>
+            </div>
+        </div>
+    `;
+    
+    editDialog.style.display = 'flex';
 }
 
 function closeEditPlayerDialog() {
-    document.getElementById('edit-player-dialog').style.display = 'none';
+    const editDialog = document.getElementById('edit-player-dialog');
+    if (editDialog) {
+        editDialog.style.display = 'none';
+    }
 }
 
-function savePlayerEdit() {
-    const playerId = document.getElementById('edit-player-id').value;
+function savePlayerEdit(playerId) {
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
     const newName = document.getElementById('edit-player-name').value.trim();
-    const newJerseyNumber = document.getElementById('edit-jersey-number').value.trim();
+    const newJerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
     
-    if (!newName || !newJerseyNumber) {
-        alert('Please enter both name and jersey number');
+    if (!newName) {
+        alert('Please enter a name for the player');
         return;
     }
     
-    // Find the player
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
-    if (playerIndex === -1) return;
-    
-    // Check if jersey number is already in use by a different player
-    const jerseyExists = appState.players.some(
-        player => player.jerseyNumber === newJerseyNumber && player.id !== playerId
-    );
-    
-    if (jerseyExists) {
-        alert('This jersey number is already in use by another player');
+    if (!newJerseyNumber || newJerseyNumber < 1 || newJerseyNumber > 99) {
+        alert('Please enter a valid jersey number between 1 and 99');
         return;
     }
     
-    // Update player
-    appState.players[playerIndex].name = newName;
-    appState.players[playerIndex].jerseyNumber = newJerseyNumber;
+    // Check for duplicate jersey numbers (excluding this player)
+    if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
+        alert('Another player already has this jersey number');
+        return;
+    }
     
+    // Update player data
+    player.name = newName;
+    player.jerseyNumber = newJerseyNumber;
+    
+    // Save and refresh
     saveAppData();
     renderPlayersList();
     closeEditPlayerDialog();
 }
 
-function deletePlayer() {
-    const playerId = document.getElementById('edit-player-id').value;
-    if (!confirm('Are you sure you want to delete this player?')) return;
-    
-    appState.players = appState.players.filter(p => p.id !== playerId);
-    saveAppData();
-    renderPlayersList();
-    closeEditPlayerDialog();
+function deletePlayer(playerId) {
+    if (confirm('Are you sure you want to remove this player?')) {
+        const playerIndex = appState.players.findIndex(p => p.id === playerId);
+        if (playerIndex !== -1) {
+            appState.players[playerIndex].active = false;
+            saveAppData();
+            renderPlayersList();
+        }
+    }
 }
 
 // Game Management
 function startGame() {
-    // Check if we have active players
-    const activePlayers = appState.players.filter(p => p.active);
-    if (activePlayers.length === 0) {
-        alert('You need at least one active player to start a game');
+    const opponentName = document.getElementById('opponent-name').value.trim();
+    const gameDate = document.getElementById('game-date').value;
+    const substitutionTime = document.getElementById('substitution-time').value;
+    
+    if (!opponentName) {
+        alert('Please enter the opponent team name');
         return;
     }
     
-    // Create a new game
-    const newGame = {
+    // Reset player stats for this new game
+    appState.players.forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        };
+    });
+    
+    // Create the new game
+    appState.currentGame = {
         id: Date.now().toString(),
-        date: new Date().toISOString(),
+        date: gameDate,
+        opponentName,
+        homeScore: 0,
+        awayScore: 0,
         startTime: new Date().toISOString(),
-        opponent: document.getElementById('opponent-name').value.trim() || 'Opponent',
-        activePlayers: activePlayers.map(p => p.id),
+        endTime: null,
         actions: [],
-        completed: false
+        activePlayers: [...appState.players.filter(p => p.active).map(p => p.id)],
+        isCompleted: false,
+        totalGameTime: 0 // Track total game time in seconds
     };
     
-    appState.currentGame = newGame;
-    appState.games.push(newGame);
-    
-    // Reset timer to default duration from settings
-    appState.timer.duration = appState.settings.defaultTimer * 60;
+    // Setup substitution timer
+    appState.timer.duration = parseInt(substitutionTime) * 60;
     appState.timer.timeLeft = appState.timer.duration;
     updateTimerDisplay();
     
-    // Reset game timer
+    // Reset and setup game timer
     appState.gameTimer.elapsed = 0;
+    appState.gameTimer.isRunning = false;
     appState.gameTimer.startTime = null;
     updateGameTimeDisplay();
     
-    // Show game screen and render players
-    showScreen('game');
+    // Update opponent name in UI
+    document.getElementById('opponent-team-name').textContent = opponentName;
+    
+    // Reset scores
+    document.getElementById('home-score').textContent = '0';
+    document.getElementById('away-score').textContent = '0';
+    
+    // Populate player grid
     renderPlayerGrid();
     
-    // Save state
-    saveAppData();
+    // Switch to game screen
+    showScreen('game-tracking');
 }
 
 function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
-    if (!playerGrid || !appState.currentGame) return;
-    
     playerGrid.innerHTML = '';
     
-    // Get active players for this game
-    const gamePlayers = appState.players.filter(
-        player => appState.currentGame.activePlayers.includes(player.id)
-    );
+    const activePlayers = appState.players.filter(p => p.active);
     
-    // Sort players by jersey number
-    gamePlayers.sort((a, b) => parseInt(a.jerseyNumber) - parseInt(b.jerseyNumber));
-    
-    // Add players to grid
-    gamePlayers.forEach(player => {
-        const playerItem = document.createElement('div');
-        playerItem.className = 'player-grid-item';
-        playerItem.onclick = function() { openPlayerActionDialog(player); };
-        
-        playerItem.innerHTML = `
-            <div class="jersey-number">#${player.jerseyNumber}</div>
-            <h3>${player.name}</h3>
-            <div class="stats-container">
-                <div class="stat">⚽ <span class="goal-count" data-player-id="${player.id}">0</span></div>
-                <div class="stat">👟 <span class="assist-count" data-player-id="${player.id}">0</span></div>
-                <div class="stat">🧤 <span class="save-count" data-player-id="${player.id}">0</span></div>
-                <div class="stat">😞 <span class="goal-allowed-count" data-player-id="${player.id}">0</span></div>
+    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        const playerGridItem = document.createElement('div');
+        playerGridItem.className = 'player-grid-item';
+        playerGridItem.setAttribute('data-player-id', player.id);
+        playerGridItem.innerHTML = `
+            <div class="player-number">${player.jerseyNumber}</div>
+            <div class="player-name">${player.name}</div>
+            <div class="player-stats-icons">
+                <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+                <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+                <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
             </div>
         `;
-        
-        playerGrid.appendChild(playerItem);
+        playerGridItem.addEventListener('click', () => {
+            openPlayerActionDialog(player);
+        });
+        playerGrid.appendChild(playerGridItem);
     });
-    
-    // Update all player stats from game actions
-    updateAllPlayerStats();
 }
 
+// Timer Functions
 function updateTimerDisplay() {
-    const timerElement = document.getElementById('timer');
-    if (!timerElement) return;
-    
     const minutes = Math.floor(appState.timer.timeLeft / 60);
     const seconds = appState.timer.timeLeft % 60;
     
-    timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    const timerDisplay = document.getElementById('substitution-timer');
+    const timerValue = timerDisplay.querySelector('.timer-value');
     
-    // Add flashing effect when timer is low
-    if (appState.timer.timeLeft <= 30 && appState.timer.isRunning) {
-        timerElement.classList.add('timer-low');
+    timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('sub-time').textContent = `Substitution: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Add alert styling if timer is at zero
+    if (appState.timer.timeLeft === 0) {
+        timerDisplay.classList.add('timer-alert');
     } else {
-        timerElement.classList.remove('timer-low');
+        timerDisplay.classList.remove('timer-alert');
     }
 }
 
 function updateGameTimeDisplay() {
-    const gameTimeElement = document.getElementById('game-time');
-    if (!gameTimeElement) return;
-    
     const minutes = Math.floor(appState.gameTimer.elapsed / 60);
     const seconds = appState.gameTimer.elapsed % 60;
-    
-    gameTimeElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    document.getElementById('game-time').textContent = `Game Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function startTimer() {
-    if (!appState.timer.isRunning) {
+    if (!appState.timer.isRunning && appState.timer.timeLeft > 0) {
         appState.timer.isRunning = true;
         appState.timer.interval = setInterval(() => {
             if (appState.timer.timeLeft > 0) {
@@ -394,24 +413,28 @@ function resetTimer() {
 function startGameTimer() {
     if (!appState.gameTimer.isRunning) {
         appState.gameTimer.isRunning = true;
-        
-        if (!appState.gameTimer.startTime) {
-            appState.gameTimer.startTime = Date.now();
-        }
+        appState.gameTimer.startTime = new Date();
         
         appState.gameTimer.interval = setInterval(() => {
             appState.gameTimer.elapsed++;
             updateGameTimeDisplay();
+            
+            // Update the current game's total time
+            if (appState.currentGame) {
+                appState.currentGame.totalGameTime = appState.gameTimer.elapsed;
+            }
         }, 1000);
     }
 }
 
 function pauseGameTimer() {
-    clearInterval(appState.gameTimer.interval);
-    appState.gameTimer.isRunning = false;
+    if (appState.gameTimer.isRunning) {
+        clearInterval(appState.gameTimer.interval);
+        appState.gameTimer.isRunning = false;
+    }
 }
 
-// Player Action Recording
+// Player Actions
 function openPlayerActionDialog(player) {
     appState.currentPlayer = player;
     
@@ -459,11 +482,12 @@ function openAssistSelectionDialog() {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
         playerItem.innerHTML = `
-            <div class="jersey-number">#${player.jerseyNumber}</div>
-            <div class="player-name">${player.name}</div>
+            <div class="player-select-number">${player.jerseyNumber}</div>
+            <div>${player.name}</div>
         `;
-        playerItem.onclick = function() { completeGoalWithAssist(player.id); };
-        
+        playerItem.addEventListener('click', () => {
+            completeGoalWithAssist(player.id);
+        });
         playersGrid.appendChild(playerItem);
     });
     
@@ -527,11 +551,12 @@ function openScorerSelectionDialog() {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
         playerItem.innerHTML = `
-            <div class="jersey-number">#${player.jerseyNumber}</div>
-            <div class="player-name">${player.name}</div>
+            <div class="player-select-number">${player.jerseyNumber}</div>
+            <div>${player.name}</div>
         `;
-        playerItem.onclick = function() { completeAssistWithScorer(player.id); };
-        
+        playerItem.addEventListener('click', () => {
+            completeAssistWithScorer(player.id);
+        });
         playersGrid.appendChild(playerItem);
     });
     
@@ -546,10 +571,10 @@ function closeScorerSelectionDialog() {
 function completeAssistWithScorer(scorerId) {
     if (!appState.assister || !scorerId) return;
     
-    // Record the assist for the current player
+    // Record the assist for the assisting player
     recordAction('assist', appState.assister.id);
     
-    // Record the goal for the selected scorer
+    // Record the goal for the scorer
     recordAction('goal', scorerId);
     
     // Close the dialog
@@ -572,71 +597,66 @@ function recordAction(actionType, specificPlayerId = null) {
         gameMinute: calculateGameMinute()
     };
     
-    // Add action to the current game
     appState.currentGame.actions.push(action);
     
-    // Update the player's stats in the grid
+    // Update player stats
+    switch (actionType) {
+        case 'goal':
+            appState.players[playerIndex].stats.goals++;
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+        case 'assist':
+            appState.players[playerIndex].stats.assists++;
+            break;
+        case 'save':
+            appState.players[playerIndex].stats.saves++;
+            break;
+        case 'goal_allowed':
+            appState.players[playerIndex].stats.goalsAllowed++;
+            appState.currentGame.awayScore++;
+            document.getElementById('away-score').textContent = appState.currentGame.awayScore;
+            break;
+    }
+    
+    // Update player grid item
     updatePlayerGridItem(playerId);
     
-    // Save the game state
     saveAppData();
+    closePlayerActionDialog();
 }
 
 function updatePlayerGridItem(playerId) {
-    // Count the actions for this player in the current game
-    let goals = 0;
-    let assists = 0;
-    let saves = 0;
-    let goalsAllowed = 0;
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
     
-    appState.currentGame.actions.forEach(action => {
-        if (action.playerId === playerId) {
-            switch (action.actionType) {
-                case 'goal':
-                    goals++;
-                    break;
-                case 'assist':
-                    assists++;
-                    break;
-                case 'save':
-                    saves++;
-                    break;
-                case 'goal_allowed':
-                    goalsAllowed++;
-                    break;
-            }
-        }
-    });
+    const gridItem = document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`);
+    if (!gridItem) return;
     
-    // Update the counter elements
-    document.querySelector(`.goal-count[data-player-id="${playerId}"]`).textContent = goals;
-    document.querySelector(`.assist-count[data-player-id="${playerId}"]`).textContent = assists;
-    document.querySelector(`.save-count[data-player-id="${playerId}"]`).textContent = saves;
-    document.querySelector(`.goal-allowed-count[data-player-id="${playerId}"]`).textContent = goalsAllowed;
-}
-
-function updateAllPlayerStats() {
-    if (!appState.currentGame) return;
-    
-    // Reset all counters to 0
-    document.querySelectorAll('.goal-count, .assist-count, .save-count, .goal-allowed-count').forEach(el => {
-        el.textContent = '0';
-    });
-    
-    // Update each player based on game actions
-    appState.currentGame.activePlayers.forEach(playerId => {
-        updatePlayerGridItem(playerId);
-    });
+    // Update the stats icons
+    const statsIcons = gridItem.querySelector('.player-stats-icons');
+    if (statsIcons) {
+        statsIcons.innerHTML = `
+            <span class="stat-icon" title="Goals: ${player.stats.goals}">⚽ ${player.stats.goals}</span>
+            <span class="stat-icon" title="Assists: ${player.stats.assists}">👟 ${player.stats.assists}</span>
+            <span class="stat-icon" title="Saves: ${player.stats.saves}">🧤 ${player.stats.saves}</span>
+            <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}">🥅 ${player.stats.goalsAllowed}</span>
+        `;
+    }
 }
 
 function calculateGameMinute() {
-    if (!appState.gameTimer.startTime) return 0;
+    if (!appState.currentGame) return 0;
     
-    const elapsedSeconds = appState.gameTimer.elapsed;
-    return Math.floor(elapsedSeconds / 60);
+    const startTime = new Date(appState.currentGame.startTime);
+    const now = new Date();
+    const diffMs = now - startTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    return diffMins;
 }
 
-// Game End Handling
+// End Game
 function confirmEndGame() {
     document.getElementById('end-game-dialog').style.display = 'flex';
 }
@@ -648,65 +668,63 @@ function closeEndGameDialog() {
 function endGame() {
     if (!appState.currentGame) return;
     
-    // Stop all timers
+    appState.currentGame.endTime = new Date().toISOString();
+    appState.currentGame.isCompleted = true;
+    
+    // Store the game in our games array
+    const finishedGameId = appState.currentGame.id;
+    appState.games.push({...appState.currentGame});
+    
+    // Stop both timers
     pauseTimer();
     pauseGameTimer();
     
-    // Mark the game as completed
-    appState.currentGame.completed = true;
-    appState.currentGame.endTime = new Date().toISOString();
-    
-    // Save the final state
+    // Save data before showing report
     saveAppData();
     
-    // Return to main menu
-    showScreen('main');
+    // Close the dialog
+    closeEndGameDialog();
+    
+    // Show the reports screen
+    showScreen('reports');
+    
+    // Generate and show the detailed report for this game
+    setTimeout(() => {
+        viewReport(finishedGameId);
+    }, 300);
     
     // Clear current game
     appState.currentGame = null;
-    
-    // Close dialog
-    closeEndGameDialog();
 }
 
 // Reports
 function renderReportsList() {
     const reportsList = document.getElementById('reports-list');
-    if (!reportsList) return;
-    
     reportsList.innerHTML = '';
     
-    // Filter for completed games only
-    const completedGames = appState.games.filter(game => game.completed);
+    const completedGames = appState.games.filter(game => game.isCompleted);
     
     if (completedGames.length === 0) {
-        reportsList.innerHTML = '<div class="empty-state">No completed games yet. Play a game to generate reports.</div>';
+        reportsList.innerHTML = '<div class="empty-state">No completed games yet</div>';
         return;
     }
     
-    // Sort games by date (newest first)
-    completedGames.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    completedGames.forEach(game => {
-        const gameDate = new Date(game.date).toLocaleDateString();
+    completedGames.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(game => {
         const reportItem = document.createElement('div');
         reportItem.className = 'report-item';
         
-        // Count goals scored by team
-        const goalsScored = game.actions.filter(a => a.actionType === 'goal').length;
-        const goalsAllowed = game.actions.filter(a => a.actionType === 'goal_allowed').length;
-        
+        const gameDate = new Date(game.date).toLocaleDateString();
         reportItem.innerHTML = `
-            <div class="report-info">
+            <div class="report-header">
                 <div class="report-date">${gameDate}</div>
-                <div class="report-title">vs ${game.opponent}</div>
-                <div class="report-score">${goalsScored} - ${goalsAllowed}</div>
+                <div class="report-score">My Team ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
             </div>
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
+                <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
+                <button class="secondary-btn" onclick="exportReport('${game.id}', 'png')">PNG</button>
             </div>
         `;
-        
         reportsList.appendChild(reportItem);
     });
 }
@@ -714,9 +732,6 @@ function renderReportsList() {
 function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
-    
-    // Store current report game for export functions
-    appState.currentReportGame = gameId;
     
     // Create a report dialog if it doesn't exist
     let reportDialog = document.getElementById('detailed-report-dialog');
@@ -741,132 +756,50 @@ function viewReport(gameId) {
         gameDuration = `${durationMins} minutes`;
     }
 
-    // Choose report format based on settings
-    if (appState.settings.recordGameTime) {
-        // TIME-BASED REPORT FORMAT
-        // Create a timeline of actions
-        const timeline = [];
-        
-        // Group actions by game minute
-        game.actions.forEach(action => {
-            const player = appState.players.find(p => p.id === action.playerId);
-            if (!player) return;
-            
-            const minute = action.gameMinute || 0;
-            
-            // Create minute entry if it doesn't exist
-            if (!timeline[minute]) {
-                timeline[minute] = [];
-            }
-            
-            // Add action to timeline
-            timeline[minute].push({
-                playerName: player.name,
+    // Get player actions from the game
+    const playerActions = {};
+    
+    // Initialize player actions
+    game.activePlayers.forEach(playerId => {
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            playerActions[playerId] = {
+                name: player.name,
                 jerseyNumber: player.jerseyNumber,
-                actionType: action.actionType,
-                timestamp: action.timestamp
-            });
-        });
-        
-        // Build timeline HTML
-        let timelineHTML = '';
-        timeline.forEach((actions, minute) => {
-            if (actions && actions.length > 0) {
-                timelineHTML += `<div class="minute-section">
-                    <h3>Minute ${minute}</h3>
-                    <ul class="action-list">`;
-                
-                actions.forEach(action => {
-                    let actionText = '';
-                    switch(action.actionType) {
-                        case 'goal':
-                            actionText = `⚽ #${action.jerseyNumber} ${action.playerName} scored a goal`;
-                            break;
-                        case 'assist':
-                            actionText = `👟 #${action.jerseyNumber} ${action.playerName} made an assist`;
-                            break;
-                        case 'save':
-                            actionText = `🧤 #${action.jerseyNumber} ${action.playerName} made a save`;
-                            break;
-                        case 'goal_allowed':
-                            actionText = `😞 #${action.jerseyNumber} ${action.playerName} allowed a goal`;
-                            break;
-                    }
-                    timelineHTML += `<li>${actionText}</li>`;
-                });
-                
-                timelineHTML += `</ul></div>`;
+                goals: 0,
+                assists: 0,
+                saves: 0,
+                goalsAllowed: 0
+            };
+        }
+    });
+    
+    // Count actions
+    game.actions.forEach(action => {
+        if (playerActions[action.playerId]) {
+            switch (action.actionType) {
+                case 'goal':
+                    playerActions[action.playerId].goals++;
+                    break;
+                case 'assist':
+                    playerActions[action.playerId].assists++;
+                    break;
+                case 'save':
+                    playerActions[action.playerId].saves++;
+                    break;
+                case 'goal_allowed':
+                    playerActions[action.playerId].goalsAllowed++;
+                    break;
             }
-        });
-        
-        // Set report HTML for time-based format
-        reportDialog.innerHTML = `
-            <div class="dialog-content wide-dialog">
-                <h2>Game Report - ${gameDate} ${gameTime}</h2>
-                <div class="report-header">
-                    <p><strong>Team:</strong> ${appState.teamName}</p>
-                    <p><strong>Opponent:</strong> ${game.opponent}</p>
-                    <p><strong>Duration:</strong> ${gameDuration}</p>
-                </div>
-                <div class="report-body timeline-format">
-                    <h3>Game Timeline</h3>
-                    ${timelineHTML || '<p>No recorded actions for this game.</p>'}
-                </div>
-                <div class="dialog-buttons">
-                    <button class="secondary-btn" onclick="closeDetailedReport()">Close</button>
-                    <div class="export-buttons">
-                        <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
-                        <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        // PLAYER-BASED REPORT FORMAT (Original)
-        // Get player actions from the game
-        const playerActions = {};
-        
-        // Initialize player actions
-        game.activePlayers.forEach(playerId => {
-            const player = appState.players.find(p => p.id === playerId);
-            if (player) {
-                playerActions[playerId] = {
-                    name: player.name,
-                    jerseyNumber: player.jerseyNumber,
-                    goals: 0,
-                    assists: 0,
-                    saves: 0,
-                    goalsAllowed: 0
-                };
-            }
-        });
-        
-        // Count actions
-        game.actions.forEach(action => {
-            if (playerActions[action.playerId]) {
-                switch (action.actionType) {
-                    case 'goal':
-                        playerActions[action.playerId].goals++;
-                        break;
-                    case 'assist':
-                        playerActions[action.playerId].assists++;
-                        break;
-                    case 'save':
-                        playerActions[action.playerId].saves++;
-                        break;
-                    case 'goal_allowed':
-                        playerActions[action.playerId].goalsAllowed++;
-                        break;
-                }
-            }
-        });
-        
-        // Build player stats table
-        let playerStatsHTML = '';
-        Object.values(playerActions)
-            .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-            .forEach(playerStat => {
-                playerStatsHTML += `
+        }
+    });
+    
+    // Build player stats table
+    let playerStatsHTML = '';
+    Object.values(playerActions)
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+        .forEach(playerStat => {
+            playerStatsHTML += `
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
                     <td>${playerStat.name}</td>
@@ -875,46 +808,46 @@ function viewReport(gameId) {
                     <td>${playerStat.saves}</td>
                     <td>${playerStat.goalsAllowed}</td>
                 </tr>
-                `;
-            });
+            `;
+        });
     
-        // Generate report HTML for player-based format
-        reportDialog.innerHTML = `
-            <div class="dialog-content wide-dialog">
-                <h2>Game Report - ${gameDate} ${gameTime}</h2>
-                <div class="report-header">
-                    <p><strong>Team:</strong> ${appState.teamName}</p>
-                    <p><strong>Opponent:</strong> ${game.opponent || 'Unknown'}</p>
-                    <p><strong>Duration:</strong> ${gameDuration}</p>
-                </div>
-                <div class="report-body">
-                    <h3>Player Stats</h3>
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>Number</th>
-                                <th>Name</th>
-                                <th>Goals</th>
-                                <th>Assists</th>
-                                <th>Saves</th>
-                                <th>Goals Allowed</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${playerStatsHTML}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="dialog-buttons">
-                    <button class="secondary-btn" onclick="closeDetailedReport()">Close</button>
-                    <div class="export-buttons">
-                        <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
-                        <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
-                    </div>
-                </div>
+    // Generate report HTML
+    reportDialog.innerHTML = `
+        <div class="dialog-content report-dialog">
+            <h2>Game Report</h2>
+            <div class="report-header-info">
+                <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
+                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
+                <div><strong>Duration:</strong> ${gameDuration}</div>
             </div>
-        `;
-    }
+            
+            <h3>Player Statistics</h3>
+            <div class="report-table-container">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Goals</th>
+                            <th>Assists</th>
+                            <th>Saves</th>
+                            <th>Goals Allowed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${playerStatsHTML}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="report-actions">
+                <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
+                <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
+                <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
+            </div>
+        </div>
+    `;
     
     // Show the dialog
     reportDialog.style.display = 'flex';
@@ -938,12 +871,10 @@ function saveSettings() {
     const language = document.querySelector('input[name="language"]:checked').value;
     const darkMode = document.getElementById('dark-mode').checked;
     const defaultTimer = document.getElementById('default-timer').value;
-    const recordGameTime = document.getElementById('record-game-time').checked;
     
     appState.settings.language = language;
     appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
-    appState.settings.recordGameTime = recordGameTime;
     
     // Apply dark mode immediately
     applyDarkMode(darkMode);
@@ -952,7 +883,7 @@ function saveSettings() {
     alert('Settings saved successfully');
 }
 
-// Data Persistence
+// Data persistence (using localStorage in the prototype)
 function saveAppData() {
     localStorage.setItem('soccerCoachApp', JSON.stringify({
         teamName: appState.teamName,
@@ -983,6 +914,7 @@ function exportTeamData() {
     // Prepare data for export
     const exportData = {
         exportDate: new Date().toISOString(),
+        appVersion: "1.0.0",
         teamName: appState.teamName,
         players: appState.players,
         games: appState.games,
@@ -990,17 +922,22 @@ function exportTeamData() {
     };
     
     // Convert to JSON string
-    const dataStr = JSON.stringify(exportData);
+    const dataStr = JSON.stringify(exportData, null, 2);
     
     // Create download link
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
+    // Create a temporary link element
     const exportFileDefaultName = `${appState.teamName.replace(/\s+/g, '_')}_data.json`;
-    
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.style.display = 'none';
+    
+    // Add to document, click, and remove
+    document.body.appendChild(linkElement);
     linkElement.click();
+    document.body.removeChild(linkElement);
 }
 
 function importTeamData() {
@@ -1022,28 +959,32 @@ function handleFileImport(event) {
                 throw new Error('Invalid data format');
             }
             
-            // Apply imported data
-            appState.teamName = importedData.teamName;
-            appState.players = importedData.players;
-            appState.games = importedData.games || [];
-            if (importedData.settings) {
-                appState.settings = importedData.settings;
-                applyDarkMode(appState.settings.darkMode);
-            }
-            
-            // Save to local storage
-            saveAppData();
-            
-            // Update UI
-            updateTeamNameUI();
-            if (document.getElementById('players-list')) {
+            // Confirm data import
+            if (confirm('This will replace your current team data. Continue?')) {
+                // Update app state with imported data
+                appState.teamName = importedData.teamName;
+                appState.players = importedData.players;
+                appState.games = importedData.games || [];
+                if (importedData.settings) {
+                    appState.settings = importedData.settings;
+                }
+                
+                // Save to local storage
+                saveAppData();
+                
+                // Update UI
+                updateTeamNameUI();
                 renderPlayersList();
+                
+                alert('Team data imported successfully!');
             }
-            
-            alert('Data imported successfully');
         } catch (error) {
-            alert('Error importing data. Invalid file format.');
+            alert('Error importing data. Please check the file format.');
+            console.error('Import error:', error);
         }
+        
+        // Reset file input
+        event.target.value = '';
     };
     
     reader.readAsText(file);
@@ -1063,61 +1004,4 @@ function addDemoPlayers() {
     appState.players = demoPlayers;
     saveAppData();
     renderPlayersList();
-}
-
-// Reset Data functions
-function confirmResetData() {
-    // Show reset confirmation dialog
-    document.getElementById('reset-data-dialog').style.display = 'flex';
-}
-
-function closeResetDataDialog() {
-    document.getElementById('reset-data-dialog').style.display = 'none';
-}
-
-function resetAllData() {
-    // Reset to default state
-    appState = {
-        teamName: "My Team",
-        players: [],
-        games: [],
-        currentGame: null,
-        timer: {
-            duration: 6 * 60, // Reset to default 6 minutes
-            timeLeft: 6 * 60,
-            interval: null,
-            isRunning: false
-        },
-        gameTimer: {
-            elapsed: 0,
-            interval: null,
-            isRunning: false,
-            startTime: null
-        },
-        settings: {
-            language: 'en',
-            darkMode: appState.settings.darkMode, // Keep current dark mode setting
-            defaultTimer: 6,
-            recordGameTime: appState.settings.recordGameTime // Keep current recording preference
-        },
-        currentPlayer: null
-    };
-    
-    // Save to local storage
-    saveAppData();
-    
-    // Update UI elements if they exist
-    updateTeamNameUI();
-    if (document.getElementById('players-list')) {
-        renderPlayersList();
-    }
-    if (document.getElementById('reports-list')) {
-        renderReportsList();
-    }
-    
-    // Close dialog
-    closeResetDataDialog();
-    
-    // Show confirmation
-    alert('All data has been reset');
 }

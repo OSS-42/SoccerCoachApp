@@ -116,20 +116,16 @@ All data is stored locally on your device. No information is transmitted to exte
 
 ## Changelog
 
-### Version 1.1.0 (May 22, 2025)
-- Added dark mode support
-- No Assist button now in orange for better visibility
-- Added game time elapsed tracking
-- Optimized layout for landscape orientation in game and report screens
-- Improved PWA support with app icons and manifest
-- Added reset data functionality in settings
-- Added option to display reports by game minute
-- Improved responsiveness across various screen sizes
-- Fixed icon colors in dark mode
-
 ### Version 1.0.0 (May 22, 2025)
 - Initial release with core functionality
 - Team management features
 - Game tracking with player actions
 - Substitution timer with alerts
 - Report generation and export
+
+### Version 1.1.0 (May 22, 2025)
+- Added dark mode support
+- No Assist button now in orange for better visibility
+- Added game time elapsed tracking
+- Optimized layout for landscape orientation in game and report screens
+- Improved PWA support with app icons and manifest
