@@ -1,0 +1,21 @@
+{
+  "name": "Soccer Coach Tracker",
+  "short_name": "Soccer Coach",
+  "description": "Track soccer player stats, manage substitutions, and generate game reports",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#2196f3",
+  "icons": [
+    {
+      "src": "../img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "../img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
