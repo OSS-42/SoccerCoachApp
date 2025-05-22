@@ -1100,6 +1100,9 @@ function saveSettings() {
     appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
     
+    // Also store language in localStorage for direct access by i18n.js
+    localStorage.setItem('appLanguage', language);
+    
     // Apply dark mode immediately
     applyDarkMode(darkMode);
     
@@ -1109,7 +1112,7 @@ function saveSettings() {
     }
     
     saveAppData();
-    alert('Settings saved successfully');
+    alert(translate('settingsSaved', language));
 }
 
 // Data persistence (using localStorage in the prototype)
