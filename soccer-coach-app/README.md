@@ -4,47 +4,112 @@ A cross-platform web app for soccer coaches to track player statistics during ga
 
 ## Features
 
-- **Team Management**: Create and edit your team roster with player names and jersey numbers
-- **Game Tracking**: Record goals, assists, and other player actions during live games
-- **Substitution Timer**: Configurable countdown timer to manage player substitutions
-- **Game Time Tracking**: Track total elapsed game time alongside substitution timer
-- **Game Reports**: Generate detailed reports for completed games
-- **Dark Mode**: Toggle between light and dark themes
-- **Responsive Design**: Optimized layouts for both portrait and landscape orientations
-- **Offline Support**: Works entirely offline using local storage
-- **Data Export/Import**: Transfer team data between devices
+### Team Management
+- Create and manage your team roster with player names and jersey numbers
+- Easily mark players as active/inactive for specific games
+- Support for demo players to quickly test the app's functionality
+- Edit player information at any time
 
-## Usage
+### Game Tracking
+- Full game management with timer and score tracking
+- Record multiple types of player actions:
+  - Goals scored by your team
+  - Assists that led to goals
+  - Goals allowed (defensive tracking)
+  - Other stats customizable through settings
+- Intuitive workflow for recording goals with associated assists
+- Visual indicators showing player performance during the game
 
-1. Open the app in any modern web browser
-2. Set up your team roster in the Team Setup section
-3. Start a new game and track player actions
-4. Use the substitution timer to manage player rotations
-5. Generate reports after games to analyze team and player performance
+### Substitution Management
+- Configurable countdown timer for managing player rotations
+- Visual alerts when substitution time has elapsed
+- Timer starts, pauses, and resets with simple button controls
+- Persistent game time tracking independent of substitution timer
 
-## Offline Installation
+### Advanced Display Features
+- Dark mode for night games and reduced eye strain
+- Automatic orientation changes:
+  - Game tracking and report screens in landscape for better visibility
+  - Team setup and settings screens in portrait for easier data entry
+- Responsive design adapts to any screen size
 
-For offline use on mobile devices:
+### Game Reports
+- Detailed post-game analysis with player statistics
+- Exportable reports for sharing with the team
+- Historical game data stored for season-long tracking
+- Sort and filter capabilities for finding specific information
 
-### iOS
+### Multi-Device Support
+- Export/import functionality to transfer data between devices
+- No account required - complete privacy and control over your data
+- Works offline with no internet connection needed
+- Install as a standalone app on iOS and Android devices
+
+## Detailed Usage Guide
+
+### Setting Up Your Team
+1. Start the app and navigate to "Team Setup"
+2. Enter your team name at the top
+3. Add players by clicking "Add Player"
+4. For each player, enter:
+   - Jersey number (must be unique)
+   - Player name
+   - Set active status (for game day roster)
+5. Edit or delete players as needed
+
+### Starting a Game
+1. From the main menu, select "Start New Game"
+2. Enter the opponent team name
+3. Select the game date (defaults to today)
+4. Set the substitution timer duration (in minutes)
+5. Click "Start Game" to begin tracking
+
+### During the Game
+1. The game screen shows all active players in a grid
+2. Click on a player to record an action:
+   - Record goals, which will prompt for possible assist
+   - Record assists, which will prompt for who scored
+   - Record other stats as configured
+3. Use the substitution timer controls to manage rotations:
+   - Start - Begin the countdown
+   - Pause - Temporarily stop the timer
+   - Reset - Return timer to original duration
+4. Track total game time independent of substitutions
+5. End the game when finished to save all statistics
+
+### Viewing Reports
+1. Access the "Reports" section from the main menu
+2. View a list of all completed games
+3. Select any game to see detailed statistics
+4. Export reports in various formats for sharing
+
+## Installation Options
+
+### Web Browser (Desktop or Mobile)
+Simply open the HTML file in any modern web browser
+
+### iOS Installation
 1. Open the app in Safari
-2. Tap the Share button
+2. Tap the Share button (rectangle with arrow)
 3. Select "Add to Home Screen"
-4. The app will now be available as an icon on your home screen
+4. Customize the name (optional)
+5. Tap "Add" to create an icon on your home screen
 
-### Android
+### Android Installation
 1. Open the app in Chrome
-2. Tap the menu (three dots)
-3. Select "Add to Home Screen"
-4. The app will now be available as an icon on your home screen
+2. Tap the menu button (three dots)
+3. Select "Add to Home Screen" or "Install App"
+4. Follow the prompts to add the icon to your home screen
 
 ## Technical Details
 
-- Built with vanilla JavaScript, HTML5, and CSS3
-- Uses localStorage for offline data persistence
-- Implements the Web App Manifest for installability
-- No server dependencies or internet connection required after initial load
+- Pure web app built with vanilla JavaScript, HTML5, and CSS3
+- Offline-first architecture with localStorage for data persistence
+- PWA-ready with app manifest for installability
+- No backend server required - fully self-contained
+- Designed for cross-platform compatibility
+- Customizable through settings without coding knowledge
 
 ## Data Privacy
 
-All data is stored locally on your device. No information is transmitted to external servers.
+All data is stored locally on your device. No information is transmitted to external servers, ensuring complete privacy for your team's information.
