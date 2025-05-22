@@ -20,6 +20,7 @@ const frTranslations = {
     'cancel': 'Annuler',
     'add': 'Ajouter',
     'edit': 'Modifier',
+    'editPlayer': 'Modifier le Joueur',
     'delete': 'Supprimer',
     'teamNameSaved': 'Nom d\'équipe enregistré avec succès',
     'pleaseEnterTeamName': 'Veuillez entrer un nom d\'équipe',
@@ -47,6 +48,8 @@ const frTranslations = {
     'goal': 'But',
     'assist': 'Passe Décisive',
     'save': 'Arrêt',
+    'saveAction': 'Arrêt',  // For the action menu
+    'saveChanges': 'Enregistrer', // For saving changes in forms
     'goalAllowed': 'But Encaissé',
     
     // Goal/Assist dialogs
