@@ -83,6 +83,13 @@ function showScreen(screenId) {
     // Special handling for different screens
     if (screenId === 'team-setup') {
         renderPlayersList();
+    } else if (screenId === 'game-setup') {
+        // Set current date as default
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('game-date');
+        if (dateInput) {
+            dateInput.value = today;
+        }
     } else if (screenId === 'settings') {
         // Update settings UI with current values
         document.getElementById('dark-mode').checked = appState.settings.darkMode;

@@ -48,6 +48,25 @@ body.dark-mode .danger-btn:hover {
     background-color: #b71c1c;
 }
 
+/* Fix icon colors for dark mode */
+body.dark-mode .icon-btn .material-icons,
+body.dark-mode .action-btn .material-icons,
+body.dark-mode .back-btn .material-icons {
+    color: white;
+}
+
+.icon-btn, .action-btn, .back-btn {
+    background-color: transparent;
+}
+
+body.dark-mode .icon-btn {
+    background-color: transparent;
+}
+
+.icon-btn .material-icons {
+    color: #333;
+}
+
 /* Remove borders from action icons in live game */
 .player-grid-item .stats-container {
     border: none;
