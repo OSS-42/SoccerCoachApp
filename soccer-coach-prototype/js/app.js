@@ -130,9 +130,77 @@ function renderPlayersList() {
 }
 
 function editPlayer(playerId) {
-    // This would open a dialog to edit the player
-    // For the prototype, we'll just show an alert
-    alert('Edit player functionality would be implemented here');
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Create edit player dialog if it doesn't exist
+    let editDialog = document.getElementById('edit-player-dialog');
+    if (!editDialog) {
+        editDialog = document.createElement('div');
+        editDialog.id = 'edit-player-dialog';
+        editDialog.className = 'dialog';
+        document.getElementById('app').appendChild(editDialog);
+    }
+    
+    editDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Edit Player</h2>
+            <div class="form-group">
+                <label for="edit-player-name">First Name:</label>
+                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's first name">
+            </div>
+            <div class="form-group">
+                <label for="edit-jersey-number">Jersey Number:</label>
+                <input type="number" id="edit-jersey-number" value="${player.jerseyNumber}" min="1" max="99">
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeEditPlayerDialog()">Cancel</button>
+                <button class="primary-btn" onclick="savePlayerEdit('${player.id}')">Save</button>
+            </div>
+        </div>
+    `;
+    
+    editDialog.style.display = 'flex';
+}
+
+function closeEditPlayerDialog() {
+    const editDialog = document.getElementById('edit-player-dialog');
+    if (editDialog) {
+        editDialog.style.display = 'none';
+    }
+}
+
+function savePlayerEdit(playerId) {
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    const newName = document.getElementById('edit-player-name').value.trim();
+    const newJerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
+    
+    if (!newName) {
+        alert('Please enter a name for the player');
+        return;
+    }
+    
+    if (!newJerseyNumber || newJerseyNumber < 1 || newJerseyNumber > 99) {
+        alert('Please enter a valid jersey number between 1 and 99');
+        return;
+    }
+    
+    // Check for duplicate jersey numbers (excluding this player)
+    if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
+        alert('Another player already has this jersey number');
+        return;
+    }
+    
+    // Update player data
+    player.name = newName;
+    player.jerseyNumber = newJerseyNumber;
+    
+    // Save and refresh
+    saveAppData();
+    renderPlayersList();
+    closeEditPlayerDialog();
 }
 
 function deletePlayer(playerId) {
@@ -212,12 +280,6 @@ function renderPlayerGrid() {
         playerGridItem.innerHTML = `
             <div class="player-number">${player.jerseyNumber}</div>
             <div class="player-name">${player.name}</div>
-            <div class="player-stats">
-                <div>Goals: 0</div>
-                <div>Assists: 0</div>
-                <div>Saves: 0</div>
-                <div>Goals Allowed: 0</div>
-            </div>
         `;
         playerGridItem.addEventListener('click', () => {
             openPlayerActionDialog(player);
@@ -332,19 +394,9 @@ function recordAction(actionType) {
 }
 
 function updatePlayerGridItem(playerId) {
-    const player = appState.players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    const gridItem = document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`);
-    if (!gridItem) return;
-    
-    const statsDiv = gridItem.querySelector('.player-stats');
-    statsDiv.innerHTML = `
-        <div>Goals: ${player.stats.goals}</div>
-        <div>Assists: ${player.stats.assists}</div>
-        <div>Saves: ${player.stats.saves}</div>
-        <div>Goals Allowed: ${player.stats.goalsAllowed}</div>
-    `;
+    // Since we no longer show stats in the game view, this function doesn't need to update anything
+    // But we'll keep it for future functionality
+    return;
 }
 
 function calculateGameMinute() {
