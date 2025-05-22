@@ -110,6 +110,29 @@ body.dark-mode .report-table tr:nth-child(even) {
     }
 }
 
+/* Special handling for small heights in landscape mode */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .game-content {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .timer-container {
+        width: 25%;
+        min-width: 150px;
+    }
+    
+    .player-grid {
+        width: 75%;
+        flex-wrap: wrap;
+    }
+    
+    .player-grid-item {
+        width: calc(25% - 10px);
+        margin: 5px;
+    }
+}
+
 /* Force portrait/landscape for specific screens */
 @media screen and (orientation: portrait) {
     #game-tracking, #detailed-report {
@@ -614,8 +637,8 @@ input:checked + .slider:before {
 }
 
 .no-assist-btn {
-    background-color: #ff5722;
-    color: white;
+    background-color: #ff5722 !important;
+    color: white !important;
 }
 
 .yellow-card {

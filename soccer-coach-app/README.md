@@ -113,3 +113,19 @@ Simply open the HTML file in any modern web browser
 ## Data Privacy
 
 All data is stored locally on your device. No information is transmitted to external servers, ensuring complete privacy for your team's information.
+
+## Changelog
+
+### Version 1.0.0 (May 22, 2025)
+- Initial release with core functionality
+- Team management features
+- Game tracking with player actions
+- Substitution timer with alerts
+- Report generation and export
+
+### Version 1.1.0 (May 22, 2025)
+- Added dark mode support
+- No Assist button now in orange for better visibility
+- Added game time elapsed tracking
+- Optimized layout for landscape orientation in game and report screens
+- Improved PWA support with app icons and manifest
