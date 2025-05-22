@@ -1007,10 +1007,10 @@ function handleFileImport(event) {
                 updateTeamNameUI();
                 renderPlayersList();
                 
-                alert('Team data imported successfully!');
+                showMessage('Team data imported successfully!', 'success');
             }
         } catch (error) {
-            alert('Error importing data. Please check the file format.');
+            showMessage('Error importing data. Please check the file format.', 'error');
             console.error('Import error:', error);
         }
         
