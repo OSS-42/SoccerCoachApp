@@ -643,8 +643,8 @@ function openScorerSelectionDialog() {
     // Clear previous content
     playersGrid.innerHTML = '';
     
-    // Get active players excluding the assister
-    const activePlayers = appState.players.filter(p => p.active && p.id !== appState.assister.id);
+    // Get all players excluding the assister
+    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id);
     
     // Add players to the grid
     activePlayers.forEach(player => {
@@ -689,6 +689,17 @@ function recordAction(actionType, specificPlayerId = null) {
     if (!playerId) return;
     
     const playerIndex = appState.players.findIndex(p => p.id === playerId);
+    if (playerIndex === -1) return; // Player not found
+    
+    // Ensure player stats object is initialized
+    if (!appState.players[playerIndex].stats) {
+        appState.players[playerIndex].stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        };
+    }
     
     const action = {
         timestamp: new Date().toISOString(),
@@ -723,7 +734,11 @@ function recordAction(actionType, specificPlayerId = null) {
     updatePlayerGridItem(playerId);
     
     saveAppData();
-    closePlayerActionDialog();
+    
+    // Only close the dialog if it was opened directly (not via another action flow)
+    if (!specificPlayerId) {
+        closePlayerActionDialog();
+    }
 }
 
 function updatePlayerGridItem(playerId) {
