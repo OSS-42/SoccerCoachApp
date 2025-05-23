@@ -123,6 +123,13 @@ function showScreen(screenId) {
     // Special handling for specific screens
     if (screenId === 'reports') {
         renderReportsList();
+    } else if (screenId === 'game-setup') {
+        // Auto-fill today's date when opening the game setup screen
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        document.getElementById('game-date').value = `${year}-${month}-${day}`;
     }
 }
 
