@@ -175,14 +175,12 @@ function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
     
-    const activePlayers = appState.players.filter(p => p.active);
-    
-    if (activePlayers.length === 0) {
+    if (appState.players.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
     }
     
-    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item';
         playerItem.innerHTML = `
@@ -357,7 +355,7 @@ function startGame() {
         startTime: new Date().toISOString(),
         endTime: null,
         actions: [],
-        activePlayers: [...appState.players.filter(p => p.active).map(p => p.id)],
+        activePlayers: [...appState.players.map(p => p.id)],
         isCompleted: false,
         totalGameTime: 0 // Track total game time in seconds
     };
@@ -391,31 +389,36 @@ function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
     playerGrid.innerHTML = '';
     
-    const activePlayers = appState.players.filter(p => p.active);
-    
-    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    // Using all players, not filtering by active status anymore
+    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
+        
+        // Create a content container for proper positioning
         playerGridItem.innerHTML = `
-            <div class="player-header">
-                <div class="player-number">${player.jerseyNumber}</div>
-                <div class="player-name">${player.name}</div>
-            </div>
-            <div class="player-stats-icons">
-                <div class="stats-row">
-                    <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="material-icons">sports_soccer</span> <span class="stat-value">${player.stats.goals}</span></span>
-                    <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
+            <div class="player-grid-item-content">
+                <div class="player-header">
+                    <div class="player-number">${player.jerseyNumber}</div>
+                    <div class="player-name">${player.name}</div>
                 </div>
-                <div class="stats-row">
-                    <span class="stat-icon" title="Saves: ${player.stats.saves}"><span class="stat-emoji">🧤</span> <span class="stat-value">${player.stats.saves}</span></span>
-                    <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed"> <span class="stat-value">${player.stats.goalsAllowed}</span></span>
+                <div class="player-stats-icons">
+                    <div class="stats-row">
+                        <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="material-icons">sports_soccer</span> <span class="stat-value">${player.stats.goals}</span></span>
+                        <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
+                    </div>
+                    <div class="stats-row">
+                        <span class="stat-icon" title="Saves: ${player.stats.saves}"><span class="stat-emoji">🧤</span> <span class="stat-value">${player.stats.saves}</span></span>
+                        <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed"> <span class="stat-value">${player.stats.goalsAllowed}</span></span>
+                    </div>
                 </div>
             </div>
         `;
+        
         playerGridItem.addEventListener('click', () => {
             openPlayerActionDialog(player);
         });
+        
         playerGrid.appendChild(playerGridItem);
     });
 }
