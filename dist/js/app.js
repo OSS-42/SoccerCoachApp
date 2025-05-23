@@ -407,22 +407,36 @@ function renderPlayerGrid() {
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
         
-        // Create a content container for proper positioning
+        // Create a completely redesigned player card
         playerGridItem.innerHTML = `
-            <div class="player-grid-item-content">
-                <div class="player-header">
-                    <div class="player-number">${player.jerseyNumber}</div>
-                    <div class="player-name">${player.name}</div>
+            <div class="player-header">
+                <div class="player-number">${player.jerseyNumber}</div>
+                <div class="player-name">${player.name}</div>
+            </div>
+            <div class="player-stats-container">
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="material-icons">sports_soccer</span> Goals
+                    </div>
+                    <div class="stat-value">${player.stats.goals}</div>
                 </div>
-                <div class="player-stats-icons">
-                    <div class="stats-row">
-                        <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="material-icons">sports_soccer</span> <span class="stat-value">${player.stats.goals}</span></span>
-                        <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="material-icons">front_hand</span> Assists
                     </div>
-                    <div class="stats-row">
-                        <span class="stat-icon" title="Saves: ${player.stats.saves}"><span class="stat-emoji">🧤</span> <span class="stat-value">${player.stats.saves}</span></span>
-                        <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed"> <span class="stat-value">${player.stats.goalsAllowed}</span></span>
+                    <div class="stat-value">${player.stats.assists}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="material-icons">back_hand</span> Saves
                     </div>
+                    <div class="stat-value">${player.stats.saves}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed"> Goals Allowed
+                    </div>
+                    <div class="stat-value">${player.stats.goalsAllowed}</div>
                 </div>
             </div>
         `;
