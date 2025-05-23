@@ -227,13 +227,13 @@ input:checked + .slider:before {
 
 /* Screen Styles */
 .screen {
-    display: none;
+    display: none !important; /* Added !important to enforce the rule */
     flex-direction: column;
     height: 100vh;
 }
 
 .screen.active {
-    display: flex;
+    display: flex !important; /* Added !important to enforce the rule */
 }
 
 .screen.landscape {
