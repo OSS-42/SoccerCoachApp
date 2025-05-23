@@ -471,14 +471,11 @@ function renderPlayerGrid() {
 
 // Timer Functions
 function updateTimerDisplay() {
-    const minutes = Math.floor(appState.timer.timeLeft / 60);
-    const seconds = appState.timer.timeLeft % 60;
-    
-    const timerDisplay = document.getElementById('substitution-timer');
+    const timerDisplay = getElement('substitution-timer');
     const timerValue = timerDisplay.querySelector('.timer-value');
     
     if (timerValue) {
-        timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        timerValue.textContent = formatTime(appState.timer.timeLeft);
     }
     
     // Add alert styling if timer is at zero
@@ -490,11 +487,9 @@ function updateTimerDisplay() {
 }
 
 function updateGameTimeDisplay() {
-    const minutes = Math.floor(appState.gameTimer.elapsed / 60);
-    const seconds = appState.gameTimer.elapsed % 60;
-    const gameTimeElement = document.getElementById('game-time');
+    const gameTimeElement = getElement('game-time');
     if (gameTimeElement) {
-        gameTimeElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        gameTimeElement.textContent = `Time: ${formatTime(appState.gameTimer.elapsed)}`;
     }
 }
 
