@@ -18,21 +18,10 @@ let appState = {
     },
     settings: {
         language: 'en',
-        darkMode: false,
         defaultTimer: 6
     },
     currentPlayer: null
 };
-
-// Initialize the app
-// Apply dark mode based on settings
-// function applyDarkMode(enabled) {
-//     if (enabled) {
-//         document.body.classList.add('dark-mode');
-//     } else {
-//         document.body.classList.remove('dark-mode');
-//     }
-// }
 
 // Message functions
 function showMessage(message, type = 'error') {
@@ -65,12 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate UI with existing data
     renderPlayersList();
     updateTeamNameUI();
-    
-    // Apply dark mode if enabled
-    // applyDarkMode(appState.settings.darkMode);
-    
-    // Set dark mode toggle to match current setting
-    // document.getElementById('dark-mode').checked = appState.settings.darkMode;
     
     // Add demo players if none exist
     if (appState.players.length === 0) {
@@ -933,15 +916,10 @@ function exportReport(gameId, format) {
 // Settings
 function saveSettings() {
     const language = document.querySelector('input[name="language"]:checked').value;
-    const darkMode = document.getElementById('dark-mode').checked;
     const defaultTimer = document.getElementById('default-timer').value;
     
     appState.settings.language = language;
-    appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
-    
-    // Apply dark mode immediately
-    // applyDarkMode(darkMode);
     
     saveAppData();
     showMessage('Settings saved successfully', 'success');
@@ -965,11 +943,6 @@ function loadAppData() {
         appState.players = data.players || [];
         appState.games = data.games || [];
         appState.settings = data.settings || appState.settings;
-        
-        // Apply settings
-        if (appState.settings.darkMode) {
-            document.body.classList.add('dark-mode');
-        }
     }
 }
 
