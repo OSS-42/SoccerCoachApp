@@ -18,20 +18,16 @@ let appState = {
     },
     settings: {
         language: 'en',
-        darkMode: false,
         defaultTimer: 6
     },
     currentPlayer: null
 };
 
 // Initialize the app
-// Apply dark mode based on settings
-function applyDarkMode(enabled) {
-    if (enabled) {
-        document.body.classList.add('dark-mode');
-    } else {
-        document.body.classList.remove('dark-mode');
-    }
+// Initialize app styling (removed dark mode functionality)
+function initializeStyling() {
+    // Always use light mode
+    document.body.classList.remove('dark-mode');
 }
 
 // Message functions
@@ -983,15 +979,10 @@ function exportReport(gameId, format) {
 // Settings
 function saveSettings() {
     const language = document.querySelector('input[name="language"]:checked').value;
-    const darkMode = document.getElementById('dark-mode').checked;
     const defaultTimer = document.getElementById('default-timer').value;
     
     appState.settings.language = language;
-    appState.settings.darkMode = darkMode;
     appState.settings.defaultTimer = parseInt(defaultTimer);
-    
-    // Apply dark mode immediately
-    applyDarkMode(darkMode);
     
     saveAppData();
     showMessage('Settings saved successfully', 'success');
