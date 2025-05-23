@@ -230,6 +230,18 @@ input:checked + .slider:before {
     display: none !important; /* Added !important to enforce the rule */
     flex-direction: column;
     height: 100vh;
+    position: fixed !important; /* Ensure screens are positioned absolutely */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10; /* Stack screens on top of each other */
+    overflow: auto; /* Allow scrolling if needed */
+    background-color: #f5f5f5; /* Match the body background */
+}
+
+.dark-mode .screen {
+    background-color: #121212; /* Match dark mode background */
 }
 
 .screen.active {
