@@ -43,7 +43,7 @@ The app uses browser localStorage for data persistence, ensuring all your data i
 ## Changelog
 
 ### Version 1.3.0 (2025-05-22)
-- Added orange "No Assist" button for better visibility
+- Added green "No Assist" button for better visibility
 - Implemented dark mode with toggle switch in settings
 - Added game time elapsed counter alongside substitution timer
 - Set landscape orientation for game and report screens
@@ -51,10 +51,10 @@ The app uses browser localStorage for data persistence, ensuring all your data i
 - Fixed various UI issues for better user experience
 
 ### Version 1.2.0 (2025-05-15)
-- Added multi-language support (English, French)
+- Added multi-language support (English, French) - reverted
 - Implemented import/export functionality for team data
-- Enhanced player statistics with detailed breakdowns
-- Added game history with searchable records
+- Enhanced player statistics with detailed breakdowns - reverted
+- Added game history with searchable records - reverted
 - Improved timer functionality with pause/reset options
 - Fixed bugs in player selection during game tracking
 
@@ -79,9 +79,6 @@ This project is available for free use by soccer coaches and teams.
 
 ## Future Development
 
-Future planned features include:
-- Player position tracking
-- Shot tracking (on/off target)
+Future considered features include:
 - Card tracking (yellow/red)
 - Game events timeline
-- Cloud synchronization across devices
