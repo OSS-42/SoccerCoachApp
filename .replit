@@ -2,7 +2,7 @@ modules = ["nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["jdk11", "gradle", "wget"]
+packages = ["jdk11", "gradle", "wget", "zip"]
 
 [workflows]
 runButton = "Project"
