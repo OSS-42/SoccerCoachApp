@@ -23,12 +23,6 @@ let appState = {
     currentPlayer: null
 };
 
-// Initialize the app
-// Initialize app styling - light mode only
-function initializeStyling() {
-    // No styling needed, we're using light mode only
-}
-
 // Message functions
 function showMessage(message, type = 'error') {
     const ribbon = document.getElementById('message-ribbon');
@@ -60,12 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate UI with existing data
     renderPlayersList();
     updateTeamNameUI();
-    
-    // Apply dark mode if enabled
-    applyDarkMode(appState.settings.darkMode);
-    
-    // Set dark mode toggle to match current setting
-    document.getElementById('dark-mode').checked = appState.settings.darkMode;
     
     // Add demo players if none exist
     if (appState.players.length === 0) {
@@ -122,13 +110,6 @@ function showScreen(screenId) {
     // Special handling for specific screens
     if (screenId === 'reports') {
         renderReportsList();
-    } else if (screenId === 'game-setup') {
-        // Auto-fill today's date when opening the game setup screen
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        document.getElementById('game-date').value = `${year}-${month}-${day}`;
     }
 }
 
@@ -158,16 +139,11 @@ function addPlayer() {
         return;
     }
     
-    // Generate a unique ID that isn't already in use
-    let playerId;
-    do {
-        playerId = Math.floor(Math.random() * 1000000).toString();
-    } while (appState.players.some(p => p.id === playerId));
-    
     const player = {
-        id: playerId, // Using a random number instead of timestamp for better reusability
+        id: Date.now().toString(),
         name,
         jerseyNumber: Number(jerseyNumber),
+        active: true,
         stats: {
             goals: 0,
             assists: 0,
@@ -186,12 +162,14 @@ function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
     
-    if (appState.players.length === 0) {
+    const activePlayers = appState.players.filter(p => p.active);
+    
+    if (activePlayers.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
     }
     
-    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item';
         playerItem.innerHTML = `
@@ -271,7 +249,7 @@ function savePlayerEdit(playerId) {
     }
     
     // Check for duplicate jersey numbers (excluding this player)
-    if (appState.players.some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
+    if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
         showMessage('Another player already has this jersey number', 'error');
         return;
     }
@@ -287,51 +265,13 @@ function savePlayerEdit(playerId) {
 }
 
 function deletePlayer(playerId) {
-    // Create confirmation dialog if it doesn't exist
-    let confirmDialog = document.getElementById('confirm-delete-dialog');
-    if (!confirmDialog) {
-        confirmDialog = document.createElement('div');
-        confirmDialog.id = 'confirm-delete-dialog';
-        confirmDialog.className = 'dialog';
-        document.getElementById('app').appendChild(confirmDialog);
-    }
-    
-    const player = appState.players.find(p => p.id === playerId);
-    if (!player) return;
-    
-    confirmDialog.innerHTML = `
-        <div class="dialog-content">
-            <h2>Confirm Delete</h2>
-            <p>Are you sure you want to remove ${player.name} (#${player.jerseyNumber})?</p>
-            <div class="dialog-buttons">
-                <button class="secondary-btn" onclick="document.getElementById('confirm-delete-dialog').style.display='none'">Cancel</button>
-                <button class="primary-btn delete-btn" onclick="confirmDeletePlayer('${playerId}')">Remove Player</button>
-            </div>
-        </div>
-    `;
-    
-    confirmDialog.style.display = 'flex';
-}
-
-function confirmDeletePlayer(playerId) {
-    // Close the confirmation dialog
-    document.getElementById('confirm-delete-dialog').style.display = 'none';
-    
-    // Actually remove the player completely instead of just marking inactive
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
-    if (playerIndex !== -1) {
-        // Get player information for the message
-        const player = appState.players[playerIndex];
-        
-        // Remove the player completely (not just set inactive)
-        appState.players.splice(playerIndex, 1);
-        
-        // Update data and UI
-        saveAppData();
-        renderPlayersList();
-        
-        // Show success message with the ribbon
-        showMessage(`Player ${player.name} (#${player.jerseyNumber}) has been removed`, 'success');
+    if (confirm('Are you sure you want to remove this player?')) {
+        const playerIndex = appState.players.findIndex(p => p.id === playerId);
+        if (playerIndex !== -1) {
+            appState.players[playerIndex].active = false;
+            saveAppData();
+            renderPlayersList();
+        }
     }
 }
 
@@ -366,7 +306,7 @@ function startGame() {
         startTime: new Date().toISOString(),
         endTime: null,
         actions: [],
-        activePlayers: [...appState.players.map(p => p.id)],
+        activePlayers: [...appState.players.filter(p => p.active).map(p => p.id)],
         isCompleted: false,
         totalGameTime: 0 // Track total game time in seconds
     };
@@ -400,60 +340,31 @@ function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
     playerGrid.innerHTML = '';
     
-    // Using all players, not filtering by active status anymore
-    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
-        // Ensure player has stats object
-        if (!player.stats) {
-            player.stats = {
-                goals: 0,
-                assists: 0,
-                saves: 0,
-                goalsAllowed: 0
-            };
-        }
-        
+    const activePlayers = appState.players.filter(p => p.active);
+    
+    activePlayers.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
-        
-        // Create a completely redesigned player card (now square shaped)
         playerGridItem.innerHTML = `
             <div class="player-header">
                 <div class="player-number">${player.jerseyNumber}</div>
                 <div class="player-name">${player.name}</div>
             </div>
-            <div class="player-stats-container">
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="material-icons">sports_soccer</span>
-                    </div>
-                    <div class="stat-value">${player.stats.goals}</div>
+            <div class="player-stats-icons">
+                <div class="stats-row">
+                    <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="stat-emoji">⚽</span> <span class="stat-value">${player.stats.goals}</span></span>
+                    <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">👟</span>
-                    </div>
-                    <div class="stat-value">${player.stats.assists}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="material-icons">back_hand</span>
-                    </div>
-                    <div class="stat-value">${player.stats.saves}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed">
-                    </div>
-                    <div class="stat-value">${player.stats.goalsAllowed}</div>
+                <div class="stats-row">
+                    <span class="stat-icon" title="Saves: ${player.stats.saves}"><span class="stat-emoji">🧤</span> <span class="stat-value">${player.stats.saves}</span></span>
+                    <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed"> <span class="stat-value">${player.stats.goalsAllowed}</span></span>
                 </div>
             </div>
         `;
-        
         playerGridItem.addEventListener('click', () => {
             openPlayerActionDialog(player);
         });
-        
         playerGrid.appendChild(playerGridItem);
     });
 }
@@ -550,14 +461,6 @@ function stopGameTimer() {
         appState.gameTimer.isRunning = false;
     }
     
-    // Reset the game timer completely to 0
-    appState.gameTimer.elapsed = 0;
-    appState.gameTimer.interval = null;
-    appState.gameTimer.startTime = null;
-    
-    // Update the display to show 00:00
-    document.getElementById('game-time').textContent = 'Time: 00:00';
-    
     // Also stop and reset substitution timer
     pauseTimer();
     resetTimer();
@@ -606,8 +509,8 @@ function openAssistSelectionDialog() {
     // Clear previous content
     playersGrid.innerHTML = '';
     
-    // Get all players excluding the goal scorer
-    const activePlayers = appState.players.filter(p => p.id !== appState.goalScorer.id);
+    // Get active players excluding the goal scorer
+    const activePlayers = appState.players.filter(p => p.active && p.id !== appState.goalScorer.id);
     
     // Add players to the grid
     activePlayers.forEach(player => {
@@ -675,8 +578,8 @@ function openScorerSelectionDialog() {
     // Clear previous content
     playersGrid.innerHTML = '';
     
-    // Get all players excluding the assister
-    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id);
+    // Get active players excluding the assister
+    const activePlayers = appState.players.filter(p => p.active && p.id !== appState.assister.id);
     
     // Add players to the grid
     activePlayers.forEach(player => {
@@ -721,17 +624,6 @@ function recordAction(actionType, specificPlayerId = null) {
     if (!playerId) return;
     
     const playerIndex = appState.players.findIndex(p => p.id === playerId);
-    if (playerIndex === -1) return; // Player not found
-    
-    // Ensure player stats object is initialized
-    if (!appState.players[playerIndex].stats) {
-        appState.players[playerIndex].stats = {
-            goals: 0,
-            assists: 0,
-            saves: 0,
-            goalsAllowed: 0
-        };
-    }
     
     const action = {
         timestamp: new Date().toISOString(),
@@ -766,27 +658,29 @@ function recordAction(actionType, specificPlayerId = null) {
     updatePlayerGridItem(playerId);
     
     saveAppData();
-    
-    // Only close the dialog if it was opened directly (not via another action flow)
-    if (!specificPlayerId) {
-        closePlayerActionDialog();
-    }
+    closePlayerActionDialog();
 }
 
 function updatePlayerGridItem(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // Directly update the stat values in the player card
-    const statValues = document.querySelectorAll(`.player-grid-item[data-player-id="${playerId}"] .stat-value`);
-    if (statValues && statValues.length >= 4) {
-        statValues[0].textContent = player.stats.goals;
-        statValues[1].textContent = player.stats.assists;
-        statValues[2].textContent = player.stats.saves;
-        statValues[3].textContent = player.stats.goalsAllowed;
-    } else {
-        // Fallback to re-rendering the entire player grid if we can't find stat elements
-        renderPlayerGrid();
+    const gridItem = document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`);
+    if (!gridItem) return;
+    
+    // Update the stats icons
+    const statsIcons = gridItem.querySelector('.player-stats-icons');
+    if (statsIcons) {
+        statsIcons.innerHTML = `
+            <div class="stats-row">
+                <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="stat-emoji">⚽</span> <span class="stat-value">${player.stats.goals}</span></span>
+                <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
+            </div>
+            <div class="stats-row">
+                <span class="stat-icon" title="Saves: ${player.stats.saves}"><span class="stat-emoji">🧤</span> <span class="stat-value">${player.stats.saves}</span></span>
+                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed"> <span class="stat-value">${player.stats.goalsAllowed}</span></span>
+            </div>
+        `;
     }
 }
 
@@ -867,6 +761,7 @@ function renderReportsList() {
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
                 <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
+                <button class="secondary-btn" onclick="exportReport('${game.id}', 'png')">PNG</button>
             </div>
         `;
         reportsList.appendChild(reportItem);
@@ -987,6 +882,7 @@ function viewReport(gameId) {
             
             <div class="report-actions">
                 <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
+                <button class="secondary-btn" onclick="exportReport('${gameId}', 'png')">Export as PNG</button>
                 <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
             </div>
         </div>
@@ -1004,45 +900,9 @@ function closeDetailedReport() {
 }
 
 function exportReport(gameId, format) {
-    const game = appState.games.find(g => g.id === gameId);
-    if (!game) {
-        showMessage('Game not found', 'error');
-        return;
-    }
-    
-    // Get the report content from the dialog
-    const reportContent = document.querySelector('.report-dialog').innerHTML;
-    
-    // For PDF, we'll use a printable version that users can save as PDF
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>Game Report - ${game.date}</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                h2, h3 { color: #333; }
-            </style>
-        </head>
-        <body>
-            ${reportContent}
-            <p style="margin-top: 30px; text-align: center; color: #666;">
-                Generated by Soccer Coach Tracker - ${new Date().toLocaleString()}
-            </p>
-            <script>
-                // Auto-print
-                window.onload = function() {
-                    window.print();
-                }
-            </script>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    showMessage('Report opened in new tab for printing/saving as PDF', 'success');
+    // This would generate and export the report
+    // For the prototype, we'll just show an alert
+    showMessage(`Report would be exported as ${format.toUpperCase()}`, 'success');
 }
 
 // Settings
@@ -1075,50 +935,6 @@ function loadAppData() {
         appState.players = data.players || [];
         appState.games = data.games || [];
         appState.settings = data.settings || appState.settings;
-        
-        // Initialize UI styling
-        initializeStyling();
-        
-        updateTeamNameUI();
-    }
-}
-
-// Function to clear all app data and start fresh
-function clearAppData() {
-    if (confirm('Are you sure you want to clear all data? This will remove all players, games, and settings.')) {
-        localStorage.removeItem('soccerCoachApp');
-        
-        // Reset app state to defaults
-        appState = {
-            teamName: "My Team",
-            players: [],
-            games: [],
-            currentGame: null,
-            timer: {
-                duration: 6 * 60,
-                timeLeft: 6 * 60,
-                interval: null,
-                isRunning: false
-            },
-            gameTimer: {
-                elapsed: 0,
-                interval: null,
-                isRunning: false,
-                startTime: null
-            },
-            settings: {
-                language: 'en',
-                defaultTimer: 6
-            },
-            currentPlayer: null
-        };
-        
-        // Update UI
-        updateTeamNameUI();
-        showMessage('All data has been cleared. The app has been reset.', 'success');
-        
-        // Return to main screen
-        showScreen('main-screen');
     }
 }
 
@@ -1204,17 +1020,17 @@ function handleFileImport(event) {
 }
 
 // Add demo players for testing
-function addDemoPlayers() {
-    const demoPlayers = [
-        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
-    ];
+// function addDemoPlayers() {
+//     const demoPlayers = [
+//         { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
+//     ];
     
-    appState.players = demoPlayers;
-    saveAppData();
-    renderPlayersList();
-}
+//     appState.players = demoPlayers;
+//     saveAppData();
+//     renderPlayersList();
+// }

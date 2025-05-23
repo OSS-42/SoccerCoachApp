@@ -47,8 +47,8 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Team Setup</h1>
-                <button class="action-btn white-btn" onclick="openAddPlayerDialog()">
-                    <span class="material-icons">person_add</span>
+                <button class="action-btn" onclick="openAddPlayerDialog()">
+                    <span class="material-icons">add</span>
                 </button>
             </div>
             <div class="content">
@@ -122,6 +122,17 @@
                 <button class="end-game-btn" onclick="confirmEndGame()">End Game</button>
             </div>
             <div class="game-content">
+                <div class="timer-container">
+                    <div class="substitution-timer" id="substitution-timer">
+                        <div class="timer-label">Next sub in...</div>
+                        <div class="timer-value">6:00</div>
+                        <div class="timer-controls">
+                            <button onclick="startTimer()"><span class="material-icons">play_arrow</span></button>
+                            <button onclick="pauseTimer()"><span class="material-icons">pause</span></button>
+                            <button onclick="resetTimer()"><span class="material-icons">replay</span></button>
+                        </div>
+                    </div>
+                </div>
                 <div class="player-grid" id="player-grid">
                     <!-- Players on the field will be shown here -->
                 </div>
@@ -166,6 +177,8 @@
 
                 </div>
 
+                <!-- Dark mode section removed -->
+
                 <div class="settings-group">
                     <h2>Default Timer</h2>
                     <div class="setting-option">
@@ -184,10 +197,6 @@
                         <button class="secondary-btn" onclick="importTeamData()">
                             <span class="material-icons">file_upload</span>
                             Import Team Data
-                        </button>
-                        <button class="secondary-btn danger-btn" onclick="clearAppData()">
-                            <span class="material-icons">delete_forever</span>
-                            Clear All Data
                         </button>
                     </div>
                     <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleFileImport(event)">
