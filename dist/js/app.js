@@ -282,13 +282,51 @@ function savePlayerEdit(playerId) {
 }
 
 function deletePlayer(playerId) {
-    if (confirm('Are you sure you want to remove this player?')) {
-        const playerIndex = appState.players.findIndex(p => p.id === playerId);
-        if (playerIndex !== -1) {
-            appState.players[playerIndex].active = false;
-            saveAppData();
-            renderPlayersList();
-        }
+    // Create confirmation dialog if it doesn't exist
+    let confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('div');
+        confirmDialog.id = 'confirm-delete-dialog';
+        confirmDialog.className = 'dialog';
+        document.getElementById('app').appendChild(confirmDialog);
+    }
+    
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    confirmDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to remove ${player.name} (#${player.jerseyNumber})?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="document.getElementById('confirm-delete-dialog').style.display='none'">Cancel</button>
+                <button class="primary-btn delete-btn" onclick="confirmDeletePlayer('${playerId}')">Remove Player</button>
+            </div>
+        </div>
+    `;
+    
+    confirmDialog.style.display = 'flex';
+}
+
+function confirmDeletePlayer(playerId) {
+    // Close the confirmation dialog
+    document.getElementById('confirm-delete-dialog').style.display = 'none';
+    
+    // Actually remove the player completely instead of just marking inactive
+    const playerIndex = appState.players.findIndex(p => p.id === playerId);
+    if (playerIndex !== -1) {
+        // Get player information for the message
+        const player = appState.players[playerIndex];
+        
+        // Remove the player completely (not just set inactive)
+        appState.players.splice(playerIndex, 1);
+        
+        // Update data and UI
+        saveAppData();
+        renderPlayersList();
+        
+        // Show success message with the ribbon
+        showMessage(`Player ${player.name} (#${player.jerseyNumber}) has been removed`, 'success');
     }
 }
 
