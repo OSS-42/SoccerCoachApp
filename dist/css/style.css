@@ -476,9 +476,7 @@ input:checked + .slider:before {
     align-items: center;
     margin-top: 8px;
     font-size: 14px;
-    background-color: rgba(255, 255, 255, 0.2);
     padding: 5px 10px;
-    border-radius: 4px;
 }
 
 .substitution-timer-small .timer-controls {
@@ -661,8 +659,8 @@ body.dark-mode .timer-controls button:hover {
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     cursor: pointer;
-    width: 130px;
-    height: 180px;
+    width: 150px;
+    height: 210px;
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
@@ -676,7 +674,7 @@ body.dark-mode .timer-controls button:hover {
 }
 
 .player-header {
-    background-color: #1e88e5;
+    background-color: #212121;
     color: white;
     padding: 8px;
     text-align: center;
@@ -724,25 +722,43 @@ body.dark-mode .timer-controls button:hover {
 }
 
 /* Responsive adjustments */
+/* Reset button for substitution timer */
+.reset-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.reset-btn .material-icons {
+    font-size: 16px;
+}
+
 @media (max-width: 600px) {
     .player-grid {
         justify-content: center;
     }
 
     .player-grid-item {
-        width: 120px;
-        height: 160px;
+        width: 140px;
+        height: 190px;
     }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 480px) {
     .player-grid-item {
-        width: 110px;
-        height: 150px;
+        width: 130px;
+        height: 180px;
     }
     
     .player-number {
-        font-size: 20px;
+        font-size: 22px;
     }
     
     .player-name {
@@ -751,6 +767,21 @@ body.dark-mode .timer-controls button:hover {
     
     .stat-value {
         font-size: 16px;
+    }
+}
+
+@media (max-width: 400px) {
+    .player-grid-item {
+        width: 120px;
+        height: 170px;
+    }
+    
+    .player-number {
+        font-size: 20px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
     }
 }
 
