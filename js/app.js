@@ -72,12 +72,6 @@ document.addEventListener('DOMContentLoaded', function() {
     renderPlayersList();
     updateTeamNameUI();
     
-    // Apply dark mode if enabled
-    applyDarkMode(appState.settings.darkMode);
-    
-    // Set dark mode toggle to match current setting
-    document.getElementById('dark-mode').checked = appState.settings.darkMode;
-    
     // Add demo players if none exist
     if (appState.players.length === 0) {
         addDemoPlayers();
