@@ -272,7 +272,7 @@ function savePlayerEdit(playerId) {
     }
     
     // Check for duplicate jersey numbers (excluding this player)
-    if (appState.players.some(p => p.id !== playerId && p.active && p.jerseyNumber === newJerseyNumber)) {
+    if (appState.players.some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
         showMessage('Another player already has this jersey number', 'error');
         return;
     }
@@ -1036,10 +1036,49 @@ function loadAppData() {
         appState.games = data.games || [];
         appState.settings = data.settings || appState.settings;
         
-        // Apply settings
-        if (appState.settings.darkMode) {
-            document.body.classList.add('dark-mode');
-        }
+        // Initialize UI styling
+        initializeStyling();
+        
+        updateTeamNameUI();
+    }
+}
+
+// Function to clear all app data and start fresh
+function clearAppData() {
+    if (confirm('Are you sure you want to clear all data? This will remove all players, games, and settings.')) {
+        localStorage.removeItem('soccerCoachApp');
+        
+        // Reset app state to defaults
+        appState = {
+            teamName: "My Team",
+            players: [],
+            games: [],
+            currentGame: null,
+            timer: {
+                duration: 6 * 60,
+                timeLeft: 6 * 60,
+                interval: null,
+                isRunning: false
+            },
+            gameTimer: {
+                elapsed: 0,
+                interval: null,
+                isRunning: false,
+                startTime: null
+            },
+            settings: {
+                language: 'en',
+                defaultTimer: 6
+            },
+            currentPlayer: null
+        };
+        
+        // Update UI
+        updateTeamNameUI();
+        showMessage('All data has been cleared. The app has been reset.', 'success');
+        
+        // Return to main screen
+        showScreen('main-screen');
     }
 }
 
