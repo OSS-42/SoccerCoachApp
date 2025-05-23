@@ -574,8 +574,8 @@ function openAssistSelectionDialog() {
     // Clear previous content
     playersGrid.innerHTML = '';
     
-    // Get active players excluding the goal scorer
-    const activePlayers = appState.players.filter(p => p.active && p.id !== appState.goalScorer.id);
+    // Get all players excluding the goal scorer
+    const activePlayers = appState.players.filter(p => p.id !== appState.goalScorer.id);
     
     // Add players to the grid
     activePlayers.forEach(player => {
