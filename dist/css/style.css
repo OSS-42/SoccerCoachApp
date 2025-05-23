@@ -12,11 +12,7 @@ body {
     transition: background-color 0.3s, color 0.3s;
 }
 
-/* Dark Mode Styles */
-body.dark-mode {
-    background-color: #121212;
-    color: #e0e0e0;
-}
+/* Light mode only - dark mode removed */
 
 /* Message Ribbon */
 .message-ribbon {
