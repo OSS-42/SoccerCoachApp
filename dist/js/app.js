@@ -152,11 +152,16 @@ function addPlayer() {
         return;
     }
     
+    // Generate a unique ID that isn't already in use
+    let playerId;
+    do {
+        playerId = Math.floor(Math.random() * 1000000).toString();
+    } while (appState.players.some(p => p.id === playerId));
+    
     const player = {
-        id: Date.now().toString(),
+        id: playerId, // Using a random number instead of timestamp for better reusability
         name,
         jerseyNumber: Number(jerseyNumber),
-        active: true,
         stats: {
             goals: 0,
             assists: 0,

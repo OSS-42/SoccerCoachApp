@@ -610,28 +610,21 @@ body.dark-mode .timer-controls button:hover {
     gap: 8px;
     padding: 10px;
     overflow-y: auto;
-    max-height: calc(100vh - 160px);
+    height: calc(100vh - 170px);
 }
 
 .player-grid-item {
     background-color: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: 6px;
     text-align: center;
     cursor: pointer;
-    width: calc(20% - 8px);
-    min-width: 70px;
-    max-width: 100px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    width: 85px;
+    height: 85px;
     transition: transform 0.2s ease;
-    font-size: clamp(12px, 2.5vw, 16px);
-    /* Make height proportional to width */
-    height: 0;
-    padding-bottom: calc(20% - 8px);
+    font-size: 0.9rem;
     position: relative;
+    margin-bottom: 6px;
 }
 
 /* Container for player content to handle the absolute positioning */
@@ -647,11 +640,33 @@ body.dark-mode .timer-controls button:hover {
     padding: 6px;
 }
 
-/* Make sure it's responsive on very small screens */
-@media (max-width: 400px) {
+/* Responsive adjustments */
+@media (max-width: 480px) {
     .player-grid-item {
-        width: calc(33.33% - 8px);
-        padding-bottom: calc(33.33% - 8px);
+        width: 75px;
+        height: 75px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .player-grid-item {
+        width: 70px;
+        height: 70px;
+        font-size: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 12px;
+    }
+    
+    .stat-icon, .stat-emoji {
+        font-size: 14px !important;
+    }
+    
+    .red-soccer-icon {
+        width: 14px !important;
+        height: 14px !important;
     }
 }
 
