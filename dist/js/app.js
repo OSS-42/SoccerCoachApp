@@ -403,11 +403,21 @@ function renderPlayerGrid() {
     
     // Using all players, not filtering by active status anymore
     appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        // Ensure player has stats object
+        if (!player.stats) {
+            player.stats = {
+                goals: 0,
+                assists: 0,
+                saves: 0,
+                goalsAllowed: 0
+            };
+        }
+        
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
         
-        // Create a completely redesigned player card
+        // Create a completely redesigned player card (now square shaped)
         playerGridItem.innerHTML = `
             <div class="player-header">
                 <div class="player-number">${player.jerseyNumber}</div>
@@ -434,7 +444,7 @@ function renderPlayerGrid() {
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed"> Goals Allowed
+                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed"> GA
                     </div>
                     <div class="stat-value">${player.stats.goalsAllowed}</div>
                 </div>
@@ -532,6 +542,22 @@ function pauseGameTimer() {
         clearInterval(appState.gameTimer.interval);
         appState.gameTimer.isRunning = false;
     }
+}
+
+function stopGameTimer() {
+    // Stop the timer
+    if (appState.gameTimer.isRunning) {
+        clearInterval(appState.gameTimer.interval);
+        appState.gameTimer.isRunning = false;
+    }
+    
+    // Reset the time to 0
+    appState.gameTimer.elapsed = 0;
+    updateGameTimeDisplay();
+    
+    // Also stop and reset substitution timer
+    pauseTimer();
+    resetTimer();
 }
 
 // Player Actions
@@ -745,22 +771,16 @@ function updatePlayerGridItem(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    const gridItem = document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`);
-    if (!gridItem) return;
-    
-    // Update the stats icons
-    const statsIcons = gridItem.querySelector('.player-stats-icons');
-    if (statsIcons) {
-        statsIcons.innerHTML = `
-            <div class="stats-row">
-                <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="material-icons">sports_soccer</span> <span class="stat-value">${player.stats.goals}</span></span>
-                <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
-            </div>
-            <div class="stats-row">
-                <span class="stat-icon" title="Saves: ${player.stats.saves}"><span class="stat-emoji">🧤</span> <span class="stat-value">${player.stats.saves}</span></span>
-                <span class="stat-icon" title="Goals Allowed: ${player.stats.goalsAllowed}"><img src="img/red-soccer.png" class="red-soccer-icon" alt="Goals Allowed"> <span class="stat-value">${player.stats.goalsAllowed}</span></span>
-            </div>
-        `;
+    // Directly update the stat values in the player card
+    const statValues = document.querySelectorAll(`.player-grid-item[data-player-id="${playerId}"] .stat-value`);
+    if (statValues && statValues.length >= 4) {
+        statValues[0].textContent = player.stats.goals;
+        statValues[1].textContent = player.stats.assists;
+        statValues[2].textContent = player.stats.saves;
+        statValues[3].textContent = player.stats.goalsAllowed;
+    } else {
+        // Fallback to re-rendering the entire player grid if we can't find stat elements
+        renderPlayerGrid();
     }
 }
 
