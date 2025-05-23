@@ -457,8 +457,43 @@ input:checked + .slider:before {
 
 .game-time-container {
     display: flex;
+    flex-direction: column;
     flex: 1;
     justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+.game-time-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.substitution-timer-small {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 14px;
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.substitution-timer-small .timer-controls {
+    margin-top: 3px;
+}
+
+.substitution-timer-small .timer-controls button {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+}
+
+.game-controls {
+    display: flex;
+    gap: 5px;
 }
 
 /* Player Stats Icons */
@@ -565,6 +600,13 @@ input:checked + .slider:before {
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 15px;
+}
+
+.substitution-timer-small .timer-value {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 0;
+    display: inline;
 }
 
 .timer-controls {
