@@ -18,6 +18,14 @@ No installation required! This is a client-side web application that runs entire
 1. Simply open the `index.html` file in a modern web browser
 2. Alternatively, serve the files using any web server
 
+### Repository Structure
+
+This repository contains:
+- `dist/` - Clean distribution version of the web app ready for deployment
+- Main directory - Development version with all source files
+- `serve.py` - Python script to easily serve either version of the app
+- `setup-gradle.sh` - Script to set up Android Gradle build environment (optional)
+
 ## Usage
 
 ### Team Setup
