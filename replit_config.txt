@@ -1,0 +1,37 @@
+# Recommended Replit Configuration for Soccer Coach Tracker Web App
+
+# Replace your current .replit file content with this:
+
+modules = ["nodejs-20", "python-3.11"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["wget", "zip"]  # Removed JDK and Gradle since they're not needed
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Web App Server"
+
+[[workflows.workflow]]
+name = "Web App Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd dist && python -m http.server 5000"  # Changed to serve from dist folder
+waitForPort = 5000
+
+[deployment]
+run = ["sh", "-c", "cd dist && python -m http.server 5000"]  # Updated for web app deployment
+
+[[ports]]
+localPort = 5000
+externalPort = 80

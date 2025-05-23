@@ -1,6 +1,6 @@
-# Soccer Coach Tracker - Deployment Guide
+# Soccer Coach Tracker - Web App Deployment Guide
 
-This guide will help you deploy the Soccer Coach Tracker web application to various hosting services.
+This guide will help you deploy the Soccer Coach Tracker web application to various hosting services. This is a pure web application (HTML, CSS, and JavaScript) with no backend requirements.
 
 ## What to Deploy
 
