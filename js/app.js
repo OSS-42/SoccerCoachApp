@@ -24,6 +24,17 @@ let appState = {
 };
 
 // Initialize the app
+// Utility functions for common operations
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
+
 // Initialize app styling - light mode only
 function initializeStyling() {
     // No styling needed, we're using light mode only
@@ -134,11 +145,11 @@ function showScreen(screenId) {
 
 // Player Management
 function openAddPlayerDialog() {
-    document.getElementById('add-player-dialog').style.display = 'flex';
+    toggleDialog('add-player-dialog', true);
 }
 
 function closeAddPlayerDialog() {
-    document.getElementById('add-player-dialog').style.display = 'none';
+    toggleDialog('add-player-dialog', false);
     document.getElementById('player-name').value = '';
     document.getElementById('jersey-number').value = '';
 }
@@ -567,21 +578,19 @@ function stopGameTimer() {
 }
 
 // Player Actions
+// Helper function to handle dialog operations
+function toggleDialog(dialogId, isOpen) {
+    document.getElementById(dialogId).style.display = isOpen ? 'flex' : 'none';
+}
+
 function openPlayerActionDialog(player) {
     appState.currentPlayer = player;
-    
-    const dialog = document.getElementById('player-action-dialog');
-    const playerNameSpan = document.getElementById('action-player-name');
-    
-    playerNameSpan.textContent = player.name;
-    
-    // All actions are now available for all players
-    
-    dialog.style.display = 'flex';
+    document.getElementById('action-player-name').textContent = player.name;
+    toggleDialog('player-action-dialog', true);
 }
 
 function closePlayerActionDialog() {
-    document.getElementById('player-action-dialog').style.display = 'none';
+    toggleDialog('player-action-dialog', false);
     appState.currentPlayer = null;
 }
 
@@ -600,7 +609,6 @@ function handleGoalAction() {
 }
 
 function openAssistSelectionDialog() {
-    const dialog = document.getElementById('assist-selection-dialog');
     const playersGrid = document.getElementById('assist-players-grid');
     
     // Clear previous content
@@ -623,11 +631,11 @@ function openAssistSelectionDialog() {
         playersGrid.appendChild(playerItem);
     });
     
-    dialog.style.display = 'flex';
+    toggleDialog('assist-selection-dialog', true);
 }
 
 function closeAssistSelectionDialog() {
-    document.getElementById('assist-selection-dialog').style.display = 'none';
+    toggleDialog('assist-selection-dialog', false);
     appState.goalScorer = null;
 }
 
@@ -669,7 +677,6 @@ function handleAssistAction() {
 }
 
 function openScorerSelectionDialog() {
-    const dialog = document.getElementById('scorer-selection-dialog');
     const playersGrid = document.getElementById('scorer-players-grid');
     
     // Clear previous content
@@ -692,11 +699,11 @@ function openScorerSelectionDialog() {
         playersGrid.appendChild(playerItem);
     });
     
-    dialog.style.display = 'flex';
+    toggleDialog('scorer-selection-dialog', true);
 }
 
 function closeScorerSelectionDialog() {
-    document.getElementById('scorer-selection-dialog').style.display = 'none';
+    toggleDialog('scorer-selection-dialog', false);
     appState.assister = null;
 }
 
@@ -803,11 +810,11 @@ function calculateGameMinute() {
 
 // End Game
 function confirmEndGame() {
-    document.getElementById('end-game-dialog').style.display = 'flex';
+    toggleDialog('end-game-dialog', true);
 }
 
 function closeEndGameDialog() {
-    document.getElementById('end-game-dialog').style.display = 'none';
+    toggleDialog('end-game-dialog', false);
 }
 
 function endGame() {
