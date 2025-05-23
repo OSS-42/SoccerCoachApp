@@ -544,17 +544,12 @@ function stopGameTimer() {
         appState.gameTimer.isRunning = false;
     }
     
-    // Reset the game timer completely to 0
-    appState.gameTimer.elapsed = 0;
+    // Do not reset the game timer to 0, just stop it
+    // Keeping the current elapsed time
     appState.gameTimer.interval = null;
-    appState.gameTimer.startTime = null;
     
-    // Update the display to show 00:00
-    document.getElementById('game-time').textContent = 'Time: 00:00';
-    
-    // Also stop and reset substitution timer
+    // Also stop substitution timer but don't reset it
     pauseTimer();
-    resetTimer();
     
     // Save the state
     saveAppData();
