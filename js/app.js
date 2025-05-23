@@ -26,13 +26,13 @@ let appState = {
 
 // Initialize the app
 // Apply dark mode based on settings
-function applyDarkMode(enabled) {
-    if (enabled) {
-        document.body.classList.add('dark-mode');
-    } else {
-        document.body.classList.remove('dark-mode');
-    }
-}
+// function applyDarkMode(enabled) {
+//     if (enabled) {
+//         document.body.classList.add('dark-mode');
+//     } else {
+//         document.body.classList.remove('dark-mode');
+//     }
+// }
 
 // Message functions
 function showMessage(message, type = 'error') {
@@ -67,10 +67,10 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTeamNameUI();
     
     // Apply dark mode if enabled
-    applyDarkMode(appState.settings.darkMode);
+    // applyDarkMode(appState.settings.darkMode);
     
     // Set dark mode toggle to match current setting
-    document.getElementById('dark-mode').checked = appState.settings.darkMode;
+    // document.getElementById('dark-mode').checked = appState.settings.darkMode;
     
     // Add demo players if none exist
     if (appState.players.length === 0) {
@@ -479,12 +479,12 @@ function stopGameTimer() {
     }
     
     // Reset the game timer completely to 0
-    appState.gameTimer.elapsed = 0;
-    appState.gameTimer.interval = null;
-    appState.gameTimer.startTime = null;
+    // appState.gameTimer.elapsed = 0;
+    // appState.gameTimer.interval = null;
+    // appState.gameTimer.startTime = null;
     
-    // Update the display to show 00:00
-    document.getElementById('game-time').textContent = 'Time: 00:00';
+    // // Update the display to show 00:00
+    // document.getElementById('game-time').textContent = 'Time: 00:00';
     
     // Also stop and reset substitution timer
     pauseTimer();
@@ -941,7 +941,7 @@ function saveSettings() {
     appState.settings.defaultTimer = parseInt(defaultTimer);
     
     // Apply dark mode immediately
-    applyDarkMode(darkMode);
+    // applyDarkMode(darkMode);
     
     saveAppData();
     showMessage('Settings saved successfully', 'success');
@@ -1055,17 +1055,17 @@ function handleFileImport(event) {
 }
 
 // Add demo players for testing
-function addDemoPlayers() {
-    const demoPlayers = [
-        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
-    ];
+// function addDemoPlayers() {
+//     const demoPlayers = [
+//         { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+//         { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
+//     ];
     
-    appState.players = demoPlayers;
-    saveAppData();
-    renderPlayersList();
-}
+//     appState.players = demoPlayers;
+//     saveAppData();
+//     renderPlayersList();
+// }
