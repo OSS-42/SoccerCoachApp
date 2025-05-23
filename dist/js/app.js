@@ -370,7 +370,7 @@ function renderPlayerGrid() {
             </div>
             <div class="player-stats-icons">
                 <div class="stats-row">
-                    <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="stat-emoji">⚽</span> <span class="stat-value">${player.stats.goals}</span></span>
+                    <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="material-icons">sports_soccer</span> <span class="stat-value">${player.stats.goals}</span></span>
                     <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
                 </div>
                 <div class="stats-row">
@@ -675,7 +675,7 @@ function updatePlayerGridItem(playerId) {
     if (statsIcons) {
         statsIcons.innerHTML = `
             <div class="stats-row">
-                <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="stat-emoji">⚽</span> <span class="stat-value">${player.stats.goals}</span></span>
+                <span class="stat-icon" title="Goals: ${player.stats.goals}"><span class="material-icons">sports_soccer</span> <span class="stat-value">${player.stats.goals}</span></span>
                 <span class="stat-icon" title="Assists: ${player.stats.assists}"><span class="stat-emoji">👟</span> <span class="stat-value">${player.stats.assists}</span></span>
             </div>
             <div class="stats-row">
