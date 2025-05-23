@@ -24,7 +24,6 @@ This repository contains:
 - `dist/` - Clean distribution version of the web app ready for deployment
 - Main directory - Development version with all source files
 - `serve.py` - Python script to easily serve either version of the app
-- `setup-gradle.sh` - Script to set up Android Gradle build environment (optional)
 
 ## Usage
 
