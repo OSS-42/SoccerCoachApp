@@ -24,10 +24,9 @@ let appState = {
 };
 
 // Initialize the app
-// Initialize app styling (removed dark mode functionality)
+// Initialize app styling - light mode only
 function initializeStyling() {
-    // Always use light mode
-    document.body.classList.remove('dark-mode');
+    // No styling needed, we're using light mode only
 }
 
 // Message functions
