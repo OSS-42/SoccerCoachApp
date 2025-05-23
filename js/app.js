@@ -554,8 +554,9 @@ function stopGameTimer() {
     // Keeping the current elapsed time
     appState.gameTimer.interval = null;
     
-    // Also stop substitution timer but don't reset it
+    // Stop substitution timer AND reset it to default value
     pauseTimer();
+    resetTimer();
     
     // Save the state
     saveAppData();
