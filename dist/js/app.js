@@ -432,7 +432,7 @@ function renderPlayerGrid() {
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <span class="material-icons">hiking</span>
+                        <span class="stat-emoji">👟</span>
                     </div>
                     <div class="stat-value">${player.stats.assists}</div>
                 </div>
@@ -551,8 +551,15 @@ function stopGameTimer() {
         appState.gameTimer.isRunning = false;
     }
     
-    // Reset the time to 0
-    appState.gameTimer.elapsed = 0;
+    // Reset the game timer completely
+    appState.gameTimer = {
+        elapsed: 0,
+        isRunning: false,
+        interval: null,
+        startTime: null
+    };
+    
+    // Update the display to show 00:00
     updateGameTimeDisplay();
     
     // Also stop and reset substitution timer

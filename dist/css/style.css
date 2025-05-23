@@ -718,7 +718,8 @@ body.dark-mode .timer-controls button:hover {
     margin-bottom: 5px;
 }
 
-.stat-label .material-icons {
+.stat-label .material-icons,
+.stat-label .stat-emoji {
     font-size: 28px;
     color: #444;
 }
