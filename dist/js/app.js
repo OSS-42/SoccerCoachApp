@@ -545,26 +545,26 @@ function pauseGameTimer() {
 }
 
 function stopGameTimer() {
-    // Stop the timer
+    // Stop the timer first
     if (appState.gameTimer.isRunning) {
         clearInterval(appState.gameTimer.interval);
         appState.gameTimer.isRunning = false;
     }
     
-    // Reset the game timer completely
-    appState.gameTimer = {
-        elapsed: 0,
-        isRunning: false,
-        interval: null,
-        startTime: null
-    };
+    // Reset the game timer completely to 0
+    appState.gameTimer.elapsed = 0;
+    appState.gameTimer.interval = null;
+    appState.gameTimer.startTime = null;
     
     // Update the display to show 00:00
-    updateGameTimeDisplay();
+    document.getElementById('game-time').textContent = 'Time: 00:00';
     
     // Also stop and reset substitution timer
     pauseTimer();
     resetTimer();
+    
+    // Save the state
+    saveAppData();
 }
 
 // Player Actions

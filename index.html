@@ -91,8 +91,8 @@
             </div>
         </div>
 
-        <!-- Game Tracking Screen (Landscape) -->
-        <div id="game-tracking" class="screen landscape">
+        <!-- Game Tracking Screen -->
+        <div id="game-tracking" class="screen">
             <div class="game-header">
                 <div class="team-scores">
                     <div class="team-score">
@@ -105,7 +105,19 @@
                     </div>
                 </div>
                 <div class="game-time-container">
-                    <div class="game-time" id="game-time">Time: 00:00</div>
+                    <div class="game-time-wrapper">
+                        <div class="game-time" id="game-time">Time: 00:00</div>
+                        <div class="timer-controls game-controls">
+                            <button onclick="startGameTimer(); startTimer();"><span class="material-icons">play_arrow</span></button>
+                            <button onclick="pauseGameTimer(); pauseTimer();"><span class="material-icons">pause</span></button>
+                            <button onclick="stopGameTimer()"><span class="material-icons">stop</span></button>
+                        </div>
+                    </div>
+                    <div class="substitution-timer-small" id="substitution-timer">
+                        <div class="timer-label">Next sub in: <span class="timer-value">6:00</span>
+                            <button class="reset-btn" onclick="resetTimer()"><span class="material-icons">replay</span></button>
+                        </div>
+                    </div>
                 </div>
                 <button class="end-game-btn" onclick="confirmEndGame()">End Game</button>
             </div>
@@ -235,7 +247,7 @@
                         Goal
                     </button>
                     <button class="action-btn" onclick="handleAssistAction()">
-                        <span class="material-icons">front_hand</span>
+                        <span class="stat-emoji">👟</span>
                         Assist
                     </button>
                     <button class="action-btn" onclick="recordAction('save')">
