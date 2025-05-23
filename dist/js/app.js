@@ -826,7 +826,6 @@ function renderReportsList() {
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
                 <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
-                <button class="secondary-btn" onclick="exportReport('${game.id}', 'png')">PNG</button>
             </div>
         `;
         reportsList.appendChild(reportItem);
