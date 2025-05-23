@@ -592,16 +592,19 @@ body.dark-mode .timer-controls button:hover {
 .player-grid {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    grid-gap: 15px;
-    padding: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+    grid-auto-rows: minmax(80px, auto);
+    grid-gap: 8px;
+    padding: 10px;
+    overflow: hidden;
+    max-height: calc(100vh - 160px);
 }
 
 .player-grid-item {
     background-color: white;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    padding: min(8px, 5%);
+    padding: 6px;
     text-align: center;
     cursor: pointer;
     aspect-ratio: 1/1;
@@ -609,9 +612,8 @@ body.dark-mode .timer-controls button:hover {
     flex-direction: column;
     justify-content: space-between;
     width: 100%;
-    height: auto;
     transition: transform 0.2s ease;
-    min-height: 80px;
+    font-size: clamp(12px, 2.5vw, 16px);
 }
 
 .player-grid-item:hover {
