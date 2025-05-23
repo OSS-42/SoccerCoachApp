@@ -659,8 +659,8 @@ body.dark-mode .timer-controls button:hover {
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
     cursor: pointer;
-    width: 170px;
-    height: 170px;
+    width: 200px;
+    height: 200px;
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
@@ -696,29 +696,37 @@ body.dark-mode .timer-controls button:hover {
 }
 
 .player-stats-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     flex: 1;
     padding: 10px;
-    justify-content: space-evenly;
+    justify-content: space-around;
+    gap: 10px;
 }
 
 .stat-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
+    justify-content: center;
 }
 
 .stat-label {
     display: flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    margin-bottom: 5px;
+}
+
+.stat-label .material-icons {
+    font-size: 28px;
+    color: #444;
 }
 
 .stat-value {
     font-weight: bold;
-    font-size: 18px;
+    font-size: 24px;
+    color: #1e88e5;
 }
 
 /* Responsive adjustments */
@@ -746,12 +754,31 @@ body.dark-mode .timer-controls button:hover {
     }
 
     .player-grid-item {
-        width: 150px;
-        height: 150px;
+        width: 180px;
+        height: 180px;
     }
 }
 
 @media (max-width: 480px) {
+    .player-grid-item {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .player-number {
+        font-size: 24px;
+    }
+    
+    .player-name {
+        font-size: 16px;
+    }
+    
+    .stat-value {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 400px) {
     .player-grid-item {
         width: 140px;
         height: 140px;
@@ -759,29 +786,6 @@ body.dark-mode .timer-controls button:hover {
     
     .player-number {
         font-size: 22px;
-    }
-    
-    .player-name {
-        font-size: 14px;
-    }
-    
-    .stat-value {
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 400px) {
-    .player-grid-item {
-        width: 130px;
-        height: 130px;
-    }
-    
-    .player-number {
-        font-size: 20px;
-    }
-    
-    .stat-label {
-        font-size: 12px;
     }
 }
 

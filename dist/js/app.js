@@ -426,25 +426,25 @@ function renderPlayerGrid() {
             <div class="player-stats-container">
                 <div class="stat-item">
                     <div class="stat-label">
-                        <span class="material-icons">sports_soccer</span> Goals
+                        <span class="material-icons">sports_soccer</span>
                     </div>
                     <div class="stat-value">${player.stats.goals}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <span class="material-icons">front_hand</span> Assists
+                        <span class="material-icons">hiking</span>
                     </div>
                     <div class="stat-value">${player.stats.assists}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <span class="material-icons">back_hand</span> Saves
+                        <span class="material-icons">back_hand</span>
                     </div>
                     <div class="stat-value">${player.stats.saves}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed"> GA
+                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed">
                     </div>
                     <div class="stat-value">${player.stats.goalsAllowed}</div>
                 </div>
