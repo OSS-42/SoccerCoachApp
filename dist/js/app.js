@@ -18,7 +18,8 @@ let appState = {
     },
     settings: {
         language: 'en',
-        defaultTimer: 6
+        defaultSubstitutionTime: null, // Replace defaultTimer with defaultSubstitutionTime
+        isSubstitutionDefaultChecked: false
     },
     currentPlayer: null
 };
@@ -29,23 +30,34 @@ function initializeStyling() {
     // No styling needed, we're using light mode only
 }
 
+function updatePlayerGridOrientation() {
+    const playerGrid = document.getElementById('player-grid');
+    if (!playerGrid) return;
+
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    if (isLandscape) {
+        playerGrid.classList.add('landscape-mode');
+    } else {
+        playerGrid.classList.remove('landscape-mode');
+    }
+}
+
+let messageTimeout;
+
 // Message functions
 function showMessage(message, type = 'error') {
     const ribbon = document.getElementById('message-ribbon');
     const messageText = document.getElementById('message-text');
     
+    clearTimeout(messageTimeout);
+    
     messageText.textContent = message;
     ribbon.className = `message-ribbon ${type}`;
+    ribbon.classList.remove('hidden');
     
-    // Show message
-    setTimeout(() => {
-        ribbon.classList.remove('hidden');
-    }, 10);
-    
-    // Auto-hide after 5 seconds
-    if (type === 'success') {
-        setTimeout(hideMessage, 5000);
-    }
+    messageTimeout = setTimeout(() => {
+        hideMessage();
+    }, 5000);
 }
 
 function hideMessage() {
@@ -53,22 +65,55 @@ function hideMessage() {
     ribbon.classList.add('hidden');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Load saved data if available
-    loadAppData();
+// Function to render the Game Setup screen and pre-fill the substitution time
+function renderGameSetup() {
+    const substitutionTimeInput = document.getElementById('substitution-time');
+    const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
     
-    // Populate UI with existing data
+    // Pre-fill substitution time if a default exists
+    if (appState.settings.defaultSubstitutionTime !== null) {
+        substitutionTimeInput.value = appState.settings.defaultSubstitutionTime;
+    } else {
+        substitutionTimeInput.value = ''; // Ensure the input is empty by default
+    }
+    
+    // Set the checkbox state based on the stored value
+    saveSubstitutionDefaultCheckbox.checked = appState.settings.isSubstitutionDefaultChecked;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set dynamic header height
+    const header = document.querySelector('.game-header') || document.querySelector('.app-header');
+    if (header) {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+    }
+
+    // Hide all dialogs
+    const dialogs = document.querySelectorAll('.dialog');
+    dialogs.forEach(dialog => {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+    });
+
+    // Update player grid orientation on load
+    updatePlayerGridOrientation();
+    // Update on orientation change
+    window.addEventListener('resize', updatePlayerGridOrientation);
+    window.addEventListener('orientationchange', updatePlayerGridOrientation);
+
+    // Load saved data
+    loadAppData();
     renderPlayersList();
     updateTeamNameUI();
     
-    // Add demo players if none exist
     if (appState.players.length === 0) {
         addDemoPlayers();
     }
     
-    // Set today's date as the default
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('game-date').value = today;
+    showScreen('main-screen');
 });
 
 // Team Name functions
@@ -113,26 +158,34 @@ function showScreen(screenId) {
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
     
+    // Reset message ribbon
+    hideMessage();
+
     // Special handling for specific screens
-    if (screenId === 'reports') {
-        renderReportsList();
-    } else if (screenId === 'game-setup') {
+    if (screenId === 'game-setup') {
         // Auto-fill today's date when opening the game setup screen
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         document.getElementById('game-date').value = `${year}-${month}-${day}`;
+        renderGameSetup(); // Pre-fill the substitution time
+    } else if (screenId === 'reports') {
+        renderReportsList();
     }
 }
 
 // Player Management
 function openAddPlayerDialog() {
-    document.getElementById('add-player-dialog').style.display = 'flex';
+    const dialog = document.getElementById('add-player-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeAddPlayerDialog() {
-    document.getElementById('add-player-dialog').style.display = 'none';
+    const dialog = document.getElementById('add-player-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     document.getElementById('player-name').value = '';
     document.getElementById('jersey-number').value = '';
 }
@@ -159,14 +212,16 @@ function addPlayer() {
     } while (appState.players.some(p => p.id === playerId));
     
     const player = {
-        id: playerId, // Using a random number instead of timestamp for better reusability
+        id: playerId,
         name,
         jerseyNumber: Number(jerseyNumber),
         stats: {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         }
     };
     
@@ -174,6 +229,9 @@ function addPlayer() {
     saveAppData();
     renderPlayersList();
     closeAddPlayerDialog();
+
+    // Show success message
+    showMessage(`Player ${name} (#${jerseyNumber}) added successfully`, 'success');
 }
 
 function renderPlayersList() {
@@ -210,7 +268,6 @@ function editPlayer(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // Create edit player dialog if it doesn't exist
     let editDialog = document.getElementById('edit-player-dialog');
     if (!editDialog) {
         editDialog = document.createElement('div');
@@ -238,12 +295,14 @@ function editPlayer(playerId) {
     `;
     
     editDialog.style.display = 'flex';
+    editDialog.classList.add('active');
 }
 
 function closeEditPlayerDialog() {
     const editDialog = document.getElementById('edit-player-dialog');
     if (editDialog) {
         editDialog.style.display = 'none';
+        editDialog.classList.remove('active');
     }
 }
 
@@ -278,10 +337,12 @@ function savePlayerEdit(playerId) {
     saveAppData();
     renderPlayersList();
     closeEditPlayerDialog();
+
+    // Show success message
+    showMessage(`Player ${newName} (#${newJerseyNumber}) updated successfully`, 'success');
 }
 
 function deletePlayer(playerId) {
-    // Create confirmation dialog if it doesn't exist
     let confirmDialog = document.getElementById('confirm-delete-dialog');
     if (!confirmDialog) {
         confirmDialog = document.createElement('div');
@@ -298,13 +359,22 @@ function deletePlayer(playerId) {
             <h2>Confirm Delete</h2>
             <p>Are you sure you want to remove ${player.name} (#${player.jerseyNumber})?</p>
             <div class="dialog-buttons">
-                <button class="secondary-btn" onclick="document.getElementById('confirm-delete-dialog').style.display='none'">Cancel</button>
+                <button class="secondary-btn" onclick="closeConfirmDeleteDialog()">Cancel</button>
                 <button class="primary-btn delete-btn" onclick="confirmDeletePlayer('${playerId}')">Remove Player</button>
             </div>
         </div>
     `;
     
     confirmDialog.style.display = 'flex';
+    confirmDialog.classList.add('active');
+}
+
+function closeConfirmDeleteDialog() {
+    const confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (confirmDialog) {
+        confirmDialog.style.display = 'none';
+        confirmDialog.classList.remove('active');
+    }
 }
 
 function confirmDeletePlayer(playerId) {
@@ -331,25 +401,73 @@ function confirmDeletePlayer(playerId) {
 
 // Game Management
 function startGame() {
-    const opponentName = document.getElementById('opponent-name').value.trim();
-    const gameDate = document.getElementById('game-date').value;
-    const substitutionTime = document.getElementById('substitution-time').value;
-    
+    const opponentNameInput = document.getElementById('opponent-name');
+    const gameDateInput = document.getElementById('game-date');
+    const numPeriodsInput = document.getElementById('num-periods');
+    const periodDurationInput = document.getElementById('period-duration');
+    const substitutionTimeInput = document.getElementById('substitution-time');
+    const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
+
+    const opponentName = opponentNameInput.value.trim();
+    const gameDate = gameDateInput.value;
+    const numPeriods = parseInt(numPeriodsInput.value, 10);
+    const periodDuration = parseInt(periodDurationInput.value, 10);
+    const substitutionTime = parseInt(substitutionTimeInput.value, 10);
+
+    // Validate inputs
     if (!opponentName) {
-        showMessage('Please enter the opponent team name', 'error');
+        showMessage('Please enter an opponent team name.', 'error');
         return;
     }
-    
+
+    if (!gameDate) {
+        showMessage('Please select a game date.', 'error');
+        return;
+    }
+
+    if (isNaN(numPeriods) || numPeriods < 1) {
+        showMessage('Number of periods must be at least 1.', 'error');
+        return;
+    }
+
+    if (isNaN(periodDuration) || periodDuration < 1 || periodDuration > 45) {
+        showMessage('Time per period must be between 1 and 45 minutes.', 'error');
+        return;
+    }
+
+    if (isNaN(substitutionTime) || substitutionTime < 1) {
+        showMessage('Substitution time must be at least 1 minute.', 'error');
+        return;
+    }
+
+    // Calculate total game time (in minutes)
+    const totalGameTime = numPeriods * periodDuration;
+
+    // Validate substitution time against total game time and max of 20 minutes
+    const maxSubstitutionTime = Math.min(totalGameTime, 20);
+    if (substitutionTime > maxSubstitutionTime) {
+        showMessage(`Substitution time cannot exceed the total game time (${totalGameTime} minutes) or 20 minutes.`, 'error');
+        return;
+    }
+
+    // Save the default substitution time and checkbox state
+    if (saveSubstitutionDefaultCheckbox.checked) {
+        appState.settings.defaultSubstitutionTime = substitutionTime;
+    }
+    appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+
     // Reset player stats for this new game
     appState.players.forEach(player => {
         player.stats = {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         };
     });
-    
+
     // Create the new game
     appState.currentGame = {
         id: Date.now().toString(),
@@ -362,30 +480,35 @@ function startGame() {
         actions: [],
         activePlayers: [...appState.players.map(p => p.id)],
         isCompleted: false,
-        totalGameTime: 0 // Track total game time in seconds
+        totalGameTime: 0,
+        numPeriods: numPeriods,
+        periodDuration: periodDuration * 60, // Convert to seconds
+        currentPeriod: 1,
+        substitutionDuration: substitutionTime * 60 // Convert to seconds
     };
-    
+
     // Setup substitution timer
-    appState.timer.duration = parseInt(substitutionTime) * 60;
+    appState.timer.duration = appState.currentGame.substitutionDuration;
     appState.timer.timeLeft = appState.timer.duration;
     updateTimerDisplay();
-    
+
     // Reset and setup game timer
     appState.gameTimer.elapsed = 0;
     appState.gameTimer.isRunning = false;
     appState.gameTimer.startTime = null;
     updateGameTimeDisplay();
-    
+    updatePeriodCounter(); // Initialize period counter
+
     // Update opponent name in UI
     document.getElementById('opponent-team-name').textContent = opponentName.toUpperCase();
-    
+
     // Reset scores
     document.getElementById('home-score').textContent = '0';
     document.getElementById('away-score').textContent = '0';
-    
+
     // Populate player grid
     renderPlayerGrid();
-    
+
     // Switch to game screen
     showScreen('game-tracking');
 }
@@ -419,7 +542,7 @@ function renderPlayerGrid() {
             <div class="player-stats-container">
                 <div class="stat-item">
                     <div class="stat-label">
-                        <span class="material-icons">sports_soccer</span>
+                        <span class="stat-emoji">⚽</span>
                     </div>
                     <div class="stat-value">${player.stats.goals}</div>
                 </div>
@@ -437,9 +560,21 @@ function renderPlayerGrid() {
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed">
+                        <img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed">
                     </div>
                     <div class="stat-value">${player.stats.goalsAllowed}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="stat-emoji">🟨</span>
+                    </div>
+                    <div class="stat-value">${player.stats.yellowCards}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="stat-emoji">🟥</span>
+                    </div>
+                    <div class="stat-value">${player.stats.redCards}</div>
                 </div>
             </div>
         `;
@@ -450,6 +585,26 @@ function renderPlayerGrid() {
         
         playerGrid.appendChild(playerGridItem);
     });
+    
+    // Update orientation class after rendering
+    updatePlayerGridOrientation();
+}
+
+function updatePeriodCounter() {
+    if (!appState.currentGame) return;
+
+    const periodDuration = appState.currentGame.periodDuration; // in seconds
+    const totalElapsed = appState.gameTimer.elapsed;
+    const currentPeriod = Math.min(
+        Math.ceil(totalElapsed / periodDuration),
+        appState.currentGame.numPeriods
+    );
+    const totalPeriods = appState.currentGame.numPeriods;
+
+    const periodCounter = document.getElementById('period-counter');
+    if (periodCounter) {
+        periodCounter.textContent = `Period ${currentPeriod} of ${totalPeriods}`;
+    }
 }
 
 // Timer Functions
@@ -477,8 +632,9 @@ function updateGameTimeDisplay() {
     const seconds = appState.gameTimer.elapsed % 60;
     const gameTimeElement = document.getElementById('game-time');
     if (gameTimeElement) {
-        gameTimeElement.textContent = `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        gameTimeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
+    updatePeriodCounter(); // Update period counter on every tick
 }
 
 function startTimer() {
@@ -517,16 +673,19 @@ function startGameTimer() {
     if (!appState.gameTimer.isRunning) {
         appState.gameTimer.isRunning = true;
         appState.gameTimer.startTime = new Date();
-        
+
         appState.gameTimer.interval = setInterval(() => {
             appState.gameTimer.elapsed++;
             updateGameTimeDisplay();
-            
+
             // Update the current game's total time
             if (appState.currentGame) {
                 appState.currentGame.totalGameTime = appState.gameTimer.elapsed;
             }
         }, 1000);
+
+        // Show success message
+        showMessage('Period started successfully', 'success');
     }
 }
 
@@ -538,40 +697,120 @@ function pauseGameTimer() {
 }
 
 function stopGameTimer() {
-    // Stop the timer first
-    if (appState.gameTimer.isRunning) {
-        clearInterval(appState.gameTimer.interval);
-        appState.gameTimer.isRunning = false;
+    // Check if the game timer is running
+    if (!appState.gameTimer.isRunning) {
+        showMessage('Cannot stop: Game clock has not been started', 'error');
+        return;
     }
-    
-    // Do not reset the game timer to 0, just stop it
-    // Keeping the current elapsed time
-    appState.gameTimer.interval = null;
-    
-    // Stop substitution timer AND reset it to default value
+
+    // Stop both timers
+    pauseGameTimer();
     pauseTimer();
-    resetTimer();
-    
-    // Save the state
-    saveAppData();
+
+    // Calculate current period based on game clock
+    const periodDuration = appState.currentGame.periodDuration; // in seconds
+    const totalElapsed = appState.gameTimer.elapsed;
+    const currentPeriod = Math.min(
+        Math.ceil(totalElapsed / periodDuration),
+        appState.currentGame.numPeriods
+    );
+
+    // If it's the last period, show "End Game" dialog
+    if (currentPeriod >= appState.currentGame.numPeriods) {
+        let endGameDialog = document.getElementById('end-game-period-dialog');
+        if (!endGameDialog) {
+            endGameDialog = document.createElement('div');
+            endGameDialog.id = 'end-game-period-dialog';
+            endGameDialog.className = 'dialog';
+            document.getElementById('app').appendChild(endGameDialog);
+        }
+
+        endGameDialog.innerHTML = `
+            <div class="dialog-content">
+                <h2>Game Complete</h2>
+                <p>Game Complete. End now?</p>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeEndGamePeriodDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="endGame()">End Game</button>
+                </div>
+            </div>
+        `;
+
+        endGameDialog.style.display = 'flex';
+        endGameDialog.classList.add('active');
+        return;
+    }
+
+    // Otherwise, show "Is this period finished?" dialog
+    let periodDialog = document.getElementById('period-finished-dialog');
+    if (!periodDialog) {
+        periodDialog = document.createElement('div');
+        periodDialog.id = 'period-finished-dialog';
+        periodDialog.className = 'dialog';
+        document.getElementById('app').appendChild(periodDialog);
+    }
+
+    periodDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Period Status</h2>
+            <p>Is this period finished?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closePeriodFinishedDialog()">No</button>
+                <button class="primary-btn" onclick="confirmPeriodFinished()">Yes</button>
+            </div>
+        </div>
+    `;
+
+    periodDialog.style.display = 'flex';
+    periodDialog.classList.add('active');
+}
+
+function closePeriodFinishedDialog() {
+    const dialog = document.getElementById('period-finished-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function confirmPeriodFinished() {
+    const dialog = document.getElementById('period-finished-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+
+    // Reset substitution timer
+    appState.timer.timeLeft = appState.timer.duration;
+    updateTimerDisplay();
+
+    // Reset game clock to the expected end of the current period
+    const periodDuration = appState.currentGame.periodDuration;
+    const totalElapsed = appState.gameTimer.elapsed;
+    const currentPeriod = Math.min(
+        Math.ceil(totalElapsed / periodDuration),
+        appState.currentGame.numPeriods
+    );
+    appState.gameTimer.elapsed = currentPeriod * periodDuration;
+    updateGameTimeDisplay(); // This will also update the period counter
+}
+
+function closeEndGamePeriodDialog() {
+    const dialog = document.getElementById('end-game-period-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
 }
 
 // Player Actions
 function openPlayerActionDialog(player) {
     appState.currentPlayer = player;
-    
     const dialog = document.getElementById('player-action-dialog');
     const playerNameSpan = document.getElementById('action-player-name');
-    
     playerNameSpan.textContent = player.name;
-    
-    // All actions are now available for all players
-    
     dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closePlayerActionDialog() {
-    document.getElementById('player-action-dialog').style.display = 'none';
+    const dialog = document.getElementById('player-action-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     appState.currentPlayer = null;
 }
 
@@ -592,14 +831,8 @@ function handleGoalAction() {
 function openAssistSelectionDialog() {
     const dialog = document.getElementById('assist-selection-dialog');
     const playersGrid = document.getElementById('assist-players-grid');
-    
-    // Clear previous content
     playersGrid.innerHTML = '';
-    
-    // Get all players excluding the goal scorer
     const activePlayers = appState.players.filter(p => p.id !== appState.goalScorer.id);
-    
-    // Add players to the grid
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -612,12 +845,14 @@ function openAssistSelectionDialog() {
         });
         playersGrid.appendChild(playerItem);
     });
-    
     dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeAssistSelectionDialog() {
-    document.getElementById('assist-selection-dialog').style.display = 'none';
+    const dialog = document.getElementById('assist-selection-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     appState.goalScorer = null;
 }
 
@@ -661,14 +896,8 @@ function handleAssistAction() {
 function openScorerSelectionDialog() {
     const dialog = document.getElementById('scorer-selection-dialog');
     const playersGrid = document.getElementById('scorer-players-grid');
-    
-    // Clear previous content
     playersGrid.innerHTML = '';
-    
-    // Get all players excluding the assister
     const activePlayers = appState.players.filter(p => p.id !== appState.assister.id);
-    
-    // Add players to the grid
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -681,12 +910,14 @@ function openScorerSelectionDialog() {
         });
         playersGrid.appendChild(playerItem);
     });
-    
     dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeScorerSelectionDialog() {
-    document.getElementById('scorer-selection-dialog').style.display = 'none';
+    const dialog = document.getElementById('scorer-selection-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     appState.assister = null;
 }
 
@@ -719,7 +950,9 @@ function recordAction(actionType, specificPlayerId = null) {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         };
     }
     
@@ -750,6 +983,12 @@ function recordAction(actionType, specificPlayerId = null) {
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
             break;
+        case 'yellow_card':
+            appState.players[playerIndex].stats.yellowCards++;
+            break;
+        case 'red_card':
+            appState.players[playerIndex].stats.redCards++;
+            break;
     }
     
     // Update player grid item
@@ -769,11 +1008,13 @@ function updatePlayerGridItem(playerId) {
     
     // Directly update the stat values in the player card
     const statValues = document.querySelectorAll(`.player-grid-item[data-player-id="${playerId}"] .stat-value`);
-    if (statValues && statValues.length >= 4) {
+    if (statValues && statValues.length >= 6) {
         statValues[0].textContent = player.stats.goals;
         statValues[1].textContent = player.stats.assists;
         statValues[2].textContent = player.stats.saves;
         statValues[3].textContent = player.stats.goalsAllowed;
+        statValues[4].textContent = player.stats.yellowCards;
+        statValues[5].textContent = player.stats.redCards;
     } else {
         // Fallback to re-rendering the entire player grid if we can't find stat elements
         renderPlayerGrid();
@@ -793,41 +1034,54 @@ function calculateGameMinute() {
 
 // End Game
 function confirmEndGame() {
-    document.getElementById('end-game-dialog').style.display = 'flex';
+    const dialog = document.getElementById('end-game-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeEndGameDialog() {
-    document.getElementById('end-game-dialog').style.display = 'none';
+    const dialog = document.getElementById('end-game-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
 }
 
 function endGame() {
     if (!appState.currentGame) return;
-    
+
+    // Close any open end game dialogs
+    const endGameDialog = document.getElementById('end-game-dialog');
+    if (endGameDialog) {
+        endGameDialog.style.display = 'none';
+        endGameDialog.classList.remove('active');
+    }
+    const endGamePeriodDialog = document.getElementById('end-game-period-dialog');
+    if (endGamePeriodDialog) {
+        endGamePeriodDialog.style.display = 'none';
+        endGamePeriodDialog.classList.remove('active');
+    }
+
     appState.currentGame.endTime = new Date().toISOString();
     appState.currentGame.isCompleted = true;
-    
+
     // Store the game in our games array
     const finishedGameId = appState.currentGame.id;
     appState.games.push({...appState.currentGame});
-    
+
     // Stop both timers
     pauseTimer();
     pauseGameTimer();
-    
+
     // Save data before showing report
     saveAppData();
-    
-    // Close the dialog
-    closeEndGameDialog();
-    
+
     // Show the reports screen
     showScreen('reports');
-    
+
     // Generate and show the detailed report for this game
     setTimeout(() => {
         viewReport(finishedGameId);
     }, 300);
-    
+
     // Clear current game
     appState.currentGame = null;
 }
@@ -867,7 +1121,6 @@ function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
     
-    // Create a report dialog if it doesn't exist
     let reportDialog = document.getElementById('detailed-report-dialog');
     if (!reportDialog) {
         reportDialog = document.createElement('div');
@@ -890,25 +1143,23 @@ function viewReport(gameId) {
         gameDuration = `${durationMins} minutes`;
     }
 
-    // Get player actions from the game
     const playerActions = {};
+        game.activePlayers.forEach(playerId => {
+            const player = appState.players.find(p => p.id === playerId);
+            if (player) {
+                playerActions[playerId] = {
+                    name: player.name,
+                    jerseyNumber: player.jerseyNumber,
+                    goals: 0,
+                    assists: 0,
+                    saves: 0,
+                    goalsAllowed: 0,
+                    yellowCards: 0,
+                    redCards: 0
+                };
+            }
+        });
     
-    // Initialize player actions
-    game.activePlayers.forEach(playerId => {
-        const player = appState.players.find(p => p.id === playerId);
-        if (player) {
-            playerActions[playerId] = {
-                name: player.name,
-                jerseyNumber: player.jerseyNumber,
-                goals: 0,
-                assists: 0,
-                saves: 0,
-                goalsAllowed: 0
-            };
-        }
-    });
-    
-    // Count actions
     game.actions.forEach(action => {
         if (playerActions[action.playerId]) {
             switch (action.actionType) {
@@ -924,11 +1175,16 @@ function viewReport(gameId) {
                 case 'goal_allowed':
                     playerActions[action.playerId].goalsAllowed++;
                     break;
+                case 'yellow_card':
+                    playerActions[action.playerId].yellowCards++;
+                    break;
+                case 'red_card':
+                    playerActions[action.playerId].redCards++;
+                    break;
             }
         }
     });
     
-    // Build player stats table
     let playerStatsHTML = '';
     Object.values(playerActions)
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
@@ -936,16 +1192,17 @@ function viewReport(gameId) {
             playerStatsHTML += `
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
-                    <td>${playerStat.name}</td>
+                    <td>${playerStat.name.toUpperCase()}</td>
                     <td>${playerStat.goals}</td>
                     <td>${playerStat.assists}</td>
                     <td>${playerStat.saves}</td>
                     <td>${playerStat.goalsAllowed}</td>
+                    <td>${playerStat.yellowCards}</td>
+                    <td>${playerStat.redCards}</td>
                 </tr>
             `;
         });
     
-    // Generate report HTML
     reportDialog.innerHTML = `
         <div class="dialog-content report-dialog">
             <h2>Game Report</h2>
@@ -963,10 +1220,12 @@ function viewReport(gameId) {
                         <tr>
                             <th>#</th>
                             <th>Name</th>
-                            <th>Goals</th>
-                            <th>Assists</th>
-                            <th>Saves</th>
-                            <th>Goals Allowed</th>
+                            <th><span class="stat-emoji">⚽</span></th>
+                            <th><span class="stat-emoji">👟</span></th>
+                            <th><span class="stat-emoji">✋</span></th>
+                            <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
+                            <th><span class="stat-emoji">🟨</span></th>
+                            <th><span class="stat-emoji">🟥</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -980,16 +1239,29 @@ function viewReport(gameId) {
                 <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
             </div>
         </div>
-    `;
+    `;          
     
-    // Show the dialog
     reportDialog.style.display = 'flex';
+    reportDialog.classList.add('active');
 }
 
 function closeDetailedReport() {
     const reportDialog = document.getElementById('detailed-report-dialog');
     if (reportDialog) {
         reportDialog.style.display = 'none';
+        reportDialog.classList.remove('active');
+    }
+
+    // Ensure end game dialogs are closed as a fallback
+    const endGameDialog = document.getElementById('end-game-dialog');
+    if (endGameDialog) {
+        endGameDialog.style.display = 'none';
+        endGameDialog.classList.remove('active');
+    }
+    const endGamePeriodDialog = document.getElementById('end-game-period-dialog');
+    if (endGamePeriodDialog) {
+        endGamePeriodDialog.style.display = 'none';
+        endGamePeriodDialog.classList.remove('active');
     }
 }
 
@@ -1003,9 +1275,15 @@ function exportReport(gameId, format) {
     // Get the report content from the dialog
     const reportContent = document.querySelector('.report-dialog').innerHTML;
     
-    // For PDF, we'll use a printable version that users can save as PDF
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    // Create a hidden iframe to render the print content
+    let iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    
+    // Write the report content to the iframe
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
         <html>
         <head>
             <title>Game Report - ${game.date}</title>
@@ -1022,27 +1300,67 @@ function exportReport(gameId, format) {
             <p style="margin-top: 30px; text-align: center; color: #666;">
                 Generated by Soccer Coach Tracker - ${new Date().toLocaleString()}
             </p>
-            <script>
-                // Auto-print
-                window.onload = function() {
-                    window.print();
-                }
-            </script>
         </body>
         </html>
     `);
-    printWindow.document.close();
-    showMessage('Report opened in new tab for printing/saving as PDF', 'success');
+    doc.close();
+    
+    // Trigger the print dialog after the iframe content is loaded
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        // Remove the iframe after printing
+        document.body.removeChild(iframe);
+    };
+    
+    showMessage('Opening print dialog for PDF export', 'success');
 }
 
 // Settings
+function handleLanguageChange() {
+    console.log('handleLanguageChange called'); // Debug
+
+    const checkedRadio = document.querySelector('input[name="language"]:checked');
+    if (!checkedRadio) {
+        console.error('No language radio button is checked');
+        showMessage('Please select a language', 'error');
+        return;
+    }
+
+    const selectedLanguage = checkedRadio.value;
+    console.log('Selected language:', selectedLanguage); // Debug
+
+    // Check if French is selected
+    if (selectedLanguage === 'fr') {
+        console.log('French selected, reverting to English'); // Debug
+        // Show error message
+        showMessage('French language is not implemented yet.', 'error');
+        // Revert to English
+        const englishRadio = document.querySelector('input[name="language"][value="en"]');
+        if (englishRadio) {
+            console.log('English radio found, setting checked to true'); // Debug
+            englishRadio.checked = true;
+            // Force UI update by dispatching a change event
+            const changeEvent = new Event('change');
+            englishRadio.dispatchEvent(changeEvent);
+            console.log('English radio checked state:', englishRadio.checked); // Debug
+        } else {
+            console.error('English radio button not found'); // Debug
+        }
+        appState.settings.language = 'en';
+        console.log('appState.settings.language set to:', appState.settings.language); // Debug
+    } else {
+        appState.settings.language = selectedLanguage;
+        console.log('appState.settings.language set to:', appState.settings.language); // Debug
+    }
+    
+    saveAppData(); // Save the state immediately
+}
+
 function saveSettings() {
-    const language = document.querySelector('input[name="language"]:checked').value;
-    const defaultTimer = document.getElementById('default-timer').value;
-    
-    appState.settings.language = language;
-    appState.settings.defaultTimer = parseInt(defaultTimer);
-    
+    console.log('saveSettings called'); // Debug
+
+    // Language is already handled by handleLanguageChange, so just save the current state
     saveAppData();
     showMessage('Settings saved successfully', 'success');
 }
@@ -1064,8 +1382,8 @@ function loadAppData() {
         appState.teamName = data.teamName || "My Team";
         appState.players = data.players || [];
         appState.games = data.games || [];
-        appState.settings = data.settings || appState.settings;
-        
+        appState.settings = data.settings || { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false };
+
         // Initialize UI styling
         initializeStyling();
         
@@ -1074,42 +1392,84 @@ function loadAppData() {
 }
 
 // Function to clear all app data and start fresh
-function clearAppData() {
-    if (confirm('Are you sure you want to clear all data? This will remove all players, games, and settings.')) {
-        localStorage.removeItem('soccerCoachApp');
-        
-        // Reset app state to defaults
-        appState = {
-            teamName: "My Team",
-            players: [],
-            games: [],
-            currentGame: null,
-            timer: {
-                duration: 6 * 60,
-                timeLeft: 6 * 60,
-                interval: null,
-                isRunning: false
-            },
-            gameTimer: {
-                elapsed: 0,
-                interval: null,
-                isRunning: false,
-                startTime: null
-            },
-            settings: {
-                language: 'en',
-                defaultTimer: 6
-            },
-            currentPlayer: null
-        };
-        
-        // Update UI
-        updateTeamNameUI();
-        showMessage('All data has been cleared. The app has been reset.', 'success');
-        
-        // Return to main screen
-        showScreen('main-screen');
+// Function to open clear data confirmation dialog
+function openClearDataDialog() {
+    let clearDialog = document.getElementById('clear-data-dialog');
+    if (!clearDialog) {
+        clearDialog = document.createElement('div');
+        clearDialog.id = 'clear-data-dialog';
+        clearDialog.className = 'dialog';
+        document.getElementById('app').appendChild(clearDialog);
     }
+    
+    clearDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Clear Data</h2>
+            <p>Are you sure you want to clear all data? This will remove all players, games, and settings.</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeClearDataDialog()">Cancel</button>
+                <button class="primary-btn" onclick="confirmClearData()">Clear Data</button>
+            </div>
+        </div>
+    `;
+    
+    clearDialog.style.display = 'flex';
+    clearDialog.classList.add('active');
+}
+
+// Function to close clear data dialog
+function closeClearDataDialog() {
+    const clearDialog = document.getElementById('clear-data-dialog');
+    if (clearDialog) {
+        clearDialog.style.display = 'none';
+        clearDialog.classList.remove('active');
+    }
+}
+
+// Function to clear all app data
+function confirmClearData() {
+    closeClearDataDialog();
+    
+    localStorage.removeItem('soccerCoachApp');
+    
+    // Reset app state to defaults
+    appState = {
+        teamName: "My Team",
+        players: [],
+        games: [],
+        currentGame: null,
+        timer: {
+            duration: 6 * 60,
+            timeLeft: 6 * 60,
+            interval: null,
+            isRunning: false
+        },
+        gameTimer: {
+            elapsed: 0,
+            interval: null,
+            isRunning: false,
+            startTime: null
+        },
+        settings: {
+            language: 'en',
+            defaultSubstitutionTime: null,
+            isSubstitutionDefaultChecked: false
+        },
+        currentPlayer: null
+    };
+    
+    // Update UI
+    updateTeamNameUI();
+    renderPlayersList();
+    showMessage('All data has been cleared. The app has been reset.', 'success');
+    
+    // Return to main screen
+    showScreen('main-screen');
+}
+
+// Modified clearAppData to trigger dialog instead of confirm
+function clearAppData() {
+    openClearDataDialog();
 }
 
 // Export/Import functions for moving data between devices
@@ -1196,12 +1556,12 @@ function handleFileImport(event) {
 // Add demo players for testing
 function addDemoPlayers() {
     const demoPlayers = [
-        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
+        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
+        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
+        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
+        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
+        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
+        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } }
     ];
     
     appState.players = demoPlayers;
