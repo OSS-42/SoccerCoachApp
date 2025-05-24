@@ -41,6 +41,11 @@ No installation required! This is a client-side web application that runs entire
 The app uses browser localStorage for data persistence, ensuring all your data is saved even without an internet connection.
 
 ## Changelog
+### Version 1.5.0 (2025-05-24)
+- Enhanced UI in live game screen
+- Added yellow and red card actions in live game screen
+- changing live game layout and corresponding game reports.
+- Optimization of error handling message.
 
 ### Version 1.4.0 (2025-05-23)
 - Replaced popup alerts with non-intrusive message ribbon system
