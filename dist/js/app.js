@@ -554,7 +554,7 @@ function renderPlayerGrid() {
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">
-                        <span class="material-icons">back_hand</span>
+                        <span class="stat-emoji">🧤</span>
                     </div>
                     <div class="stat-value">${player.stats.saves}</div>
                 </div>
@@ -1222,7 +1222,7 @@ function viewReport(gameId) {
                             <th>Name</th>
                             <th><span class="stat-emoji">⚽</span></th>
                             <th><span class="stat-emoji">👟</span></th>
-                            <th><span class="stat-emoji">✋</span></th>
+                            <th><span class="stat-emoji">🧤</span></th>
                             <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
                             <th><span class="stat-emoji">🟨</span></th>
                             <th><span class="stat-emoji">🟥</span></th>
