@@ -1,0 +1,1318 @@
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Message Ribbon */
+.message-ribbon {
+    position: fixed;
+    bottom: 0; /* Move to bottom */
+    top: auto; /* Remove top positioning */
+    left: 0;
+    right: 0;
+    padding: 20px 20px; /* Increase vertical padding to make taller */
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1100;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); /* Shadow casts upward */
+    /* transition: transform 0.3s ease; */
+}
+
+.message-ribbon.error {
+    background-color: #f44336;
+}
+
+.message-ribbon.success {
+    background-color: #4caf50;
+}
+
+.message-ribbon.hidden {
+    display: none;
+}
+
+.message-ribbon .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 0 0 15px;
+}
+
+#app {
+    max-width: 100%;
+    margin: 0 auto;
+    background-color: white;
+    min-height: 100vh;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+/* Screen Orientation Handling */
+@media screen and (orientation: landscape) {
+    #app {
+        max-width: 100%;
+    }
+    
+    .screen:not(.landscape) {
+        max-width: 100%; /* Remove 600px restriction */
+        margin: 0 auto;
+    }
+    
+    .landscape {
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    #app {
+        max-width: 100%; /* Ensure full width on small screens */
+    }
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+/* Screen Styles */
+/* Ensure only active screen is visible */
+.screen {
+    display: none !important;
+    flex-direction: column;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    overflow: auto;
+    background-color: #f5f5f5;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+    overflow-y: auto; /* Allow vertical scrolling */
+}
+
+.screen.active {
+    display: flex !important;
+    z-index: 20; /* Higher z-index for active screen */
+}
+
+/* Header Styles */
+.app-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #1e88e5;
+    color: white;
+    position: relative;
+}
+
+.app-header h1 {
+    flex: 1;
+    text-align: center;
+    font-size: 20px;
+}
+
+.back-btn, .action-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.action-btn.white-btn {
+    background-color: white;
+    color: #1e88e5;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Main Menu Styles */
+.main-menu {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px;
+    flex: 1;
+    justify-content: center;
+}
+
+.menu-row {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 5px;
+}
+
+.menu-btn {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    gap: 10px;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.menu-row .menu-btn {
+    flex: 1;
+}
+
+.player-counter {
+    font-size: clamp(0.7rem, 2vmin, 0.9rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    height: 100%;
+    width: calc(100% * (46 / (100% - 10px - 46px)));
+    aspect-ratio: 1 / 1;
+    color: #333;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.game-report-counter {
+    font-size: clamp(0.7rem, 2vmin, 0.9rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    height: 100%;
+    width: calc(100% * (46 / (100% - 10px - 46px)));
+    aspect-ratio: 1 / 1;
+    color: #333;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.player-counter .material-icons,
+.game-report-counter .material-icons {
+    font-size: 1rem;
+    margin-right: 0.2rem;
+}
+
+/* Content Area */
+.content {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+/* Updated primary button */
+.primary-btn {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* Updated secondary button */
+.secondary-btn {
+    background-color: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+    padding: 11px 20px; /* Reduced top/bottom padding by 1px to offset border */
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* New delete button style */
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+/* Team Setup Styles */
+.team-name-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.team-name-edit {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.team-name-edit input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.player-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.jersey-number {
+    width: 40px;
+    height: 40px;
+    background-color: #2196f3;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.player-info {
+    flex: 1;
+    text-transform: uppercase;
+}
+
+/* .player-name {
+    font-weight: bold;
+    font-size: 16px;
+} */
+
+.player-position {
+    flex: 1;
+    font-size: clamp(0.75rem, 2.2vmin, 1rem);
+    font-weight: 500;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.25rem;
+}
+
+.player-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.player-action-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Game Setup Screen */
+/* Substitution Timer Row: Ensure input, checkbox, and label are on the same line */
+.substitution-timer-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.substitution-timer-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    flex-wrap: nowrap; /* Prevent wrapping to ensure they stay on the same line */
+}
+
+.substitution-timer-row input[type="number"] {
+    width: 100px; /* Fixed width for the number input to prevent it from taking too much space */
+    flex: 0 0 auto; /* Prevent the input from growing */
+}
+
+.substitution-timer-row .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap; /* Prevent the label text from wrapping */
+    font-weight: normal; /* Match the style of other labels */
+}
+
+/* Game Tracking Styles */
+/* Ensure #game-tracking fills the viewport and stacks elements vertically */
+#game-tracking {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.game-header {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    background-color: #1e88e5;
+    color: white;
+    position: relative;
+    flex-wrap: wrap;
+    flex: 0 0 16vh;
+    width: 100%;
+    box-sizing: border-box;
+    opacity: 1;
+}
+
+.card-counters {
+    display: flex;
+    gap: 5px;
+    margin-left: 5px;
+    opacity: 1;
+}
+
+.card-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    min-width: 20px;
+    height: 26px;
+    font-size: 16px;
+    color: #1c2526;
+    font-weight: normal;
+    border-radius: 0;
+    text-align: center;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 400;
+    opacity: 1;
+    background-clip: padding-box;
+    text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.8);
+}
+
+#game-tracking .card-counter.yellow-card {
+    background-color: #ffca28 !important;
+}
+
+#game-tracking .card-counter.red-card {
+    background-color: #d32f2f !important;
+}
+
+/* Team Scores: Container for scores, clock, and timer */
+.team-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    opacity: 1;
+}
+
+.team-score {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 32px;
+    box-sizing: border-box;
+    opacity: 1;
+}
+
+/* Team Name: Flexible width, left-aligned */
+.team-score .team-name {
+    flex: 1; /* Grow to take as much space as needed */
+    min-width: 0; /* Allow shrinking */
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: left;
+    padding-left: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Score: Fixed width, right-aligned */
+.team-score .score {
+    flex: 0 0 100px; /* Fixed width for score column to align with clock/timer */
+    font-size: 20px;
+    font-weight: bold;
+    text-align: right;
+    padding-right: 10px;
+}
+
+/* Separator Line: 1px thick, stops 10px short of borders */
+.separator-line {
+    width: calc(100% - 20px); /* Full width minus 10px on each side */
+    height: 1px;
+    background-color: #ffffff; /* White line for visibility on #1e88e5 background */
+    margin: 0px 10px; /* 5px top/bottom for spacing, 10px left/right for gap */
+}
+
+.time-controls-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Game Time Container: Two-column layout */
+.game-time-container {
+    display: flex;
+    width: 100%;
+    gap: 10px; /* Small gap between columns */
+    margin-top: 5px; /* Space above the timer section */
+}
+
+/* Game Clock Column: Left */
+.game-time-wrapper {
+    flex: 1; /* Equal width with substitution timer */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content */
+    gap: 3px;
+}
+
+.game-time-label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.game-time {
+    font-size: 40px;
+    font-weight: bold;
+}
+
+/* Substitution Timer Column: Right */
+.substitution-timer-small {
+    flex: 1; /* Equal width with game clock */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content */
+    gap: 3px;
+    font-size: 14px;
+}
+
+.substitution-timer-small .timer-label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.substitution-timer-small .timer-value {
+    font-size: 35px;
+    font-weight: bold;
+    display: inline;
+}
+
+/* Period Counter: Unchanged */
+.period-counter {
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    width: 100%;
+    padding: 0 10px;
+}
+
+/* Style buttons in game-controls */
+/* Style the new controls row */
+.controls-row {
+    display: flex;
+    align-items: center;
+    padding: 0px 0; /* Remove left/right padding, keep top/bottom */
+    width: 100%;
+    box-sizing: border-box;
+    flex: 0 0 auto; /* Take only the space needed */
+}
+
+.game-controls {
+    display: flex;
+    width: 100%; /* Take full width of the parent */
+    justify-content: stretch; /* Distribute buttons evenly */
+    flex-wrap: nowrap; /* Allow wrapping on smaller screens */
+}
+
+.control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* gap: 5px; */
+    flex: 1; /* Buttons grow equally to fill the available space */
+    min-width: 80px; /* Reduced min-width to prevent wrapping on smaller screens */
+    height: 40px;
+    padding: 5 5px;
+    border: 1px solid #000; /* Added 1px border */
+    border-radius: 0; /* Make buttons rectangular */
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    transition: background-color 0.3s;
+    box-sizing: border-box;
+    /* Remove borders between touching buttons */
+    border-right: none; /* Remove right border for all buttons except the last */
+}
+
+.control-btn:last-child {
+    border-right: 1px solid #000; /* Ensure the last button has a right border */
+}
+
+.control-btn .material-icons {
+    font-size: 18px;
+}
+
+/* Specific colors for each button */
+.play-btn {
+    background-color: #4caf50; /* Green */
+}
+
+.play-btn:hover {
+    background-color: #388e3c; /* Darker green */
+}
+
+.pause-btn {
+    background-color: #ff9800; /* Orange */
+}
+
+.pause-btn:hover {
+    background-color: #f57c00; /* Darker orange */
+}
+
+.stop-btn {
+    background-color: #f44336; /* Red */
+}
+
+.stop-btn:hover {
+    background-color: #d32f2f; /* Darker red */
+}
+
+.reset-btn {
+    background-color: #2196f3; /* Blue */
+}
+
+.reset-btn:hover {
+    background-color: #1976d2; /* Darker blue */
+}
+
+.end-game-btn {
+    background-color: #d32f2f; /* Dark red */
+}
+
+.end-game-btn:hover {
+    background-color: #b71c1c; /* Darker dark red */
+}
+
+/* Player Stats Icons */
+.player-stats-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: clamp(14px, 3vw, 18px);
+    width: 100%;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 5px 0;
+}
+
+.stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    padding: 3px;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.stat-emoji {
+    font-size: clamp(14px, 4vw, 22px);
+}
+
+.stat-value {
+    font-size: clamp(14px, 3.5vw, 20px);
+    margin-left: 2px;
+    font-weight: bold;
+}
+
+.team-name {
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.red-soccer-icon {
+    width: clamp(18px, 4vw, 24px);
+    height: clamp(18px, 4vw, 24px);
+    vertical-align: middle;
+}
+
+.score {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.game-time {
+    font-size: 30px;
+    font-weight: bold;
+    padding: 0 20px;
+}
+
+.game-content {
+    display: flex;
+    flex: 1;
+    padding: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    flex-direction: column;
+}
+
+.timer-container {
+    width: 200px;
+    padding: 10px;
+}
+
+.substitution-timer {
+    border: 2px solid white;
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+}
+
+.timer-label {
+    font-size: 30px;
+    margin-bottom: 5px;
+}
+
+.timer-value {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.substitution-timer-small .timer-value {
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 0;
+    display: inline;
+}
+
+.timer-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.timer-controls button {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(0, 0, 0, 0.1);
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.timer-controls button:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Completely redesigned player grid */
+.player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15vmin, 1fr));
+    column-gap: 0;
+    row-gap: 0;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    flex: 0 1 auto;
+    height: fit-content; /* Size based on content */
+    overflow-y: auto;
+    min-height: 0;
+    box-sizing: border-box;
+    align-content: start;
+}
+
+.player-grid-item {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    width: 100%;
+    aspect-ratio: 3 / 3;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    transition: transform 0.2s ease;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.player-grid-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.player-grid-item.active {
+    border: 2px solid #2196f3;
+}
+
+.player-grid-item.yellow-card {
+    background-color: #ffca28;
+}
+
+.player-grid-item.red-card {
+    background-color: white;
+    cursor: default;
+}
+
+.player-grid-item.red-card:hover {
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.player-grid-item.red-card::before,
+.player-grid-item.red-card::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 141.42%; /* Diagonal of square (sqrt(2) * 100%) */
+    background-color: #d32f2f;
+    left: 50%;
+    top: 50%;
+}
+
+.player-grid-item.red-card::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.player-grid-item.red-card::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.player-grid.landscape-mode {
+    grid-template-columns: repeat(6, minmax(100px, 1fr)) !important;
+    column-gap: 0;
+    row-gap: 0;
+    align-content: start;
+    height: fit-content;
+    background-color: rgba(0, 0, 255, 0.1); /* Debug: Light blue background */
+}
+
+.player-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 0.25rem;
+    padding: 0;
+    width: 100%;
+}
+
+.player-number {
+    flex: 1;
+    font-weight: bold;
+    font-size: clamp(1rem, 3vmin, 1.5rem);
+    color: #2196f3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 0;
+    padding: 0.25rem;
+}
+
+.player-name {
+    font-size: clamp(0.75rem, 2.2vmin, 1rem);
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.25rem 0;
+    background-color: #e0e0e0;
+    text-transform: uppercase;
+}
+
+.player-columns {
+    display: flex;
+    flex: 1;
+    width: 100%;
+}
+
+.player-stats-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Adjust to 3 columns to fit 6 stats */
+    gap: 0.25rem;
+    width: 100%;
+    flex: 1;
+    justify-items: center;
+    align-items: center;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+}
+
+.stat-label img.red-soccer-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.stat-label img.red-soccer-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.stat-emoji {
+    font-size: 18px; /* Ensure consistent size for all emojis */
+}
+
+.stat-value {
+    font-weight: bold;
+    font-size: clamp(0.75rem, 2.5vmin, 1rem); /* Increased for better readability */
+    color: #1e88e5;
+}
+
+/* Responsive adjustments */
+/* Limit to 4 cards per row in portrait mode */
+/* Limit to 4 cards per row in portrait mode */
+/* Adjust for larger screens: Keep 6 columns, larger cards */
+@media screen and (min-width: 768px) {
+    .player-grid {
+        grid-template-columns: repeat(6, minmax(150px, 1fr));
+        column-gap: 0;
+        row-gap: 0;
+        align-content: start;
+        height: fit-content;
+    }
+}
+
+@media screen and (min-width: 1400px) {
+    .player-grid {
+        grid-template-columns: repeat(6, minmax(180px, 1fr));
+        column-gap: 0;
+        row-gap: 0;
+        align-content: start;
+        height: fit-content;
+    }
+}
+
+/* Portrait mode: Maintain 4 columns */
+@media screen and (orientation: portrait) {
+    .player-grid {
+        grid-template-columns: repeat(4, minmax(15vmin, 1fr));
+        column-gap: 0;
+        row-gap: 0;
+        align-content: start;
+        height: fit-content;
+    }
+}
+
+/* Ensure portrait overrides for smaller screens */
+@media screen and (orientation: portrait) and (max-width: 600px) {
+    .player-grid {
+        grid-template-columns: repeat(4, minmax(14vmin, 1fr));
+        column-gap: 0;
+        row-gap: 0;
+        align-content: start;
+        height: fit-content;
+    }
+}
+
+/* Enforce 6 columns in landscape mode for all screen sizes */
+@media screen and (orientation: landscape) {
+    .player-grid {
+        grid-template-columns: repeat(6, minmax(100px, 1fr));
+        column-gap: 0;
+        row-gap: 0;
+        align-content: start;
+        height: fit-content;
+        background-color: rgba(0, 255, 0, 0.1); /* Debug: Light green background */
+    }
+}
+
+/* Fallback for cellphones in landscape mode (broader range) */
+@media screen and (min-width: 601px) {
+    .player-grid:not(.landscape-mode) {
+        grid-template-columns: repeat(6, minmax(100px, 1fr));
+        column-gap: 0;
+        row-gap: 0;
+        align-content: start;
+        height: fit-content;
+        background-color: rgba(255, 0, 0, 0.1); /* Debug: Light red background */
+    }
+}
+
+/* Dialog Styles */
+.dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog.active {
+    display: flex; /* Only show when active class is added */
+}
+
+.dialog-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 4px;
+    width: 90%;
+    position: relative;
+    max-width: 400px;
+}
+
+.dialog h2 {
+    margin-bottom: 15px;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.dialog-buttons button {
+    min-height: 44px; /* Standard height for accessibility and consistency */
+    line-height: 1.5; /* Ensure text alignment doesn't affect height */
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center text vertically and horizontally */
+}
+
+.yellow-card-btn {
+    background-color: #ffca28; /* Yellow color for yellow card button */
+    color: #000;
+}
+
+.yellow-card-btn:hover {
+    background-color: #ffb300;
+}
+
+.red-card-btn {
+    background-color: #d32f2f; /* Red color for red card button */
+}
+
+.red-card-btn:hover {
+    background-color: #b71c1c;
+}
+
+@media screen and (min-width: 768px) {
+    .dialog-content {
+        max-width: 500px; /* Slightly larger on big screens */
+    }
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background-color: transparent;
+    border: 2px solid #444;
+    border-radius: 4px;
+    gap: 10px;
+    color: #333;
+}
+
+/* Player Selection Grid */
+.players-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.player-select-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-transform: uppercase;
+}
+
+.player-select-item:hover {
+    background-color: #e0e0e0;
+}
+
+.player-select-number {
+    width: 30px;
+    height: 30px;
+    background-color: #2196f3;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.full-width-btn {
+    width: 100%;
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.primary-btn.no-assist-btn,
+button.no-assist-btn {
+    background-color: #4caf50 !important;
+    color: white;
+}
+
+.goal-allowed-icon {
+    color: #f44336;
+}
+
+/* Settings Styles */
+.settings-group {
+    margin-bottom: 25px;
+}
+
+.settings-group h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.setting-option {
+    padding: 10px 0;
+}
+
+.data-management-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.data-management-buttons button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Timer Alert */
+.timer-alert {
+    animation: blink 1s infinite;
+    border: 2px solid red;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Empty State */
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
+/* Report Dialog */
+.report-dialog {
+    max-width: 800px;
+    width: 90%;
+}
+
+.report-header-info {
+    margin: 15px 0;
+    line-height: 1.6;
+}
+
+.report-dialog h3 {
+    margin: 20px 0 10px;
+}
+
+.report-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.report-table td:nth-child(2) {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    text-transform: uppercase;
+}
+
+.report-table th {
+    background-color: #f5f5f5;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 2px solid #ddd;
+}
+
+.report-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.report-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.report-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.report-table th {
+    text-align: center; /* Center-align icons in table headers */
+    padding: 0.5rem;
+}
+
+.report-table th .stat-emoji,
+.report-table th .red-soccer-icon {
+    vertical-align: middle; /* Ensure icons are vertically centered */
+}
