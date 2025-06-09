@@ -558,9 +558,15 @@ function startGame() {
         totalGameTime: 0,
         numPeriods: numPeriods,
         periodDuration: periodDuration * 60, // Convert to seconds
-        currentPeriod: 1,
         substitutionDuration: substitutionTime * 60 // Convert to seconds
     };
+
+    // Validate game data
+    if (!appState.currentGame.numPeriods || !appState.currentGame.periodDuration) {
+        console.error('Failed to set game duration parameters');
+        showMessage('Error setting game duration parameters', 'error');
+        return;
+    }
 
     // Setup substitution timer
     appState.timer.duration = appState.currentGame.substitutionDuration;
@@ -1181,8 +1187,16 @@ function endGame() {
         endGamePeriodDialog.classList.remove('active');
     }
 
-    appState.currentGame.endTime = new Date().toISOString();
+    // Set endTime if not already set
+    appState.currentGame.endTime = appState.currentGame.endTime || new Date().toISOString();
     appState.currentGame.isCompleted = true;
+
+    // Validate game data
+    if (!appState.currentGame.numPeriods || !appState.currentGame.periodDuration) {
+        console.warn('Game data incomplete, setting fallback values');
+        appState.currentGame.numPeriods = appState.currentGame.numPeriods || 2;
+        appState.currentGame.periodDuration = appState.currentGame.periodDuration || 15 * 60; // 15 minutes in seconds
+    }
 
     // Store the game in our games array
     const finishedGameId = appState.currentGame.id;
@@ -1198,13 +1212,10 @@ function endGame() {
     // Update game report counter
     updateGameReportCounter();
 
-    // Show the reports screen
+    // Show the reports screen and open the report dialog
     showScreen('reports');
-
-    // Generate and show the detailed report for this game
-    setTimeout(() => {
-        viewReport(finishedGameId);
-    }, 300);
+    renderReportsList();
+    viewReport(finishedGameId);
 
     // Clear current game
     appState.currentGame = null;
@@ -1222,15 +1233,18 @@ function renderReportsList() {
         return;
     }
     
-    completedGames.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(game => {
+    completedGames.sort((a, b) => {
+        if (!a.startTime || !b.startTime) return a.startTime ? -1 : b.startTime ? 1 : 0;
+        return new Date(b.startTime) - new Date(a.startTime);
+    }).forEach(game => {
         const reportItem = document.createElement('div');
         reportItem.className = 'report-item';
         
-        const gameDate = new Date(game.date).toLocaleDateString();
+        const gameDateTime = game.startTime ? new Date(game.startTime).toLocaleString() : 'No date provided';
         reportItem.innerHTML = `
             <div class="report-header">
-                <div class="report-date">${gameDate}</div>
-                <div class="report-score">My Team ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
+                <div class="report-date">${gameDateTime}</div>
+                <div class="report-score">${appState.teamName} ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
             </div>
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
@@ -1245,24 +1259,29 @@ function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
     
-    let reportDialog = document.getElementById('player-actions');
+    let reportDialog = document.getElementById('detailed-report-dialog');
     if (!reportDialog) {
         reportDialog = document.createElement('div');
-        reportDialog.id = 'player-actions';
-        reportDialog.className = 'player-actions';
-        playerActions.appendChild(playerActions);
+        reportDialog.id = 'detailed-report-dialog';
+        reportDialog.className = 'dialog';
+        document.getElementById('app').appendChild(reportDialog);
     }
     
     const gameDate = new Date(game.date).toDateString();
-    const gameTime = game.startTime ? new Date(gameTime).toTimeString([], { timeStyle: 'short' }) : '';
+    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], { timeStyle: 'short' }) : '';
     
     let gameDuration = '';
-    if (gameDuration) {
-        const start = new Date(gameDuration);
-        const end = new Date(gameDuration);
+    if (game.startTime && game.endTime && !isNaN(new Date(game.endTime) - new Date(game.startTime))) {
+        const start = new Date(game.startTime);
+        const end = new Date(game.endTime);
         const durationMs = end - start;
         const durationMins = Math.floor(durationMs / 60000);
-        gameDuration = durationMs;
+        gameDuration = `${durationMins} minutes`;
+    } else if (game.numPeriods && game.periodDuration) {
+        const durationMins = Math.floor(game.numPeriods * game.periodDuration / 60);
+        gameDuration = `${durationMins} minutes`;
+    } else {
+        gameDuration = 'N/A';
     }
 
     const playerActions = {};
@@ -1392,9 +1411,9 @@ function viewReport(gameId) {
             <h2>Game Report</h2>
             <div class="report-header-info">
                 <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Teams:</strong> ${appState.teamName} vs ${game.opponentName}</div>
                 <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
-                <div><strong>Goal for My Team:</strong> ${goalLine}</div>
+                <div><strong>Goal for ${appState.teamName}:</strong> ${goalLine}</div>
                 <div><strong>Yellow card:</strong> ${yellowCardLine}</div>
                 <div><strong>Red card:</strong> ${redCardLine}</div>
                 <div><strong>Duration:</strong> ${gameDuration}</div>

@@ -383,11 +383,6 @@ input:checked + .slider:before {
     text-transform: uppercase;
 }
 
-/* .player-name {
-    font-weight: bold;
-    font-size: 16px;
-} */
-
 .player-position {
     flex: 1;
     font-size: clamp(0.75rem, 2.2vmin, 1rem);
@@ -1315,4 +1310,44 @@ button.no-assist-btn {
 .report-table th .stat-emoji,
 .report-table th .red-soccer-icon {
     vertical-align: middle; /* Ensure icons are vertically centered */
+}
+
+/* Report item container */
+.report-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #d3d3d3; /* Light gray 1px solid line */
+    padding: 10px 0; /* Minimal padding for visual balance */
+}
+
+/* Remove border from the last report item */
+.report-item:last-child {
+    border-bottom: none;
+}
+
+/* Report header (date and score) */
+.report-header {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Space between date and score */
+}
+
+/* Report date */
+.report-date {
+    font-size: 16px;
+    color: #333;
+}
+
+/* Report score */
+.report-score {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Report actions (buttons) */
+.report-actions {
+    display: flex;
+    gap: 10px; /* Space between buttons */
 }
