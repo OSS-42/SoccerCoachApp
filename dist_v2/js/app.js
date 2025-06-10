@@ -319,7 +319,7 @@ function updateDeleteRibbon() {
     if (checkboxes.length > 0) {
         clearTimeout(messageTimeout); // Cancel any existing timeout
         ribbon.innerHTML = `
-            <div id="message-text">Selected players will be deleted.</div>
+            <span id="message-text">Selected players will be deleted.</span>
             <div class="ribbon-buttons">
                 <button class="warning-delete-btn" onclick="openDeletePlayersDialog()">Delete</button>
                 <span class="close-btn" onclick="closeWarningRibbon()">×</span>
@@ -327,12 +327,15 @@ function updateDeleteRibbon() {
         `;
         ribbon.className = 'message-ribbon warning';
         ribbon.classList.remove('hidden');
-        ribbon.style.display = 'flex'; // Ensure display is set
+        ribbon.style.display = 'flex'; // Ensure ribbon is visible
         updateEditButtonStates(); // Update edit button states
     } else {
         ribbon.classList.add('hidden');
-        ribbon.innerHTML = ''; // Clear all content
         ribbon.style.display = 'none'; // Explicitly hide
+        ribbon.innerHTML = `
+            <span id="message-text"></span>
+            <button class="close-btn" onclick="hideMessage()">×</button>
+        `; // Restore default structure
         updateEditButtonStates(); // Re-enable edit buttons
     }
 }
@@ -436,7 +439,7 @@ function confirmDeletePlayers() {
 // Update showMessage to prevent timeout if yellow ribbon is needed
 function showMessage(message, type = 'error') {
     const ribbon = document.getElementById('message-ribbon');
-    const messageText = document.getElementById('message-text');
+    let messageText = document.getElementById('message-text');
     
     clearTimeout(messageTimeout);
     
@@ -446,9 +449,17 @@ function showMessage(message, type = 'error') {
         return;
     }
     
-    messageText.innerHTML = type === 'warning' ? message : message;
+    // Reset ribbon content for non-warning messages
+    ribbon.innerHTML = `
+        <span id="message-text"></span>
+        <button class="close-btn" onclick="hideMessage()">×</button>
+    `;
+    messageText = document.getElementById('message-text'); // Re-query after resetting
+    
+    messageText.textContent = message;
     ribbon.className = `message-ribbon ${type}`;
     ribbon.classList.remove('hidden');
+    ribbon.style.display = 'flex'; // Ensure ribbon is visible
     
     if (type !== 'warning') {
         messageTimeout = setTimeout(() => {
@@ -470,8 +481,11 @@ function hideMessage() {
     
     const ribbon = document.getElementById('message-ribbon');
     ribbon.classList.add('hidden');
-    ribbon.innerHTML = ''; // Clear all content
     ribbon.style.display = 'none'; // Explicitly hide
+    ribbon.innerHTML = `
+        <span id="message-text"></span>
+        <button class="close-btn" onclick="hideMessage()">×</button>
+    `; // Restore default structure
     updateEditButtonStates(); // Ensure edit buttons are enabled
 }
 
