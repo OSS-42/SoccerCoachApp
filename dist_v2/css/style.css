@@ -37,8 +37,13 @@ body {
     background-color: #4caf50;
 }
 
+
 .message-ribbon.hidden {
-    display: none;
+    display: none !important; /* Ensure hidden state is enforced */
+    height: 0; /* Collapse height */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    border: none; /* Remove any borders */
 }
 
 /* Ensure players-list has no padding by default */
@@ -55,30 +60,32 @@ body {
     position: fixed;
     top: var(--header-height);
     bottom: auto;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Downward shadow */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
     flex-wrap: nowrap;
+    width: 100%; /* Ensure full width */
+}
+
+.message-ribbon.warning .ribbon-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between delete and close buttons */
+}
+
+.message-ribbon.warning .warning-delete-btn {
+    margin: 0; /* Remove any default margins */
+    padding: 8px 16px; /* Maintain existing padding */
+    background-color: #ff2828;
+    color: #ffffff;
 }
 
 .message-ribbon.warning .close-btn {
-    color: #000; /* Black close button */
-}
-
-/* Style for Delete button in yellow warning ribbon */
-.warning-delete-btn {
-    background-color: #d32f2f;
-    color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    align-items: right;
-}
-
-.warning-delete-btn:hover {
-    background-color: #b71c1c;
+    padding: 0; /* Keep compact */
+    margin-left: 0; /* Override any existing margin */
+    color: #000; /* Ensure black color for close button */
 }
 
 .message-ribbon .close-btn {

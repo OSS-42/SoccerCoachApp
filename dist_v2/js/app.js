@@ -315,23 +315,34 @@ function renderPlayersList() {
 function updateDeleteRibbon() {
     const checkboxes = document.querySelectorAll('.player-checkbox:checked');
     const ribbon = document.getElementById('message-ribbon');
-    const messageText = document.getElementById('message-text');
     
     if (checkboxes.length > 0) {
         clearTimeout(messageTimeout); // Cancel any existing timeout
-        messageText.innerHTML = `<div id="message-ribbon" class="message-ribbon warning">
-            <div id="message-text">Selected players will be deleted. 
-                <button class="warning-delete-btn">Delete</button>
-            </div> <span class="close-btn">×</span>
-        </div>`;
+        ribbon.innerHTML = `
+            <div id="message-text">Selected players will be deleted.</div>
+            <div class="ribbon-buttons">
+                <button class="warning-delete-btn" onclick="openDeletePlayersDialog()">Delete</button>
+                <span class="close-btn" onclick="closeWarningRibbon()">×</span>
+            </div>
+        `;
         ribbon.className = 'message-ribbon warning';
         ribbon.classList.remove('hidden');
+        ribbon.style.display = 'flex'; // Ensure display is set
         updateEditButtonStates(); // Update edit button states
     } else {
         ribbon.classList.add('hidden');
-        messageText.textContent = '';
+        ribbon.innerHTML = ''; // Clear all content
+        ribbon.style.display = 'none'; // Explicitly hide
         updateEditButtonStates(); // Re-enable edit buttons
     }
+}
+
+function closeWarningRibbon() {
+    const checkboxes = document.querySelectorAll('.player-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false; // Uncheck all player checkboxes
+    });
+    updateDeleteRibbon(); // Update ribbon to hide it
 }
 
 // Open confirmation dialog for multiple players
@@ -459,8 +470,8 @@ function hideMessage() {
     
     const ribbon = document.getElementById('message-ribbon');
     ribbon.classList.add('hidden');
-    const messageText = document.getElementById('message-text');
-    messageText.textContent = '';
+    ribbon.innerHTML = ''; // Clear all content
+    ribbon.style.display = 'none'; // Explicitly hide
     updateEditButtonStates(); // Ensure edit buttons are enabled
 }
 
