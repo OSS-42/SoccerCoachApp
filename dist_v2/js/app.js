@@ -291,13 +291,135 @@ function renderPlayersList() {
                 <button class="player-action-btn" onclick="editPlayer('${player.id}')">
                     <span class="material-icons">edit</span>
                 </button>
-                <button class="player-action-btn" onclick="deletePlayer('${player.id}')">
-                    <span class="material-icons">delete</span>
-                </button>
+                <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="updateDeleteRibbon()">
             </div>
         `;
         playersList.appendChild(playerItem);
     });
+    
+    updateDeleteRibbon(); // Initialize ribbon state
+}
+
+// Show/hide yellow ribbon based on checkbox states
+function updateDeleteRibbon() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    const ribbon = document.getElementById('message-ribbon');
+    const messageText = document.getElementById('message-text');
+    
+    if (checkboxes.length > 0) {
+        messageText.innerHTML = `Selected players will be deleted. <button class="primary-btn" onclick="openDeletePlayersDialog()">Delete</button>`;
+        ribbon.className = 'message-ribbon warning';
+        ribbon.classList.remove('hidden');
+    } else {
+        hideMessage();
+    }
+}
+
+// Open confirmation dialog for multiple players
+function openDeletePlayersDialog() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    if (checkboxes.length === 0) {
+        hideMessage();
+        return;
+    }
+    
+    let confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('div');
+        confirmDialog.id = 'confirm-delete-dialog';
+        confirmDialog.className = 'dialog';
+        document.getElementById('app').appendChild(confirmDialog);
+    }
+    
+    const playerCount = checkboxes.length;
+    confirmDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to remove ${playerCount} player${playerCount > 1 ? 's' : ''}?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeConfirmDeleteDialog()">Cancel</button>
+                <button class="primary-btn delete-btn" onclick="confirmDeletePlayers()">Confirm</button>
+            </div>
+        </div>
+    `;
+    
+    confirmDialog.style.display = 'flex';
+    confirmDialog.classList.add('active');
+}
+
+// Update closeConfirmDeleteDialog to reset checkboxes
+function closeConfirmDeleteDialog() {
+    const confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (confirmDialog) {
+        confirmDialog.style.display = 'none';
+        confirmDialog.classList.remove('active');
+    }
+    // Reset all checkboxes
+    document.querySelectorAll('.player-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateDeleteRibbon();
+}
+
+// Delete multiple selected players
+function confirmDeletePlayers() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    const playerIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-player-id'));
+    
+    if (playerIds.length === 0) {
+        hideMessage();
+        return;
+    }
+    
+    // Close the dialog
+    closeConfirmDeleteDialog();
+    
+    // Delete selected players
+    const deletedCount = playerIds.length;
+    playerIds.forEach(playerId => {
+        const playerIndex = appState.players.findIndex(p => p.id === playerId);
+        if (playerIndex !== -1) {
+            const player = appState.players[playerIndex];
+            if (!appState.settings.reusablePlayerIds) {
+                appState.settings.reusablePlayerIds = [];
+            }
+            appState.settings.reusablePlayerIds.push(player.id);
+            appState.players.splice(playerIndex, 1);
+        }
+    });
+    
+    // Save and update UI
+    saveAppData();
+    renderPlayersList();
+    updatePlayerCounter();
+    
+    // Show success message
+    showMessage(`${deletedCount} player${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
+}
+
+// Update showMessage to handle players-list padding
+function showMessage(message, type = 'error') {
+    const ribbon = document.getElementById('message-ribbon');
+    const messageText = document.getElementById('message-text');
+    
+    clearTimeout(messageTimeout);
+    
+    messageText.innerHTML = message; // Use innerHTML to support button in warning ribbon
+    ribbon.className = `message-ribbon ${type}`;
+    ribbon.classList.remove('hidden');
+    
+    messageTimeout = setTimeout(() => {
+        hideMessage();
+    }, 5000);
+}
+
+// Update hideMessage to reset players-list padding
+function hideMessage() {
+    const ribbon = document.getElementById('message-ribbon');
+    ribbon.classList.add('hidden');
+    // Clear message content to prevent stale buttons
+    const messageText = document.getElementById('message-text');
+    messageText.textContent = '';
 }
 
 function editPlayer(playerId) {

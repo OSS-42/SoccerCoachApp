@@ -42,6 +42,16 @@ body {
     display: none;
 }
 
+/* Yellow warning ribbon for player deletion */
+.message-ribbon.warning {
+    background-color: #ffca28;
+}
+
+/* Add padding to players-list when any ribbon is visible */
+.players-list:has(+ .message-ribbon:not(.hidden)) {
+    padding-bottom: 60px;
+}
+
 .message-ribbon .close-btn {
     background: none;
     border: none;
