@@ -71,27 +71,6 @@ function updatePlayerGridOrientation() {
 
 let messageTimeout;
 
-// Message functions
-function showMessage(message, type = 'error') {
-    const ribbon = document.getElementById('message-ribbon');
-    const messageText = document.getElementById('message-text');
-    
-    clearTimeout(messageTimeout);
-    
-    messageText.textContent = message;
-    ribbon.className = `message-ribbon ${type}`;
-    ribbon.classList.remove('hidden');
-    
-    messageTimeout = setTimeout(() => {
-        hideMessage();
-    }, 5000);
-}
-
-function hideMessage() {
-    const ribbon = document.getElementById('message-ribbon');
-    ribbon.classList.add('hidden');
-}
-
 // Function to render the Game Setup screen and pre-fill the substitution time
 function renderGameSetup() {
     const substitutionTimeInput = document.getElementById('substitution-time');
@@ -303,7 +282,7 @@ function renderPlayersList() {
                 <button class="player-action-btn" onclick="editPlayer('${player.id}')" ${anyChecked ? 'disabled' : ''}>
                     <span class="material-icons">edit</span>
                 </button>
-                <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="updateDeleteRibbon()">
+                <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="updateDeletePlayerRibbon()">
             </div>
         `;
         playersList.appendChild(playerItem);
@@ -311,8 +290,8 @@ function renderPlayersList() {
 }
 
 // Show/hide yellow ribbon based on checkbox states
-// Update updateDeleteRibbon to reinforce yellow ribbon precedence
-function updateDeleteRibbon() {
+// Update updateDeletePlayerRibbon to reinforce yellow ribbon precedence
+function updateDeletePlayerRibbon() {
     const checkboxes = document.querySelectorAll('.player-checkbox:checked');
     const ribbon = document.getElementById('message-ribbon');
     
@@ -345,7 +324,7 @@ function closeWarningRibbon() {
     checkboxes.forEach(checkbox => {
         checkbox.checked = false; // Uncheck all player checkboxes
     });
-    updateDeleteRibbon(); // Update ribbon to hide it
+    updateDeletePlayerRibbon(); // Update ribbon to hide it
 }
 
 // Open confirmation dialog for multiple players
@@ -391,7 +370,7 @@ function closeConfirmDeleteDialog() {
     document.querySelectorAll('.player-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
-    updateDeleteRibbon();
+    updateDeletePlayerRibbon();
 }
 
 // Delete multiple selected players
@@ -478,7 +457,7 @@ function hideMessage() {
     const playerCheckboxes = document.querySelectorAll('.player-checkbox:checked');
     const reportCheckboxes = document.querySelectorAll('.report-checkbox:checked');
     if (playerCheckboxes.length > 0) {
-        updateDeleteRibbon();
+        updateDeletePlayerRibbon();
         return;
     }
     if (reportCheckboxes.length > 0) {
