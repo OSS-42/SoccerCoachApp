@@ -1198,13 +1198,10 @@ function endGame() {
     // Update game report counter
     updateGameReportCounter();
 
-    // Show the reports screen
+    // Show the reports screen and open the report dialog
     showScreen('reports');
-
-    // Generate and show the detailed report for this game
-    setTimeout(() => {
-        viewReport(finishedGameId);
-    }, 300);
+    renderReportsList();
+    viewReport(finishedGameId);
 
     // Clear current game
     appState.currentGame = null;
@@ -1245,24 +1242,24 @@ function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
     
-    let reportDialog = document.getElementById('player-actions');
+    let reportDialog = document.getElementById('detailed-report-dialog');
     if (!reportDialog) {
         reportDialog = document.createElement('div');
-        reportDialog.id = 'player-actions';
-        reportDialog.className = 'player-actions';
-        playerActions.appendChild(playerActions);
+        reportDialog.id = 'detailed-report-dialog';
+        reportDialog.className = 'dialog';
+        document.getElementById('app').appendChild(reportDialog);
     }
     
     const gameDate = new Date(game.date).toDateString();
-    const gameTime = game.startTime ? new Date(gameTime).toTimeString([], { timeStyle: 'short' }) : '';
+    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], { timeStyle: 'short' }) : '';
     
     let gameDuration = '';
-    if (gameDuration) {
-        const start = new Date(gameDuration);
-        const end = new Date(gameDuration);
+    if (game.startTime && game.endTime) {
+        const start = new Date(game.startTime);
+        const end = new Date(game.endTime);
         const durationMs = end - start;
         const durationMins = Math.floor(durationMs / 60000);
-        gameDuration = durationMs;
+        gameDuration = `${durationMins} minutes`;
     }
 
     const playerActions = {};
@@ -1392,9 +1389,9 @@ function viewReport(gameId) {
             <h2>Game Report</h2>
             <div class="report-header-info">
                 <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Teams:</strong> ${appState.teamName} vs ${game.opponentName}</div>
                 <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
-                <div><strong>Goal for My Team:</strong> ${goalLine}</div>
+                <div><strong>Goal for ${appState.teamName}:</strong> ${goalLine}</div>
                 <div><strong>Yellow card:</strong> ${yellowCardLine}</div>
                 <div><strong>Red card:</strong> ${redCardLine}</div>
                 <div><strong>Duration:</strong> ${gameDuration}</div>
