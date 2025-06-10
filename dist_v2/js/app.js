@@ -443,9 +443,10 @@ function showMessage(message, type = 'error') {
     
     clearTimeout(messageTimeout);
     
-    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
-    if (checkboxes.length > 0 && type !== 'warning') {
-        // Skip non-warning ribbons if checkboxes are checked
+    const playerCheckboxes = document.querySelectorAll('.player-checkbox:checked');
+    const reportCheckboxes = document.querySelectorAll('.report-checkbox:checked');
+    if ((playerCheckboxes.length > 0 || reportCheckboxes.length > 0) && type !== 'warning') {
+        // Skip non-warning ribbons if any checkboxes are checked
         return;
     }
     
@@ -463,7 +464,8 @@ function showMessage(message, type = 'error') {
     
     if (type !== 'warning') {
         messageTimeout = setTimeout(() => {
-            if (document.querySelectorAll('.player-checkbox:checked').length === 0) {
+            if (document.querySelectorAll('.player-checkbox:checked').length === 0 && 
+                document.querySelectorAll('.report-checkbox:checked').length === 0) {
                 hideMessage();
             }
         }, 5000);
@@ -473,9 +475,14 @@ function showMessage(message, type = 'error') {
 // Update hideMessage to reset players-list padding
 // Update hideMessage to check checkbox state
 function hideMessage() {
-    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
-    if (checkboxes.length > 0) {
+    const playerCheckboxes = document.querySelectorAll('.player-checkbox:checked');
+    const reportCheckboxes = document.querySelectorAll('.report-checkbox:checked');
+    if (playerCheckboxes.length > 0) {
         updateDeleteRibbon();
+        return;
+    }
+    if (reportCheckboxes.length > 0) {
+        updateDeleteReportsRibbon();
         return;
     }
     
@@ -1424,6 +1431,8 @@ function renderReportsList() {
         return;
     }
     
+    const anyChecked = document.querySelectorAll('.report-checkbox:checked').length > 0;
+    
     completedGames.sort((a, b) => {
         if (!a.startTime || !b.startTime) return a.startTime ? -1 : b.startTime ? 1 : 0;
         return new Date(b.startTime) - new Date(a.startTime);
@@ -1440,10 +1449,119 @@ function renderReportsList() {
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
                 <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
+                <input type="checkbox" class="report-checkbox" data-report-id="${game.id}" onchange="updateDeleteReportsRibbon()" ${anyChecked ? 'disabled' : ''}>
             </div>
         `;
         reportsList.appendChild(reportItem);
     });
+}
+
+function updateDeleteReportsRibbon() {
+    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+    const ribbon = document.getElementById('message-ribbon');
+    
+    if (checkboxes.length > 0) {
+        clearTimeout(messageTimeout); // Cancel any existing timeout
+        ribbon.innerHTML = `
+            <span id="message-text">Selected reports will be deleted.</span>
+            <div class="ribbon-buttons">
+                <button class="warning-delete-btn" onclick="openDeleteReportsDialog()">Delete</button>
+                <span class="close-btn" onclick="closeWarningReportsRibbon()">×</span>
+            </div>
+        `;
+        ribbon.className = 'message-ribbon warning';
+        ribbon.classList.remove('hidden');
+        ribbon.style.display = 'flex'; // Ensure ribbon is visible
+    } else {
+        ribbon.classList.add('hidden');
+        ribbon.style.display = 'none'; // Explicitly hide
+        ribbon.innerHTML = `
+            <span id="message-text"></span>
+            <button class="close-btn" onclick="hideMessage()">×</button>
+        `; // Restore default structure
+    }
+}
+
+function closeWarningReportsRibbon() {
+    const checkboxes = document.querySelectorAll('.report-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false; // Uncheck all report checkboxes
+    });
+    updateDeleteReportsRibbon(); // Update ribbon to hide it
+}
+
+function openDeleteReportsDialog() {
+    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+    if (checkboxes.length === 0) {
+        updateDeleteReportsRibbon();
+        return;
+    }
+    
+    let confirmDialog = document.getElementById('confirm-delete-reports-dialog');
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('div');
+        confirmDialog.id = 'confirm-delete-reports-dialog';
+        confirmDialog.className = 'dialog';
+        document.getElementById('app').appendChild(confirmDialog);
+    }
+    
+    const reportCount = checkboxes.length;
+    confirmDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to remove ${reportCount} report${reportCount > 1 ? 's' : ''}?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeConfirmDeleteReportsDialog()">Cancel</button>
+                <button class="primary-btn delete-btn" onclick="confirmDeleteReports()">Confirm</button>
+            </div>
+        </div>
+    `;
+    
+    confirmDialog.style.display = 'flex';
+    confirmDialog.classList.add('active');
+}
+
+function closeConfirmDeleteReportsDialog() {
+    const confirmDialog = document.getElementById('confirm-delete-reports-dialog');
+    if (confirmDialog) {
+        confirmDialog.style.display = 'none';
+        confirmDialog.classList.remove('active');
+    }
+    // Reset all checkboxes
+    document.querySelectorAll('.report-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateDeleteReportsRibbon();
+}
+
+function confirmDeleteReports() {
+    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+    const reportIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-report-id'));
+    
+    if (reportIds.length === 0) {
+        updateDeleteReportsRibbon();
+        return;
+    }
+    
+    // Close the dialog
+    closeConfirmDeleteReportsDialog();
+    
+    // Delete selected reports
+    const deletedCount = reportIds.length;
+    reportIds.forEach(reportId => {
+        const reportIndex = appState.games.findIndex(g => g.id === reportId);
+        if (reportIndex !== -1) {
+            appState.games.splice(reportIndex, 1);
+        }
+    });
+    
+    // Save and update UI
+    saveAppData();
+    renderReportsList();
+    updateGameReportCounter();
+    
+    // Show success message
+    showMessage(`${deletedCount} report${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
 }
 
 function viewReport(gameId) {
