@@ -319,7 +319,9 @@ function updateDeleteRibbon() {
     
     if (checkboxes.length > 0) {
         clearTimeout(messageTimeout); // Cancel any existing timeout
-        messageText.innerHTML = `Selected players will be deleted. <button class="primary-btn" onclick="openDeletePlayersDialog()">Delete</button>`;
+        messageText.innerHTML = `Selected players will be deleted.
+            <button class="warning-delete-btn" onclick="openDeletePlayersDialog()">Delete</button>
+        </span>`;
         ribbon.className = 'message-ribbon warning';
         ribbon.classList.remove('hidden');
         updateEditButtonStates(); // Update edit button states
@@ -377,6 +379,7 @@ function closeConfirmDeleteDialog() {
 }
 
 // Delete multiple selected players
+// Update confirmDeletePlayers to ensure proper state updates
 function confirmDeletePlayers() {
     const checkboxes = document.querySelectorAll('.player-checkbox:checked');
     const playerIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-player-id'));
@@ -402,6 +405,10 @@ function confirmDeletePlayers() {
             appState.players.splice(playerIndex, 1);
         }
     });
+    
+    // Log state for debugging
+    console.log('After deletion - Players:', appState.players);
+    console.log('Reusable Player IDs:', appState.settings.reusablePlayerIds);
     
     // Save and update UI
     saveAppData();
@@ -1735,9 +1742,11 @@ function saveSettings() {
 }
 
 // Data persistence (using localStorage in the prototype)
+// Update saveAppData to ensure reliable persistence
 function saveAppData() {
     if (!db) {
         showMessage('Database not initialized', 'error');
+        console.error('IndexedDB not initialized');
         return;
     }
 
@@ -1750,18 +1759,24 @@ function saveAppData() {
     // Validate data
     if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
         showMessage('Invalid data format for saving', 'error');
+        console.error('Invalid appState:', appState);
         return;
     }
 
     // Save team
     teamStore.put({ id: 'team', teamName: appState.teamName });
 
-    // Save players
-    appState.players.forEach(player => {
-        if (player.id && player.name && player.jerseyNumber !== undefined) {
-            playersStore.put(player);
-        }
-    });
+    // Clear and save players
+    const clearPlayersRequest = playersStore.clear();
+    clearPlayersRequest.onsuccess = () => {
+        appState.players.forEach(player => {
+            if (player.id && player.name && player.jerseyNumber !== undefined) {
+                playersStore.put(player);
+            } else {
+                console.warn('Skipping invalid player:', player);
+            }
+        });
+    };
 
     // Save games
     appState.games.forEach(game => {
@@ -1774,11 +1789,12 @@ function saveAppData() {
     settingsStore.put({ id: 'settings', ...appState.settings });
 
     transaction.oncomplete = () => {
-        // No success message to avoid spamming the UI
+        console.log('Data saved successfully to IndexedDB');
     };
 
-    transaction.onerror = () => {
+    transaction.onerror = (event) => {
         showMessage('Failed to save data', 'error');
+        console.error('IndexedDB save error:', event.target.error);
     };
 }
 

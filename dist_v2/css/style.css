@@ -56,16 +56,30 @@ body {
     top: var(--header-height);
     bottom: auto;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Downward shadow */
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
 }
 
 .message-ribbon.warning .close-btn {
     color: #000; /* Black close button */
 }
 
-/* Add padding to players-list when any ribbon is visible
-.players-list:has(+ .message-ribbon:not(.hidden)) {
-    padding-bottom: 60px;
-} */
+/* Style for Delete button in yellow warning ribbon */
+.warning-delete-btn {
+    background-color: #d32f2f;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    align-items: right;
+}
+
+.warning-delete-btn:hover {
+    background-color: #b71c1c;
+}
 
 .message-ribbon .close-btn {
     background: none;
