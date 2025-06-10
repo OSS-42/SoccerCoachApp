@@ -24,6 +24,33 @@ let appState = {
     currentPlayer: null
 };
 
+// Initialize IndexedDB
+let db = null;
+function initIndexedDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('SoccerCoachDB', 1);
+
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            // Create object stores
+            db.createObjectStore('team', { keyPath: 'id' });
+            db.createObjectStore('players', { keyPath: 'id' });
+            db.createObjectStore('games', { keyPath: 'id' });
+            db.createObjectStore('settings', { keyPath: 'id' });
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+        };
+
+        request.onerror = (event) => {
+            showMessage('Failed to initialize database', 'error');
+            reject(event.target.error);
+        };
+    });
+}
+
 // Initialize the app
 // Initialize app styling - light mode only
 function initializeStyling() {
@@ -70,15 +97,21 @@ function renderGameSetup() {
     const substitutionTimeInput = document.getElementById('substitution-time');
     const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
     
-    // Pre-fill substitution time if a default exists
-    if (appState.settings.defaultSubstitutionTime !== null) {
+    // Pre-fill substitution time and checkbox state from settings
+    if (appState.settings.isSubstitutionDefaultChecked && appState.settings.defaultSubstitutionTime !== null) {
         substitutionTimeInput.value = appState.settings.defaultSubstitutionTime;
+        saveSubstitutionDefaultCheckbox.checked = true;
     } else {
-        substitutionTimeInput.value = ''; // Ensure the input is empty by default
+        substitutionTimeInput.value = ''; // Default to empty if no persisted default
+        saveSubstitutionDefaultCheckbox.checked = false;
     }
-    
-    // Set the checkbox state based on the stored value
-    saveSubstitutionDefaultCheckbox.checked = appState.settings.isSubstitutionDefaultChecked;
+}
+
+function updateUI() {
+    updatePlayerCounter();
+    updateGameReportCounter();
+    updateTeamNameUI();
+    renderPlayersList();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -98,22 +131,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update player grid orientation on load
     updatePlayerGridOrientation();
-    // Update on orientation change
     window.addEventListener('resize', updatePlayerGridOrientation);
     window.addEventListener('orientationchange', updatePlayerGridOrientation);
 
-    // Load saved data
-    loadAppData();
-    renderPlayersList();
-    updateTeamNameUI();
-    
-    if (appState.players.length === 0) {
-        addDemoPlayers();
-    }
-    
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('game-date').value = today;
-    showScreen('main-screen');
+    // Load saved data and update UI
+    loadAppData().then(() => {
+        updateUI();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('game-date').value = today;
+        showScreen('main-screen');
+    });
 });
 
 // Team Name functions
@@ -193,9 +220,10 @@ function closeAddPlayerDialog() {
 function addPlayer() {
     const name = document.getElementById('player-name').value.trim();
     const jerseyNumber = document.getElementById('jersey-number').value;
+    const position = document.getElementById('player-position').value;
     
-    if (!name || !jerseyNumber) {
-        showMessage('Please fill in all required fields', 'error');
+    if (!name || !jerseyNumber || !position) {
+        showMessage('Please fill in all required fields, including position', 'error');
         return;
     }
     
@@ -205,16 +233,21 @@ function addPlayer() {
         return;
     }
     
-    // Generate a unique ID that isn't already in use
+    // Get player ID (reuse or generate new)
     let playerId;
-    do {
-        playerId = Math.floor(Math.random() * 1000000).toString();
-    } while (appState.players.some(p => p.id === playerId));
+    if (appState.settings.reusablePlayerIds && appState.settings.reusablePlayerIds.length > 0) {
+        playerId = appState.settings.reusablePlayerIds.shift();
+    } else {
+        do {
+            playerId = Math.floor(Math.random() * 1000000).toString();
+        } while (appState.players.some(p => p.id === playerId));
+    }
     
     const player = {
         id: playerId,
         name,
         jerseyNumber: Number(jerseyNumber),
+        position,
         stats: {
             goals: 0,
             assists: 0,
@@ -228,6 +261,7 @@ function addPlayer() {
     appState.players.push(player);
     saveAppData();
     renderPlayersList();
+    updatePlayerCounter();
     closeAddPlayerDialog();
 
     // Show success message
@@ -249,7 +283,7 @@ function renderPlayersList() {
         playerItem.innerHTML = `
             <div class="jersey-number">${player.jerseyNumber}</div>
             <div class="player-info">
-                <div class="player-name">${player.name}</div>
+                <div class="player-name">${player.name} (${player.position})</div>
             </div>
             <div class="player-actions">
                 <button class="player-action-btn" onclick="editPlayer('${player.id}')">
@@ -276,6 +310,11 @@ function editPlayer(playerId) {
         document.getElementById('app').appendChild(editDialog);
     }
     
+    const positions = ['GK', 'SW', 'LB', 'LCB', 'CB', 'RCB', 'RB', 'LWB', 'CDM', 'RWB', 'LM', 'LCM', 'CM', 'RCM', 'RM', 'LW', 'CAM', 'RW', 'SS', 'CF', 'ST'];
+    const positionOptions = positions.map(pos => 
+        `<option value="${pos}" ${player.position === pos ? 'selected' : ''}>${pos}</option>`
+    ).join('');
+    
     editDialog.innerHTML = `
         <div class="dialog-content">
             <h2>Edit Player</h2>
@@ -286,6 +325,12 @@ function editPlayer(playerId) {
             <div class="form-group">
                 <label for="edit-jersey-number">Jersey Number:</label>
                 <input type="number" id="edit-jersey-number" value="${player.jerseyNumber}" min="1" max="99">
+            </div>
+            <div class="form-group">
+                <label for="edit-player-position">Position:</label>
+                <select id="edit-player-position">
+                    ${positionOptions}
+                </select>
             </div>
             <div class="dialog-buttons">
                 <button class="secondary-btn" onclick="closeEditPlayerDialog()">Cancel</button>
@@ -312,6 +357,7 @@ function savePlayerEdit(playerId) {
     
     const newName = document.getElementById('edit-player-name').value.trim();
     const newJerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
+    const newPosition = document.getElementById('edit-player-position').value;
     
     if (!newName) {
         showMessage('Please enter a name for the player', 'error');
@@ -320,6 +366,11 @@ function savePlayerEdit(playerId) {
     
     if (!newJerseyNumber || newJerseyNumber < 1 || newJerseyNumber > 99) {
         showMessage('Please enter a valid jersey number between 1 and 99', 'error');
+        return;
+    }
+    
+    if (!newPosition) {
+        showMessage('Please select a position', 'error');
         return;
     }
     
@@ -332,10 +383,12 @@ function savePlayerEdit(playerId) {
     // Update player data
     player.name = newName;
     player.jerseyNumber = newJerseyNumber;
+    player.position = newPosition;
     
     // Save and refresh
     saveAppData();
     renderPlayersList();
+    updatePlayerCounter();
     closeEditPlayerDialog();
 
     // Show success message
@@ -381,21 +434,43 @@ function confirmDeletePlayer(playerId) {
     // Close the confirmation dialog
     document.getElementById('confirm-delete-dialog').style.display = 'none';
     
-    // Actually remove the player completely instead of just marking inactive
+    // Remove the player and add their ID to reusablePlayerIds
     const playerIndex = appState.players.findIndex(p => p.id === playerId);
     if (playerIndex !== -1) {
         // Get player information for the message
         const player = appState.players[playerIndex];
         
-        // Remove the player completely (not just set inactive)
+        // Add player ID to reusable IDs
+        if (!appState.settings.reusablePlayerIds) {
+            appState.settings.reusablePlayerIds = [];
+        }
+        appState.settings.reusablePlayerIds.push(player.id);
+        
+        // Remove the player
         appState.players.splice(playerIndex, 1);
         
         // Update data and UI
         saveAppData();
         renderPlayersList();
+        updatePlayerCounter();
         
         // Show success message with the ribbon
         showMessage(`Player ${player.name} (#${player.jerseyNumber}) has been removed`, 'success');
+    }
+}
+
+function updatePlayerCounter() {
+    const counterElement = document.getElementById('player-counter');
+    if (counterElement) {
+        counterElement.textContent = appState.players.length;
+    }
+}
+
+function updateGameReportCounter() {
+    const counterElement = document.getElementById('game-report-counter');
+    if (counterElement) {
+        const completedGames = appState.games.filter(game => game.isCompleted).length;
+        counterElement.textContent = completedGames;
     }
 }
 
@@ -513,19 +588,51 @@ function startGame() {
     showScreen('game-tracking');
 }
 
+function updateCardCounters() {
+    if (!appState.currentGame) return;
+    
+    const yellowCardCount = appState.players.reduce((sum, player) => sum + (player.stats.yellowCards || 0), 0);
+    const redCardCount = appState.players.reduce((sum, player) => {
+        const yellows = player.stats.yellowCards || 0;
+        const reds = player.stats.redCards || 0;
+        return sum + reds + (yellows >= 2 ? 1 : 0);
+    }, 0);
+    
+    const yellowCardElement = document.getElementById('yellow-card-count');
+    const redCardElement = document.getElementById('red-card-count');
+    
+    if (yellowCardElement) yellowCardElement.textContent = yellowCardCount;
+    if (redCardElement) redCardElement.textContent = redCardCount;
+}
+
 function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
+    if (!playerGrid) {
+        console.error('Player grid element not found');
+        return;
+    }
+    
     playerGrid.innerHTML = '';
     
-    // Using all players, not filtering by active status anymore
+    if (appState.players.length === 0) {
+        playerGrid.innerHTML = '<div class="empty-state">No players available</div>';
+        return;
+    }
+    
     appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
-        // Ensure player has stats object
+        if (!player.id || !player.jerseyNumber || !player.name || !player.position) {
+            console.warn('Skipping invalid player:', player);
+            return;
+        }
+        
         if (!player.stats) {
             player.stats = {
                 goals: 0,
                 assists: 0,
                 saves: 0,
-                goalsAllowed: 0
+                goalsAllowed: 0,
+                yellowCards: 0,
+                redCards: 0
             };
         }
         
@@ -533,61 +640,37 @@ function renderPlayerGrid() {
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
         
-        // Create a completely redesigned player card (now square shaped)
+        // Apply yellow or red card classes
+        if (player.stats.redCards > 0 || player.stats.yellowCards >= 2) {
+            playerGridItem.classList.add('red-card');
+        } else if (player.stats.yellowCards > 0) {
+            playerGridItem.classList.add('yellow-card');
+        }
+        
         playerGridItem.innerHTML = `
-            <div class="player-header">
+            <div class="player-name">${player.name}</div>
+            <div class="player-columns">
                 <div class="player-number">${player.jerseyNumber}</div>
-                <div class="player-name">${player.name}</div>
-            </div>
-            <div class="player-stats-container">
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">⚽</span>
-                    </div>
-                    <div class="stat-value">${player.stats.goals}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">👟</span>
-                    </div>
-                    <div class="stat-value">${player.stats.assists}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">🧤</span>
-                    </div>
-                    <div class="stat-value">${player.stats.saves}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed">
-                    </div>
-                    <div class="stat-value">${player.stats.goalsAllowed}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">🟨</span>
-                    </div>
-                    <div class="stat-value">${player.stats.yellowCards}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">🟥</span>
-                    </div>
-                    <div class="stat-value">${player.stats.redCards}</div>
-                </div>
+                <div class="player-position">${player.position}</div>
             </div>
         `;
         
-        playerGridItem.addEventListener('click', () => {
-            openPlayerActionDialog(player);
-        });
+        // Add click handler based on player status
+        if (player.stats.redCards === 0 && player.stats.yellowCards < 2) {
+            playerGridItem.addEventListener('click', () => {
+                openPlayerActionDialog(player);
+            });
+        } else {
+            playerGridItem.addEventListener('click', () => {
+                showMessage('Player sent off, no actions allowed', 'error');
+            });
+        }
         
         playerGrid.appendChild(playerGridItem);
     });
     
-    // Update orientation class after rendering
     updatePlayerGridOrientation();
+    updateCardCounters();
 }
 
 function updatePeriodCounter() {
@@ -820,6 +903,9 @@ function handleGoalAction() {
     
     // Record the current player as the scorer
     appState.goalScorer = appState.currentPlayer;
+
+    // Save state to ensure latest stats
+    saveAppData();
     
     // Close the player action dialog
     closePlayerActionDialog();
@@ -832,7 +918,11 @@ function openAssistSelectionDialog() {
     const dialog = document.getElementById('assist-selection-dialog');
     const playersGrid = document.getElementById('assist-players-grid');
     playersGrid.innerHTML = '';
-    const activePlayers = appState.players.filter(p => p.id !== appState.goalScorer.id);
+    const activePlayers = appState.players.filter(p => {
+        const redCards = p.stats?.redCards || 0;
+        const yellowCards = p.stats?.yellowCards || 0;
+        return p.id !== appState.goalScorer.id && redCards === 0 && yellowCards < 2;
+    });
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -897,7 +987,7 @@ function openScorerSelectionDialog() {
     const dialog = document.getElementById('scorer-selection-dialog');
     const playersGrid = document.getElementById('scorer-players-grid');
     playersGrid.innerHTML = '';
-    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id);
+    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id && p.stats.redCards === 0 && p.stats.yellowCards < 2);
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -937,69 +1027,100 @@ function completeAssistWithScorer(scorerId) {
 function recordAction(actionType, specificPlayerId = null) {
     if (!appState.currentGame) return;
     
-    // Use the specified player ID or the current player's ID
     const playerId = specificPlayerId || (appState.currentPlayer ? appState.currentPlayer.id : null);
-    if (!playerId) return;
-    
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
-    if (playerIndex === -1) return; // Player not found
-    
-    // Ensure player stats object is initialized
-    if (!appState.players[playerIndex].stats) {
-        appState.players[playerIndex].stats = {
-            goals: 0,
-            assists: 0,
-            saves: 0,
-            goalsAllowed: 0,
-            yellowCards: 0,
-            redCards: 0
-        };
-    }
-    
     const action = {
         timestamp: new Date().toISOString(),
-        playerId,
+        playerId: actionType === 'own_goal' ? null : playerId,
         actionType,
         gameMinute: calculateGameMinute()
     };
     
     appState.currentGame.actions.push(action);
     
-    // Update player stats
+    const playerIndex = playerId ? appState.players.findIndex(p => p.id === playerId) : -1;
+    const playerGridItem = playerId ? document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`) : null;
+    
+    if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
+        appState.players[playerIndex].stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0,
+            faults: 0,
+            blockedShots: 0
+        };
+    }
+    
     switch (actionType) {
         case 'goal':
             appState.players[playerIndex].stats.goals++;
             appState.currentGame.homeScore++;
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            showMessage('Goal recorded', 'success');
             break;
         case 'assist':
             appState.players[playerIndex].stats.assists++;
+            showMessage('Assist recorded', 'success');
             break;
         case 'save':
             appState.players[playerIndex].stats.saves++;
+            showMessage('Save recorded', 'success');
             break;
         case 'goal_allowed':
             appState.players[playerIndex].stats.goalsAllowed++;
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
+            showMessage('Goal allowed recorded', 'success');
             break;
         case 'yellow_card':
             appState.players[playerIndex].stats.yellowCards++;
+            if (appState.players[playerIndex].stats.yellowCards >= 2) {
+                if (playerGridItem) {
+                    playerGridItem.classList.remove('yellow-card');
+                    playerGridItem.classList.add('red-card');
+                }
+            } else if (playerGridItem) {
+                playerGridItem.classList.add('yellow-card');
+            }
+            updateCardCounters();
+            showMessage('Yellow card recorded', 'success');
             break;
         case 'red_card':
             appState.players[playerIndex].stats.redCards++;
+            if (playerGridItem) {
+                playerGridItem.classList.remove('yellow-card');
+                playerGridItem.classList.add('red-card');
+            }
+            updateCardCounters();
+            showMessage('Red card recorded', 'success');
+            break;
+        case 'own_goal':
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            showMessage('Own goal recorded', 'success');
+            break;
+        case 'late_to_game':
+            showMessage('Player recorded as late to game', 'success');
+            break;
+        case 'fault':
+            appState.players[playerIndex].stats.faults++;
+            showMessage('Fault recorded', 'success'); // Changed from 'yellow' to 'success' for consistency
+            break;
+        case 'blocked_shot':
+            appState.players[playerIndex].stats.blockedShots++;
+            showMessage('Blocked shot recorded', 'success');
             break;
     }
     
-    // Update player grid item
-    updatePlayerGridItem(playerId);
+    if (playerId) {
+        updatePlayerGridItem(playerId);
+    }
     
     saveAppData();
     
-    // Only close the dialog if it was opened directly (not via another action flow)
-    if (!specificPlayerId) {
-        closePlayerActionDialog();
-    }
+    closePlayerActionDialog();
 }
 
 function updatePlayerGridItem(playerId) {
@@ -1074,6 +1195,9 @@ function endGame() {
     // Save data before showing report
     saveAppData();
 
+    // Update game report counter
+    updateGameReportCounter();
+
     // Show the reports screen
     showScreen('reports');
 
@@ -1121,50 +1245,54 @@ function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
     
-    let reportDialog = document.getElementById('detailed-report-dialog');
+    let reportDialog = document.getElementById('player-actions');
     if (!reportDialog) {
         reportDialog = document.createElement('div');
-        reportDialog.id = 'detailed-report-dialog';
-        reportDialog.className = 'dialog';
-        document.getElementById('app').appendChild(reportDialog);
+        reportDialog.id = 'player-actions';
+        reportDialog.className = 'player-actions';
+        playerActions.appendChild(playerActions);
     }
     
-    // Format date
-    const gameDate = new Date(game.date).toLocaleDateString();
-    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    const gameDate = new Date(game.date).toDateString();
+    const gameTime = game.startTime ? new Date(gameTime).toTimeString([], { timeStyle: 'short' }) : '';
     
-    // Calculate game duration
     let gameDuration = '';
-    if (game.startTime && game.endTime) {
-        const start = new Date(game.startTime);
-        const end = new Date(game.endTime);
+    if (gameDuration) {
+        const start = new Date(gameDuration);
+        const end = new Date(gameDuration);
         const durationMs = end - start;
         const durationMins = Math.floor(durationMs / 60000);
-        gameDuration = `${durationMins} minutes`;
+        gameDuration = durationMs;
     }
 
     const playerActions = {};
-        game.activePlayers.forEach(playerId => {
-            const player = appState.players.find(p => p.id === playerId);
-            if (player) {
-                playerActions[playerId] = {
-                    name: player.name,
-                    jerseyNumber: player.jerseyNumber,
-                    goals: 0,
-                    assists: 0,
-                    saves: 0,
-                    goalsAllowed: 0,
-                    yellowCards: 0,
-                    redCards: 0
-                };
-            }
-        });
+    game.activePlayers.forEach(playerId => {
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            playerActions[playerId] = {
+                name: player.name,
+                jerseyNumber: player.jerseyNumber,
+                goals: [],
+                assists: 0,
+                saves: 0,
+                goalsAllowed: 0,
+                yellowCards: [],
+                redCards: [],
+                lateToGame: false,
+                faults: 0,
+                blockedShots: 0
+            };
+        }
+    });
     
+    const ownGoals = [];
     game.actions.forEach(action => {
-        if (playerActions[action.playerId]) {
+        if (action.actionType === 'own_goal') {
+            ownGoals.push(action.gameMinute);
+        } else if (playerActions[action.playerId]) {
             switch (action.actionType) {
                 case 'goal':
-                    playerActions[action.playerId].goals++;
+                    playerActions[action.playerId].goals.push(action.gameMinute);
                     break;
                 case 'assist':
                     playerActions[action.playerId].assists++;
@@ -1176,10 +1304,19 @@ function viewReport(gameId) {
                     playerActions[action.playerId].goalsAllowed++;
                     break;
                 case 'yellow_card':
-                    playerActions[action.playerId].yellowCards++;
+                    playerActions[action.playerId].yellowCards.push(action.gameMinute);
                     break;
                 case 'red_card':
-                    playerActions[action.playerId].redCards++;
+                    playerActions[action.playerId].redCards.push(action.gameMinute);
+                    break;
+                case 'late_to_game':
+                    playerActions[action.playerId].lateToGame = true;
+                    break;
+                case 'fault':
+                    playerActions[action.playerId].faults++;
+                    break;
+                case 'blocked_shot':
+                    playerActions[action.playerId].blockedShots++;
                     break;
             }
         }
@@ -1189,19 +1326,66 @@ function viewReport(gameId) {
     Object.values(playerActions)
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
         .forEach(playerStat => {
+            const effectiveRedCards = playerStat.redCards.length + (playerStat.yellowCards.length >= 2 ? 1 : 0);
             playerStatsHTML += `
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
                     <td>${playerStat.name.toUpperCase()}</td>
-                    <td>${playerStat.goals}</td>
+                    <td>${playerStat.goals.length}</td>
                     <td>${playerStat.assists}</td>
                     <td>${playerStat.saves}</td>
                     <td>${playerStat.goalsAllowed}</td>
-                    <td>${playerStat.yellowCards}</td>
-                    <td>${playerStat.redCards}</td>
+                    <td>${playerStat.blockedShots}</td>
+                    <td>${playerStat.faults}</td>
+                    <td>${playerStat.yellowCards.length}</td>
+                    <td>${effectiveRedCards}</td>
                 </tr>
             `;
         });
+    
+    const goalEntries = Object.values(playerActions)
+        .filter(p => p.goals.length > 0)
+        .map(p => ({
+            name: p.name,
+            times: p.goals.sort((a, b) => a - b)
+        }));
+    ownGoals.sort((a, b) => a - b).forEach(time => {
+        goalEntries.push({ name: 'Opponent', times: [time], isOwnGoal: true });
+    });
+    const goalLine = goalEntries.length > 0
+        ? goalEntries.map(entry => {
+              const times = entry.times.map(t => `${t}'`).join(', ');
+              return entry.isOwnGoal ? `${entry.name} (${times}, og)` : `${entry.name} (${times})`;
+          }).join(', ')
+        : 'N/A';
+    
+    const yellowCardEntries = Object.values(playerActions)
+        .filter(p => p.yellowCards.length > 0)
+        .map(p => ({
+            name: p.name,
+            times: p.yellowCards.sort((a, b) => a - b)
+        }));
+    const yellowCardLine = yellowCardEntries.length > 0
+        ? yellowCardEntries.map(entry => `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`).join(', ')
+        : 'N/A';
+    
+    const redCardEntries = Object.values(playerActions)
+        .filter(p => p.redCards.length > 0 || p.yellowCards.length >= 2)
+        .map(p => {
+            const redTimes = [...p.redCards];
+            if (p.yellowCards.length >= 2) {
+                redTimes.push(p.yellowCards[1]);
+            }
+            return { name: p.name, times: redTimes.sort((a, b) => a - b) };
+        });
+    const redCardLine = redCardEntries.length > 0
+        ? redCardEntries.map(entry => `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`).join(', ')
+        : 'N/A';
+    
+    const latePlayers = Object.values(playerActions)
+        .filter(p => p.lateToGame)
+        .map(p => p.name);
+    const lateLine = latePlayers.length > 0 ? latePlayers.join(', ') : 'N/A';
     
     reportDialog.innerHTML = `
         <div class="dialog-content report-dialog">
@@ -1210,6 +1394,9 @@ function viewReport(gameId) {
                 <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
                 <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
                 <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
+                <div><strong>Goal for My Team:</strong> ${goalLine}</div>
+                <div><strong>Yellow card:</strong> ${yellowCardLine}</div>
+                <div><strong>Red card:</strong> ${redCardLine}</div>
                 <div><strong>Duration:</strong> ${gameDuration}</div>
             </div>
             
@@ -1224,6 +1411,8 @@ function viewReport(gameId) {
                             <th><span class="stat-emoji">👟</span></th>
                             <th><span class="stat-emoji">🧤</span></th>
                             <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
+                            <th><span class="stat-emoji">❌</span></th>
+                            <th><span class="stat-emoji">⚠️</span></th>
                             <th><span class="stat-emoji">🟨</span></th>
                             <th><span class="stat-emoji">🟥</span></th>
                         </tr>
@@ -1234,12 +1423,16 @@ function viewReport(gameId) {
                 </table>
             </div>
             
+            <div class="report-footer">
+                <div><strong>Late to the game:</strong> ${lateLine}</div>
+            </div>
+            
             <div class="report-actions">
                 <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
                 <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
             </div>
         </div>
-    `;          
+    `;
     
     reportDialog.style.display = 'flex';
     reportDialog.classList.add('active');
@@ -1367,28 +1560,157 @@ function saveSettings() {
 
 // Data persistence (using localStorage in the prototype)
 function saveAppData() {
-    localStorage.setItem('soccerCoachApp', JSON.stringify({
-        teamName: appState.teamName,
-        players: appState.players,
-        games: appState.games,
-        settings: appState.settings
-    }));
+    if (!db) {
+        showMessage('Database not initialized', 'error');
+        return;
+    }
+
+    const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readwrite');
+    const teamStore = transaction.objectStore('team');
+    const playersStore = transaction.objectStore('players');
+    const gamesStore = transaction.objectStore('games');
+    const settingsStore = transaction.objectStore('settings');
+
+    // Validate data
+    if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
+        showMessage('Invalid data format for saving', 'error');
+        return;
+    }
+
+    // Save team
+    teamStore.put({ id: 'team', teamName: appState.teamName });
+
+    // Save players
+    appState.players.forEach(player => {
+        if (player.id && player.name && player.jerseyNumber !== undefined) {
+            playersStore.put(player);
+        }
+    });
+
+    // Save games
+    appState.games.forEach(game => {
+        if (game.id) {
+            gamesStore.put(game);
+        }
+    });
+
+    // Save settings
+    settingsStore.put({ id: 'settings', ...appState.settings });
+
+    transaction.oncomplete = () => {
+        // No success message to avoid spamming the UI
+    };
+
+    transaction.onerror = () => {
+        showMessage('Failed to save data', 'error');
+    };
 }
 
 function loadAppData() {
-    const savedData = localStorage.getItem('soccerCoachApp');
-    if (savedData) {
-        const data = JSON.parse(savedData);
-        appState.teamName = data.teamName || "My Team";
-        appState.players = data.players || [];
-        appState.games = data.games || [];
-        appState.settings = data.settings || { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false };
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+            console.error('IndexedDB not supported');
+            // Fallback to defaults
+            appState.teamName = "My Team";
+            appState.players = [];
+            appState.games = [];
+            appState.settings = {
+                language: 'en',
+                defaultSubstitutionTime: null,
+                isSubstitutionDefaultChecked: false,
+                reusablePlayerIds: []
+            };
+            updateTeamNameUI();
+            renderPlayersList();
+            updatePlayerCounter();
+            updateGameReportCounter();
+            showMessage('IndexedDB not supported, using defaults', 'error');
+            resolve();
+            return;
+        }
 
-        // Initialize UI styling
-        initializeStyling();
-        
-        updateTeamNameUI();
-    }
+        initIndexedDB().then(() => {
+            const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readonly');
+            const teamStore = transaction.objectStore('team');
+            const playersStore = transaction.objectStore('players');
+            const gamesStore = transaction.objectStore('games');
+            const settingsStore = transaction.objectStore('settings');
+
+            // Load team
+            teamStore.get('team').onsuccess = (event) => {
+                const team = event.target.result;
+                appState.teamName = team ? team.teamName : "My Team";
+                updateTeamNameUI();
+            };
+
+            // Load players
+            playersStore.getAll().onsuccess = (event) => {
+                appState.players = event.target.result || [];
+                updatePlayerCounter();
+            };
+
+            // Load games
+            gamesStore.getAll().onsuccess = (event) => {
+                appState.games = event.target.result || [];
+                updateGameReportCounter();
+            };
+
+            // Load settings
+            settingsStore.get('settings').onsuccess = (event) => {
+                const settings = event.target.result || {
+                    language: 'en',
+                    defaultSubstitutionTime: null,
+                    isSubstitutionDefaultChecked: false,
+                    reusablePlayerIds: []
+                };
+                appState.settings = settings;
+                initializeStyling();
+            };
+
+            transaction.oncomplete = () => {
+                renderPlayersList();
+                resolve();
+            };
+
+            transaction.onerror = () => {
+                console.error('Transaction error');
+                // Fallback to defaults
+                appState.teamName = "My Team";
+                appState.players = [];
+                appState.games = [];
+                appState.settings = {
+                    language: 'en',
+                    defaultSubstitutionTime: null,
+                    isSubstitutionDefaultChecked: false,
+                    reusablePlayerIds: []
+                };
+                updateTeamNameUI();
+                renderPlayersList();
+                updatePlayerCounter();
+                updateGameReportCounter();
+                showMessage('Failed to load data, using defaults', 'error');
+                resolve();
+            };
+        }).catch((error) => {
+            console.error('IndexedDB initialization failed:', error);
+            // Fallback to defaults
+            appState.teamName = "My Team";
+            appState.players = [];
+            appState.games = [];
+            appState.settings = {
+                language: 'en',
+                defaultSubstitutionTime: null,
+                isSubstitutionDefaultChecked: false,
+                reusablePlayerIds: []
+            };
+            updateTeamNameUI();
+            renderPlayersList();
+            updatePlayerCounter();
+            updateGameReportCounter();
+            showMessage('Database initialization failed, using defaults', 'error');
+            resolve();
+        });
+    });
 }
 
 // Function to clear all app data and start fresh
@@ -1481,7 +1803,7 @@ function exportTeamData() {
         teamName: appState.teamName,
         players: appState.players,
         games: appState.games,
-        settings: appState.settings
+        settings: appState.settings // Includes reusablePlayerIds
     };
     
     // Convert to JSON string
@@ -1528,11 +1850,14 @@ function handleFileImport(event) {
                 appState.teamName = importedData.teamName;
                 appState.players = importedData.players;
                 appState.games = importedData.games || [];
-                if (importedData.settings) {
-                    appState.settings = importedData.settings;
-                }
+                appState.settings = importedData.settings || {
+                    language: 'en',
+                    defaultSubstitutionTime: null,
+                    isSubstitutionDefaultChecked: false,
+                    reusablePlayerIds: []
+                };
                 
-                // Save to local storage
+                // Save to IndexedDB
                 saveAppData();
                 
                 // Update UI
@@ -1551,20 +1876,4 @@ function handleFileImport(event) {
     };
     
     reader.readAsText(file);
-}
-
-// Add demo players for testing
-function addDemoPlayers() {
-    const demoPlayers = [
-        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
-        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
-        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
-        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
-        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } },
-        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0, yellowCards: 0, redCards: 0 } }
-    ];
-    
-    appState.players = demoPlayers;
-    saveAppData();
-    renderPlayersList();
 }
