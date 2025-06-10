@@ -1876,6 +1876,50 @@ function importTeamData() {
     document.getElementById('import-file').click();
 }
 
+// Add these functions to handle the import confirmation dialog
+function openImportConfirmDialog() {
+    const dialog = document.getElementById('import-confirm-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+}
+
+function closeImportConfirmDialog() {
+    const dialog = document.getElementById('import-confirm-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function confirmImportTeamData() {
+    closeImportConfirmDialog();
+    // Store the import data in a temporary variable to access after confirmation
+    if (appState.pendingImportData) {
+        // Update app state with imported data
+        appState.teamName = appState.pendingImportData.teamName;
+        appState.players = appState.pendingImportData.players;
+        appState.games = appState.pendingImportData.games || [];
+        appState.settings = appState.pendingImportData.settings || {
+            language: 'en',
+            defaultSubstitutionTime: null,
+            isSubstitutionDefaultChecked: false,
+            reusablePlayerIds: []
+        };
+        
+        // Save to IndexedDB
+        saveAppData();
+        
+        // Update UI
+        updateTeamNameUI();
+        renderPlayersList();
+        updatePlayerCounter();
+        updateGameReportCounter();
+        
+        showMessage('Team data imported successfully!', 'success');
+        
+        // Clear pending import data
+        appState.pendingImportData = null;
+    }
+}
+
 function handleFileImport(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1890,30 +1934,11 @@ function handleFileImport(event) {
                 throw new Error('Invalid data format');
             }
             
-            // Confirm data import
-            if (confirm('This will replace your current team data. Continue?')) {
-                // Update app state with imported data
-                appState.teamName = importedData.teamName;
-                appState.players = importedData.players;
-                appState.games = importedData.games || [];
-                appState.settings = importedData.settings || {
-                    language: 'en',
-                    defaultSubstitutionTime: null,
-                    isSubstitutionDefaultChecked: false,
-                    reusablePlayerIds: []
-                };
-                
-                // Save to IndexedDB
-                saveAppData();
-                
-                // Update UI
-                updateTeamNameUI();
-                renderPlayersList();
-                updatePlayerCounter(); // Added to update player counter
-                updateGameReportCounter(); // Update game report counter for consistency
-                
-                showMessage('Team data imported successfully!', 'success');
-            }
+            // Store the imported data temporarily
+            appState.pendingImportData = importedData;
+            
+            // Show confirmation dialog instead of native confirm
+            openImportConfirmDialog();
         } catch (error) {
             showMessage('Error importing data. Please check the file format.', 'error');
             console.error('Import error:', error);

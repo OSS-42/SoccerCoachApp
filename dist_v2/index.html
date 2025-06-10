@@ -18,7 +18,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.5</h1>
+                <h1>Soccer Coach Tracker v1.9.6</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -362,6 +362,18 @@
                 <div class="dialog-buttons">
                     <button class="secondary-btn" onclick="closeEndGameDialog()">Cancel</button>
                     <button class="primary-btn" onclick="endGame()">End Game</button>
+                </div>
+            </div>
+        </div>
+
+<!-- import file confirmation dialog box -->
+        <div id="import-confirm-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Confirm Import</h2>
+                <p>This will replace your current team data. Continue?</p>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeImportConfirmDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="confirmImportTeamData()">Import</button>
                 </div>
             </div>
         </div>
