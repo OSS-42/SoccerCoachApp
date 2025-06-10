@@ -114,6 +114,7 @@ function updateUI() {
     renderPlayersList();
 }
 
+// Update the DOMContentLoaded listener to ensure Settings screen updates
 document.addEventListener('DOMContentLoaded', function() {
     // Set dynamic header height
     const header = document.querySelector('.game-header') || document.querySelector('.app-header');
@@ -137,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load saved data and update UI
     loadAppData().then(() => {
         updateUI();
+        renderReportsList(); // Ensure reports list is rendered on load
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('game-date').value = today;
         showScreen('main-screen');
@@ -1771,41 +1773,66 @@ function closeClearDataDialog() {
 function confirmClearData() {
     closeClearDataDialog();
     
-    localStorage.removeItem('soccerCoachApp');
-    
-    // Reset app state to defaults
-    appState = {
-        teamName: "My Team",
-        players: [],
-        games: [],
-        currentGame: null,
-        timer: {
-            duration: 6 * 60,
-            timeLeft: 6 * 60,
-            interval: null,
-            isRunning: false
-        },
-        gameTimer: {
-            elapsed: 0,
-            interval: null,
-            isRunning: false,
-            startTime: null
-        },
-        settings: {
-            language: 'en',
-            defaultSubstitutionTime: null,
-            isSubstitutionDefaultChecked: false
-        },
-        currentPlayer: null
+    if (!db) {
+        showMessage('Database not initialized', 'error');
+        return;
+    }
+
+    const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readwrite');
+    const teamStore = transaction.objectStore('team');
+    const playersStore = transaction.objectStore('players');
+    const gamesStore = transaction.objectStore('games');
+    const settingsStore = transaction.objectStore('settings');
+
+    // Clear all stores
+    teamStore.clear();
+    playersStore.clear();
+    gamesStore.clear();
+    settingsStore.clear();
+
+    transaction.oncomplete = () => {
+        // Reset app state to defaults
+        appState = {
+            teamName: "My Team",
+            players: [],
+            games: [],
+            currentGame: null,
+            timer: {
+                duration: 6 * 60,
+                timeLeft: 6 * 60,
+                interval: null,
+                isRunning: false
+            },
+            gameTimer: {
+                elapsed: 0,
+                interval: null,
+                isRunning: false,
+                startTime: null
+            },
+            settings: {
+                language: 'en',
+                defaultSubstitutionTime: null,
+                isSubstitutionDefaultChecked: false,
+                reusablePlayerIds: []
+            },
+            currentPlayer: null,
+            goalScorer: null,
+            assister: null
+        };
+
+        // Update UI
+        updateTeamNameUI();
+        renderPlayersList();
+        updatePlayerCounter();
+        updateGameReportCounter();
+        renderReportsList(); // Update reports list to show empty state
+
+        showMessage('All data has been cleared. The app has been reset.', 'success');
     };
-    
-    // Update UI
-    updateTeamNameUI();
-    renderPlayersList();
-    showMessage('All data has been cleared. The app has been reset.', 'success');
-    
-    // Return to main screen
-    showScreen('main-screen');
+
+    transaction.onerror = () => {
+        showMessage('Failed to clear data', 'error');
+    };
 }
 
 // Modified clearAppData to trigger dialog instead of confirm
