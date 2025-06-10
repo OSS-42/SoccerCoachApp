@@ -1909,6 +1909,8 @@ function handleFileImport(event) {
                 // Update UI
                 updateTeamNameUI();
                 renderPlayersList();
+                updatePlayerCounter(); // Added to update player counter
+                updateGameReportCounter(); // Update game report counter for consistency
                 
                 showMessage('Team data imported successfully!', 'success');
             }
