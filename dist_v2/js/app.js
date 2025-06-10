@@ -270,6 +270,16 @@ function addPlayer() {
     showMessage(`Player ${name} (#${jerseyNumber}) added successfully`, 'success');
 }
 
+// New function to update edit button states without re-rendering
+function updateEditButtonStates() {
+    const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
+    const editButtons = document.querySelectorAll('.player-action-btn[onclick*="editPlayer"]');
+    editButtons.forEach(button => {
+        button.disabled = anyChecked;
+    });
+}
+
+// Update renderPlayersList to disable edit button when checkboxes are checked
 function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
@@ -278,6 +288,8 @@ function renderPlayersList() {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
     }
+    
+    const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
     
     appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerItem = document.createElement('div');
@@ -288,7 +300,7 @@ function renderPlayersList() {
                 <div class="player-name">${player.name} (${player.position})</div>
             </div>
             <div class="player-actions">
-                <button class="player-action-btn" onclick="editPlayer('${player.id}')">
+                <button class="player-action-btn" onclick="editPlayer('${player.id}')" ${anyChecked ? 'disabled' : ''}>
                     <span class="material-icons">edit</span>
                 </button>
                 <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="updateDeleteRibbon()">
@@ -296,22 +308,25 @@ function renderPlayersList() {
         `;
         playersList.appendChild(playerItem);
     });
-    
-    updateDeleteRibbon(); // Initialize ribbon state
 }
 
 // Show/hide yellow ribbon based on checkbox states
+// Update updateDeleteRibbon to reinforce yellow ribbon precedence
 function updateDeleteRibbon() {
     const checkboxes = document.querySelectorAll('.player-checkbox:checked');
     const ribbon = document.getElementById('message-ribbon');
     const messageText = document.getElementById('message-text');
     
     if (checkboxes.length > 0) {
+        clearTimeout(messageTimeout); // Cancel any existing timeout
         messageText.innerHTML = `Selected players will be deleted. <button class="primary-btn" onclick="openDeletePlayersDialog()">Delete</button>`;
         ribbon.className = 'message-ribbon warning';
         ribbon.classList.remove('hidden');
+        updateEditButtonStates(); // Update edit button states
     } else {
-        hideMessage();
+        ribbon.classList.add('hidden');
+        messageText.textContent = '';
+        updateEditButtonStates(); // Re-enable edit buttons
     }
 }
 
@@ -398,28 +413,46 @@ function confirmDeletePlayers() {
 }
 
 // Update showMessage to handle players-list padding
+// Update showMessage to prevent timeout if yellow ribbon is needed
 function showMessage(message, type = 'error') {
     const ribbon = document.getElementById('message-ribbon');
     const messageText = document.getElementById('message-text');
     
     clearTimeout(messageTimeout);
     
-    messageText.innerHTML = message; // Use innerHTML to support button in warning ribbon
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    if (checkboxes.length > 0 && type !== 'warning') {
+        // Skip non-warning ribbons if checkboxes are checked
+        return;
+    }
+    
+    messageText.innerHTML = type === 'warning' ? message : message;
     ribbon.className = `message-ribbon ${type}`;
     ribbon.classList.remove('hidden');
     
-    messageTimeout = setTimeout(() => {
-        hideMessage();
-    }, 5000);
+    if (type !== 'warning') {
+        messageTimeout = setTimeout(() => {
+            if (document.querySelectorAll('.player-checkbox:checked').length === 0) {
+                hideMessage();
+            }
+        }, 5000);
+    }
 }
 
 // Update hideMessage to reset players-list padding
+// Update hideMessage to check checkbox state
 function hideMessage() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    if (checkboxes.length > 0) {
+        updateDeleteRibbon();
+        return;
+    }
+    
     const ribbon = document.getElementById('message-ribbon');
     ribbon.classList.add('hidden');
-    // Clear message content to prevent stale buttons
     const messageText = document.getElementById('message-text');
     messageText.textContent = '';
+    updateEditButtonStates(); // Ensure edit buttons are enabled
 }
 
 function editPlayer(playerId) {

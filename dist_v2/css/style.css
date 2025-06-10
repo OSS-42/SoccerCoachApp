@@ -15,19 +15,18 @@ body {
 /* Message Ribbon */
 .message-ribbon {
     position: fixed;
-    bottom: 0; /* Move to bottom */
-    top: auto; /* Remove top positioning */
+    bottom: 0;
+    top: auto;
     left: 0;
     right: 0;
-    padding: 20px 20px; /* Increase vertical padding to make taller */
+    padding: 20px;
     color: white;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 1100;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); /* Shadow casts upward */
-    /* transition: transform 0.3s ease; */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .message-ribbon.error {
@@ -42,15 +41,31 @@ body {
     display: none;
 }
 
-/* Yellow warning ribbon for player deletion */
-.message-ribbon.warning {
-    background-color: #ffca28;
+/* Ensure players-list has no padding by default */
+/* Reset players-list padding */
+#players-list {
+    padding-bottom: 0;
+    padding-top: 0;
 }
 
-/* Add padding to players-list when any ribbon is visible */
+/* Yellow warning ribbon at top, below header */
+.message-ribbon.warning {
+    background-color: #ffca28;
+    color: #000;
+    position: fixed;
+    top: var(--header-height);
+    bottom: auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Downward shadow */
+}
+
+.message-ribbon.warning .close-btn {
+    color: #000; /* Black close button */
+}
+
+/* Add padding to players-list when any ribbon is visible
 .players-list:has(+ .message-ribbon:not(.hidden)) {
     padding-bottom: 60px;
-}
+} */
 
 .message-ribbon .close-btn {
     background: none;
