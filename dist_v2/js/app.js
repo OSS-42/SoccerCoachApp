@@ -319,9 +319,11 @@ function updateDeleteRibbon() {
     
     if (checkboxes.length > 0) {
         clearTimeout(messageTimeout); // Cancel any existing timeout
-        messageText.innerHTML = `Selected players will be deleted.
-            <button class="warning-delete-btn" onclick="openDeletePlayersDialog()">Delete</button>
-        </span>`;
+        messageText.innerHTML = `<div id="message-ribbon" class="message-ribbon warning">
+            <div id="message-text">Selected players will be deleted. 
+                <button class="warning-delete-btn">Delete</button>
+            </div> <span class="close-btn">×</span>
+        </div>`;
         ribbon.className = 'message-ribbon warning';
         ribbon.classList.remove('hidden');
         updateEditButtonStates(); // Update edit button states
