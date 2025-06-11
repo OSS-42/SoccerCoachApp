@@ -48,9 +48,11 @@ body {
 
 /* Ensure players-list has no padding by default */
 /* Reset players-list padding */
-#players-list {
-    padding-bottom: 0;
-    padding-top: 0;
+#player-list {
+    max-width: 150px;
+    overflow-y: auto;
+    padding: #f0f3f0;
+    background: #d0f0f0;
 }
 
 /* Yellow warning ribbon at top, below header */
@@ -973,6 +975,7 @@ input:checked + .slider:before {
     font-weight: bold;
     font-size: clamp(1rem, 3vmin, 1.5rem);
     color: #2196f3;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1000,7 +1003,7 @@ input:checked + .slider:before {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0.25rem 0;
-    background-color: #e0e0e0;
+    /* background-color: #e0e0e0; */
     text-transform: uppercase;
 }
 
@@ -1460,21 +1463,19 @@ button.no-assist-btn {
 .player-item-draggable {
     display: flex;
     align-items: center;
-    padding: 5px;
-    margin-bottom: 5px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    margin-bottom: 10px; /* Slightly increased for spacing */
+    font-size: 14px; /* Slightly larger for readability */
+    cursor: pointer;
 }
 
 .player-number.disabled {
-    background: #999;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-.player-name {
+/* .player-name {
     font-size: 14px;
-}
+} */
 
 .formation-field {
     width: 260px;

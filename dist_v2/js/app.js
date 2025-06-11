@@ -25,6 +25,163 @@ let appState = {
     formationTemp: null // Temporary storage for formation during setup
 };
 
+// Touch event handlers
+let draggedElement = null;
+let initialX = 0;
+let initialY = 0;
+let clone = null;
+let lastVibratedSlot = null; // Track last slot vibrated to debounce
+
+function touchStart(e) {
+    if (e.target.classList.contains('disabled')) return;
+    e.preventDefault();
+    draggedElement = e.target;
+    const touch = e.targetTouches[0];
+
+    // Haptic feedback on selection
+    if (navigator.vibrate) {
+        navigator.vibrate(50); // 50ms vibration
+    }
+
+    // Create a clone for visual feedback
+    clone = draggedElement.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.opacity = '0.7';
+    clone.style.pointerEvents = 'none';
+    clone.style.zIndex = '1000';
+    clone.style.width = '72px'; // 3x larger than original 24px
+    clone.style.height = '72px'; // 3x larger than original 24px
+    clone.style.lineHeight = '72px'; // Center text vertically
+    clone.style.fontSize = '36px'; // Scale font size for readability
+    clone.style.borderRadius = '50%'; // Ensure circular shape
+    clone.style.background = '#000'; // Retain black background
+    clone.style.color = '#fff'; // Retain white text
+    document.body.appendChild(clone);
+    updateClonePosition(touch.clientX, touch.clientY);
+}
+
+function touchMove(e) {
+    if (!draggedElement) return;
+    e.preventDefault();
+    const touch = e.targetTouches[0];
+    updateClonePosition(touch.clientX, touch.clientY);
+
+    // Haptic feedback when passing over a slot
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = dropTarget.closest('.player-slot');
+    if (slot && slot !== lastVibratedSlot) {
+        if (navigator.vibrate) {
+            navigator.vibrate(30); // 30ms vibration
+        }
+        lastVibratedSlot = slot;
+    } else if (!slot) {
+        lastVibratedSlot = null; // Reset when not over a slot
+    }
+}
+
+function updateClonePosition(clientX, clientY) {
+    if (clone) {
+        clone.style.left = `${clientX - 36}px`; // Center clone at touch point (72px / 2)
+        clone.style.top = `${clientY - 36}px`; // Center clone at touch point (72px / 2)
+    }
+}
+
+function touchEnd(e) {
+    if (!draggedElement) return;
+    e.preventDefault();
+
+    // Remove clone
+    if (clone) {
+        document.body.removeChild(clone);
+        clone = null;
+    }
+
+    const touch = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const playerId = draggedElement.getAttribute('data-player-id');
+    const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
+    const slotId = draggedElement.parentElement.id || '';
+
+    const slot = dropTarget.closest('.player-slot');
+    if (slot) {
+        const position = slot.getAttribute('data-position');
+        const matchType = appState.currentGame.matchType;
+        const maxPlayers = parseInt(matchType.split('v')[0]);
+        let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
+
+        if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+            showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
+            draggedElement = null;
+            return;
+        }
+
+        const existingPlayerId = slot.getAttribute('data-player-id');
+        if (existingPlayerId && existingPlayerId !== playerId) {
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
+            const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+            if (oldPlayer) {
+                oldPlayer.classList.remove('disabled');
+                oldPlayer.draggable = true;
+            }
+        }
+
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        const x = parseFloat(slot.style.left);
+        const y = parseFloat(slot.style.top);
+
+        appState.formationTemp.push({
+            playerId,
+            position: position === 'GK' || position === 'SW' ? position : appState.players.find(p => p.id === playerId).position,
+            x,
+            y
+        });
+
+        slot.innerHTML = '';
+        slot.setAttribute('data-player-id', playerId);
+        slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>`;
+        slot.classList.add('occupied');
+
+        if (source === 'sidebar') {
+            disablePlayerNumber(playerId);
+        } else if (source === 'field' && slotId !== slot.id) {
+            const prevSlot = document.getElementById(slotId);
+            if (prevSlot) {
+                prevSlot.innerHTML = '';
+                prevSlot.removeAttribute('data-player-id');
+                prevSlot.classList.remove('occupied');
+            }
+        }
+
+        setupPlacedPlayerDrag();
+        setupPlacedPlayerTouch(); // Reattach touch event listeners
+    }
+
+    const sidebar = document.querySelector('#player-list');
+    if (sidebar && source === 'field' && dropTarget.closest('#player-list')) {
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (number) {
+            number.classList.remove('disabled');
+            number.draggable = true;
+        }
+    }
+
+    console.log('Formation after drag:', appState.formationTemp.map(f => ({
+        playerId: f.playerId,
+        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+        position: f.position
+    })));
+
+    draggedElement = null;
+    lastVibratedSlot = null; // Reset after drop
+}
+
 // Initialize IndexedDB
 let db = null;
 function initIndexedDB() {
@@ -819,163 +976,8 @@ function renderFormationSetup() {
     playerList.addEventListener('dragover', dragOver);
     playerList.addEventListener('drop', dropToSidebar);
 
-    // Touch event handlers
-    let draggedElement = null;
-    let initialX = 0;
-    let initialY = 0;
-    let clone = null;
-    let lastVibratedSlot = null; // Track last slot vibrated to debounce
-
-    function touchStart(e) {
-    if (e.target.classList.contains('disabled')) return;
-    e.preventDefault();
-    draggedElement = e.target;
-    const touch = e.targetTouches[0];
-
-    // Haptic feedback on selection
-    if (navigator.vibrate) {
-        navigator.vibrate(50); // 50ms vibration
-    }
-
-    // Create a clone for visual feedback
-    clone = draggedElement.cloneNode(true);
-    clone.style.position = 'absolute';
-    clone.style.opacity = '0.7';
-    clone.style.pointerEvents = 'none';
-    clone.style.zIndex = '1000';
-    clone.style.width = '72px'; // 3x larger than original 24px
-    clone.style.height = '72px'; // 3x larger than original 24px
-    clone.style.lineHeight = '72px'; // Center text vertically
-    clone.style.fontSize = '36px'; // Scale font size for readability
-    clone.style.borderRadius = '50%'; // Ensure circular shape
-    clone.style.background = '#000'; // Retain black background
-    clone.style.color = '#fff'; // Retain white text
-    document.body.appendChild(clone);
-    updateClonePosition(touch.clientX, touch.clientY);
-}
-
-    function touchMove(e) {
-        if (!draggedElement) return;
-        e.preventDefault();
-        const touch = e.targetTouches[0];
-        updateClonePosition(touch.clientX, touch.clientY);
-
-        // Haptic feedback when passing over a slot
-        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        const slot = dropTarget.closest('.player-slot');
-        if (slot && slot !== lastVibratedSlot) {
-            if (navigator.vibrate) {
-                navigator.vibrate(30); // 30ms vibration
-            }
-            lastVibratedSlot = slot;
-        } else if (!slot) {
-            lastVibratedSlot = null; // Reset when not over a slot
-        }
-    }
-
-    function updateClonePosition(clientX, clientY) {
-    if (clone) {
-        clone.style.left = `${clientX - 36}px`; // Center clone at touch point (72px / 2)
-        clone.style.top = `${clientY - 36}px`; // Center clone at touch point (72px / 2)
-    }
-}
-
-    function touchEnd(e) {
-        if (!draggedElement) return;
-        e.preventDefault();
-
-        // Remove clone
-        if (clone) {
-            document.body.removeChild(clone);
-            clone = null;
-        }
-
-        const touch = e.changedTouches[0];
-        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-        const playerId = draggedElement.getAttribute('data-player-id');
-        const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
-        const slotId = draggedElement.parentElement.id || '';
-
-        // Handle drop to slot
-        const slot = dropTarget.closest('.player-slot');
-        if (slot) {
-            const position = slot.getAttribute('data-position');
-            const matchType = appState.currentGame.matchType;
-            const maxPlayers = parseInt(matchType.split('v')[0]);
-            let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
-
-            if (source === 'sidebar' && currentPlayers >= maxPlayers) {
-                showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
-                draggedElement = null;
-                return;
-            }
-
-            const existingPlayerId = slot.getAttribute('data-player-id');
-            if (existingPlayerId && existingPlayerId !== playerId) {
-                appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
-                const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
-                if (oldPlayer) {
-                    oldPlayer.classList.remove('disabled');
-                    oldPlayer.draggable = true;
-                }
-            }
-
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-            const x = parseFloat(slot.style.left);
-            const y = parseFloat(slot.style.top);
-
-            appState.formationTemp.push({
-                playerId,
-                position: position === 'GK' || position === 'SW' ? position : appState.players.find(p => p.id === playerId).position,
-                x,
-                y
-            });
-
-            slot.innerHTML = '';
-            slot.setAttribute('data-player-id', playerId);
-            slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>`;
-            slot.classList.add('occupied');
-
-            if (source === 'sidebar') {
-                disablePlayerNumber(playerId);
-            } else if (source === 'field' && slotId !== slot.id) {
-                const prevSlot = document.getElementById(slotId);
-                if (prevSlot) {
-                    prevSlot.innerHTML = '';
-                    prevSlot.removeAttribute('data-player-id');
-                    prevSlot.classList.remove('occupied');
-                }
-            }
-
-            setupPlacedPlayerDrag();
-        }
-
-        // Handle drop to sidebar
-        const sidebar = document.querySelector('#player-list');
-        if (sidebar && source === 'field' && dropTarget.closest('#player-list')) {
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-            const slot = document.getElementById(slotId);
-            if (slot) {
-                slot.innerHTML = '';
-                slot.removeAttribute('data-player-id');
-                slot.classList.remove('occupied');
-            }
-            const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-            if (number) {
-                number.classList.remove('disabled');
-                number.draggable = true;
-            }
-        }
-
-        console.log('Formation after drag:', appState.formationTemp.map(f => ({
-            playerId: f.playerId,
-            jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
-            position: f.position
-        })));
-
-        draggedElement = null;
-        lastVibratedSlot = null; // Reset after drop
-    }
+    // Set up touch events for placed players
+    setupPlacedPlayerTouch();
 }
 
 function dragStart(e) {
@@ -1046,6 +1048,7 @@ function dropToSidebar(e) {
     })));
 }
 
+// Update dropToSlot to call setupPlacedPlayerTouch
 function dropToSlot(e) {
     e.preventDefault();
     const playerId = e.dataTransfer.getData('playerId');
@@ -1060,16 +1063,13 @@ function dropToSlot(e) {
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
 
-    // Exclude dragged player from count
     let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
-    // Validate player count
     if (source === 'sidebar' && currentPlayers >= maxPlayers) {
         showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
         return;
     }
 
-    // Handle existing player in the slot
     const existingPlayerId = slot.getAttribute('data-player-id');
     if (existingPlayerId && existingPlayerId !== playerId) {
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
@@ -1080,14 +1080,10 @@ function dropToSlot(e) {
         }
     }
 
-    // Remove dragged player from formation
     appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-
-    // Get slot coordinates
     const x = parseFloat(slot.style.left);
     const y = parseFloat(slot.style.top);
 
-    // Add new player to formation
     appState.formationTemp.push({
         playerId,
         position: position === 'GK' || position === 'SW' ? position : player.position,
@@ -1095,7 +1091,6 @@ function dropToSlot(e) {
         y
     });
 
-    // Update UI
     slot.innerHTML = '';
     slot.setAttribute('data-player-id', playerId);
     slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
@@ -1104,7 +1099,6 @@ function dropToSlot(e) {
     if (source === 'sidebar') {
         disablePlayerNumber(playerId);
     } else if (source === 'field' && slotId !== slot.id) {
-        // Clear previous slot
         const prevSlot = document.getElementById(slotId);
         if (prevSlot) {
             prevSlot.innerHTML = '';
@@ -1114,11 +1108,6 @@ function dropToSlot(e) {
     }
 
     setupPlacedPlayerDrag();
-    console.log('Formation after drop:', appState.formationTemp.map(f => ({
-        playerId: f.playerId,
-        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
-        position: f.position
-    })));
 }
 
 // Add function to setup drag for placed players
@@ -1127,6 +1116,18 @@ function setupPlacedPlayerDrag() {
     placedNumbers.forEach(number => {
         number.removeEventListener('dragstart', dragStart);
         number.addEventListener('dragstart', dragStart);
+    });
+}
+
+function setupPlacedPlayerTouch() {
+    const placedNumbers = document.querySelectorAll('.player-number-placed');
+    placedNumbers.forEach(number => {
+        number.removeEventListener('touchstart', touchStart);
+        number.removeEventListener('touchmove', touchMove);
+        number.removeEventListener('touchend', touchEnd);
+        number.addEventListener('touchstart', touchStart, { passive: false });
+        number.addEventListener('touchmove', touchMove, { passive: false });
+        number.addEventListener('touchend', touchEnd);
     });
 }
 
