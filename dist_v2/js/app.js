@@ -827,27 +827,32 @@ function renderFormationSetup() {
     let lastVibratedSlot = null; // Track last slot vibrated to debounce
 
     function touchStart(e) {
-        if (e.target.classList.contains('disabled')) return;
-        e.preventDefault();
-        draggedElement = e.target;
-        const touch = e.targetTouches[0];
-        initialX = touch.clientX - parseFloat(draggedElement.offsetLeft);
-        initialY = touch.clientY - parseFloat(draggedElement.offsetTop);
+    if (e.target.classList.contains('disabled')) return;
+    e.preventDefault();
+    draggedElement = e.target;
+    const touch = e.targetTouches[0];
 
-        // Haptic feedback on selection
-        if (navigator.vibrate) {
-            navigator.vibrate(50); // 50ms vibration
-        }
-
-        // Create a clone for visual feedback
-        clone = draggedElement.cloneNode(true);
-        clone.style.position = 'absolute';
-        clone.style.opacity = '0.7';
-        clone.style.pointerEvents = 'none';
-        clone.style.zIndex = '1000';
-        document.body.appendChild(clone);
-        updateClonePosition(touch.clientX, touch.clientY);
+    // Haptic feedback on selection
+    if (navigator.vibrate) {
+        navigator.vibrate(50); // 50ms vibration
     }
+
+    // Create a clone for visual feedback
+    clone = draggedElement.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.opacity = '0.7';
+    clone.style.pointerEvents = 'none';
+    clone.style.zIndex = '1000';
+    clone.style.width = '72px'; // 3x larger than original 24px
+    clone.style.height = '72px'; // 3x larger than original 24px
+    clone.style.lineHeight = '72px'; // Center text vertically
+    clone.style.fontSize = '36px'; // Scale font size for readability
+    clone.style.borderRadius = '50%'; // Ensure circular shape
+    clone.style.background = '#000'; // Retain black background
+    clone.style.color = '#fff'; // Retain white text
+    document.body.appendChild(clone);
+    updateClonePosition(touch.clientX, touch.clientY);
+}
 
     function touchMove(e) {
         if (!draggedElement) return;
@@ -869,11 +874,11 @@ function renderFormationSetup() {
     }
 
     function updateClonePosition(clientX, clientY) {
-        if (clone) {
-            clone.style.left = `${clientX - initialX}px`;
-            clone.style.top = `${clientY - initialY}px`;
-        }
+    if (clone) {
+        clone.style.left = `${clientX - 36}px`; // Center clone at touch point (72px / 2)
+        clone.style.top = `${clientY - 36}px`; // Center clone at touch point (72px / 2)
     }
+}
 
     function touchEnd(e) {
         if (!draggedElement) return;
@@ -977,6 +982,31 @@ function dragStart(e) {
     e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
     e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
     e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
+
+    // Create a custom drag image
+    const dragImage = document.createElement('div');
+    dragImage.textContent = e.target.textContent; // Set jersey number
+    dragImage.style.position = 'absolute';
+    dragImage.style.width = '72px'; // Match mobile clone size
+    dragImage.style.height = '72px';
+    dragImage.style.lineHeight = '72px';
+    dragImage.style.fontSize = '36px';
+    dragImage.style.borderRadius = '50%';
+    dragImage.style.background = '#000';
+    dragImage.style.color = '#fff';
+    dragImage.style.textAlign = 'center';
+    dragImage.style.opacity = '0.7';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '1000';
+    document.body.appendChild(dragImage);
+
+    // Set the drag image
+    e.dataTransfer.setDragImage(dragImage, 36, 36); // Center at cursor (72px / 2)
+
+    // Clean up drag image after a short delay
+    setTimeout(() => {
+        document.body.removeChild(dragImage);
+    }, 0);
 }
 
 function dragOver(e) {
