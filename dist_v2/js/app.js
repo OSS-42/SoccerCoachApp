@@ -753,15 +753,15 @@ function renderFormationSetup() {
         playerList.appendChild(playerItem);
     });
 
-    // Set up drag-and-drop
+    // Set up drag-and-drop with listener cleanup
     const numbers = document.querySelectorAll('.player-number');
     numbers.forEach(number => {
-        number.removeEventListener('dragstart', dragStart); // Prevent duplicates
+        number.removeEventListener('dragstart', dragStart);
         number.addEventListener('dragstart', dragStart);
     });
 
     const gkSlot = document.getElementById('gk-slot');
-    gkSlot.removeEventListener('dragover', dragOver); // Prevent duplicates
+    gkSlot.removeEventListener('dragover', dragOver);
     gkSlot.removeEventListener('drop', dropToGkSlot);
     gkSlot.addEventListener('dragover', dragOver);
     gkSlot.addEventListener('drop', dropToGkSlot);
@@ -781,7 +781,7 @@ function renderFormationSetup() {
 function dragStart(e) {
     e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
     e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
-    e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
+    e.dataTransfer.setData('slotId', e.target.parentElement.id || e.target.parentElement.getAttribute('data-slot-id') || '');
 }
 
 // Allow dropping back to sidebar to remove player
@@ -789,20 +789,21 @@ function dropToSidebar(e) {
     e.preventDefault();
     const playerId = e.dataTransfer.getData('playerId');
     const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
     if (source !== 'field') return;
 
     // Remove from formation
     appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
 
-    // Remove from field
-    const slot = document.querySelector(`.player-slot[data-player-id="${playerId}"]`) || document.getElementById('gk-slot');
-    if (slot) {
-        if (slot.id === 'gk-slot') {
-            slot.innerHTML = '';
-            slot.classList.remove('occupied');
-        } else {
-            slot.remove();
-        }
+    // Remove from field or GK slot
+    if (slotId === 'gk-slot') {
+        const gkSlot = document.getElementById('gk-slot');
+        gkSlot.innerHTML = '';
+        gkSlot.classList.remove('occupied');
+        gkSlot.removeAttribute('data-player-id');
+    } else {
+        const slot = document.querySelector(`.player-slot[data-player-id="${playerId}"]`);
+        if (slot) slot.remove();
     }
 
     // Re-enable player number
@@ -821,6 +822,7 @@ function dropToGkSlot(e) {
     e.preventDefault();
     const playerId = e.dataTransfer.getData('playerId');
     const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
 
@@ -828,8 +830,8 @@ function dropToGkSlot(e) {
     const maxPlayers = parseInt(matchType.split('v')[0]);
     let currentPlayers = appState.formationTemp.length;
 
-    // Adjust count for replacement
-    if (source === 'field' && e.dataTransfer.getData('slotId') !== 'gk-slot') {
+    // Adjust count for replacement or repositioning
+    if (source === 'field' && slotId !== 'gk-slot') {
         currentPlayers--;
     }
 
@@ -849,7 +851,7 @@ function dropToGkSlot(e) {
             oldPlayer.classList.remove('disabled');
             oldPlayer.draggable = true;
         }
-    } else if (existingGk && source === 'field' && e.dataTransfer.getData('slotId') !== 'gk-slot') {
+    } else if (existingGk && source === 'field' && slotId !== 'gk-slot') {
         showMessage('Goalkeeper slot is already occupied.', 'error');
         return;
     }
@@ -867,7 +869,8 @@ function dropToGkSlot(e) {
 
     // Update UI
     const gkSlot = e.target.closest('#gk-slot');
-    gkSlot.innerHTML = ''; // Clear content to prevent duplicates
+    gkSlot.innerHTML = ''; // Clear content
+    gkSlot.setAttribute('data-player-id', playerId);
     gkSlot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
     gkSlot.classList.add('occupied');
     if (source === 'sidebar') {
@@ -894,6 +897,12 @@ function dropToField(e) {
         currentPlayers--;
     }
 
+    // Validate player count
+    if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+        showMessage(`Too many players for ${matchType}.`, 'error');
+        return;
+    }
+
     // Handle repositioning
     if (source === 'field' && slotId !== 'gk-slot') {
         const fieldRect = document.getElementById('formation-field').getBoundingClientRect();
@@ -909,12 +918,6 @@ function dropToField(e) {
             slot.style.left = `${x}%`;
             slot.style.top = `${y}%`;
         }
-        return;
-    }
-
-    // Validate player count for new drops
-    if (source === 'sidebar' && currentPlayers >= maxPlayers) {
-        showMessage(`Too many players for ${matchType}.`, 'error');
         return;
     }
 
@@ -955,6 +958,7 @@ function dropToField(e) {
         playerSlot = document.createElement('div');
         playerSlot.className = 'player-slot';
         playerSlot.setAttribute('data-player-id', playerId);
+        playerSlot.setAttribute('data-slot-id', `slot-${playerId}`); // Unique slot ID
         document.getElementById('formation-field').appendChild(playerSlot);
     }
     playerSlot.style.left = `${x}%`;
@@ -970,7 +974,7 @@ function dropToField(e) {
 function setupPlacedPlayerDrag() {
     const placedNumbers = document.querySelectorAll('.player-number-placed');
     placedNumbers.forEach(number => {
-        number.removeEventListener('dragstart', dragStart); // Prevent duplicate listeners
+        number.removeEventListener('dragstart', dragStart);
         number.addEventListener('dragstart', dragStart);
     });
 }
@@ -2027,33 +2031,33 @@ function viewReport(gameId) {
             `;
         });
 
-        const goalLine = Object.values(playerActions)
+    const goalLine = Object.values(playerActions)
         .filter(p => p.goals.length > 0)
         .map(p => ({ name: p.name, times: p.goals.sort((a, b) => a - b) }))
         .concat(ownGoals.sort((a, b) => a - b).map(time => ({ name: 'Opponent', times: [time], isOwnGoal: true })))
         .map(entry => entry.isOwnGoal ? `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')}, og)` : `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`)
         .join(', ') || 'N/A';
 
-        const yellowCardLine = Object.values(playerActions)
-            .filter(p => p.yellowCards.length > 0)
-            .map(p => `${p.name} (${p.yellowCards.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`)
-            .join(', ') || 'N/A';
+    const yellowCardLine = Object.values(playerActions)
+        .filter(p => p.yellowCards.length > 0)
+        .map(p => `${p.name} (${p.yellowCards.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`)
+        .join(', ') || 'N/A';
 
-        const redCardLine = Object.values(playerActions)
-            .filter(p => p.redCards.length > 0 || p.yellowCards.length >= 2)
-            .map(p => {
-                const redTimes = [...p.redCards];
-                if (p.yellowCards.length >= 2) redTimes.push(p.yellowCards[1]);
-                return `${p.name} (${redTimes.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`;
-            })
-            .join(', ') || 'N/A';
+    const redCardLine = Object.values(playerActions)
+        .filter(p => p.redCards.length > 0 || p.yellowCards.length >= 2)
+        .map(p => {
+            const redTimes = [...p.redCards];
+            if (p.yellowCards.length >= 2) redTimes.push(p.yellowCards[1]);
+            return `${p.name} (${redTimes.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`;
+        })
+        .join(', ') || 'N/A';
 
-        const lateLine = Object.values(playerActions)
-            .filter(p => p.lateToGame)
-            .map(p => p.name)
-            .join(', ') || 'N/A';
+    const lateLine = Object.values(playerActions)
+        .filter(p => p.lateToGame)
+        .map(p => p.name)
+        .join(', ') || 'N/A';
 
-        // Formation Section
+    // Formation Section with correct stats and player names
     let formationHTML = '';
     if (game.formation && game.formation.length > 0) {
         formationHTML = `
@@ -2080,6 +2084,7 @@ function viewReport(gameId) {
                             return `
                                 <div class="player-slot-report" style="left: ${f.x}%; top: ${f.y}%">
                                     <span class="player-number-report">${player.jerseyNumber}</span>
+                                    <span class="player-name-report">${player.name}</span>
                                     ${statTable}
                                 </div>
                             `;
@@ -2220,10 +2225,15 @@ function exportReport(gameId, format) {
                 .formation-field-report::after { top: 0; }
                 .player-slot-report {
                     position: absolute; text-align: center; transform: translate(-50%, -50%);
+                    display: flex; flex-direction: column; align-items: center;
                 }
                 .player-number-report {
                     display: inline-block; width: 24px; height: 24px; line-height: 24px;
                     background: #000; color: #fff; border-radius: 50%; font-size: 12px;
+                }
+                .player-name-report {
+                    font-size: 10px; color: #fff; margin-top: 2px;
+                    text-shadow: 1px 1px 1px #000;
                 }
                 .player-stats-table {
                     width: 100px; font-size: 10px; margin-top: 5px;

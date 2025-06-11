@@ -979,6 +979,16 @@ input:checked + .slider:before {
     text-align: center;
     margin: 0;
     padding: 0.25rem;
+    border-radius: 50%;
+}
+
+/* Player grid numbers */
+.player-grid-item .player-number {
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 12px;
+    border-radius: 50%;
 }
 
 .player-name {
@@ -1456,24 +1466,6 @@ button.no-assist-btn {
     border-radius: 4px;
 }
 
-/* Fix jersey number circles in sidebar */
-/* .player-number {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    width: 24px;
-    height: 24px;
-    min-width: 24px; /* Prevent compression
-    line-height: 24px;
-    text-align: center;
-    background: #000;
-    color: #fff;
-    border-radius: 50%;
-    margin-right: 10px;
-    cursor: move;
-    font-size: 12px; /* Consistent font size
-} */
-
 .player-number.disabled {
     background: #999;
     cursor: not-allowed;
@@ -1570,6 +1562,16 @@ button.no-assist-btn {
     transform: translate(-50%, -50%);
 }
 
+/* Game report player slots with names */
+.player-slot-report {
+    position: absolute;
+    text-align: center;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .player-number-report {
     display: inline-block;
     width: 24px;
@@ -1579,6 +1581,13 @@ button.no-assist-btn {
     color: #fff;
     border-radius: 50%;
     font-size: 12px;
+}
+
+.player-name-report {
+    font-size: 10px;
+    color: #fff;
+    margin-top: 2px;
+    text-shadow: 1px 1px 1px #000; /* Improve readability on green field */
 }
 
 .player-stats-table {
