@@ -971,18 +971,18 @@ input:checked + .slider:before {
 }
 
 .player-number {
-    flex: 1;
-    font-weight: bold;
-    font-size: clamp(1rem, 3vmin, 1.5rem);
-    color: #2196f3;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-block;
+    width: 24px; /* Match .player-jersey */
+    height: 24px;
+    line-height: 24px;
     text-align: center;
-    margin: 0;
-    padding: 0.25rem;
-    border-radius: 50%;
+    background: #007bff; /* Blue, match .player-jersey */
+    color: #fff; /* White text */
+    border-radius: 50%; /* Circular */
+    margin-right: 12px; /* Consistent with previous sidebar styling */
+    font-size: 12px; /* Match .player-jersey */
+    flex-shrink: 0; /* Prevent stretching */
+    user-select: none; /* Prevent text selection during drag */
 }
 
 /* Player grid numbers */
