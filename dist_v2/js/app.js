@@ -739,8 +739,46 @@ function renderFormationSetup() {
     const playerList = document.getElementById('player-list');
     const formationField = document.getElementById('formation-field');
     playerList.innerHTML = '';
-    formationField.innerHTML = '<div id="gk-slot" class="player-slot gk-slot" data-position="GK" draggable="false"></div>';
+    formationField.innerHTML = '';
     appState.formationTemp = [];
+
+    // Define spots for 260x400px field
+    const spots = [
+        { position: 'GK', x: 50, y: 95 }, // Goalkeeper
+        { position: 'SW', x: 50, y: 86.5 }, // Sweeper
+        // Defense row
+        { position: 'DEF-1', x: 10, y: 78.5 }, { position: 'DEF-2', x: 30, y: 78.5 },
+        { position: 'DEF-3', x: 50, y: 78.5 }, { position: 'DEF-4', x: 70, y: 78.5 },
+        { position: 'DEF-5', x: 90, y: 78.5 },
+        // Defense Midfielder row
+        { position: 'DM-1', x: 10, y: 61.38 }, { position: 'DM-2', x: 30, y: 61.38 },
+        { position: 'DM-3', x: 50, y: 61.38 }, { position: 'DM-4', x: 70, y: 61.38 },
+        { position: 'DM-5', x: 90, y: 61.38 },
+        // Midfielder row
+        { position: 'MID-1', x: 10, y: 44.25 }, { position: 'MID-2', x: 30, y: 44.25 },
+        { position: 'MID-3', x: 50, y: 44.25 }, { position: 'MID-4', x: 70, y: 44.25 },
+        { position: 'MID-5', x: 90, y: 44.25 },
+        // Offensive Midfielder row
+        { position: 'OM-1', x: 10, y: 27.13 }, { position: 'OM-2', x: 30, y: 27.13 },
+        { position: 'OM-3', x: 50, y: 27.13 }, { position: 'OM-4', x: 70, y: 27.13 },
+        { position: 'OM-5', x: 90, y: 27.13 },
+        // Forwards row
+        { position: 'FWD-1', x: 10, y: 10 }, { position: 'FWD-2', x: 30, y: 10 },
+        { position: 'FWD-3', x: 50, y: 10 }, { position: 'FWD-4', x: 70, y: 10 },
+        { position: 'FWD-5', x: 90, y: 10 }
+    ];
+
+    // Render spots
+    spots.forEach(spot => {
+        const slot = document.createElement('div');
+        slot.className = `player-slot ${spot.position === 'GK' ? 'gk-slot' : spot.position === 'SW' ? 'sw-slot' : ''}`;
+        slot.id = spot.position === 'GK' ? 'gk-slot' : spot.position === 'SW' ? 'sw-slot' : `slot-${spot.position}`;
+        slot.setAttribute('data-position', spot.position);
+        slot.style.left = `${spot.x}%`;
+        slot.style.top = `${spot.y}%`;
+        slot.draggable = false;
+        formationField.appendChild(slot);
+    });
 
     // Render player list
     appState.players.forEach(player => {
@@ -753,36 +791,198 @@ function renderFormationSetup() {
         playerList.appendChild(playerItem);
     });
 
-    // Set up drag-and-drop with listener cleanup
+    // Set up drag-and-drop and touch events
     const numbers = document.querySelectorAll('.player-number');
     numbers.forEach(number => {
+        // Desktop drag events
         number.removeEventListener('dragstart', dragStart);
         number.addEventListener('dragstart', dragStart);
+        // Mobile touch events
+        number.removeEventListener('touchstart', touchStart);
+        number.removeEventListener('touchmove', touchMove);
+        number.removeEventListener('touchend', touchEnd);
+        number.addEventListener('touchstart', touchStart, { passive: false });
+        number.addEventListener('touchmove', touchMove, { passive: false });
+        number.addEventListener('touchend', touchEnd);
     });
 
-    const gkSlot = document.getElementById('gk-slot');
-    gkSlot.removeEventListener('dragover', dragOver);
-    gkSlot.removeEventListener('drop', dropToGkSlot);
-    gkSlot.addEventListener('dragover', dragOver);
-    gkSlot.addEventListener('drop', dropToGkSlot);
-
-    formationField.removeEventListener('dragover', dragOver);
-    formationField.removeEventListener('drop', dropToField);
-    formationField.addEventListener('dragover', dragOver);
-    formationField.addEventListener('drop', dropToField);
+    const slots = document.querySelectorAll('.player-slot');
+    slots.forEach(slot => {
+        slot.removeEventListener('dragover', dragOver);
+        slot.removeEventListener('drop', dropToSlot);
+        slot.addEventListener('dragover', dragOver);
+        slot.addEventListener('drop', dropToSlot);
+    });
 
     playerList.removeEventListener('dragover', dragOver);
     playerList.removeEventListener('drop', dropToSidebar);
     playerList.addEventListener('dragover', dragOver);
     playerList.addEventListener('drop', dropToSidebar);
+
+    // Touch event handlers
+    let draggedElement = null;
+    let initialX = 0;
+    let initialY = 0;
+    let clone = null;
+    let lastVibratedSlot = null; // Track last slot vibrated to debounce
+
+    function touchStart(e) {
+        if (e.target.classList.contains('disabled')) return;
+        e.preventDefault();
+        draggedElement = e.target;
+        const touch = e.targetTouches[0];
+        initialX = touch.clientX - parseFloat(draggedElement.offsetLeft);
+        initialY = touch.clientY - parseFloat(draggedElement.offsetTop);
+
+        // Haptic feedback on selection
+        if (navigator.vibrate) {
+            navigator.vibrate(50); // 50ms vibration
+        }
+
+        // Create a clone for visual feedback
+        clone = draggedElement.cloneNode(true);
+        clone.style.position = 'absolute';
+        clone.style.opacity = '0.7';
+        clone.style.pointerEvents = 'none';
+        clone.style.zIndex = '1000';
+        document.body.appendChild(clone);
+        updateClonePosition(touch.clientX, touch.clientY);
+    }
+
+    function touchMove(e) {
+        if (!draggedElement) return;
+        e.preventDefault();
+        const touch = e.targetTouches[0];
+        updateClonePosition(touch.clientX, touch.clientY);
+
+        // Haptic feedback when passing over a slot
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        const slot = dropTarget.closest('.player-slot');
+        if (slot && slot !== lastVibratedSlot) {
+            if (navigator.vibrate) {
+                navigator.vibrate(30); // 30ms vibration
+            }
+            lastVibratedSlot = slot;
+        } else if (!slot) {
+            lastVibratedSlot = null; // Reset when not over a slot
+        }
+    }
+
+    function updateClonePosition(clientX, clientY) {
+        if (clone) {
+            clone.style.left = `${clientX - initialX}px`;
+            clone.style.top = `${clientY - initialY}px`;
+        }
+    }
+
+    function touchEnd(e) {
+        if (!draggedElement) return;
+        e.preventDefault();
+
+        // Remove clone
+        if (clone) {
+            document.body.removeChild(clone);
+            clone = null;
+        }
+
+        const touch = e.changedTouches[0];
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+        const playerId = draggedElement.getAttribute('data-player-id');
+        const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
+        const slotId = draggedElement.parentElement.id || '';
+
+        // Handle drop to slot
+        const slot = dropTarget.closest('.player-slot');
+        if (slot) {
+            const position = slot.getAttribute('data-position');
+            const matchType = appState.currentGame.matchType;
+            const maxPlayers = parseInt(matchType.split('v')[0]);
+            let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
+
+            if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+                showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
+                draggedElement = null;
+                return;
+            }
+
+            const existingPlayerId = slot.getAttribute('data-player-id');
+            if (existingPlayerId && existingPlayerId !== playerId) {
+                appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
+                const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+                if (oldPlayer) {
+                    oldPlayer.classList.remove('disabled');
+                    oldPlayer.draggable = true;
+                }
+            }
+
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+            const x = parseFloat(slot.style.left);
+            const y = parseFloat(slot.style.top);
+
+            appState.formationTemp.push({
+                playerId,
+                position: position === 'GK' || position === 'SW' ? position : appState.players.find(p => p.id === playerId).position,
+                x,
+                y
+            });
+
+            slot.innerHTML = '';
+            slot.setAttribute('data-player-id', playerId);
+            slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>`;
+            slot.classList.add('occupied');
+
+            if (source === 'sidebar') {
+                disablePlayerNumber(playerId);
+            } else if (source === 'field' && slotId !== slot.id) {
+                const prevSlot = document.getElementById(slotId);
+                if (prevSlot) {
+                    prevSlot.innerHTML = '';
+                    prevSlot.removeAttribute('data-player-id');
+                    prevSlot.classList.remove('occupied');
+                }
+            }
+
+            setupPlacedPlayerDrag();
+        }
+
+        // Handle drop to sidebar
+        const sidebar = document.querySelector('#player-list');
+        if (sidebar && source === 'field' && dropTarget.closest('#player-list')) {
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+            const slot = document.getElementById(slotId);
+            if (slot) {
+                slot.innerHTML = '';
+                slot.removeAttribute('data-player-id');
+                slot.classList.remove('occupied');
+            }
+            const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+            if (number) {
+                number.classList.remove('disabled');
+                number.draggable = true;
+            }
+        }
+
+        console.log('Formation after drag:', appState.formationTemp.map(f => ({
+            playerId: f.playerId,
+            jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+            position: f.position
+        })));
+
+        draggedElement = null;
+        lastVibratedSlot = null; // Reset after drop
+    }
 }
 
-// Update dragStart to include source info
 function dragStart(e) {
     e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
     e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
-    e.dataTransfer.setData('slotId', e.target.parentElement.id || e.target.parentElement.getAttribute('data-slot-id') || '');
+    e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
 }
+
+function dragOver(e) {
+    e.preventDefault();
+}
+
 // Allow dropping back to sidebar to remove player
 function dropToSidebar(e) {
     e.preventDefault();
@@ -794,15 +994,12 @@ function dropToSidebar(e) {
     // Remove from formation
     appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
 
-    // Remove from field or GK slot
-    if (slotId === 'gk-slot') {
-        const gkSlot = document.getElementById('gk-slot');
-        gkSlot.innerHTML = '';
-        gkSlot.classList.remove('occupied');
-        gkSlot.removeAttribute('data-player-id');
-    } else {
-        const slot = document.querySelector(`.player-slot[data-player-id="${playerId}"]`);
-        if (slot) slot.remove();
+    // Clear slot
+    const slot = document.getElementById(slotId);
+    if (slot) {
+        slot.innerHTML = '';
+        slot.removeAttribute('data-player-id');
+        slot.classList.remove('occupied');
     }
 
     // Re-enable player number
@@ -811,13 +1008,15 @@ function dropToSidebar(e) {
         number.classList.remove('disabled');
         number.draggable = true;
     }
+
+    console.log('Formation after sidebar drop:', appState.formationTemp.map(f => ({
+        playerId: f.playerId,
+        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+        position: f.position
+    })));
 }
 
-function dragOver(e) {
-    e.preventDefault();
-}
-
-function dropToGkSlot(e) {
+function dropToSlot(e) {
     e.preventDefault();
     const playerId = e.dataTransfer.getData('playerId');
     const source = e.dataTransfer.getData('source');
@@ -825,137 +1024,71 @@ function dropToGkSlot(e) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
 
+    const slot = e.target.closest('.player-slot');
+    if (!slot) return;
+    const position = slot.getAttribute('data-position');
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
+
+    // Exclude dragged player from count
     let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
     // Validate player count
     if (source === 'sidebar' && currentPlayers >= maxPlayers) {
-        showMessage(`Too many players for ${matchType}.`, 'error');
+        showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
         return;
     }
 
-    // Remove existing GK if replacing
-    const existingGk = appState.formationTemp.find(f => f.position === 'GK');
-    if (existingGk && source === 'sidebar') {
-        appState.formationTemp = appState.formationTemp.filter(f => f.position !== 'GK');
-        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingGk.playerId}"]`);
+    // Handle existing player in the slot
+    const existingPlayerId = slot.getAttribute('data-player-id');
+    if (existingPlayerId && existingPlayerId !== playerId) {
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
+        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
         if (oldPlayer) {
             oldPlayer.classList.remove('disabled');
             oldPlayer.draggable = true;
         }
-        currentPlayers--;
-    } else if (existingGk && source === 'field' && slotId !== 'gk-slot') {
-        showMessage('Goalkeeper slot is already occupied.', 'error');
-        return;
     }
 
     // Remove dragged player from formation
     appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
 
-    // Add new GK
+    // Get slot coordinates
+    const x = parseFloat(slot.style.left);
+    const y = parseFloat(slot.style.top);
+
+    // Add new player to formation
     appState.formationTemp.push({
         playerId,
-        position: 'GK',
-        x: 50,
-        y: 90
+        position: position === 'GK' || position === 'SW' ? position : player.position,
+        x,
+        y
     });
 
     // Update UI
-    const gkSlot = e.target.closest('#gk-slot');
-    gkSlot.innerHTML = '';
-    gkSlot.setAttribute('data-player-id', playerId);
-    gkSlot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-    gkSlot.classList.add('occupied');
+    slot.innerHTML = '';
+    slot.setAttribute('data-player-id', playerId);
+    slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    slot.classList.add('occupied');
+
     if (source === 'sidebar') {
         disablePlayerNumber(playerId);
-    }
-    setupPlacedPlayerDrag();
-}
-
-// Update dropToField to support replacement and repositioning
-function dropToField(e) {
-    e.preventDefault();
-    const playerId = e.dataTransfer.getData('playerId');
-    const source = e.dataTransfer.getData('source');
-    const slotId = e.dataTransfer.getData('slotId');
-    const player = appState.players.find(p => p.id === playerId);
-    if (!player) return;
-
-    const matchType = appState.currentGame.matchType;
-    const maxPlayers = parseInt(matchType.split('v')[0]);
-    let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
-
-    // Validate player count
-    if (source === 'sidebar' && currentPlayers >= maxPlayers) {
-        showMessage(`Too many players for ${matchType}.`, 'error');
-        return;
-    }
-
-    // Handle repositioning
-    if (source === 'field' && slotId !== 'gk-slot') {
-        const fieldRect = document.getElementById('formation-field').getBoundingClientRect();
-        const x = ((e.clientX - fieldRect.left) / fieldRect.width) * 100;
-        const y = ((e.clientY - fieldRect.top) / fieldRect.height) * 100;
-
-        appState.formationTemp = appState.formationTemp.map(f => 
-            f.playerId === playerId ? { ...f, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : f
-        );
-
-        const slot = document.querySelector(`.player-slot[data-player-id="${playerId}"]`);
-        if (slot) {
-            slot.style.left = `${x}%`;
-            slot.style.top = `${y}%`;
-        }
-        return;
-    }
-
-    // Handle replacement
-    const fieldRect = document.getElementById('formation-field').getBoundingClientRect();
-    const x = ((e.clientX - fieldRect.left) / fieldRect.width) * 100;
-    const y = ((e.clientY - fieldRect.top) / fieldRect.height) * 100;
-    const targetSlot = e.target.closest('.player-slot');
-    if (targetSlot && targetSlot !== document.getElementById('gk-slot')) {
-        const targetPlayerId = targetSlot.getAttribute('data-player-id');
-        if (targetPlayerId && source === 'sidebar') {
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== targetPlayerId);
-            const oldPlayer = document.querySelector(`.player-number[data-player-id="${targetPlayerId}"]`);
-            if (oldPlayer) {
-                oldPlayer.classList.remove('disabled');
-                oldPlayer.draggable = true;
-            }
-            targetSlot.remove();
-            currentPlayers--;
+    } else if (source === 'field' && slotId !== slot.id) {
+        // Clear previous slot
+        const prevSlot = document.getElementById(slotId);
+        if (prevSlot) {
+            prevSlot.innerHTML = '';
+            prevSlot.removeAttribute('data-player-id');
+            prevSlot.classList.remove('occupied');
         }
     }
 
-    // Add or update player
-    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-    appState.formationTemp.push({
-        playerId,
-        position: player.position,
-        x: Math.max(0, Math.min(100, x)),
-        y: Math.max(0, Math.min(100, y))
-    });
-
-    // Update UI
-    let playerSlot;
-    if (targetSlot && targetSlot !== document.getElementById('gk-slot')) {
-        playerSlot = targetSlot;
-    } else {
-        playerSlot = document.createElement('div');
-        playerSlot.className = 'player-slot';
-        playerSlot.setAttribute('data-player-id', playerId);
-        playerSlot.setAttribute('data-slot-id', `slot-${playerId}`);
-        document.getElementById('formation-field').appendChild(playerSlot);
-    }
-    playerSlot.style.left = `${x}%`;
-    playerSlot.style.top = `${y}%`;
-    playerSlot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-    if (source === 'sidebar') {
-        disablePlayerNumber(playerId);
-    }
     setupPlacedPlayerDrag();
+    console.log('Formation after drop:', appState.formationTemp.map(f => ({
+        playerId: f.playerId,
+        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+        position: f.position
+    })));
 }
 
 // Add function to setup drag for placed players
@@ -1000,7 +1133,11 @@ function startGameFromFormation() {
     const formation = appState.formationTemp || [];
 
     // Debug formation state
-    console.log('Formation:', formation);
+    console.log('Formation before start:', formation.map(f => ({
+        playerId: f.playerId,
+        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+        position: f.position
+    })));
 
     // Validate formation
     if (formation.length > maxPlayers) {
@@ -2212,7 +2349,7 @@ function exportReport(gameId, format) {
                 }
                 .formation-field-report {
                     width: 300px; height: 400px;
-                    background: url('img/field.png') no-repeat center center;
+                    background: url('img/field-400.png') no-repeat center center;
                     background-size: cover;
                     position: relative;
                     border: 2px solid #fff;
