@@ -18,7 +18,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.11</h1>
+                <h1>Soccer Coach Tracker v1.9.22</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -86,6 +86,16 @@
                     <input type="date" id="game-date">
                 </div>
                 <div class="form-group">
+                    <label for="match-type">Match Type:</label>
+                    <select id="match-type">
+                        <option value="" disabled selected>Select match type</option>
+                        <option value="5v5">5 vs 5</option>
+                        <option value="7v7">7 vs 7</option>
+                        <option value="9v9">9 vs 9</option>
+                        <option value="11v11">11 vs 11</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="num-periods">Number of Periods:</label>
                     <input type="number" id="num-periods" value="4" min="1">
                 </div>
@@ -102,7 +112,38 @@
                         </label>
                     </div>
                 </div>
-                <button class="primary-btn" onclick="startGame()">Start Game</button>
+                <button class="primary-btn" onclick="setupFormation()">Formation Setup</button>
+            </div>
+        </div>
+
+        <!-- Formation Setup Screen -->
+        <div id="formation-setup" class="screen">
+            <div class="app-header">
+                <button class="back-btn" onclick="confirmBackToGameSetup()">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <h1>Formation Setup</h1>
+            </div>
+            <div class="content formation-content">
+                <div class="formation-container">
+                    <div id="player-list" class="player-list"></div>
+                    <div id="formation-field" class="formation-field">
+                        <div id="gk-slot" class="player-slot gk-slot" data-position="GK" draggable="false"></div>
+                    </div>
+                </div>
+                <button class="primary-btn" onclick="startGameFromFormation()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Back Confirmation Dialog -->
+        <div id="back-confirm-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Confirm Back</h2>
+                <p>Your formation will be lost. Continue?</p>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeBackConfirmDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="backToGameSetup()">Confirm</button>
+                </div>
             </div>
         </div>
 

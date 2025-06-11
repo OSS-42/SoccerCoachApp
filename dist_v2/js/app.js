@@ -21,7 +21,8 @@ let appState = {
         defaultSubstitutionTime: null, // Replace defaultTimer with defaultSubstitutionTime
         isSubstitutionDefaultChecked: false
     },
-    currentPlayer: null
+    currentPlayer: null,
+    formationTemp: null // Temporary storage for formation during setup
 };
 
 // Initialize IndexedDB
@@ -649,6 +650,408 @@ function updateGameReportCounter() {
         const completedGames = appState.games.filter(game => game.isCompleted).length;
         counterElement.textContent = completedGames;
     }
+}
+
+// Game Creation: Replace startGame with setupFormation
+function setupFormation() {
+    const opponentNameInput = document.getElementById('opponent-name');
+    const gameDateInput = document.getElementById('game-date');
+    const matchTypeInput = document.getElementById('match-type');
+    const numPeriodsInput = document.getElementById('num-periods');
+    const periodDurationInput = document.getElementById('period-duration');
+    const substitutionTimeInput = document.getElementById('substitution-time');
+    const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
+
+    const opponentName = opponentNameInput.value.trim();
+    const gameDate = gameDateInput.value;
+    const matchType = matchTypeInput.value;
+    const numPeriods = parseInt(numPeriodsInput.value, 10);
+    const periodDuration = parseInt(periodDurationInput.value, 10);
+    const substitutionTime = parseInt(substitutionTimeInput.value, 10);
+
+    // Validate inputs
+    if (!opponentName) {
+        showMessage('Please enter an opponent team name.', 'error');
+        return;
+    }
+    if (!gameDate) {
+        showMessage('Please select a game date.', 'error');
+        return;
+    }
+    if (!matchType) {
+        showMessage('Please select a match type.', 'error');
+        return;
+    }
+    if (isNaN(numPeriods) || numPeriods < 1) {
+        showMessage('Number of periods must be at least 1.', 'error');
+        return;
+    }
+    if (isNaN(periodDuration) || periodDuration < 1 || periodDuration > 45) {
+        showMessage('Time per period must be between 1 and 45 minutes.', 'error');
+        return;
+    }
+    if (isNaN(substitutionTime) || substitutionTime < 1) {
+        showMessage('Substitution time must be at least 1 minute.', 'error');
+        return;
+    }
+
+    // Validate player count
+    const minPlayers = parseInt(matchType.split('v')[0]);
+    if (appState.players.length < minPlayers) {
+        showMessage(`At least ${minPlayers} players are required for ${matchType}.`, 'error');
+        return;
+    }
+
+    // Save substitution settings
+    if (saveSubstitutionDefaultCheckbox.checked) {
+        appState.settings.defaultSubstitutionTime = substitutionTime;
+    }
+    appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+
+    // Initialize currentGame
+    appState.currentGame = {
+        id: Date.now().toString(),
+        date: gameDate,
+        opponentName,
+        matchType,
+        homeScore: 0,
+        awayScore: 0,
+        startTime: new Date().toISOString(),
+        endTime: null,
+        actions: [],
+        activePlayers: [...appState.players.map(p => p.id)],
+        isCompleted: false,
+        totalGameTime: 0,
+        numPeriods,
+        periodDuration: periodDuration * 60,
+        substitutionDuration: substitutionTime * 60,
+        formation: [],
+        substitutes: []
+    };
+
+    // Show formation screen
+    showScreen('formation-setup');
+    renderFormationSetup();
+}
+
+// Formation Setup
+function renderFormationSetup() {
+    const playerList = document.getElementById('player-list');
+    const formationField = document.getElementById('formation-field');
+    playerList.innerHTML = '';
+    formationField.innerHTML = '<div id="gk-slot" class="player-slot gk-slot" data-position="GK" draggable="false"></div>';
+    appState.formationTemp = [];
+
+    // Render player list
+    appState.players.forEach(player => {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item-draggable';
+        playerItem.innerHTML = `
+            <span class="player-number" draggable="true" data-player-id="${player.id}">${player.jerseyNumber}</span>
+            <span class="player-name">${player.name}</span>
+        `;
+        playerList.appendChild(playerItem);
+    });
+
+    // Set up drag-and-drop
+    const numbers = document.querySelectorAll('.player-number');
+    numbers.forEach(number => {
+        number.removeEventListener('dragstart', dragStart); // Prevent duplicates
+        number.addEventListener('dragstart', dragStart);
+    });
+
+    const gkSlot = document.getElementById('gk-slot');
+    gkSlot.removeEventListener('dragover', dragOver); // Prevent duplicates
+    gkSlot.removeEventListener('drop', dropToGkSlot);
+    gkSlot.addEventListener('dragover', dragOver);
+    gkSlot.addEventListener('drop', dropToGkSlot);
+
+    formationField.removeEventListener('dragover', dragOver);
+    formationField.removeEventListener('drop', dropToField);
+    formationField.addEventListener('dragover', dragOver);
+    formationField.addEventListener('drop', dropToField);
+
+    playerList.removeEventListener('dragover', dragOver);
+    playerList.removeEventListener('drop', dropToSidebar);
+    playerList.addEventListener('dragover', dragOver);
+    playerList.addEventListener('drop', dropToSidebar);
+}
+
+// Update dragStart to include source info
+function dragStart(e) {
+    e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
+    e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
+    e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
+}
+
+// Allow dropping back to sidebar to remove player
+function dropToSidebar(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    if (source !== 'field') return;
+
+    // Remove from formation
+    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+
+    // Remove from field
+    const slot = document.querySelector(`.player-slot[data-player-id="${playerId}"]`) || document.getElementById('gk-slot');
+    if (slot) {
+        if (slot.id === 'gk-slot') {
+            slot.innerHTML = '';
+            slot.classList.remove('occupied');
+        } else {
+            slot.remove();
+        }
+    }
+
+    // Re-enable player number
+    const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+    if (number) {
+        number.classList.remove('disabled');
+        number.draggable = true;
+    }
+}
+
+function dragOver(e) {
+    e.preventDefault();
+}
+
+function dropToGkSlot(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const matchType = appState.currentGame.matchType;
+    const maxPlayers = parseInt(matchType.split('v')[0]);
+    let currentPlayers = appState.formationTemp.length;
+
+    // Adjust count for replacement
+    if (source === 'field' && e.dataTransfer.getData('slotId') !== 'gk-slot') {
+        currentPlayers--;
+    }
+
+    // Validate player count
+    if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+        showMessage(`Too many players for ${matchType}.`, 'error');
+        return;
+    }
+
+    // Check if GK slot is occupied
+    const existingGk = appState.formationTemp.find(f => f.position === 'GK');
+    if (existingGk && source === 'sidebar') {
+        // Replace existing GK
+        appState.formationTemp = appState.formationTemp.filter(f => f.position !== 'GK');
+        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingGk.playerId}"]`);
+        if (oldPlayer) {
+            oldPlayer.classList.remove('disabled');
+            oldPlayer.draggable = true;
+        }
+    } else if (existingGk && source === 'field' && e.dataTransfer.getData('slotId') !== 'gk-slot') {
+        showMessage('Goalkeeper slot is already occupied.', 'error');
+        return;
+    }
+
+    // Remove existing player from formation
+    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+
+    // Add or update GK
+    appState.formationTemp.push({
+        playerId,
+        position: 'GK',
+        x: 50,
+        y: 90
+    });
+
+    // Update UI
+    const gkSlot = e.target.closest('#gk-slot');
+    gkSlot.innerHTML = ''; // Clear content to prevent duplicates
+    gkSlot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    gkSlot.classList.add('occupied');
+    if (source === 'sidebar') {
+        disablePlayerNumber(playerId);
+    }
+    setupPlacedPlayerDrag();
+}
+
+// Update dropToField to support replacement and repositioning
+function dropToField(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const matchType = appState.currentGame.matchType;
+    const maxPlayers = parseInt(matchType.split('v')[0]);
+    let currentPlayers = appState.formationTemp.length;
+
+    // Adjust count for replacement or repositioning
+    if (source === 'field' && slotId !== 'gk-slot') {
+        currentPlayers--;
+    }
+
+    // Handle repositioning
+    if (source === 'field' && slotId !== 'gk-slot') {
+        const fieldRect = document.getElementById('formation-field').getBoundingClientRect();
+        const x = ((e.clientX - fieldRect.left) / fieldRect.width) * 100;
+        const y = ((e.clientY - fieldRect.top) / fieldRect.height) * 100;
+
+        appState.formationTemp = appState.formationTemp.map(f => 
+            f.playerId === playerId ? { ...f, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) } : f
+        );
+
+        const slot = document.querySelector(`.player-slot[data-player-id="${playerId}"]`);
+        if (slot) {
+            slot.style.left = `${x}%`;
+            slot.style.top = `${y}%`;
+        }
+        return;
+    }
+
+    // Validate player count for new drops
+    if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+        showMessage(`Too many players for ${matchType}.`, 'error');
+        return;
+    }
+
+    // Handle replacement
+    const fieldRect = document.getElementById('formation-field').getBoundingClientRect();
+    const x = ((e.clientX - fieldRect.left) / fieldRect.width) * 100;
+    const y = ((e.clientY - fieldRect.top) / fieldRect.height) * 100;
+    const targetSlot = e.target.closest('.player-slot');
+    if (targetSlot && targetSlot !== document.getElementById('gk-slot')) {
+        const targetPlayerId = targetSlot.getAttribute('data-player-id');
+        if (targetPlayerId && source === 'sidebar') {
+            // Replace existing player
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== targetPlayerId);
+            const oldPlayer = document.querySelector(`.player-number[data-player-id="${targetPlayerId}"]`);
+            if (oldPlayer) {
+                oldPlayer.classList.remove('disabled');
+                oldPlayer.draggable = true;
+            }
+            targetSlot.remove();
+            currentPlayers--;
+        }
+    }
+
+    // Add or update player
+    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+    appState.formationTemp.push({
+        playerId,
+        position: player.position,
+        x: Math.max(0, Math.min(100, x)),
+        y: Math.max(0, Math.min(100, y))
+    });
+
+    // Update UI
+    let playerSlot;
+    if (targetSlot && targetSlot !== document.getElementById('gk-slot')) {
+        playerSlot = targetSlot;
+    } else {
+        playerSlot = document.createElement('div');
+        playerSlot.className = 'player-slot';
+        playerSlot.setAttribute('data-player-id', playerId);
+        document.getElementById('formation-field').appendChild(playerSlot);
+    }
+    playerSlot.style.left = `${x}%`;
+    playerSlot.style.top = `${y}%`;
+    playerSlot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    if (source === 'sidebar') {
+        disablePlayerNumber(playerId);
+    }
+    setupPlacedPlayerDrag();
+}
+
+// Add function to setup drag for placed players
+function setupPlacedPlayerDrag() {
+    const placedNumbers = document.querySelectorAll('.player-number-placed');
+    placedNumbers.forEach(number => {
+        number.removeEventListener('dragstart', dragStart); // Prevent duplicate listeners
+        number.addEventListener('dragstart', dragStart);
+    });
+}
+
+function disablePlayerNumber(playerId) {
+    const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+    if (number) {
+        number.classList.add('disabled');
+        number.draggable = false;
+    }
+}
+
+function confirmBackToGameSetup() {
+    const dialog = document.getElementById('back-confirm-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+}
+
+function closeBackConfirmDialog() {
+    const dialog = document.getElementById('back-confirm-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function backToGameSetup() {
+    closeBackConfirmDialog();
+    appState.currentGame = null;
+    appState.formationTemp = null;
+    showScreen('game-setup');
+}
+
+function startGameFromFormation() {
+    const matchType = appState.currentGame.matchType;
+    const maxPlayers = parseInt(matchType.split('v')[0]);
+    const formation = appState.formationTemp || [];
+
+    // Strict validation
+    if (formation.length !== maxPlayers) {
+        showMessage(`Please assign exactly ${maxPlayers} players for ${matchType}.`, 'error');
+        return;
+    }
+    if (!formation.some(f => f.position === 'GK')) {
+        showMessage('A goalkeeper is required.', 'error');
+        return;
+    }
+
+    // Set formation and substitutes
+    appState.currentGame.formation = formation;
+    appState.currentGame.substitutes = appState.players
+        .filter(p => !formation.some(f => f.playerId === p.id))
+        .map(p => p.id);
+
+    // Reset player stats
+    appState.players.forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0,
+            faults: 0,
+            blockedShots: 0
+        };
+    });
+
+    // Setup timers and UI
+    appState.timer.duration = appState.currentGame.substitutionDuration;
+    appState.timer.timeLeft = appState.timer.duration;
+    updateTimerDisplay();
+    appState.gameTimer.elapsed = 0;
+    appState.gameTimer.isRunning = false;
+    appState.gameTimer.startTime = null;
+    updateGameTimeDisplay();
+    updatePeriodCounter();
+    document.getElementById('opponent-team-name').textContent = appState.currentGame.opponentName.toUpperCase();
+    document.getElementById('home-score').textContent = '0';
+    document.getElementById('away-score').textContent = '0';
+    renderPlayerGrid();
+    showScreen('game-tracking');
+    appState.formationTemp = null;
 }
 
 // Game Management
@@ -1543,10 +1946,11 @@ function confirmDeleteReports() {
     showMessage(`${deletedCount} report${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
 }
 
+// Update viewReport to include formation
 function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
-    
+
     let reportDialog = document.getElementById('detailed-report-dialog');
     if (!reportDialog) {
         reportDialog = document.createElement('div');
@@ -1554,26 +1958,17 @@ function viewReport(gameId) {
         reportDialog.className = 'dialog';
         document.getElementById('app').appendChild(reportDialog);
     }
-    
+
     const gameDate = new Date(game.date).toDateString();
     const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], { timeStyle: 'short' }) : '';
-    
-    let gameDuration = '';
-    if (game.startTime && game.endTime && !isNaN(new Date(game.endTime) - new Date(game.startTime))) {
-        const start = new Date(game.startTime);
-        const end = new Date(game.endTime);
-        const durationMs = end - start;
-        const durationMins = Math.floor(durationMs / 60000);
-        gameDuration = `${durationMins} minutes`;
-    } else if (game.numPeriods && game.periodDuration) {
-        const durationMins = Math.floor(game.numPeriods * game.periodDuration / 60);
-        gameDuration = `${durationMins} minutes`;
-    } else {
-        gameDuration = 'N/A';
-    }
+    const gameDuration = game.startTime && game.endTime && !isNaN(new Date(game.endTime) - new Date(game.startTime))
+        ? `${Math.floor((new Date(game.endTime) - new Date(game.startTime)) / 60000)} minutes`
+        : game.numPeriods && game.periodDuration
+        ? `${Math.floor(game.numPeriods * game.periodDuration / 60)} minutes`
+        : 'N/A';
 
     const playerActions = {};
-    game.activePlayers.forEach(playerId => {
+    (game.activePlayers || []).forEach(playerId => {
         const player = appState.players.find(p => p.id === playerId);
         if (player) {
             playerActions[playerId] = {
@@ -1591,44 +1986,26 @@ function viewReport(gameId) {
             };
         }
     });
-    
+
     const ownGoals = [];
-    game.actions.forEach(action => {
+    (game.actions || []).forEach(action => {
         if (action.actionType === 'own_goal') {
             ownGoals.push(action.gameMinute);
         } else if (playerActions[action.playerId]) {
             switch (action.actionType) {
-                case 'goal':
-                    playerActions[action.playerId].goals.push(action.gameMinute);
-                    break;
-                case 'assist':
-                    playerActions[action.playerId].assists++;
-                    break;
-                case 'save':
-                    playerActions[action.playerId].saves++;
-                    break;
-                case 'goal_allowed':
-                    playerActions[action.playerId].goalsAllowed++;
-                    break;
-                case 'yellow_card':
-                    playerActions[action.playerId].yellowCards.push(action.gameMinute);
-                    break;
-                case 'red_card':
-                    playerActions[action.playerId].redCards.push(action.gameMinute);
-                    break;
-                case 'late_to_game':
-                    playerActions[action.playerId].lateToGame = true;
-                    break;
-                case 'fault':
-                    playerActions[action.playerId].faults++;
-                    break;
-                case 'blocked_shot':
-                    playerActions[action.playerId].blockedShots++;
-                    break;
+                case 'goal': playerActions[action.playerId].goals.push(action.gameMinute); break;
+                case 'assist': playerActions[action.playerId].assists++; break;
+                case 'save': playerActions[action.playerId].saves++; break;
+                case 'goal_allowed': playerActions[action.playerId].goalsAllowed++; break;
+                case 'yellow_card': playerActions[action.playerId].yellowCards.push(action.gameMinute); break;
+                case 'red_card': playerActions[action.playerId].redCards.push(action.gameMinute); break;
+                case 'late_to_game': playerActions[action.playerId].lateToGame = true; break;
+                case 'fault': playerActions[action.playerId].faults++; break;
+                case 'blocked_shot': playerActions[action.playerId].blockedShots++; break;
             }
         }
     });
-    
+
     let playerStatsHTML = '';
     Object.values(playerActions)
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
@@ -1649,51 +2026,89 @@ function viewReport(gameId) {
                 </tr>
             `;
         });
-    
-    const goalEntries = Object.values(playerActions)
+
+        const goalLine = Object.values(playerActions)
         .filter(p => p.goals.length > 0)
-        .map(p => ({
-            name: p.name,
-            times: p.goals.sort((a, b) => a - b)
-        }));
-    ownGoals.sort((a, b) => a - b).forEach(time => {
-        goalEntries.push({ name: 'Opponent', times: [time], isOwnGoal: true });
-    });
-    const goalLine = goalEntries.length > 0
-        ? goalEntries.map(entry => {
-              const times = entry.times.map(t => `${t}'`).join(', ');
-              return entry.isOwnGoal ? `${entry.name} (${times}, og)` : `${entry.name} (${times})`;
-          }).join(', ')
-        : 'N/A';
-    
-    const yellowCardEntries = Object.values(playerActions)
-        .filter(p => p.yellowCards.length > 0)
-        .map(p => ({
-            name: p.name,
-            times: p.yellowCards.sort((a, b) => a - b)
-        }));
-    const yellowCardLine = yellowCardEntries.length > 0
-        ? yellowCardEntries.map(entry => `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`).join(', ')
-        : 'N/A';
-    
-    const redCardEntries = Object.values(playerActions)
-        .filter(p => p.redCards.length > 0 || p.yellowCards.length >= 2)
-        .map(p => {
-            const redTimes = [...p.redCards];
-            if (p.yellowCards.length >= 2) {
-                redTimes.push(p.yellowCards[1]);
-            }
-            return { name: p.name, times: redTimes.sort((a, b) => a - b) };
-        });
-    const redCardLine = redCardEntries.length > 0
-        ? redCardEntries.map(entry => `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`).join(', ')
-        : 'N/A';
-    
-    const latePlayers = Object.values(playerActions)
-        .filter(p => p.lateToGame)
-        .map(p => p.name);
-    const lateLine = latePlayers.length > 0 ? latePlayers.join(', ') : 'N/A';
-    
+        .map(p => ({ name: p.name, times: p.goals.sort((a, b) => a - b) }))
+        .concat(ownGoals.sort((a, b) => a - b).map(time => ({ name: 'Opponent', times: [time], isOwnGoal: true })))
+        .map(entry => entry.isOwnGoal ? `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')}, og)` : `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`)
+        .join(', ') || 'N/A';
+
+        const yellowCardLine = Object.values(playerActions)
+            .filter(p => p.yellowCards.length > 0)
+            .map(p => `${p.name} (${p.yellowCards.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`)
+            .join(', ') || 'N/A';
+
+        const redCardLine = Object.values(playerActions)
+            .filter(p => p.redCards.length > 0 || p.yellowCards.length >= 2)
+            .map(p => {
+                const redTimes = [...p.redCards];
+                if (p.yellowCards.length >= 2) redTimes.push(p.yellowCards[1]);
+                return `${p.name} (${redTimes.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`;
+            })
+            .join(', ') || 'N/A';
+
+        const lateLine = Object.values(playerActions)
+            .filter(p => p.lateToGame)
+            .map(p => p.name)
+            .join(', ') || 'N/A';
+
+        // Formation Section
+    let formationHTML = '';
+    if (game.formation && game.formation.length > 0) {
+        formationHTML = `
+            <div class="report-formation">
+                <h3>Starting Formation (${game.matchType})</h3>
+                <div class="formation-container-report">
+                    <div class="formation-field-report">
+                        ${game.formation.map(f => {
+                            const player = appState.players.find(p => p.id === f.playerId);
+                            if (!player) return '';
+                            const isGk = f.position === 'GK';
+                            const stats = playerActions[f.playerId] || {};
+                            const statTable = isGk
+                                ? `<table class="player-stats-table">
+                                       <tr><th>Saves</th><td>${stats.saves || 0}</td></tr>
+                                       <tr><th>Goals Allowed</th><td>${stats.goalsAllowed || 0}</td></tr>
+                                   </table>`
+                                : `<table class="player-stats-table">
+                                       <tr><th>Goals</th><td>${stats.goals?.length || 0}</td></tr>
+                                       <tr><th>Assists</th><td>${stats.assists || 0}</td></tr>
+                                       <tr><th>Yellow Cards</th><td>${stats.yellowCards?.length || 0}</td></tr>
+                                       <tr><th>Red Cards</th><td>${stats.redCards?.length + (stats.yellowCards?.length >= 2 ? 1 : 0)}</td></tr>
+                                   </table>`;
+                            return `
+                                <div class="player-slot-report" style="left: ${f.x}%; top: ${f.y}%">
+                                    <span class="player-number-report">${player.jerseyNumber}</span>
+                                    ${statTable}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="substitutes-list">
+                        <h4>Substitutes</h4>
+                        ${game.substitutes?.map(subId => {
+                            const player = appState.players.find(p => p.id === subId);
+                            if (!player) return '';
+                            const stats = playerActions[subId] || {};
+                            return `
+                                <div class="substitute-item">
+                                    <span>#${player.jerseyNumber} ${player.name}</span>
+                                    <table class="player-stats-table">
+                                        <tr><th>Goals</th><td>${stats.goals?.length || 0}</td></tr>
+                                        <tr><th>Assists</th><td>${stats.assists || 0}</td></tr>
+                                        <tr><th>Yellow Cards</th><td>${stats.yellowCards?.length || 0}</td></tr>
+                                        <tr><th>Red Cards</th><td>${stats.redCards?.length + (stats.yellowCards?.length >= 2 ? 1 : 0)}</td></tr>
+                                    </table>
+                                </div>
+                            `;
+                        }).join('') || '<p>No substitutes</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     reportDialog.innerHTML = `
         <div class="dialog-content report-dialog">
             <h2>Game Report</h2>
@@ -1706,7 +2121,7 @@ function viewReport(gameId) {
                 <div><strong>Red card:</strong> ${redCardLine}</div>
                 <div><strong>Duration:</strong> ${gameDuration}</div>
             </div>
-            
+            ${formationHTML}
             <h3>Player Statistics</h3>
             <div class="report-table-container">
                 <table class="report-table">
@@ -1729,18 +2144,16 @@ function viewReport(gameId) {
                     </tbody>
                 </table>
             </div>
-            
             <div class="report-footer">
                 <div><strong>Late to the game:</strong> ${lateLine}</div>
             </div>
-            
             <div class="report-actions">
                 <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
                 <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
             </div>
         </div>
     `;
-    
+
     reportDialog.style.display = 'flex';
     reportDialog.classList.add('active');
 }
@@ -1765,22 +2178,19 @@ function closeDetailedReport() {
     }
 }
 
+// Update exportReport to ensure formation is styled for PDF
 function exportReport(gameId, format) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) {
         showMessage('Game not found', 'error');
         return;
     }
-    
-    // Get the report content from the dialog
+
     const reportContent = document.querySelector('.report-dialog').innerHTML;
-    
-    // Create a hidden iframe to render the print content
     let iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     document.body.appendChild(iframe);
-    
-    // Write the report content to the iframe
+
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open();
     doc.write(`
@@ -1792,7 +2202,41 @@ function exportReport(gameId, format) {
                 table { border-collapse: collapse; width: 100%; margin: 20px 0; }
                 th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                 th { background-color: #f2f2f2; }
-                h2, h3 { color: #333; }
+                h2, h3, h4 { color: #333; }
+                .formation-container-report {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 20px;
+                    align-items: flex-start;
+                }
+                .formation-field-report {
+                    width: 300px; height: 400px; background: #2e7d32; position: relative;
+                    border: 2px solid #fff; flex-shrink: 0;
+                }
+                .formation-field-report::before, .formation-field-report::after {
+                    content: ''; position: absolute; width: 100%; height: 2px; background: #fff;
+                }
+                .formation-field-report::before { top: 50%; }
+                .formation-field-report::after { top: 0; }
+                .player-slot-report {
+                    position: absolute; text-align: center; transform: translate(-50%, -50%);
+                }
+                .player-number-report {
+                    display: inline-block; width: 24px; height: 24px; line-height: 24px;
+                    background: #000; color: #fff; border-radius: 50%; font-size: 12px;
+                }
+                .player-stats-table {
+                    width: 100px; font-size: 10px; margin-top: 5px;
+                    border-collapse: collapse; background: #fff;
+                }
+                .player-stats-table th, .player-stats-table td {
+                    border: 1px solid #ddd; padding: 2px;
+                }
+                .substitutes-list {
+                    width: 200px; background: #f5f5f5; padding: 10px;
+                    border-radius: 8px; max-height: 400px; overflow-y: auto;
+                }
+                .substitute-item { margin-bottom: 10px; }
             </style>
         </head>
         <body>
@@ -1804,15 +2248,13 @@ function exportReport(gameId, format) {
         </html>
     `);
     doc.close();
-    
-    // Trigger the print dialog after the iframe content is loaded
+
     iframe.onload = function() {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
-        // Remove the iframe after printing
         document.body.removeChild(iframe);
     };
-    
+
     showMessage('Opening print dialog for PDF export', 'success');
 }
 
