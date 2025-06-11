@@ -783,7 +783,6 @@ function dragStart(e) {
     e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
     e.dataTransfer.setData('slotId', e.target.parentElement.id || e.target.parentElement.getAttribute('data-slot-id') || '');
 }
-
 // Allow dropping back to sidebar to remove player
 function dropToSidebar(e) {
     e.preventDefault();
@@ -828,12 +827,7 @@ function dropToGkSlot(e) {
 
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
-    let currentPlayers = appState.formationTemp.length;
-
-    // Adjust count for replacement or repositioning
-    if (source === 'field' && slotId !== 'gk-slot') {
-        currentPlayers--;
-    }
+    let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
     // Validate player count
     if (source === 'sidebar' && currentPlayers >= maxPlayers) {
@@ -841,25 +835,25 @@ function dropToGkSlot(e) {
         return;
     }
 
-    // Check if GK slot is occupied
+    // Remove existing GK if replacing
     const existingGk = appState.formationTemp.find(f => f.position === 'GK');
     if (existingGk && source === 'sidebar') {
-        // Replace existing GK
         appState.formationTemp = appState.formationTemp.filter(f => f.position !== 'GK');
         const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingGk.playerId}"]`);
         if (oldPlayer) {
             oldPlayer.classList.remove('disabled');
             oldPlayer.draggable = true;
         }
+        currentPlayers--;
     } else if (existingGk && source === 'field' && slotId !== 'gk-slot') {
         showMessage('Goalkeeper slot is already occupied.', 'error');
         return;
     }
 
-    // Remove existing player from formation
+    // Remove dragged player from formation
     appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
 
-    // Add or update GK
+    // Add new GK
     appState.formationTemp.push({
         playerId,
         position: 'GK',
@@ -869,7 +863,7 @@ function dropToGkSlot(e) {
 
     // Update UI
     const gkSlot = e.target.closest('#gk-slot');
-    gkSlot.innerHTML = ''; // Clear content
+    gkSlot.innerHTML = '';
     gkSlot.setAttribute('data-player-id', playerId);
     gkSlot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
     gkSlot.classList.add('occupied');
@@ -890,12 +884,7 @@ function dropToField(e) {
 
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
-    let currentPlayers = appState.formationTemp.length;
-
-    // Adjust count for replacement or repositioning
-    if (source === 'field' && slotId !== 'gk-slot') {
-        currentPlayers--;
-    }
+    let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
     // Validate player count
     if (source === 'sidebar' && currentPlayers >= maxPlayers) {
@@ -929,7 +918,6 @@ function dropToField(e) {
     if (targetSlot && targetSlot !== document.getElementById('gk-slot')) {
         const targetPlayerId = targetSlot.getAttribute('data-player-id');
         if (targetPlayerId && source === 'sidebar') {
-            // Replace existing player
             appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== targetPlayerId);
             const oldPlayer = document.querySelector(`.player-number[data-player-id="${targetPlayerId}"]`);
             if (oldPlayer) {
@@ -958,7 +946,7 @@ function dropToField(e) {
         playerSlot = document.createElement('div');
         playerSlot.className = 'player-slot';
         playerSlot.setAttribute('data-player-id', playerId);
-        playerSlot.setAttribute('data-slot-id', `slot-${playerId}`); // Unique slot ID
+        playerSlot.setAttribute('data-slot-id', `slot-${playerId}`);
         document.getElementById('formation-field').appendChild(playerSlot);
     }
     playerSlot.style.left = `${x}%`;
@@ -1011,9 +999,16 @@ function startGameFromFormation() {
     const maxPlayers = parseInt(matchType.split('v')[0]);
     const formation = appState.formationTemp || [];
 
-    // Strict validation
-    if (formation.length !== maxPlayers) {
-        showMessage(`Please assign exactly ${maxPlayers} players for ${matchType}.`, 'error');
+    // Debug formation state
+    console.log('Formation:', formation);
+
+    // Validate formation
+    if (formation.length > maxPlayers) {
+        showMessage(`Too many players assigned for ${matchType}. Please assign exactly ${maxPlayers} players.`, 'error');
+        return;
+    }
+    if (formation.length < maxPlayers) {
+        showMessage(`Not enough players assigned for ${matchType}. Please assign exactly ${maxPlayers} players.`, 'error');
         return;
     }
     if (!formation.some(f => f.position === 'GK')) {
@@ -2213,16 +2208,16 @@ function exportReport(gameId, format) {
                     flex-direction: row;
                     gap: 20px;
                     align-items: flex-start;
+                    min-width: 520px;
                 }
                 .formation-field-report {
-                    width: 300px; height: 400px; background: #2e7d32; position: relative;
-                    border: 2px solid #fff; flex-shrink: 0;
+                    width: 300px; height: 400px;
+                    background: url('img/field.png') no-repeat center center;
+                    background-size: cover;
+                    position: relative;
+                    border: 2px solid #fff;
+                    flex-shrink: 0;
                 }
-                .formation-field-report::before, .formation-field-report::after {
-                    content: ''; position: absolute; width: 100%; height: 2px; background: #fff;
-                }
-                .formation-field-report::before { top: 50%; }
-                .formation-field-report::after { top: 0; }
                 .player-slot-report {
                     position: absolute; text-align: center; transform: translate(-50%, -50%);
                     display: flex; flex-direction: column; align-items: center;
