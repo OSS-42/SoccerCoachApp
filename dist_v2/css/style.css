@@ -910,6 +910,7 @@ input:checked + .slider:before {
     min-height: 0;
     box-sizing: border-box;
     align-content: start;
+    justify-content: center;
 }
 
 .player-grid-item {
@@ -936,19 +937,15 @@ input:checked + .slider:before {
     border: 2px solid #2196f3;
 }
 
-/* .player-grid-item.yellow-card {
-    background-color: #ffca28;
-}
-
-.player-grid-item.red-card {
+/* .player-grid-item.red-card {
     background-color: white;
     cursor: default;
 } */
 
-.player-grid-item.red-card:hover {
+/* .player-grid-item.red-card:hover {
     transform: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
+} */
 
 /* .player-grid-item.red-card::before,
 .player-grid-item.red-card::after {
@@ -962,11 +959,15 @@ input:checked + .slider:before {
 } */
 
 .player-grid-item.starter {
-    background-color: #e0f7e9; /* Light pastel green */
+    background-color: #a8f1c4; /* Light pastel green */
 }
 
 .player-grid-item.substitute {
-    background-color: #e0f2fe; /* Light pastel blue */
+    background-color: #b7def9; /* Light pastel blue */
+}
+
+.player-grid-item.yellow-card {
+    background-color: #ffca28;
 }
 
 .player-grid-item.red-card {
@@ -985,6 +986,7 @@ input:checked + .slider:before {
     align-content: start;
     height: fit-content;
     background-color: rgba(0, 0, 255, 0.1); /* Debug: Light blue background */
+    justify-content: center;
 }
 
 .player-header {
@@ -999,18 +1001,14 @@ input:checked + .slider:before {
 }
 
 .player-number {
-    display: inline-block;
-    width: 24px; /* Match .player-jersey */
+    width: 24px;
     height: 24px;
     line-height: 24px;
     text-align: center;
-    background: #007bff; /* Blue, match .player-jersey */
-    color: #fff; /* White text */
-    border-radius: 50%; /* Circular */
-    margin-right: 12px; /* Consistent with previous sidebar styling */
-    font-size: 12px; /* Match .player-jersey */
-    flex-shrink: 0; /* Prevent stretching */
-    user-select: none; /* Prevent text selection during drag */
+    background: #007bff;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
 }
 
 /* Player grid numbers */
@@ -1031,14 +1029,18 @@ input:checked + .slider:before {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0.25rem 0;
-    /* background-color: #e0e0e0; */
     text-transform: uppercase;
 }
 
 .player-columns {
     display: flex;
-    flex: 1;
-    width: 100%;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(0.7rem, 2vmin, 0.9rem);
+    gap: 8px;
+    flex-grow: 1; /* Occupy remaining space */
+    align-self: center; /* Center horizontally */
 }
 
 .player-stats-container {
