@@ -1184,7 +1184,7 @@ function startGameFromFormation() {
         showMessage(`Not enough players assigned for ${matchType}. Please assign exactly ${maxPlayers} players.`, 'error');
         return;
     }
-    
+
     appState.currentGame.formation = formation;
 
     // Check for goalkeeper (y = 95)
@@ -2135,29 +2135,44 @@ function confirmDeleteReports() {
     const reportIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-report-id'));
     
     if (reportIds.length === 0) {
+        console.warn('No reports selected for deletion');
         updateDeleteReportsRibbon();
         return;
     }
     
-    // Close the dialog
-    closeConfirmDeleteReportsDialog();
+    console.log('Before deletion, appState.games:', JSON.stringify(appState.games, null, 2));
+    console.log('Deleting reports with IDs:', reportIds);
     
-    // Delete selected reports
     const deletedCount = reportIds.length;
+    const transaction = db.transaction(['games'], 'readwrite');
+    const gamesStore = transaction.objectStore('games');
+
     reportIds.forEach(reportId => {
         const reportIndex = appState.games.findIndex(g => g.id === reportId);
         if (reportIndex !== -1) {
             appState.games.splice(reportIndex, 1);
+            gamesStore.delete(reportId);
+            console.log(`Deleted report at index ${reportIndex} (ID: ${reportId}) from appState and IndexedDB`);
+        } else {
+            console.warn(`Report with ID ${reportId} not found in appState.games`);
         }
     });
-    
-    // Save and update UI
-    saveAppData();
-    renderReportsList();
-    updateGameReportCounter();
-    
-    // Show success message
-    showMessage(`${deletedCount} report${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
+
+    transaction.oncomplete = () => {
+        console.log('Deletion transaction completed');
+        closeConfirmDeleteReportsDialog(); // Close dialog
+        saveAppData(); // Ensure store is synced
+        renderReportsList();
+        updateGameReportCounter();
+        showMessage(`${deletedCount} report${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
+    };
+
+    transaction.onerror = (event) => {
+        console.error('Deletion transaction error:', event.target.error);
+        showMessage('Failed to delete reports', 'error');
+    };
+
+    console.log('After deletion, appState.games:', JSON.stringify(appState.games, null, 2));
 }
 
 // Update viewReport to include formation
@@ -2564,18 +2579,33 @@ function saveAppData() {
         });
     };
 
-    // Save games
-    appState.games.forEach(game => {
-        if (game.id) {
-            gamesStore.put(game);
-        }
-    });
+    // Clear and save games
+    const clearGamesRequest = gamesStore.clear();
+    clearGamesRequest.onsuccess = () => {
+        console.log('Games store cleared');
+        appState.games.forEach(game => {
+            if (game.id) {
+                gamesStore.put(game);
+                console.log('Saved game:', game.id);
+            } else {
+                console.warn('Skipping invalid game:', game);
+            }
+        });
+        // Verify games store
+        const allGamesRequest = gamesStore.getAll();
+        allGamesRequest.onsuccess = () => {
+            console.log('Games in store after save:', allGamesRequest.result);
+        };
+    };
+    clearGamesRequest.onerror = (event) => {
+        console.error('Failed to clear games store:', event.target.error);
+    };
 
     // Save settings
     settingsStore.put({ id: 'settings', ...appState.settings });
 
     transaction.oncomplete = () => {
-        console.log('Data saved successfully to IndexedDB');
+        console.log('Data saved successfully to IndexedDB:', appState.games);
     };
 
     transaction.onerror = (event) => {
@@ -2588,7 +2618,6 @@ function loadAppData() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) {
             console.error('IndexedDB not supported');
-            // Fallback to defaults
             appState.teamName = "My Team";
             appState.players = [];
             appState.games = [];
@@ -2630,6 +2659,7 @@ function loadAppData() {
             // Load games
             gamesStore.getAll().onsuccess = (event) => {
                 appState.games = event.target.result || [];
+                console.log('Loaded games from IndexedDB:', JSON.stringify(appState.games, null, 2));
                 updateGameReportCounter();
             };
 
@@ -2652,7 +2682,6 @@ function loadAppData() {
 
             transaction.onerror = () => {
                 console.error('Transaction error');
-                // Fallback to defaults
                 appState.teamName = "My Team";
                 appState.players = [];
                 appState.games = [];
@@ -2671,7 +2700,6 @@ function loadAppData() {
             };
         }).catch((error) => {
             console.error('IndexedDB initialization failed:', error);
-            // Fallback to defaults
             appState.teamName = "My Team";
             appState.players = [];
             appState.games = [];
