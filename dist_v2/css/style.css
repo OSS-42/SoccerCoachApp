@@ -49,7 +49,7 @@ body {
 /* Ensure players-list has no padding by default */
 /* Reset players-list padding */
 #player-list {
-    max-width: 150px;
+    /* max-width: 150px; */
     overflow-y: auto;
     padding: #f0f3f0;
     background: #d0f0f0;
@@ -126,17 +126,40 @@ body {
 }
 
 #formation-setup {
-    touch-action: pan-y; /* Allow vertical scrolling, block horizontal swipes */
-    overscroll-behavior-x: none; /* Prevent horizontal overscroll navigation */
+    touch-action: auto;
+    overscroll-behavior-x: none;
+    width: 100%;
 }
 
+/* Specific to formation setup */
+#formation-setup .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: none; /* Remove any width restrictions */
+}
+
+/* Mobile screens (≤600px) */
 @media screen and (max-width: 600px) {
-    #app {
-        max-width: 100%; /* Ensure full width on small screens */
+    .player-list {
+        grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* 2–4 columns */
+        padding: 8px;
+    }
+    .player-item-draggable {
+        font-size: 12px; /* Compact for mobile */
+        padding: 4px;
     }
 }
 
-.slider {
+/* Laptop screens (≥1024px) */
+@media screen and (min-width: 1024px) {
+    .player-list {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* 2–6 columns */
+    }
+}
+
+/* .slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -156,9 +179,9 @@ body {
     bottom: 4px;
     background-color: white;
     transition: .4s;
-}
+} */
 
-input:checked + .slider {
+/* input:checked + .slider {
     background-color: #2196F3;
 }
 
@@ -168,15 +191,15 @@ input:focus + .slider {
 
 input:checked + .slider:before {
     transform: translateX(26px);
-}
+} */
 
-.slider.round {
+/* .slider.round {
     border-radius: 34px;
 }
 
 .slider.round:before {
     border-radius: 50%;
-}
+} */
 
 .toggle-container {
     display: flex;
@@ -347,6 +370,7 @@ input:checked + .slider:before {
     padding: 20px;
     flex: 1;
     overflow-y: auto;
+    width: 100%; /* Ensure full width */
 }
 
 /* Form Styles */
@@ -1465,7 +1489,10 @@ button.no-assist-btn {
 
 .formation-container {
     display: flex;
+    flex-direction: column;
     gap: 20px;
+    align-items: center;
+    width: 100%;
 }
 
 .formation-container-report {
@@ -1486,20 +1513,22 @@ button.no-assist-btn {
 
 /* Player list sidebar */
 .player-list {
-    width: 200px;
+    width: 100%;
     background: #f5f5f5;
     padding: 10px;
     border-radius: 8px;
-    overflow-y: auto;
-    max-height: 400px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
+    gap: 10px;
+    touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
 }
 
 .player-item-draggable {
     display: flex;
     align-items: center;
-    margin-bottom: 10px; /* Slightly increased for spacing */
-    font-size: 14px; /* Slightly larger for readability */
+    font-size: 14px;
     cursor: pointer;
+    padding: 5px; /* Compact padding for grid */
 }
 
 .player-number.disabled {
@@ -1514,9 +1543,10 @@ button.no-assist-btn {
 .formation-field {
     width: 260px;
     height: 400px;
-    /* background: #2e7d32; */
+    background: url('../img/field.png') no-repeat center center;
+    background-size: auto 400px;
     position: relative;
-    /* border: 2px solid #fff; */
+    margin: 0 auto; /* Center horizontally */
 }
 
 .formation-field::before,
