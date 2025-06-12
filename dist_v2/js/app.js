@@ -172,11 +172,11 @@ function touchEnd(e) {
         }
     }
 
-    console.log('Formation after drag:', appState.formationTemp.map(f => ({
-        playerId: f.playerId,
-        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
-        position: f.position
-    })));
+    // console.log('Formation after drag:', appState.formationTemp.map(f => ({
+    //     playerId: f.playerId,
+    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+    //     position: f.position
+    // })));
 
     draggedElement = null;
     lastVibratedSlot = null; // Reset after drop
@@ -565,8 +565,8 @@ function confirmDeletePlayers() {
     });
     
     // Log state for debugging
-    console.log('After deletion - Players:', appState.players);
-    console.log('Reusable Player IDs:', appState.settings.reusablePlayerIds);
+    // console.log('After deletion - Players:', appState.players);
+    // console.log('Reusable Player IDs:', appState.settings.reusablePlayerIds);
     
     // Save and update UI
     saveAppData();
@@ -1046,11 +1046,11 @@ function dropToSidebar(e) {
         number.draggable = true;
     }
 
-    console.log('Formation after sidebar drop:', appState.formationTemp.map(f => ({
-        playerId: f.playerId,
-        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
-        position: f.position
-    })));
+    // console.log('Formation after sidebar drop:', appState.formationTemp.map(f => ({
+    //     playerId: f.playerId,
+    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+    //     position: f.position
+    // })));
 }
 
 // Update dropToSlot to call setupPlacedPlayerTouch
@@ -1169,11 +1169,11 @@ function startGameFromFormation() {
     const formation = appState.formationTemp || [];
 
     // Debug formation state
-    console.log('Formation before start:', formation.map(f => ({
-        playerId: f.playerId,
-        jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
-        position: f.position
-    })));
+    // console.log('Formation before start:', formation.map(f => ({
+    //     playerId: f.playerId,
+    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+    //     position: f.position
+    // })));
 
     // Validate formation
     if (formation.length > maxPlayers) {
@@ -2140,8 +2140,8 @@ function confirmDeleteReports() {
         return;
     }
     
-    console.log('Before deletion, appState.games:', JSON.stringify(appState.games, null, 2));
-    console.log('Deleting reports with IDs:', reportIds);
+    // console.log('Before deletion, appState.games:', JSON.stringify(appState.games, null, 2));
+    // console.log('Deleting reports with IDs:', reportIds);
     
     const deletedCount = reportIds.length;
     const transaction = db.transaction(['games'], 'readwrite');
@@ -2172,7 +2172,7 @@ function confirmDeleteReports() {
         showMessage('Failed to delete reports', 'error');
     };
 
-    console.log('After deletion, appState.games:', JSON.stringify(appState.games, null, 2));
+    // console.log('After deletion, appState.games:', JSON.stringify(appState.games, null, 2));
 }
 
 // Update viewReport to include formation
@@ -2495,7 +2495,7 @@ function exportReport(gameId, format) {
 
 // Settings
 function handleLanguageChange() {
-    console.log('handleLanguageChange called'); // Debug
+    // console.log('handleLanguageChange called'); // Debug
 
     const checkedRadio = document.querySelector('input[name="language"]:checked');
     if (!checkedRadio) {
@@ -2505,37 +2505,37 @@ function handleLanguageChange() {
     }
 
     const selectedLanguage = checkedRadio.value;
-    console.log('Selected language:', selectedLanguage); // Debug
+    // console.log('Selected language:', selectedLanguage); // Debug
 
     // Check if French is selected
     if (selectedLanguage === 'fr') {
-        console.log('French selected, reverting to English'); // Debug
+        // console.log('French selected, reverting to English'); // Debug
         // Show error message
         showMessage('French language is not implemented yet.', 'error');
         // Revert to English
         const englishRadio = document.querySelector('input[name="language"][value="en"]');
         if (englishRadio) {
-            console.log('English radio found, setting checked to true'); // Debug
+            // console.log('English radio found, setting checked to true'); // Debug
             englishRadio.checked = true;
             // Force UI update by dispatching a change event
             const changeEvent = new Event('change');
             englishRadio.dispatchEvent(changeEvent);
-            console.log('English radio checked state:', englishRadio.checked); // Debug
+            // console.log('English radio checked state:', englishRadio.checked); // Debug
         } else {
-            console.error('English radio button not found'); // Debug
+            // console.error('English radio button not found'); // Debug
         }
         appState.settings.language = 'en';
-        console.log('appState.settings.language set to:', appState.settings.language); // Debug
+        // console.log('appState.settings.language set to:', appState.settings.language); // Debug
     } else {
         appState.settings.language = selectedLanguage;
-        console.log('appState.settings.language set to:', appState.settings.language); // Debug
+        // console.log('appState.settings.language set to:', appState.settings.language); // Debug
     }
     
     saveAppData(); // Save the state immediately
 }
 
 function saveSettings() {
-    console.log('saveSettings called'); // Debug
+    // console.log('saveSettings called'); // Debug
 
     // Language is already handled by handleLanguageChange, so just save the current state
     saveAppData();
@@ -2582,11 +2582,11 @@ function saveAppData() {
     // Clear and save games
     const clearGamesRequest = gamesStore.clear();
     clearGamesRequest.onsuccess = () => {
-        console.log('Games store cleared');
+        // console.log('Games store cleared');
         appState.games.forEach(game => {
             if (game.id) {
                 gamesStore.put(game);
-                console.log('Saved game:', game.id);
+                // console.log('Saved game:', game.id);
             } else {
                 console.warn('Skipping invalid game:', game);
             }
@@ -2659,7 +2659,7 @@ function loadAppData() {
             // Load games
             gamesStore.getAll().onsuccess = (event) => {
                 appState.games = event.target.result || [];
-                console.log('Loaded games from IndexedDB:', JSON.stringify(appState.games, null, 2));
+                // console.log('Loaded games from IndexedDB:', JSON.stringify(appState.games, null, 2));
                 updateGameReportCounter();
             };
 
