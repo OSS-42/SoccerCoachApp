@@ -1363,6 +1363,33 @@ function updateCardCounters() {
     if (redCardElement) redCardElement.textContent = redCardCount;
 }
 
+function getPlayerPositionInGame(playerId) {
+    if (!appState.currentGame || !appState.currentGame.formation || !appState.currentGame.substitutes) {
+        return 'SUB'; // Default to SUB if no game or formation
+    }
+
+    // Check if player is a substitute
+    if (appState.currentGame.substitutes.includes(playerId)) {
+        return 'SUB';
+    }
+
+    // Find player's formation entry
+    const formationEntry = appState.currentGame.formation.find(f => f.playerId === playerId);
+    if (!formationEntry) {
+        return 'SUB'; // Not in formation, treat as substitute
+    }
+
+    const y = formationEntry.y;
+    if (y === 95) return 'GK'; // Goalkeeper
+    if (y === 86.5 || y === 78.5) return 'DEF'; // Sweeper or Defensive row
+    if (y === 61.38) return 'MDEF'; // Defensive Midfield
+    if (y === 44.25) return 'MID'; // Midfield
+    if (y === 27.13) return 'OMID'; // Offensive Midfield
+    if (y === 10) return 'ATT'; // Forward
+
+    return 'SUB'; // Fallback
+}
+
 function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
     if (!playerGrid) {
@@ -1397,6 +1424,13 @@ function renderPlayerGrid() {
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
+        // NEW: Apply starter or substitute class based on formation status
+        const position = getPlayerPositionInGame(player.id);
+        if (position === 'SUB') {
+            playerGridItem.classList.add('substitute');
+        } else {
+            playerGridItem.classList.add('starter');
+        }
         
         // Apply yellow or red card classes
         if (player.stats.redCards > 0 || player.stats.yellowCards >= 2) {
@@ -1405,11 +1439,14 @@ function renderPlayerGrid() {
             playerGridItem.classList.add('yellow-card');
         }
         
+        // Get position from formation
+        // const position = getPlayerPositionInGame(player.id);
+        
         playerGridItem.innerHTML = `
             <div class="player-name">${player.name}</div>
             <div class="player-columns">
                 <div class="player-number">${player.jerseyNumber}</div>
-                <div class="player-position">${player.position}</div>
+                <div class="player-position">${position}</div>
             </div>
         `;
         
