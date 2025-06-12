@@ -420,10 +420,15 @@ function updateEditButtonStates() {
 function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
-    
+    const teamPlayerCounter = document.getElementById('team-player-counter');
+    playersList.innerHTML = '';
+
     if (appState.players.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
+    }
+    if (teamPlayerCounter) {
+        teamPlayerCounter.textContent = appState.players.length;
     }
     
     const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;

@@ -291,6 +291,30 @@ input:checked + .slider:before {
     box-sizing: border-box;
 }
 
+.players-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.player-counter-team {
+    font-size: clamp(0.7rem, 2vmin, 0.9rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    height: min-content;
+    width: min-content;
+    aspect-ratio: 1 / 1;
+    color: #333;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
 .game-report-counter {
     font-size: clamp(0.7rem, 2vmin, 0.9rem);
     display: flex;
@@ -430,11 +454,6 @@ input:checked + .slider:before {
     flex: 1;
     text-transform: uppercase;
 }
-
-/* .player-name {
-    font-weight: bold;
-    font-size: 16px;
-} */
 
 .player-position {
     flex: 1;
@@ -1051,7 +1070,6 @@ input:checked + .slider:before {
 }
 
 /* Responsive adjustments */
-/* Limit to 4 cards per row in portrait mode */
 /* Limit to 4 cards per row in portrait mode */
 /* Adjust for larger screens: Keep 6 columns, larger cards */
 @media screen and (min-width: 768px) {

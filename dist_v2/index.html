@@ -18,7 +18,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.30</h1>
+                <h1>Soccer Coach Tracker v1.9.31</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -61,7 +61,13 @@
                         <button class="secondary-btn" onclick="saveTeamName()">Save</button>
                     </div>
                 </div>
-                <h2>Players</h2>
+                <div class="players-header">
+                    <h2>Players</h2>
+                    <span class="player-counter-team">
+                        <span class="material-icons">person</span>
+                        <span id="team-player-counter">0</span>
+                    </span>
+                </div>
                 <div id="players-list" class="players-list">
                     <!-- Players will be added here dynamically -->
                 </div>
