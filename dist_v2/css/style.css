@@ -125,6 +125,11 @@ body {
     }
 }
 
+#formation-setup {
+    touch-action: pan-y; /* Allow vertical scrolling, block horizontal swipes */
+    overscroll-behavior-x: none; /* Prevent horizontal overscroll navigation */
+}
+
 @media screen and (max-width: 600px) {
     #app {
         max-width: 100%; /* Ensure full width on small screens */
