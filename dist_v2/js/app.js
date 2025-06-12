@@ -1184,13 +1184,18 @@ function startGameFromFormation() {
         showMessage(`Not enough players assigned for ${matchType}. Please assign exactly ${maxPlayers} players.`, 'error');
         return;
     }
-    if (!formation.some(f => f.position === 'GK')) {
-        showMessage('A goalkeeper is required.', 'error');
+    
+    appState.currentGame.formation = formation;
+
+    // Check for goalkeeper (y = 95)
+    const hasGoalkeeper = appState.currentGame.formation.some(f => f.y === 95 && f.playerId);
+    if (!hasGoalkeeper) {
+        showMessage('A goalkeeper must be assigned before starting the game.', 'error');
         return;
     }
 
     // Set formation and substitutes
-    appState.currentGame.formation = formation;
+    
     appState.currentGame.substitutes = appState.players
         .filter(p => !formation.some(f => f.playerId === p.id))
         .map(p => p.id);
