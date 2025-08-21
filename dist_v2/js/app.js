@@ -1222,10 +1222,18 @@ function dropToUnavailableSlot(e) {
     
     if (!targetSlot || !playerId) return;
     
-    // Check if slot is already occupied
-    if (targetSlot.querySelector('.player-number-placed')) {
-        showMessage('Unavailable position already occupied', 'error');
-        return;
+    // Handle occupied slot - displace the existing player (same as field behavior)
+    const existingPlayerId = targetSlot.getAttribute('data-player-id');
+    if (existingPlayerId && existingPlayerId !== playerId) {
+        // Remove displaced player from unavailable list
+        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
+        
+        // Re-enable the displaced player in sidebar
+        const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+        if (displacedNumber) {
+            displacedNumber.classList.remove('disabled');
+            displacedNumber.draggable = true;
+        }
     }
     
     const player = appState.players.find(p => p.id === playerId);
