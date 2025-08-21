@@ -1041,7 +1041,7 @@ function setupPlayerDragAndDrop() {
         number.addEventListener('touchend', touchEnd);
     });
 
-    const slots = document.querySelectorAll('.player-slot');
+    const slots = document.querySelectorAll('.player-slot, .absent-slot, .injured-slot');
     slots.forEach(slot => {
         slot.removeEventListener('dragover', dragOver);
         slot.removeEventListener('drop', dropToSlot);
