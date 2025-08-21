@@ -900,9 +900,16 @@ function setupFormation() {
 function renderFormationSetup() {
     const playerList = document.getElementById('player-list');
     const formationField = document.getElementById('formation-field');
+    const unavailableSlots = document.getElementById('unavailable-slots');
     playerList.innerHTML = '';
     formationField.innerHTML = '';
+    unavailableSlots.innerHTML = '';
     appState.formationTemp = [];
+    
+    // Initialize unavailable players array if not exists
+    if (!appState.unavailablePlayers) {
+        appState.unavailablePlayers = [];
+    }
 
     // Define spots for 260x400px field
     const spots = [
@@ -942,8 +949,8 @@ function renderFormationSetup() {
         formationField.appendChild(slot);
     });
 
-    // Render player list
-    appState.players.forEach(player => {
+    // Render player list (filter out unavailable players)
+    appState.players.filter(player => !appState.unavailablePlayers.includes(player.id)).forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item-draggable';
         playerItem.innerHTML = `
@@ -951,6 +958,30 @@ function renderFormationSetup() {
             <span class="player-name">${player.name}</span>
         `;
         playerList.appendChild(playerItem);
+    });
+
+    // Create 5 unavailable player slots
+    for (let i = 1; i <= 5; i++) {
+        const unavailableSlot = document.createElement('div');
+        unavailableSlot.className = 'unavailable-slot';
+        unavailableSlot.id = `unavailable-slot-${i}`;
+        unavailableSlot.setAttribute('data-slot-type', 'unavailable');
+        unavailableSlots.appendChild(unavailableSlot);
+    }
+
+    // Render already unavailable players in slots
+    appState.unavailablePlayers.forEach((playerId, index) => {
+        if (index < 5) { // Only first 5 unavailable players
+            const player = appState.players.find(p => p.id === playerId);
+            if (player) {
+                const slot = document.getElementById(`unavailable-slot-${index + 1}`);
+                slot.innerHTML = `
+                    <span class="player-number player-number-placed" draggable="true" data-player-id="${player.id}">${player.jerseyNumber}</span>
+                `;
+                slot.classList.add('occupied');
+                slot.setAttribute('data-player-id', player.id);
+            }
+        }
     });
 
     // Set up drag-and-drop and touch events
@@ -981,13 +1012,33 @@ function renderFormationSetup() {
     playerList.addEventListener('dragover', dragOver);
     playerList.addEventListener('drop', dropToSidebar);
 
+    // Set up drag and drop for unavailable slots
+    const unavailableSlotElements = document.querySelectorAll('.unavailable-slot');
+    unavailableSlotElements.forEach(slot => {
+        slot.removeEventListener('dragover', dragOver);
+        slot.removeEventListener('drop', dropToUnavailableSlot);
+        slot.addEventListener('dragover', dragOver);
+        slot.addEventListener('drop', dropToUnavailableSlot);
+    });
+
     // Set up touch events for placed players
     setupPlacedPlayerTouch();
 }
 
 function dragStart(e) {
     e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
-    e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
+    const isPlaced = e.target.classList.contains('player-number-placed');
+    const parentSlot = e.target.closest('.player-slot, .unavailable-slot');
+    const isFromUnavailable = parentSlot && parentSlot.classList.contains('unavailable-slot');
+    
+    let source = 'sidebar';
+    if (isPlaced && isFromUnavailable) {
+        source = 'unavailable';
+    } else if (isPlaced) {
+        source = 'field';
+    }
+    
+    e.dataTransfer.setData('source', source);
     e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
 
     // Create a custom drag image
@@ -1113,6 +1164,73 @@ function dropToSlot(e) {
     }
 
     setupPlacedPlayerDrag();
+}
+
+// Handle drop to unavailable slot
+function dropToUnavailableSlot(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const sourceSlotId = e.dataTransfer.getData('slotId');
+    const targetSlot = e.target.closest('.unavailable-slot');
+    
+    if (!targetSlot || !playerId) return;
+    
+    // Check if slot is already occupied
+    if (targetSlot.querySelector('.player-number-placed')) {
+        showMessage('Unavailable position already occupied', 'error');
+        return;
+    }
+    
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Remove from source
+    if (source === 'field') {
+        const sourceSlot = document.getElementById(sourceSlotId);
+        if (sourceSlot) {
+            sourceSlot.innerHTML = '';
+            sourceSlot.removeAttribute('data-player-id');
+            sourceSlot.classList.remove('occupied');
+        }
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        // Re-enable player number if moving from field
+        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (number) {
+            number.classList.remove('disabled');
+            number.draggable = true;
+        }
+    } else if (source === 'unavailable') {
+        // Moving between unavailable slots
+        const sourceSlot = document.getElementById(sourceSlotId);
+        if (sourceSlot) {
+            sourceSlot.innerHTML = '';
+            sourceSlot.removeAttribute('data-player-id');
+            sourceSlot.classList.remove('occupied');
+        }
+    }
+    
+    // Add to unavailable players if not already there
+    if (!appState.unavailablePlayers.includes(playerId)) {
+        appState.unavailablePlayers.push(playerId);
+    }
+    
+    // Add to target slot
+    targetSlot.innerHTML = `
+        <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>
+    `;
+    targetSlot.setAttribute('data-player-id', playerId);
+    targetSlot.classList.add('occupied');
+    
+    // Re-setup drag events and re-render if source was sidebar
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
+    if (source === 'sidebar') {
+        renderFormationSetup();
+    }
+    
+    // Save data
+    saveAppData();
 }
 
 // Add function to setup drag for placed players

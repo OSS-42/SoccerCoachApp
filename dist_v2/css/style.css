@@ -1495,6 +1495,33 @@ button.no-assist-btn {
     width: 100%;
 }
 
+/* Mobile layout: Available left, Field center, Unavailable right */
+@media screen and (max-width: 768px) {
+    .formation-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .player-list {
+        width: 25%;
+        order: 1;
+    }
+    
+    .formation-field {
+        width: 200px;
+        height: 320px;
+        order: 2;
+        flex-shrink: 0;
+    }
+    
+    .unavailable-players {
+        width: 25%;
+        order: 3;
+    }
+}
+
 .formation-container-report {
     display: flex;
     flex-direction: row;
@@ -1521,6 +1548,66 @@ button.no-assist-btn {
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
     gap: 10px;
     touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
+}
+
+/* Unavailable players section */
+.unavailable-players {
+    width: 100%;
+    background: #ffebee; /* Light red background */
+    border: 2px solid #f44336; /* Red border */
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.unavailable-players h4 {
+    margin: 0 0 10px 0;
+    color: #d32f2f;
+    font-size: 14px;
+    text-align: center;
+}
+
+.unavailable-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.unavailable-slot {
+    width: 50px;
+    height: 50px;
+    border: 2px dashed #f44336;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(244, 67, 54, 0.1);
+    position: relative;
+}
+
+.unavailable-slot.occupied {
+    border: 2px solid #d32f2f;
+    background: #ffcdd2;
+}
+
+/* Mobile adjustments for unavailable players */
+@media screen and (max-width: 768px) {
+    .unavailable-players {
+        margin-top: 0;
+    }
+    
+    .unavailable-slots {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .unavailable-slot {
+        width: 45px;
+        height: 45px;
+    }
 }
 
 .player-item-draggable {
