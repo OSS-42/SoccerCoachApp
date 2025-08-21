@@ -1945,10 +1945,9 @@ function updatePlayerGridItem(playerId) {
 function calculateGameMinute() {
     if (!appState.currentGame) return 0;
     
-    const startTime = new Date(appState.currentGame.startTime);
-    const now = new Date();
-    const diffMs = now - startTime;
-    const diffMins = Math.floor(diffMs / 60000);
+    // Use accumulated game timer instead of wall-clock time
+    // This ensures correct cumulative time across periods
+    const diffMins = Math.floor(appState.gameTimer.elapsed / 60);
     
     return diffMins;
 }
