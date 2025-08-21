@@ -949,12 +949,16 @@ function renderFormationSetup() {
         formationField.appendChild(slot);
     });
 
-    // Render player list (filter out unavailable players)
-    appState.players.filter(player => !appState.unavailablePlayers.includes(player.id)).forEach(player => {
+    // Render player list (show all players, gray out unavailable and placed ones)
+    appState.players.forEach(player => {
+        const isOnField = appState.formationTemp.some(f => f.playerId === player.id);
+        const isUnavailable = appState.unavailablePlayers.includes(player.id);
+        const shouldDisable = isOnField || isUnavailable;
+        
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item-draggable';
         playerItem.innerHTML = `
-            <span class="player-number" draggable="true" data-player-id="${player.id}">${player.jerseyNumber}</span>
+            <span class="player-number ${shouldDisable ? 'disabled' : ''}" draggable="${!shouldDisable}" data-player-id="${player.id}">${player.jerseyNumber}</span>
             <span class="player-name">${player.name}</span>
         `;
         playerList.appendChild(playerItem);
@@ -980,6 +984,30 @@ function renderFormationSetup() {
                 `;
                 slot.classList.add('occupied');
                 slot.setAttribute('data-player-id', player.id);
+            }
+        }
+    });
+
+    // Restore formation positions on field
+    appState.formationTemp.forEach(formationPlayer => {
+        const position = formationPlayer.position;
+        const playerId = formationPlayer.playerId;
+        const player = appState.players.find(p => p.id === playerId);
+        
+        if (player) {
+            // Find the correct slot based on position
+            let slotId;
+            if (position === 'GK') slotId = 'gk-slot';
+            else if (position === 'SW') slotId = 'sw-slot';
+            else slotId = `slot-${position}`;
+            
+            const slot = document.getElementById(slotId);
+            if (slot) {
+                slot.innerHTML = `
+                    <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>
+                `;
+                slot.setAttribute('data-player-id', playerId);
+                slot.classList.add('occupied');
             }
         }
     });
@@ -1077,25 +1105,43 @@ function dropToSidebar(e) {
     const playerId = e.dataTransfer.getData('playerId');
     const source = e.dataTransfer.getData('source');
     const slotId = e.dataTransfer.getData('slotId');
-    if (source !== 'field') return;
+    
+    // Handle players from field or unavailable area
+    if (source === 'field') {
+        // Remove from formation
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
 
-    // Remove from formation
-    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-
-    // Clear slot
-    const slot = document.getElementById(slotId);
-    if (slot) {
-        slot.innerHTML = '';
-        slot.removeAttribute('data-player-id');
-        slot.classList.remove('occupied');
+        // Clear field slot
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    } else if (source === 'unavailable') {
+        // Remove from unavailable players
+        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        
+        // Clear unavailable slot
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    } else {
+        return; // Only handle field and unavailable sources
     }
 
-    // Re-enable player number
+    // Re-enable player number in sidebar
     const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
     if (number) {
         number.classList.remove('disabled');
         number.draggable = true;
     }
+    
+    // Save data
+    saveAppData();
 
     // console.log('Formation after sidebar drop:', appState.formationTemp.map(f => ({
     //     playerId: f.playerId,
@@ -1222,11 +1268,12 @@ function dropToUnavailableSlot(e) {
     targetSlot.setAttribute('data-player-id', playerId);
     targetSlot.classList.add('occupied');
     
-    // Re-setup drag events and re-render if source was sidebar
+    // Re-setup drag events - no need to re-render, just update sidebar
     setupPlacedPlayerDrag();
     setupPlacedPlayerTouch();
     if (source === 'sidebar') {
-        renderFormationSetup();
+        // Just disable the player number in sidebar instead of full re-render
+        disablePlayerNumber(playerId);
     }
     
     // Save data
