@@ -68,7 +68,7 @@ function touchMove(e) {
 
     // Haptic feedback when passing over a slot
     const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const slot = dropTarget.closest('.player-slot, .absent-slot, .injured-slot');
+    const slot = dropTarget.closest('.player-slot');
     if (slot && slot !== lastVibratedSlot) {
         if (navigator.vibrate) {
             navigator.vibrate(30); // 30ms vibration
@@ -102,27 +102,21 @@ function touchEnd(e) {
     const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
     const slotId = draggedElement.parentElement.id || '';
 
-    const slot = dropTarget.closest('.player-slot, .absent-slot, .injured-slot');
+    const slot = dropTarget.closest('.player-slot');
     if (slot) {
         const position = slot.getAttribute('data-position');
-        const isFormationSlot = position !== null; // Formation slots have positions, absent/injured don't
-        
-        // Only check max players for formation slots
-        if (isFormationSlot) {
-            const matchType = appState.currentGame.matchType;
-            const maxPlayers = parseInt(matchType.split('v')[0]);
-            let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
+        const matchType = appState.currentGame.matchType;
+        const maxPlayers = parseInt(matchType.split('v')[0]);
+        let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
-            if (source === 'sidebar' && currentPlayers >= maxPlayers) {
-                showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
-                draggedElement = null;
-                return;
-            }
+        if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+            showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
+            draggedElement = null;
+            return;
         }
 
         const existingPlayerId = slot.getAttribute('data-player-id');
         if (existingPlayerId && existingPlayerId !== playerId) {
-            // Remove existing player and make them available again
             appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
             const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
             if (oldPlayer) {
@@ -131,21 +125,16 @@ function touchEnd(e) {
             }
         }
 
-        // Remove player from formation if they're being moved
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-        
-        // Only add to formation if this is a formation slot (has position)
-        if (isFormationSlot) {
-            const x = parseFloat(slot.style.left);
-            const y = parseFloat(slot.style.top);
+        const x = parseFloat(slot.style.left);
+        const y = parseFloat(slot.style.top);
 
-            appState.formationTemp.push({
-                playerId,
-                position: position === 'GK' || position === 'SW' ? position : appState.players.find(p => p.id === playerId).position,
-                x,
-                y
-            });
-        }
+        appState.formationTemp.push({
+            playerId,
+            position: position === 'GK' || position === 'SW' ? position : appState.players.find(p => p.id === playerId).position,
+            x,
+            y
+        });
 
         slot.innerHTML = '';
         slot.setAttribute('data-player-id', playerId);
@@ -167,24 +156,21 @@ function touchEnd(e) {
         setupPlacedPlayerTouch(); // Reattach touch event listeners
     }
 
-    // Handle drops to player lists (available, absent, injured)
-    const playerLists = document.querySelectorAll('.player-list');
-    playerLists.forEach(list => {
-        if (list.contains(dropTarget) && source === 'field') {
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-            const slot = document.getElementById(slotId);
-            if (slot) {
-                slot.innerHTML = '';
-                slot.removeAttribute('data-player-id');
-                slot.classList.remove('occupied');
-            }
-            const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-            if (number) {
-                number.classList.remove('disabled');
-                number.draggable = true;
-            }
+    const sidebar = document.querySelector('#player-list');
+    if (sidebar && source === 'field' && dropTarget.closest('#player-list')) {
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
         }
-    });
+        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (number) {
+            number.classList.remove('disabled');
+            number.draggable = true;
+        }
+    }
 
     // console.log('Formation after drag:', appState.formationTemp.map(f => ({
     //     playerId: f.playerId,
@@ -195,7 +181,6 @@ function touchEnd(e) {
     draggedElement = null;
     lastVibratedSlot = null; // Reset after drop
 }
-
 
 // Initialize IndexedDB
 let db = null;
@@ -914,20 +899,10 @@ function setupFormation() {
 // Formation Setup
 function renderFormationSetup() {
     const playerList = document.getElementById('player-list');
-    const absentList = document.getElementById('absent-list');
-    const injuredList = document.getElementById('injured-list');
     const formationField = document.getElementById('formation-field');
-    
-    // Clear all lists
     playerList.innerHTML = '';
-    absentList.innerHTML = '';
-    injuredList.innerHTML = '';
     formationField.innerHTML = '';
     appState.formationTemp = [];
-    
-    // Initialize player categories
-    if (!appState.currentGame.absentPlayers) appState.currentGame.absentPlayers = [];
-    if (!appState.currentGame.injuredPlayers) appState.currentGame.injuredPlayers = [];
 
     // Define spots for 260x400px field
     const spots = [
@@ -967,7 +942,7 @@ function renderFormationSetup() {
         formationField.appendChild(slot);
     });
 
-    // Render all players in available list initially
+    // Render player list
     appState.players.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item-draggable';
@@ -977,56 +952,8 @@ function renderFormationSetup() {
         `;
         playerList.appendChild(playerItem);
     });
-    
-    // Populate absent slots if players are assigned
-    if (appState.currentGame.absentPlayers) {
-        appState.currentGame.absentPlayers.forEach((playerId, index) => {
-            if (index < 5) {
-                const player = appState.players.find(p => p.id === playerId);
-                const slot = document.getElementById(`absent-slot-${index + 1}`);
-                if (player && slot) {
-                    slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-                    slot.setAttribute('data-player-id', playerId);
-                    slot.classList.add('occupied');
-                    disablePlayerNumber(playerId);
-                }
-            }
-        });
-    }
-    
-    // Populate injured slots if players are assigned
-    if (appState.currentGame.injuredPlayers) {
-        appState.currentGame.injuredPlayers.forEach((playerId, index) => {
-            if (index < 5) {
-                const player = appState.players.find(p => p.id === playerId);
-                const slot = document.getElementById(`injured-slot-${index + 1}`);
-                if (player && slot) {
-                    slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-                    slot.setAttribute('data-player-id', playerId);
-                    slot.classList.add('occupied');
-                    disablePlayerNumber(playerId);
-                }
-            }
-        });
-    }
 
     // Set up drag-and-drop and touch events
-    setupPlayerDragAndDrop();
-}
-
-// Helper function to create draggable player items
-function createDraggablePlayer(player, status = 'available') {
-    const playerItem = document.createElement('div');
-    playerItem.className = `player-item-draggable ${status}`;
-    playerItem.innerHTML = `
-        <span class="player-number" draggable="true" data-player-id="${player.id}" data-status="${status}">${player.jerseyNumber}</span>
-        <span class="player-name">${player.name}</span>
-    `;
-    return playerItem;
-}
-
-// Setup drag and drop functionality
-function setupPlayerDragAndDrop() {
     const numbers = document.querySelectorAll('.player-number');
     numbers.forEach(number => {
         // Desktop drag events
@@ -1041,7 +968,7 @@ function setupPlayerDragAndDrop() {
         number.addEventListener('touchend', touchEnd);
     });
 
-    const slots = document.querySelectorAll('.player-slot, .absent-slot, .injured-slot');
+    const slots = document.querySelectorAll('.player-slot');
     slots.forEach(slot => {
         slot.removeEventListener('dragover', dragOver);
         slot.removeEventListener('drop', dropToSlot);
@@ -1049,14 +976,10 @@ function setupPlayerDragAndDrop() {
         slot.addEventListener('drop', dropToSlot);
     });
 
-    // Set up drag events for all player lists
-    const allPlayerLists = document.querySelectorAll('.player-list');
-    allPlayerLists.forEach(list => {
-        list.removeEventListener('dragover', dragOver);
-        list.removeEventListener('drop', dropToSidebar);
-        list.addEventListener('dragover', dragOver);
-        list.addEventListener('drop', dropToSidebar);
-    });
+    playerList.removeEventListener('dragover', dragOver);
+    playerList.removeEventListener('drop', dropToSidebar);
+    playerList.addEventListener('dragover', dragOver);
+    playerList.addEventListener('drop', dropToSidebar);
 
     // Set up touch events for placed players
     setupPlacedPlayerTouch();
@@ -1273,25 +1196,8 @@ function startGameFromFormation() {
 
     // Set formation and substitutes
     
-    // Get players in absent and injured slots
-    const absentSlots = document.querySelectorAll('.absent-slot.occupied');
-    const injuredSlots = document.querySelectorAll('.injured-slot.occupied');
-    
-    appState.currentGame.absentPlayers = Array.from(absentSlots)
-        .map(slot => slot.getAttribute('data-player-id'))
-        .filter(Boolean);
-    
-    appState.currentGame.injuredPlayers = Array.from(injuredSlots)
-        .map(slot => slot.getAttribute('data-player-id'))
-        .filter(Boolean);
-    
-    // Store the substitutes (exclude formation, absent, and injured players)
     appState.currentGame.substitutes = appState.players
-        .filter(p => 
-            !formation.some(f => f.playerId === p.id) &&
-            !appState.currentGame.absentPlayers.includes(p.id) &&
-            !appState.currentGame.injuredPlayers.includes(p.id)
-        )
+        .filter(p => !formation.some(f => f.playerId === p.id))
         .map(p => p.id);
 
     // Reset player stats

@@ -1511,78 +1511,16 @@ button.no-assist-btn {
     flex-shrink: 0;
 }
 
-/* Player sections container */
-.player-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-}
-
-.player-section {
-    background: #f5f5f5;
-    border-radius: 8px;
-    padding: 10px;
-}
-
-.player-section h3 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    color: #333;
-    text-align: center;
-}
-
 /* Player list sidebar */
 .player-list {
     width: 100%;
-    background: transparent;
-    padding: 5px;
+    background: #f5f5f5;
+    padding: 10px;
     border-radius: 8px;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
     gap: 10px;
     touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
-    min-height: 50px;
-    align-items: flex-start;
-}
-
-.absent-list {
-    background: #ffe4e1; /* Light red for absent/suspended */
-    border: 2px dashed #ff6b6b;
-    border-radius: 8px;
-    justify-content: center;
-}
-
-.injured-list {
-    background: #fff3cd; /* Light yellow for injured */
-    border: 2px dashed #ffc107;
-    border-radius: 8px;
-    justify-content: center;
-}
-
-.absent-slot, .injured-slot {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: 2px dashed #ccc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 5px;
-    background: rgba(255, 255, 255, 0.7);
-}
-
-.absent-slot {
-    border-color: #ff6b6b;
-}
-
-.injured-slot {
-    border-color: #ffc107;
-}
-
-.absent-slot.occupied, .injured-slot.occupied {
-    border: 2px solid #333;
-    background: #fff;
 }
 
 .player-item-draggable {
@@ -1590,17 +1528,7 @@ button.no-assist-btn {
     align-items: center;
     font-size: 14px;
     cursor: pointer;
-    padding: 5px;
-    flex: 0 0 auto; /* Don't grow or shrink, keep natural size */
-    width: auto;
-}
-
-.player-item-draggable.absent {
-    opacity: 0.7;
-}
-
-.player-item-draggable.injured {
-    opacity: 0.7;
+    padding: 5px; /* Compact padding for grid */
 }
 
 .player-number.disabled {
