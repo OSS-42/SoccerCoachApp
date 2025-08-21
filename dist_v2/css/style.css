@@ -1538,11 +1538,12 @@ button.no-assist-btn {
     background: transparent;
     padding: 5px;
     border-radius: 8px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
     min-height: 50px;
+    align-items: flex-start;
 }
 
 .absent-list {
@@ -1582,7 +1583,9 @@ button.no-assist-btn {
     align-items: center;
     font-size: 14px;
     cursor: pointer;
-    padding: 5px; /* Compact padding for grid */
+    padding: 5px;
+    flex: 0 0 auto; /* Don't grow or shrink, keep natural size */
+    width: auto;
 }
 
 .player-item-draggable.absent {

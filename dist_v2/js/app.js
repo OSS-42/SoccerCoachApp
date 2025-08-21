@@ -1072,10 +1072,14 @@ function setupPlayerDragAndDrop() {
         slot.addEventListener('drop', dropToSlot);
     });
 
-    playerList.removeEventListener('dragover', dragOver);
-    playerList.removeEventListener('drop', dropToSidebar);
-    playerList.addEventListener('dragover', dragOver);
-    playerList.addEventListener('drop', dropToSidebar);
+    // Set up drag events for all player lists
+    const allPlayerLists = document.querySelectorAll('.player-list');
+    allPlayerLists.forEach(list => {
+        list.removeEventListener('dragover', dragOver);
+        list.removeEventListener('drop', dropToSidebar);
+        list.addEventListener('dragover', dragOver);
+        list.addEventListener('drop', dropToSidebar);
+    });
 
     // Set up touch events for placed players
     setupPlacedPlayerTouch();
