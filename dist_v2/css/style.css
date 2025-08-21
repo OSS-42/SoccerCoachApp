@@ -1550,32 +1550,39 @@ button.no-assist-btn {
     background: #ffe4e1; /* Light red for absent/suspended */
     border: 2px dashed #ff6b6b;
     border-radius: 8px;
+    justify-content: center;
 }
 
 .injured-list {
     background: #fff3cd; /* Light yellow for injured */
     border: 2px dashed #ffc107;
     border-radius: 8px;
+    justify-content: center;
 }
 
-.absent-list:empty::after {
-    content: "Drag absent/suspended players here";
-    color: #666;
-    font-style: italic;
-    text-align: center;
-    display: block;
-    padding: 15px;
-    line-height: 1.5;
+.absent-slot, .injured-slot {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px dashed #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px;
+    background: rgba(255, 255, 255, 0.7);
 }
 
-.injured-list:empty::after {
-    content: "Drag injured players here";
-    color: #666;
-    font-style: italic;
-    text-align: center;
-    display: block;
-    padding: 15px;
-    line-height: 1.5;
+.absent-slot {
+    border-color: #ff6b6b;
+}
+
+.injured-slot {
+    border-color: #ffc107;
+}
+
+.absent-slot.occupied, .injured-slot.occupied {
+    border: 2px solid #333;
+    background: #fff;
 }
 
 .player-item-draggable {
