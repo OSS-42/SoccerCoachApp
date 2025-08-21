@@ -68,7 +68,7 @@ function touchMove(e) {
 
     // Haptic feedback when passing over a slot
     const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const slot = dropTarget.closest('.player-slot');
+    const slot = dropTarget.closest('.player-slot, .absent-slot, .injured-slot');
     if (slot && slot !== lastVibratedSlot) {
         if (navigator.vibrate) {
             navigator.vibrate(30); // 30ms vibration
@@ -102,7 +102,7 @@ function touchEnd(e) {
     const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
     const slotId = draggedElement.parentElement.id || '';
 
-    const slot = dropTarget.closest('.player-slot');
+    const slot = dropTarget.closest('.player-slot, .absent-slot, .injured-slot');
     if (slot) {
         const position = slot.getAttribute('data-position');
         const isFormationSlot = position !== null; // Formation slots have positions, absent/injured don't
