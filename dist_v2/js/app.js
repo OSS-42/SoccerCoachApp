@@ -156,8 +156,15 @@ function touchEnd(e) {
         setupPlacedPlayerTouch(); // Reattach touch event listeners
     }
 
-    const sidebar = document.querySelector('#player-list');
-    if (sidebar && source === 'field' && dropTarget.closest('#player-list')) {
+    // Handle drops to different zones
+    if (dropTarget.closest('#absent-list')) {
+        movePlayerToAbsent(playerId);
+    } else if (dropTarget.closest('#injured-list')) {
+        movePlayerToInjured(playerId);
+    } else if (dropTarget.closest('#player-list')) {
+        movePlayerToAvailable(playerId);
+    } else if (source === 'field' && (dropTarget.closest('#player-list') || dropTarget.closest('#absent-list') || dropTarget.closest('#injured-list'))) {
+        // Remove from formation when dragged to any player list
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
         const slot = document.getElementById(slotId);
         if (slot) {
@@ -165,10 +172,14 @@ function touchEnd(e) {
             slot.removeAttribute('data-player-id');
             slot.classList.remove('occupied');
         }
-        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-        if (number) {
-            number.classList.remove('disabled');
-            number.draggable = true;
+        
+        // Then handle the specific zone
+        if (dropTarget.closest('#absent-list')) {
+            movePlayerToAbsent(playerId);
+        } else if (dropTarget.closest('#injured-list')) {
+            movePlayerToInjured(playerId);
+        } else {
+            movePlayerToAvailable(playerId);
         }
     }
 
@@ -180,6 +191,47 @@ function touchEnd(e) {
 
     draggedElement = null;
     lastVibratedSlot = null; // Reset after drop
+}
+
+// Helper functions to move players between categories
+function movePlayerToAbsent(playerId) {
+    // Remove from other categories
+    appState.currentGame.injuredPlayers = appState.currentGame.injuredPlayers.filter(id => id !== playerId);
+    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+    
+    // Add to absent if not already there
+    if (!appState.currentGame.absentPlayers.includes(playerId)) {
+        appState.currentGame.absentPlayers.push(playerId);
+    }
+    
+    renderFormationSetup();
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
+}
+
+function movePlayerToInjured(playerId) {
+    // Remove from other categories
+    appState.currentGame.absentPlayers = appState.currentGame.absentPlayers.filter(id => id !== playerId);
+    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+    
+    // Add to injured if not already there
+    if (!appState.currentGame.injuredPlayers.includes(playerId)) {
+        appState.currentGame.injuredPlayers.push(playerId);
+    }
+    
+    renderFormationSetup();
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
+}
+
+function movePlayerToAvailable(playerId) {
+    // Remove from absent/injured categories
+    appState.currentGame.absentPlayers = appState.currentGame.absentPlayers.filter(id => id !== playerId);
+    appState.currentGame.injuredPlayers = appState.currentGame.injuredPlayers.filter(id => id !== playerId);
+    
+    renderFormationSetup();
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
 }
 
 // Initialize IndexedDB
@@ -899,10 +951,20 @@ function setupFormation() {
 // Formation Setup
 function renderFormationSetup() {
     const playerList = document.getElementById('player-list');
+    const absentList = document.getElementById('absent-list');
+    const injuredList = document.getElementById('injured-list');
     const formationField = document.getElementById('formation-field');
+    
+    // Clear all lists
     playerList.innerHTML = '';
+    absentList.innerHTML = '';
+    injuredList.innerHTML = '';
     formationField.innerHTML = '';
     appState.formationTemp = [];
+    
+    // Initialize player categories if not exists
+    if (!appState.currentGame.absentPlayers) appState.currentGame.absentPlayers = [];
+    if (!appState.currentGame.injuredPlayers) appState.currentGame.injuredPlayers = [];
 
     // Define spots for 260x400px field
     const spots = [
@@ -942,18 +1004,52 @@ function renderFormationSetup() {
         formationField.appendChild(slot);
     });
 
-    // Render player list
-    appState.players.forEach(player => {
-        const playerItem = document.createElement('div');
-        playerItem.className = 'player-item-draggable';
-        playerItem.innerHTML = `
-            <span class="player-number" draggable="true" data-player-id="${player.id}">${player.jerseyNumber}</span>
-            <span class="player-name">${player.name}</span>
-        `;
+    // Render available players (exclude absent/injured)
+    const availablePlayers = appState.players.filter(player => 
+        !appState.currentGame.absentPlayers.includes(player.id) &&
+        !appState.currentGame.injuredPlayers.includes(player.id)
+    );
+    
+    availablePlayers.forEach(player => {
+        const playerItem = createDraggablePlayer(player, 'available');
         playerList.appendChild(playerItem);
+    });
+    
+    // Render absent players
+    appState.currentGame.absentPlayers.forEach(playerId => {
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            const playerItem = createDraggablePlayer(player, 'absent');
+            absentList.appendChild(playerItem);
+        }
+    });
+    
+    // Render injured players
+    appState.currentGame.injuredPlayers.forEach(playerId => {
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            const playerItem = createDraggablePlayer(player, 'injured');
+            injuredList.appendChild(playerItem);
+        }
     });
 
     // Set up drag-and-drop and touch events
+    setupPlayerDragAndDrop();
+}
+
+// Helper function to create draggable player items
+function createDraggablePlayer(player, status = 'available') {
+    const playerItem = document.createElement('div');
+    playerItem.className = `player-item-draggable ${status}`;
+    playerItem.innerHTML = `
+        <span class="player-number" draggable="true" data-player-id="${player.id}" data-status="${status}">${player.jerseyNumber}</span>
+        <span class="player-name">${player.name}</span>
+    `;
+    return playerItem;
+}
+
+// Setup drag and drop functionality
+function setupPlayerDragAndDrop() {
     const numbers = document.querySelectorAll('.player-number');
     numbers.forEach(number => {
         // Desktop drag events
@@ -1196,7 +1292,12 @@ function startGameFromFormation() {
 
     // Set formation and substitutes
     
-    appState.currentGame.substitutes = appState.players
+    // Store the substitutes (only available players not in formation)
+    const availablePlayers = appState.players.filter(p => 
+        !appState.currentGame.absentPlayers.includes(p.id) &&
+        !appState.currentGame.injuredPlayers.includes(p.id)
+    );
+    appState.currentGame.substitutes = availablePlayers
         .filter(p => !formation.some(f => f.playerId === p.id))
         .map(p => p.id);
 

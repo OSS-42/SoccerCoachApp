@@ -1511,16 +1511,70 @@ button.no-assist-btn {
     flex-shrink: 0;
 }
 
+/* Player sections container */
+.player-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.player-section {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.player-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+}
+
 /* Player list sidebar */
 .player-list {
     width: 100%;
-    background: #f5f5f5;
-    padding: 10px;
+    background: transparent;
+    padding: 5px;
     border-radius: 8px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
     gap: 10px;
     touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
+    min-height: 50px;
+}
+
+.absent-list {
+    background: #ffe4e1; /* Light red for absent/suspended */
+    border: 2px dashed #ff6b6b;
+    border-radius: 8px;
+}
+
+.injured-list {
+    background: #fff3cd; /* Light yellow for injured */
+    border: 2px dashed #ffc107;
+    border-radius: 8px;
+}
+
+.absent-list:empty::after {
+    content: "Drag absent/suspended players here";
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    display: block;
+    padding: 15px;
+    line-height: 1.5;
+}
+
+.injured-list:empty::after {
+    content: "Drag injured players here";
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    display: block;
+    padding: 15px;
+    line-height: 1.5;
 }
 
 .player-item-draggable {
@@ -1529,6 +1583,14 @@ button.no-assist-btn {
     font-size: 14px;
     cursor: pointer;
     padding: 5px; /* Compact padding for grid */
+}
+
+.player-item-draggable.absent {
+    opacity: 0.7;
+}
+
+.player-item-draggable.injured {
+    opacity: 0.7;
 }
 
 .player-number.disabled {
