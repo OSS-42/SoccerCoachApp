@@ -204,9 +204,16 @@ function movePlayerToAbsent(playerId) {
         appState.currentGame.absentPlayers.push(playerId);
     }
     
-    renderFormationSetup();
-    setupPlacedPlayerDrag();
-    setupPlacedPlayerTouch();
+    // Visual update: move player element to absent list
+    const player = appState.players.find(p => p.id === playerId);
+    const absentList = document.getElementById('absent-list');
+    const playerItem = createDraggablePlayer(player, 'absent');
+    absentList.appendChild(playerItem);
+    
+    // Remove from other lists
+    removePlayerFromOtherLists(playerId, 'absent-list');
+    
+    setupPlayerDragAndDrop();
 }
 
 function movePlayerToInjured(playerId) {
@@ -219,9 +226,16 @@ function movePlayerToInjured(playerId) {
         appState.currentGame.injuredPlayers.push(playerId);
     }
     
-    renderFormationSetup();
-    setupPlacedPlayerDrag();
-    setupPlacedPlayerTouch();
+    // Visual update: move player element to injured list
+    const player = appState.players.find(p => p.id === playerId);
+    const injuredList = document.getElementById('injured-list');
+    const playerItem = createDraggablePlayer(player, 'injured');
+    injuredList.appendChild(playerItem);
+    
+    // Remove from other lists
+    removePlayerFromOtherLists(playerId, 'injured-list');
+    
+    setupPlayerDragAndDrop();
 }
 
 function movePlayerToAvailable(playerId) {
@@ -229,9 +243,42 @@ function movePlayerToAvailable(playerId) {
     appState.currentGame.absentPlayers = appState.currentGame.absentPlayers.filter(id => id !== playerId);
     appState.currentGame.injuredPlayers = appState.currentGame.injuredPlayers.filter(id => id !== playerId);
     
-    renderFormationSetup();
-    setupPlacedPlayerDrag();
-    setupPlacedPlayerTouch();
+    // Visual update: move player element to available list
+    const player = appState.players.find(p => p.id === playerId);
+    const playerList = document.getElementById('player-list');
+    const playerItem = createDraggablePlayer(player, 'available');
+    playerList.appendChild(playerItem);
+    
+    // Remove from other lists
+    removePlayerFromOtherLists(playerId, 'player-list');
+    
+    setupPlayerDragAndDrop();
+}
+
+// Helper function to remove player from all other lists except the target
+function removePlayerFromOtherLists(playerId, targetListId) {
+    const allLists = ['player-list', 'absent-list', 'injured-list'];
+    
+    allLists.forEach(listId => {
+        if (listId !== targetListId) {
+            const list = document.getElementById(listId);
+            const playerElements = list.querySelectorAll(`[data-player-id="${playerId}"]`);
+            playerElements.forEach(element => {
+                element.parentElement.remove();
+            });
+        }
+    });
+    
+    // Also remove from formation field if moving from field
+    const formationSlots = document.querySelectorAll('.player-slot');
+    formationSlots.forEach(slot => {
+        const playerElement = slot.querySelector(`[data-player-id="${playerId}"]`);
+        if (playerElement) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    });
 }
 
 // Initialize IndexedDB
