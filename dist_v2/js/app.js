@@ -2292,19 +2292,38 @@ function viewReport(gameId) {
                         ${game.formation.map(f => {
                             const player = appState.players.find(p => p.id === f.playerId);
                             if (!player) return '';
-                            const isGk = f.position === 'GK';
                             const stats = playerActions[f.playerId] || {};
-                            const statTable = isGk
-                                ? `<table class="player-stats-table">
-                                       <tr><th>Saves</th><td>${stats.saves || 0}</td></tr>
-                                       <tr><th>Goals Allowed</th><td>${stats.goalsAllowed || 0}</td></tr>
-                                   </table>`
-                                : `<table class="player-stats-table">
-                                       <tr><th>Goals</th><td>${stats.goals?.length || 0}</td></tr>
-                                       <tr><th>Assists</th><td>${stats.assists || 0}</td></tr>
-                                       <tr><th>Yellow Cards</th><td>${stats.yellowCards?.length || 0}</td></tr>
-                                       <tr><th>Red Cards</th><td>${stats.redCards?.length + (stats.yellowCards?.length >= 2 ? 1 : 0)}</td></tr>
-                                   </table>`;
+                            
+                            // Show only non-zero stats regardless of starting position
+                            let statTable = '<table class="player-stats-table">';
+                            
+                            if (stats.goals?.length > 0) {
+                                statTable += `<tr><th>Goals</th><td>${stats.goals.length}</td></tr>`;
+                            }
+                            if (stats.assists > 0) {
+                                statTable += `<tr><th>Assists</th><td>${stats.assists}</td></tr>`;
+                            }
+                            if (stats.saves > 0) {
+                                statTable += `<tr><th>Saves</th><td>${stats.saves}</td></tr>`;
+                            }
+                            if (stats.goalsAllowed > 0) {
+                                statTable += `<tr><th>Goals Allowed</th><td>${stats.goalsAllowed}</td></tr>`;
+                            }
+                            if (stats.blockedShots > 0) {
+                                statTable += `<tr><th>Blocked Shots</th><td>${stats.blockedShots}</td></tr>`;
+                            }
+                            if (stats.faults > 0) {
+                                statTable += `<tr><th>Faults</th><td>${stats.faults}</td></tr>`;
+                            }
+                            if (stats.yellowCards?.length > 0) {
+                                statTable += `<tr><th>Yellow Cards</th><td>${stats.yellowCards.length}</td></tr>`;
+                            }
+                            const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
+                            if (redCards > 0) {
+                                statTable += `<tr><th>Red Cards</th><td>${redCards}</td></tr>`;
+                            }
+                            
+                            statTable += '</table>';
                             return `
                                 <div class="player-slot-report" style="left: ${f.x}%; top: ${f.y}%">
                                     <span class="player-number-report">${player.jerseyNumber}</span>
@@ -2320,15 +2339,42 @@ function viewReport(gameId) {
                             const player = appState.players.find(p => p.id === subId);
                             if (!player) return '';
                             const stats = playerActions[subId] || {};
+                            
+                            // Show only non-zero stats for substitutes too
+                            let statTable = '<table class="player-stats-table">';
+                            
+                            if (stats.goals?.length > 0) {
+                                statTable += `<tr><th>Goals</th><td>${stats.goals.length}</td></tr>`;
+                            }
+                            if (stats.assists > 0) {
+                                statTable += `<tr><th>Assists</th><td>${stats.assists}</td></tr>`;
+                            }
+                            if (stats.saves > 0) {
+                                statTable += `<tr><th>Saves</th><td>${stats.saves}</td></tr>`;
+                            }
+                            if (stats.goalsAllowed > 0) {
+                                statTable += `<tr><th>Goals Allowed</th><td>${stats.goalsAllowed}</td></tr>`;
+                            }
+                            if (stats.blockedShots > 0) {
+                                statTable += `<tr><th>Blocked Shots</th><td>${stats.blockedShots}</td></tr>`;
+                            }
+                            if (stats.faults > 0) {
+                                statTable += `<tr><th>Faults</th><td>${stats.faults}</td></tr>`;
+                            }
+                            if (stats.yellowCards?.length > 0) {
+                                statTable += `<tr><th>Yellow Cards</th><td>${stats.yellowCards.length}</td></tr>`;
+                            }
+                            const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
+                            if (redCards > 0) {
+                                statTable += `<tr><th>Red Cards</th><td>${redCards}</td></tr>`;
+                            }
+                            
+                            statTable += '</table>';
+                            
                             return `
                                 <div class="substitute-item">
                                     <span>#${player.jerseyNumber} ${player.name}</span>
-                                    <table class="player-stats-table">
-                                        <tr><th>Goals</th><td>${stats.goals?.length || 0}</td></tr>
-                                        <tr><th>Assists</th><td>${stats.assists || 0}</td></tr>
-                                        <tr><th>Yellow Cards</th><td>${stats.yellowCards?.length || 0}</td></tr>
-                                        <tr><th>Red Cards</th><td>${stats.redCards?.length + (stats.yellowCards?.length >= 2 ? 1 : 0)}</td></tr>
-                                    </table>
+                                    ${statTable}
                                 </div>
                             `;
                         }).join('') || '<p>No substitutes</p>'}
