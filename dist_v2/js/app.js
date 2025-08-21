@@ -2189,8 +2189,8 @@ function viewReport(gameId) {
 
     const gameDate = new Date(game.date).toDateString();
     const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], { timeStyle: 'short' }) : '';
-    const gameDuration = game.startTime && game.endTime && !isNaN(new Date(game.endTime) - new Date(game.startTime))
-        ? `${Math.floor((new Date(game.endTime) - new Date(game.startTime)) / 60000)} minutes`
+    const gameDuration = game.totalGameTime 
+        ? `${Math.floor(game.totalGameTime / 60)} minutes`
         : game.numPeriods && game.periodDuration
         ? `${Math.floor(game.numPeriods * game.periodDuration / 60)} minutes`
         : 'N/A';
