@@ -1582,7 +1582,10 @@ function renderPlayerGrid() {
         return;
     }
     
-    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    appState.players
+        .filter(player => !appState.unavailablePlayers || !appState.unavailablePlayers.includes(player.id))
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+        .forEach(player => {
         if (!player.id || !player.jerseyNumber || !player.name || !player.position) {
             console.warn('Skipping invalid player:', player);
             return;
