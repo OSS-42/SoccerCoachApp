@@ -1989,7 +1989,8 @@ function openAssistSelectionDialog() {
     const activePlayers = appState.players.filter(p => {
         const redCards = p.stats?.redCards || 0;
         const yellowCards = p.stats?.yellowCards || 0;
-        return p.id !== appState.goalScorer.id && redCards === 0 && yellowCards < 2;
+        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        return p.id !== appState.goalScorer.id && redCards === 0 && yellowCards < 2 && !isUnavailable;
     });
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
@@ -2055,7 +2056,10 @@ function openScorerSelectionDialog() {
     const dialog = document.getElementById('scorer-selection-dialog');
     const playersGrid = document.getElementById('scorer-players-grid');
     playersGrid.innerHTML = '';
-    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id && p.stats.redCards === 0 && p.stats.yellowCards < 2);
+    const activePlayers = appState.players.filter(p => {
+        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        return p.id !== appState.assister.id && p.stats.redCards === 0 && p.stats.yellowCards < 2 && !isUnavailable;
+    });
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -3477,8 +3481,11 @@ function editAction(actionIndex) {
         document.getElementById('app').appendChild(editDialog);
     }
     
-    // Get all players, not just active ones for editing actions
-    const availablePlayers = appState.players || [];
+    // Get all available players (excluding unavailable ones) for editing actions
+    const availablePlayers = (appState.players || []).filter(p => {
+        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        return !isUnavailable;
+    });
     const currentPlayer = appState.players.find(p => p.id === action.playerId);
     
     editDialog.innerHTML = `
