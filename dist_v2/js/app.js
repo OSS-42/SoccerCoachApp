@@ -1001,7 +1001,6 @@ function renderFormationSetup() {
     if (appState.defaultFormation && appState.defaultFormation.length > 0) {
         console.log('Loading default formation:', appState.defaultFormation);
         appState.formationTemp = [...appState.defaultFormation];
-        showMessage('Default formation loaded (all players available)', 'success');
     } else {
         appState.formationTemp = [];
     }
@@ -1083,11 +1082,14 @@ function renderFormationSetup() {
         }
     });
 
-    // Restore formation positions on field
+    // Restore formation positions on field (for default formation loading)
+    let playersPlaced = 0;
     appState.formationTemp.forEach(formationPlayer => {
         const position = formationPlayer.position;
         const playerId = formationPlayer.playerId;
         const player = appState.players.find(p => p.id === playerId);
+        
+        console.log(`Placing player ${player?.name} at position ${position}`); // Debug
         
         if (player) {
             // Find the correct slot based on position
@@ -1103,9 +1105,20 @@ function renderFormationSetup() {
                 `;
                 slot.setAttribute('data-player-id', playerId);
                 slot.classList.add('occupied');
+                playersPlaced++;
+                console.log(`Successfully placed ${player.name} at ${position}`); // Debug
+            } else {
+                console.log(`Slot not found for position ${position}`); // Debug
             }
+        } else {
+            console.log(`Player not found for ID ${playerId}`); // Debug
         }
     });
+    
+    // Show success message after placing players
+    if (playersPlaced > 0 && appState.defaultFormation && appState.defaultFormation.length > 0) {
+        showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
+    }
 
     // Set up drag-and-drop and touch events
     const numbers = document.querySelectorAll('.player-number');
