@@ -1543,8 +1543,8 @@ button.no-assist-btn {
     }
     
     /* Mobile layout: hide secondary buttons from main row */
-    .game-controls .control-btn.action-review-btn,
-    .game-controls .control-btn.note-btn {
+    .game-controls .action-review-btn,
+    .game-controls .note-btn {
         display: none !important;
     }
     

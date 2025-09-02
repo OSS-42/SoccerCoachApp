@@ -2046,7 +2046,13 @@ function closePlayerActionDialog() {
 
 // Note handling functions
 function openNoteDialog() {
-    if (!appState.currentPlayer) return;
+    console.log('openNoteDialog called'); // Debug
+    console.log('Current player:', appState.currentPlayer); // Debug
+    
+    if (!appState.currentPlayer) {
+        console.log('No current player set'); // Debug
+        return;
+    }
     
     const dialog = document.getElementById('note-dialog');
     const playerNameSpan = document.getElementById('note-player-name');
