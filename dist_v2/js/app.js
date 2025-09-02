@@ -2087,12 +2087,19 @@ function completeAssistWithScorer(scorerId) {
 function recordAction(actionType, specificPlayerId = null) {
     if (!appState.currentGame) return;
     
+    const gameMinute = calculateGameMinute();
+    
+    // Validate game minute for all actions
+    if (!validateGameMinute(gameMinute)) {
+        return; // Don't record action if time is invalid
+    }
+    
     const playerId = specificPlayerId || (appState.currentPlayer ? appState.currentPlayer.id : null);
     const action = {
         timestamp: new Date().toISOString(),
         playerId: actionType === 'own_goal' ? null : playerId,
         actionType,
-        gameMinute: calculateGameMinute()
+        gameMinute: gameMinute
     };
     
     appState.currentGame.actions.push(action);
@@ -3613,26 +3620,29 @@ function applyAction(action) {
 
 // Game minute validation function
 function validateGameMinute(gameMinute) {
+    console.log('validateGameMinute called with:', gameMinute);
+    
     if (!appState.currentGame) {
         showMessage('No active game found', 'error');
         return false;
     }
     
-    const periodDuration = appState.currentGame.periodDuration || 15; // Default to 15 minutes
-    const numPeriods = appState.currentGame.numPeriods || 2; // Default to 2 periods
+    const periodDuration = appState.currentGame.periodDuration || 15;
+    const numPeriods = appState.currentGame.numPeriods || 2;
     const maxGameMinutes = periodDuration * numPeriods;
+    
+    console.log('Game settings:', { periodDuration, numPeriods, maxGameMinutes });
     
     if (gameMinute > maxGameMinutes) {
         showMessage(`Game minute cannot exceed ${maxGameMinutes} minutes (${numPeriods} periods × ${periodDuration} min)`, 'error');
         return false;
     }
     
-    if (gameMinute > periodDuration) {
-        const period = Math.ceil(gameMinute / periodDuration);
-        if (period > numPeriods) {
-            showMessage(`Minute ${gameMinute} would be in period ${period}, but game only has ${numPeriods} periods`, 'error');
-            return false;
-        }
+    // Check if the minute belongs to a valid period
+    const currentPeriod = Math.ceil(gameMinute / periodDuration);
+    if (currentPeriod > numPeriods) {
+        showMessage(`Minute ${gameMinute} would be in period ${currentPeriod}, but game only has ${numPeriods} periods`, 'error');
+        return false;
     }
     
     return true;
