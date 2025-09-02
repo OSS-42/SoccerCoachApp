@@ -534,6 +534,16 @@ input:checked + .slider:before {
     flex-direction: column;
 }
 
+.substitution-title-row {
+    margin-bottom: 10px;
+}
+
+.substitution-title-row .checkbox-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+}
+
 .substitution-timer-row {
     display: flex;
     align-items: center;

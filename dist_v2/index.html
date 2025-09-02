@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.75</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.75">
+    <title>Soccer Coach Tracker v1.9.76</title>
+    <link rel="stylesheet" href="css/style.css?v=1.9.76">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.75</h1>
+                <h1>Soccer Coach Tracker v1.9.76</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -158,14 +158,15 @@
                     <input type="number" id="period-duration" value="12" min="1" max="45">
                 </div>
                 <div class="form-group substitution-timer-group">
-                    <label for="substitution-time">Substitution Timer (minutes):</label>
-                    <div class="substitution-timer-row">
+                    <div class="substitution-title-row">
+                        <label for="use-substitution-timer" class="checkbox-label">
+                            <input type="checkbox" id="use-substitution-timer" checked> Substitution Timer (minutes):
+                        </label>
+                    </div>
+                    <div class="substitution-timer-row" id="substitution-timer-controls">
                         <input type="number" id="substitution-time" min="1" max="20">
                         <label for="save-substitution-default" class="checkbox-label">
                             <input type="checkbox" id="save-substitution-default"> Default?
-                        </label>
-                        <label for="timer-not-needed" class="checkbox-label">
-                            <input type="checkbox" id="timer-not-needed"> Timer not needed
                         </label>
                     </div>
                 </div>
@@ -523,5 +524,5 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=1.9.75"></script>
+    <script src="js/app.js?v=1.9.76"></script>
 </html>
