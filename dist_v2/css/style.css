@@ -537,13 +537,13 @@ input:checked + .slider:before {
 .substitution-timer-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
     width: 100%;
     flex-wrap: nowrap; /* Prevent wrapping to ensure they stay on the same line */
 }
 
 .substitution-timer-row input[type="number"] {
-    width: 100px; /* Fixed width for the number input to prevent it from taking too much space */
+    width: 80px; /* Fixed width for the number input to prevent it from taking too much space */
     flex: 0 0 auto; /* Prevent the input from growing */
 }
 
