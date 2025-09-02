@@ -1887,9 +1887,13 @@ function stopGameTimer() {
             <div class="dialog-content">
                 <h2>Game Complete</h2>
                 <p>Game Complete. End now?</p>
+                <div class="form-group">
+                    <label for="game-summary">Game Summary (optional):</label>
+                    <textarea id="game-summary" rows="3" placeholder="Overall game notes..." maxlength="300"></textarea>
+                </div>
                 <div class="dialog-buttons">
                     <button class="secondary-btn" onclick="closeEndGamePeriodDialog()">Cancel</button>
-                    <button class="primary-btn" onclick="endGame()">End Game</button>
+                    <button class="primary-btn" onclick="endGameWithSummary()">End Game</button>
                 </div>
             </div>
         `;
@@ -1955,6 +1959,71 @@ function closeEndGamePeriodDialog() {
     dialog.classList.remove('active');
 }
 
+function endGameWithSummary() {
+    const summary = document.getElementById('game-summary')?.value.trim() || '';
+    
+    // Store summary in game if provided
+    if (summary && appState.currentGame) {
+        appState.currentGame.gameSummary = summary;
+    }
+    
+    // Close the dialog and proceed with ending the game
+    closeEndGamePeriodDialog();
+    endGame();
+}
+
+// Game Note functions
+function openGameNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    const playerNameSpan = document.getElementById('note-player-name');
+    const noteText = document.getElementById('note-text');
+    const charCount = document.getElementById('note-char-count');
+    
+    playerNameSpan.textContent = 'General Game';
+    noteText.value = '';
+    charCount.textContent = '0';
+    
+    // Add character counter listener
+    noteText.oninput = () => {
+        charCount.textContent = noteText.value.length;
+    };
+    
+    // Set flag for general note
+    appState.isGeneralNote = true;
+    
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+    noteText.focus();
+}
+
+function recordGeneralNoteAction() {
+    const noteText = document.getElementById('note-text').value.trim();
+    if (!noteText) {
+        showMessage('Please enter a note', 'error');
+        return;
+    }
+    
+    const gameMinute = calculateGameMinute();
+    if (!validateGameMinute(gameMinute)) {
+        return;
+    }
+    
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: null, // General note has no specific player
+        actionType: 'note',
+        gameMinute: gameMinute,
+        noteText: noteText
+    };
+    
+    appState.currentGame.actions.push(action);
+    saveAppData();
+    closeNoteDialog();
+    
+    showMessage('Game note added', 'success');
+    appState.isGeneralNote = false;
+}
+
 // Player Actions
 function openPlayerActionDialog(player) {
     appState.currentPlayer = player;
@@ -1969,6 +2038,73 @@ function closePlayerActionDialog() {
     const dialog = document.getElementById('player-action-dialog');
     dialog.style.display = 'none';
     dialog.classList.remove('active');
+    appState.currentPlayer = null;
+}
+
+// Note handling functions
+function openNoteDialog() {
+    if (!appState.currentPlayer) return;
+    
+    const dialog = document.getElementById('note-dialog');
+    const playerNameSpan = document.getElementById('note-player-name');
+    const noteText = document.getElementById('note-text');
+    const charCount = document.getElementById('note-char-count');
+    
+    playerNameSpan.textContent = appState.currentPlayer.name;
+    noteText.value = '';
+    charCount.textContent = '0';
+    
+    // Add character counter listener
+    noteText.oninput = () => {
+        charCount.textContent = noteText.value.length;
+    };
+    
+    closePlayerActionDialog();
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+    noteText.focus();
+}
+
+function closeNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+    appState.isGeneralNote = false; // Reset flag
+}
+
+function recordNoteAction() {
+    // Check if this is a general note or player-specific note
+    if (appState.isGeneralNote) {
+        recordGeneralNoteAction();
+        return;
+    }
+    
+    if (!appState.currentPlayer) return;
+    
+    const noteText = document.getElementById('note-text').value.trim();
+    if (!noteText) {
+        showMessage('Please enter a note', 'error');
+        return;
+    }
+    
+    const gameMinute = calculateGameMinute();
+    if (!validateGameMinute(gameMinute)) {
+        return;
+    }
+    
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: appState.currentPlayer.id,
+        actionType: 'note',
+        gameMinute: gameMinute,
+        noteText: noteText
+    };
+    
+    appState.currentGame.actions.push(action);
+    saveAppData();
+    closeNoteDialog();
+    
+    showMessage(`Note added for ${appState.currentPlayer.name}`, 'success');
     appState.currentPlayer = null;
 }
 
@@ -2518,6 +2654,9 @@ function viewReport(gameId) {
                 case 'late_to_game': playerActions[action.playerId].lateToGame = true; break;
                 case 'fault': playerActions[action.playerId].faults++; break;
                 case 'blocked_shot': playerActions[action.playerId].blockedShots++; break;
+                case 'note': 
+                    // Notes are displayed separately, no stats to update
+                    break;
             }
         }
     });
@@ -2568,6 +2707,23 @@ function viewReport(gameId) {
         .filter(p => p.lateToGame)
         .map(p => p.name)
         .join(', ') || 'N/A';
+
+    // Generate notes HTML
+    const noteActions = (game.actions || []).filter(action => action.actionType === 'note');
+    let notesHTML = '';
+    if (noteActions.length > 0) {
+        notesHTML = `
+            <div style="margin-top: 15px;"><strong>Game Notes:</strong></div>
+            <div class="game-notes" style="margin-left: 15px; font-size: 12px;">
+                ${noteActions.map(note => {
+                    const playerName = note.playerId ? 
+                        (appState.players.find(p => p.id === note.playerId)?.name || 'Unknown Player') : 
+                        'General';
+                    return `<div class="note-item" style="margin: 5px 0;">${note.gameMinute}' - ${playerName}: ${note.noteText}</div>`;
+                }).join('')}
+            </div>
+        `;
+    }
 
     // Generate missed players line
     const missedLine = (game.unavailablePlayers || [])
@@ -2717,8 +2873,10 @@ function viewReport(gameId) {
                 </table>
             </div>
             <div class="report-footer">
+                <div><strong>Game Summary:</strong> ${game.gameSummary || 'None'}</div>
                 <div><strong>Missed the game:</strong> ${missedLine}</div>
                 <div><strong>Late to the game:</strong> ${lateLine}</div>
+                ${notesHTML}
             </div>
             <div class="report-actions">
                 <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
@@ -3522,6 +3680,7 @@ function editAction(actionIndex) {
                         <option value="blocked_shot" ${action.actionType === 'blocked_shot' ? 'selected' : ''}>Blocked Shot</option>
                         <option value="late_to_game" ${action.actionType === 'late_to_game' ? 'selected' : ''}>Late to Game</option>
                         <option value="own_goal" ${action.actionType === 'own_goal' ? 'selected' : ''}>Own Goal</option>
+                        <option value="note" ${action.actionType === 'note' ? 'selected' : ''}>Note</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -3671,7 +3830,7 @@ function applyAction(action) {
     if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
         appState.players[playerIndex].stats = {
             goals: 0, assists: 0, saves: 0, goalsAllowed: 0,
-            yellowCards: 0, redCards: 0, faults: 0, blockedShots: 0
+            yellowCards: 0, redCards: 0, faults: 0, blockedShots: 0, notes: 0
         };
     }
     

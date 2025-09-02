@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.55</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.55">
+    <title>Soccer Coach Tracker v1.9.56</title>
+    <link rel="stylesheet" href="css/style.css?v=1.9.56">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.55</h1>
+                <h1>Soccer Coach Tracker v1.9.56</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -255,6 +255,9 @@
                     <button class="control-btn action-review-btn" onclick="openActionReviewDialog()" id="action-review-btn">
                         <span class="material-icons">rule</span> Action Review
                     </button>
+                    <button class="control-btn note-btn" onclick="openGameNoteDialog()" title="Add general game note">
+                        <span class="material-icons">note_add</span> Game Note
+                    </button>
                 </div>
             </div>
             <div class="player-grid" id="player-grid">
@@ -416,9 +419,29 @@
                         <span class="stat-emoji">🕒</span>
                         Late to Game
                     </button>
+                    <button class="action-btn" onclick="openNoteDialog()">
+                        <span class="stat-emoji">📝</span>
+                        Add Note
+                    </button>
                 </div>
                 <div class="dialog-buttons">
                     <button class="secondary-btn" onclick="closePlayerActionDialog()">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Note Input Dialog -->
+        <div id="note-dialog" class="dialog">
+            <div class="dialog-content">
+                <h2>Add Note for <span id="note-player-name"></span></h2>
+                <div class="form-group">
+                    <label for="note-text">Note:</label>
+                    <textarea id="note-text" rows="3" placeholder="Enter your note..." maxlength="200"></textarea>
+                    <div class="char-count"><span id="note-char-count">0</span>/200</div>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeNoteDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="recordNoteAction()">Save Note</button>
                 </div>
             </div>
         </div>
@@ -478,5 +501,5 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=1.9.55"></script>
+    <script src="js/app.js?v=1.9.56"></script>
 </html>
