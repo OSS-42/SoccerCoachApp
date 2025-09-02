@@ -2082,27 +2082,43 @@ function closeNoteDialog() {
 }
 
 function recordNoteAction() {
+    console.log('recordNoteAction called'); // Debug
+    console.log('appState.isGeneralNote:', appState.isGeneralNote); // Debug
+    
     // Check if this is a general note or player-specific note
     if (appState.isGeneralNote) {
+        console.log('Calling recordGeneralNoteAction'); // Debug
         recordGeneralNoteAction();
         return;
     }
     
-    if (!appState.currentPlayer) return;
+    console.log('Processing player note'); // Debug
+    console.log('appState.currentPlayer:', appState.currentPlayer); // Debug
+    
+    if (!appState.currentPlayer) {
+        console.log('No current player - returning'); // Debug
+        return;
+    }
     
     const noteText = document.getElementById('note-text').value.trim();
+    console.log('Note text:', noteText); // Debug
+    
     if (!noteText) {
+        console.log('Empty note text - showing error'); // Debug
         showMessage('Please enter a note', 'error');
         return;
     }
     
     if (!appState.currentGame) {
+        console.log('No current game - showing error'); // Debug
         showMessage('No active game found', 'error');
         return;
     }
     
+    console.log('Current game exists, proceeding...'); // Debug
+    
     const gameMinute = calculateGameMinute();
-    // Allow notes even if game exceeds time limit - notes are observations
+    console.log('Game minute:', gameMinute); // Debug
     
     const action = {
         timestamp: new Date().toISOString(),
@@ -2112,17 +2128,22 @@ function recordNoteAction() {
         noteText: noteText
     };
     
-    // Debug logging
-    console.log('Recording player note:', action);
-    console.log('Current game:', appState.currentGame);
-    console.log('Current player:', appState.currentPlayer);
+    console.log('Created action:', action); // Debug
+    console.log('Adding to actions array...'); // Debug
     
     appState.currentGame.actions.push(action);
+    
+    console.log('Calling saveAppData...'); // Debug
     saveAppData();
+    
+    console.log('Calling closeNoteDialog...'); // Debug
     closeNoteDialog();
     
+    console.log('Showing success message...'); // Debug
     showMessage(`Note added for ${appState.currentPlayer.name}`, 'success');
     appState.currentPlayer = null;
+    
+    console.log('recordNoteAction completed'); // Debug
 }
 
 // Goal with possible assist handling

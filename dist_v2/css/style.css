@@ -1555,6 +1555,8 @@ button.no-assist-btn {
         justify-content: center;
         margin-top: 10px;
         width: 100%;
+        clear: both;
+        flex-wrap: nowrap;
     }
     
     .mobile-secondary-controls .control-btn {
@@ -1565,10 +1567,22 @@ button.no-assist-btn {
         max-width: 150px;
         height: 40px;
         border-right: none;
+        min-width: 120px;
     }
     
     .mobile-secondary-controls .control-btn:last-child {
         border-right: 1px solid #000000;
+    }
+    
+    /* Ensure proper spacing between rows */
+    .controls-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .game-controls {
+        margin-bottom: 0;
     }
 }
 
