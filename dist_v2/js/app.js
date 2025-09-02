@@ -3446,12 +3446,9 @@ function saveEditedAction(actionIndex) {
     }
     
     // Validate game minute against game settings
-    console.log('About to validate game minute:', gameMinute);
     if (!validateGameMinute(gameMinute)) {
-        console.log('Validation failed, stopping save');
         return; // Error message is shown in validateGameMinute function
     }
-    console.log('Validation passed, continuing with save');
     
     const oldAction = appState.currentGame.actions[actionIndex];
     
@@ -3626,8 +3623,6 @@ function applyAction(action) {
 
 // Game minute validation function
 function validateGameMinute(gameMinute) {
-    console.log('validateGameMinute called with:', gameMinute);
-    
     if (!appState.currentGame) {
         showMessage('No active game found', 'error');
         return false;
@@ -3637,13 +3632,6 @@ function validateGameMinute(gameMinute) {
     const periodDurationMinutes = Math.floor((appState.currentGame.periodDuration || 900) / 60);
     const numPeriods = appState.currentGame.numPeriods || 2;
     const maxGameMinutes = periodDurationMinutes * numPeriods;
-    
-    console.log('Game settings:', { 
-        periodDurationSeconds: appState.currentGame.periodDuration,
-        periodDurationMinutes, 
-        numPeriods, 
-        maxGameMinutes 
-    });
     
     if (gameMinute > maxGameMinutes) {
         showMessage(`Game minute cannot exceed ${maxGameMinutes} minutes (${numPeriods} periods × ${periodDurationMinutes} min)`, 'error');
@@ -3689,7 +3677,6 @@ function syncGoalAssistTimes(editedIndex, editedActionType, newGameMinute, oldAc
     
     // Update related actions to the same game minute
     relatedActions.forEach(({ action, index }) => {
-        console.log(`Syncing ${action.actionType} at index ${index} to minute ${newGameMinute}`);
         actions[index] = {
             ...action,
             gameMinute: newGameMinute
