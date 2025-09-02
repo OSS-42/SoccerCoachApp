@@ -120,13 +120,14 @@ function touchEnd(e) {
         const maxPlayers = parseInt(matchType.split('v')[0]);
         let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
-        if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+        const existingPlayerId = slot.getAttribute('data-player-id');
+        
+        // Only check player limit if adding to empty slot (not replacing)
+        if (source === 'sidebar' && !existingPlayerId && currentPlayers >= maxPlayers) {
             showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
             draggedElement = null;
             return;
         }
-
-        const existingPlayerId = slot.getAttribute('data-player-id');
         if (existingPlayerId && existingPlayerId !== playerId) {
             // Remove existing player from formation and return to sidebar
             appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
@@ -1264,12 +1265,13 @@ function dropToSlot(e) {
 
     let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
 
-    if (source === 'sidebar' && currentPlayers >= maxPlayers) {
+    const existingPlayerId = slot.getAttribute('data-player-id');
+    
+    // Only check player limit if adding to empty slot (not replacing)
+    if (source === 'sidebar' && !existingPlayerId && currentPlayers >= maxPlayers) {
         showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
         return;
     }
-
-    const existingPlayerId = slot.getAttribute('data-player-id');
     if (existingPlayerId && existingPlayerId !== playerId) {
         // Remove existing player from formation and return to sidebar  
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
@@ -1478,7 +1480,6 @@ function clearFormation() {
     });
     
     // Re-setup drag handlers
-    setupPlayerDrag();
     setupPlacedPlayerDrag();
     setupPlacedPlayerTouch();
     
