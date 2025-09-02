@@ -994,18 +994,16 @@ function renderFormationSetup() {
     formationField.innerHTML = '';
     unavailableSlots.innerHTML = '';
     
-    // Initialize formation temp - load default if exists
+    // Initialize unavailable players array - always reset when loading formation setup
+    appState.unavailablePlayers = [];
+    
+    // Initialize formation temp - load default if exists (only field positions, not unavailable status)
     if (appState.defaultFormation && appState.defaultFormation.length > 0) {
         console.log('Loading default formation:', appState.defaultFormation);
         appState.formationTemp = [...appState.defaultFormation];
-        showMessage('Default formation loaded', 'success');
+        showMessage('Default formation loaded (all players available)', 'success');
     } else {
         appState.formationTemp = [];
-    }
-    
-    // Initialize unavailable players array if not exists
-    if (!appState.unavailablePlayers) {
-        appState.unavailablePlayers = [];
     }
 
     // Define spots for 260x400px field
