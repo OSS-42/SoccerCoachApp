@@ -31,3 +31,6 @@ run = ["sh", "-c", "./gradlew assembleDebug && cd app/build/outputs/apk/debug &&
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[agent]
+expertMode = true

@@ -3729,13 +3729,20 @@ function calculatePlayerStatistics() {
     
     // Sum up stats from all completed games
     const completedGames = appState.games.filter(game => game.isCompleted);
+    console.log('Debug - All games:', appState.games);
+    console.log('Debug - Completed games found:', completedGames);
+    
     if (completedGames && completedGames.length > 0) {
-        completedGames.forEach(game => {
+        completedGames.forEach((game, index) => {
+            console.log(`Debug - Game ${index + 1}:`, game);
+            console.log(`Debug - Game ${index + 1} actions:`, game.actions);
+            
             if (game.actions && game.actions.length > 0) {
                 // Track which players played in this game
                 const playersInGame = new Set();
                 
                 game.actions.forEach(action => {
+                    console.log('Debug - Processing action:', action);
                     if (action.playerId && playerStats[action.playerId]) {
                         playersInGame.add(action.playerId);
                         
@@ -3782,10 +3789,15 @@ function calculatePlayerStatistics() {
                         playerStats[playerId].gamesPlayed++;
                     }
                 });
+            } else {
+                console.log(`Debug - Game ${index + 1} has no actions`);
             }
         });
+    } else {
+        console.log('Debug - No completed games found');
     }
     
+    console.log('Debug - Final player stats:', playerStats);
     return playerStats;
 }
 
