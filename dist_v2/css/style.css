@@ -1280,6 +1280,31 @@ input:checked + .slider:before {
     margin-top: 5px;
 }
 
+/* Formation options styles */
+.formation-options {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.2);
+}
+
+.checkmark {
+    margin-left: 5px;
+}
+
 /* Hide mobile secondary controls on desktop */
 .mobile-secondary-controls {
     display: none;
@@ -1554,7 +1579,7 @@ button.no-assist-btn {
         flex-wrap: nowrap;
         gap: 0;
         margin-top: 0;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         width: 100%;
     }
     

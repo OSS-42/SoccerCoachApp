@@ -993,7 +993,15 @@ function renderFormationSetup() {
     playerList.innerHTML = '';
     formationField.innerHTML = '';
     unavailableSlots.innerHTML = '';
-    appState.formationTemp = [];
+    
+    // Initialize formation temp - load default if exists
+    if (appState.defaultFormation && appState.defaultFormation.length > 0) {
+        console.log('Loading default formation:', appState.defaultFormation);
+        appState.formationTemp = [...appState.defaultFormation];
+        showMessage('Default formation loaded', 'success');
+    } else {
+        appState.formationTemp = [];
+    }
     
     // Initialize unavailable players array if not exists
     if (!appState.unavailablePlayers) {
@@ -1429,6 +1437,15 @@ function startGameFromFormation() {
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
     const formation = appState.formationTemp || [];
+    
+    // Check if user wants to save this formation as default
+    const saveDefaultCheckbox = document.getElementById('save-default-formation');
+    if (saveDefaultCheckbox && saveDefaultCheckbox.checked) {
+        // Save current formation as default
+        appState.defaultFormation = [...formation];
+        console.log('Saved default formation:', appState.defaultFormation);
+        showMessage('Formation saved as default', 'success');
+    }
 
     // Debug formation state
     // console.log('Formation before start:', formation.map(f => ({
