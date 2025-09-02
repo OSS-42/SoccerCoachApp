@@ -142,7 +142,7 @@ function touchEnd(e) {
 
         appState.formationTemp.push({
             playerId,
-            position: position === 'GK' || position === 'SW' ? position : appState.players.find(p => p.id === playerId).position,
+            position: position, // Always use the field slot position, not player's original position
             x,
             y
         });
@@ -1058,7 +1058,7 @@ function renderFormationSetup() {
         playerList.appendChild(playerItem);
     });
 
-    // Create 5 unavailable player slots
+    // Create 5 unavailable player slots (empty when loading default formation)
     for (let i = 1; i <= 5; i++) {
         const unavailableSlot = document.createElement('div');
         unavailableSlot.className = 'unavailable-slot';
@@ -1067,20 +1067,8 @@ function renderFormationSetup() {
         unavailableSlots.appendChild(unavailableSlot);
     }
 
-    // Render already unavailable players in slots
-    appState.unavailablePlayers.forEach((playerId, index) => {
-        if (index < 5) { // Only first 5 unavailable players
-            const player = appState.players.find(p => p.id === playerId);
-            if (player) {
-                const slot = document.getElementById(`unavailable-slot-${index + 1}`);
-                slot.innerHTML = `
-                    <span class="player-number player-number-placed" draggable="true" data-player-id="${player.id}">${player.jerseyNumber}</span>
-                `;
-                slot.classList.add('occupied');
-                slot.setAttribute('data-player-id', player.id);
-            }
-        }
-    });
+    // Note: unavailable players are deliberately NOT rendered here when loading default formation
+    // This ensures all players start as available, only field positions are restored
 
     // Restore formation positions on field (for default formation loading)
     let playersPlaced = 0;
