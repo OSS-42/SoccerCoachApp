@@ -3688,6 +3688,174 @@ function syncGoalAssistTimes(editedIndex, editedActionType, newGameMinute, oldAc
     }
 }
 
+// Team Setup Tab Management
+function switchTeamTab(tabName) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    document.getElementById(`${tabName}-tab-content`).classList.add('active');
+    
+    // If switching to statistics tab, render the statistics
+    if (tabName === 'statistics') {
+        renderPlayerStatistics();
+    }
+}
+
+// Calculate accumulated player statistics across all completed games
+function calculatePlayerStatistics() {
+    const playerStats = {};
+    
+    // Initialize stats for all players
+    appState.players.forEach(player => {
+        playerStats[player.id] = {
+            name: player.name,
+            jerseyNumber: player.jerseyNumber,
+            gamesPlayed: 0,
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            passes: 0,
+            shots: 0,
+            blocks: 0,
+            fouls: 0,
+            yellowCards: 0,
+            redCards: 0,
+            ownGoals: 0
+        };
+    });
+    
+    // Sum up stats from all completed games
+    if (appState.completedGames && appState.completedGames.length > 0) {
+        appState.completedGames.forEach(game => {
+            if (game.actions && game.actions.length > 0) {
+                // Track which players played in this game
+                const playersInGame = new Set();
+                
+                game.actions.forEach(action => {
+                    if (action.playerId && playerStats[action.playerId]) {
+                        playersInGame.add(action.playerId);
+                        
+                        switch (action.actionType) {
+                            case 'goal':
+                                playerStats[action.playerId].goals++;
+                                break;
+                            case 'assist':
+                                playerStats[action.playerId].assists++;
+                                break;
+                            case 'save':
+                                playerStats[action.playerId].saves++;
+                                break;
+                            case 'pass':
+                                playerStats[action.playerId].passes++;
+                                break;
+                            case 'shot':
+                                playerStats[action.playerId].shots++;
+                                break;
+                            case 'blocked_shot':
+                                playerStats[action.playerId].blocks++;
+                                break;
+                            case 'foul':
+                                playerStats[action.playerId].fouls++;
+                                break;
+                            case 'yellow_card':
+                                playerStats[action.playerId].yellowCards++;
+                                break;
+                            case 'red_card':
+                                playerStats[action.playerId].redCards++;
+                                break;
+                            case 'own_goal':
+                                if (action.playerId) {
+                                    playerStats[action.playerId].ownGoals++;
+                                }
+                                break;
+                        }
+                    }
+                });
+                
+                // Update games played count
+                playersInGame.forEach(playerId => {
+                    if (playerStats[playerId]) {
+                        playerStats[playerId].gamesPlayed++;
+                    }
+                });
+            }
+        });
+    }
+    
+    return playerStats;
+}
+
+// Render player statistics table
+function renderPlayerStatistics() {
+    const container = document.getElementById('player-statistics-container');
+    if (!container) return;
+    
+    const playerStats = calculatePlayerStatistics();
+    const hasCompletedGames = appState.completedGames && appState.completedGames.length > 0;
+    
+    if (!hasCompletedGames || appState.players.length === 0) {
+        container.innerHTML = `
+            <div class="no-stats-message">
+                ${appState.players.length === 0 
+                    ? 'No players added to the team yet.' 
+                    : 'No completed games yet. Statistics will appear after completing games.'}
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort players by jersey number
+    const sortedPlayers = Object.values(playerStats)
+        .filter(player => appState.players.find(p => p.id === Object.keys(playerStats).find(id => playerStats[id] === player)))
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
+    
+    const tableHTML = `
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>GP</th>
+                    <th>Goals</th>
+                    <th>Assists</th>
+                    <th>Saves</th>
+                    <th>Passes</th>
+                    <th>Shots</th>
+                    <th>Blocks</th>
+                    <th>Fouls</th>
+                    <th>YC</th>
+                    <th>RC</th>
+                    <th>OG</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${sortedPlayers.map(player => `
+                    <tr>
+                        <td class="jersey-cell">${player.jerseyNumber}</td>
+                        <td>${player.name}</td>
+                        <td class="number-cell">${player.gamesPlayed}</td>
+                        <td class="number-cell">${player.goals}</td>
+                        <td class="number-cell">${player.assists}</td>
+                        <td class="number-cell">${player.saves}</td>
+                        <td class="number-cell">${player.passes}</td>
+                        <td class="number-cell">${player.shots}</td>
+                        <td class="number-cell">${player.blocks}</td>
+                        <td class="number-cell">${player.fouls}</td>
+                        <td class="number-cell">${player.yellowCards}</td>
+                        <td class="number-cell">${player.redCards}</td>
+                        <td class="number-cell">${player.ownGoals}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    container.innerHTML = tableHTML;
+}
+
 // No longer needed - removed updateActionHistory and updateUndoButton functions
 
 function getPlayerName(playerId) {

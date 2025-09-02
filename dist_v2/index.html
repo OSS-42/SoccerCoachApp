@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.44</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.44">
+    <title>Soccer Coach Tracker v1.9.45</title>
+    <link rel="stylesheet" href="css/style.css?v=1.9.45">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.44</h1>
+                <h1>Soccer Coach Tracker v1.9.45</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -64,15 +64,40 @@
                         <button class="secondary-btn" onclick="saveTeamName()">Save</button>
                     </div>
                 </div>
-                <div class="players-header">
-                    <h2>Players</h2>
-                    <span class="player-counter-team">
-                        <span class="material-icons">person</span>
-                        <span id="team-player-counter">0</span>
-                    </span>
+                
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" onclick="switchTeamTab('players')" id="players-tab">
+                        <span class="material-icons">people</span> Players
+                    </button>
+                    <button class="tab-btn" onclick="switchTeamTab('statistics')" id="statistics-tab">
+                        <span class="material-icons">analytics</span> Statistics
+                    </button>
                 </div>
-                <div id="players-list" class="players-list">
-                    <!-- Players will be added here dynamically -->
+                
+                <!-- Players Tab Content -->
+                <div id="players-tab-content" class="tab-content active">
+                    <div class="players-header">
+                        <h2>Players</h2>
+                        <span class="player-counter-team">
+                            <span class="material-icons">person</span>
+                            <span id="team-player-counter">0</span>
+                        </span>
+                    </div>
+                    <div id="players-list" class="players-list">
+                        <!-- Players will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Statistics Tab Content -->
+                <div id="statistics-tab-content" class="tab-content">
+                    <div class="statistics-header">
+                        <h2>Player Statistics</h2>
+                        <span class="stats-info">Accumulated across all completed games</span>
+                    </div>
+                    <div id="player-statistics-container" class="statistics-container">
+                        <!-- Player statistics will be displayed here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -429,5 +454,5 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=1.9.44"></script>
+    <script src="js/app.js?v=1.9.45"></script>
 </html>
