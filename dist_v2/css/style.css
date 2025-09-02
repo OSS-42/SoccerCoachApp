@@ -1542,32 +1542,19 @@ button.no-assist-btn {
         border-color: #000000 !important;
     }
     
-    /* Mobile layout: separate secondary buttons to second row */
-    .game-controls {
-        margin-bottom: 5px;
-    }
-    
+    /* Mobile layout: hide secondary buttons from main row */
     .game-controls .control-btn.action-review-btn,
     .game-controls .control-btn.note-btn {
-        display: none; /* Hide from main row on mobile */
-    }
-    
-    /* Create second row for mobile secondary buttons */
-    .controls-row::after {
-        content: "";
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0;
-        justify-content: center;
-        margin-top: 5px;
+        display: none !important;
     }
     
     /* Show secondary buttons in separate row on mobile */
     .mobile-secondary-controls {
-        display: flex;
+        display: flex !important;
         gap: 0;
         justify-content: center;
-        margin-top: 5px;
+        margin-top: 10px;
+        width: 100%;
     }
     
     .mobile-secondary-controls .control-btn {
@@ -1576,6 +1563,12 @@ button.no-assist-btn {
         border-color: #000000 !important;
         flex: 1;
         max-width: 150px;
+        height: 40px;
+        border-right: none;
+    }
+    
+    .mobile-secondary-controls .control-btn:last-child {
+        border-right: 1px solid #000000;
     }
 }
 

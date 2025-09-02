@@ -2106,6 +2106,11 @@ function recordNoteAction() {
         noteText: noteText
     };
     
+    // Debug logging
+    console.log('Recording player note:', action);
+    console.log('Current game:', appState.currentGame);
+    console.log('Current player:', appState.currentPlayer);
+    
     appState.currentGame.actions.push(action);
     saveAppData();
     closeNoteDialog();
