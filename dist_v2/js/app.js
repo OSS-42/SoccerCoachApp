@@ -66,9 +66,9 @@ function touchMove(e) {
     const touch = e.targetTouches[0];
     updateClonePosition(touch.clientX, touch.clientY);
 
-    // Haptic feedback when passing over a slot
+    // Haptic feedback when passing over a slot (field or unavailable)
     const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const slot = dropTarget.closest('.player-slot');
+    const slot = dropTarget.closest('.player-slot, .unavailable-slot');
     if (slot && slot !== lastVibratedSlot) {
         if (navigator.vibrate) {
             navigator.vibrate(30); // 30ms vibration
@@ -99,10 +99,21 @@ function touchEnd(e) {
     const touch = e.changedTouches[0];
     const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
     const playerId = draggedElement.getAttribute('data-player-id');
-    const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
+    const isPlaced = draggedElement.classList.contains('player-number-placed');
+    const parentSlot = draggedElement.closest('.player-slot, .unavailable-slot');
+    const isFromUnavailable = parentSlot && parentSlot.classList.contains('unavailable-slot');
+    
+    let source = 'sidebar';
+    if (isPlaced && isFromUnavailable) {
+        source = 'unavailable';
+    } else if (isPlaced) {
+        source = 'field';
+    }
+    
     const slotId = draggedElement.parentElement.id || '';
 
     const slot = dropTarget.closest('.player-slot');
+    const unavailableSlot = dropTarget.closest('.unavailable-slot');
     if (slot) {
         const position = slot.getAttribute('data-position');
         const matchType = appState.currentGame.matchType;
@@ -154,11 +165,81 @@ function touchEnd(e) {
 
         setupPlacedPlayerDrag();
         setupPlacedPlayerTouch(); // Reattach touch event listeners
+    } else if (unavailableSlot) {
+        // Handle drop to unavailable slot (mobile touch)
+        const existingPlayerId = unavailableSlot.getAttribute('data-player-id');
+        if (existingPlayerId && existingPlayerId !== playerId) {
+            // Remove displaced player from unavailable list
+            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
+            
+            // Re-enable the displaced player in sidebar
+            const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+            if (displacedNumber) {
+                displacedNumber.classList.remove('disabled');
+                displacedNumber.draggable = true;
+            }
+        }
+        
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            // Remove from source
+            if (source === 'field') {
+                const sourceSlot = document.getElementById(slotId);
+                if (sourceSlot) {
+                    sourceSlot.innerHTML = '';
+                    sourceSlot.removeAttribute('data-player-id');
+                    sourceSlot.classList.remove('occupied');
+                }
+                appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+                // Re-enable player number if moving from field
+                const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+                if (number) {
+                    number.classList.remove('disabled');
+                    number.draggable = true;
+                }
+            } else if (source === 'unavailable') {
+                // Moving between unavailable slots
+                const sourceSlot = document.getElementById(slotId);
+                if (sourceSlot) {
+                    sourceSlot.innerHTML = '';
+                    sourceSlot.removeAttribute('data-player-id');
+                    sourceSlot.classList.remove('occupied');
+                }
+            }
+            
+            // Add to unavailable players if not already there
+            if (!appState.unavailablePlayers.includes(playerId)) {
+                appState.unavailablePlayers.push(playerId);
+            }
+            
+            // Add to target slot
+            unavailableSlot.innerHTML = `
+                <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>
+            `;
+            unavailableSlot.setAttribute('data-player-id', playerId);
+            unavailableSlot.classList.add('occupied');
+            
+            // Re-setup drag events and disable player in sidebar if from sidebar
+            setupPlacedPlayerDrag();
+            setupPlacedPlayerTouch();
+            if (source === 'sidebar') {
+                disablePlayerNumber(playerId);
+            }
+            
+            // Save data
+            saveAppData();
+        }
     }
 
     const sidebar = document.querySelector('#player-list');
-    if (sidebar && source === 'field' && dropTarget.closest('#player-list')) {
-        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+    if (sidebar && (source === 'field' || source === 'unavailable') && dropTarget.closest('#player-list')) {
+        // Handle dropping back to sidebar from field or unavailable area
+        if (source === 'field') {
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        } else if (source === 'unavailable') {
+            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        }
+        
         const slot = document.getElementById(slotId);
         if (slot) {
             slot.innerHTML = '';
@@ -170,6 +251,9 @@ function touchEnd(e) {
             number.classList.remove('disabled');
             number.draggable = true;
         }
+        
+        // Save data
+        saveAppData();
     }
 
     // console.log('Formation after drag:', appState.formationTemp.map(f => ({
