@@ -1280,6 +1280,11 @@ input:checked + .slider:before {
     margin-top: 5px;
 }
 
+/* Hide mobile secondary controls on desktop */
+.mobile-secondary-controls {
+    display: none;
+}
+
 
 .action-btn {
     display: flex;
@@ -1514,24 +1519,63 @@ button.no-assist-btn {
     gap: 20px;
 }
 
-/* Action Review button - force styles for mobile */
-.control-btn.action-review-btn {
+/* Action Review and Note buttons - force black styles */
+.control-btn.action-review-btn,
+.control-btn.note-btn {
     background-color: #000000 !important;
     color: white !important;
     border-color: #000000 !important;
 }
 
-.control-btn.action-review-btn:hover {
+.control-btn.action-review-btn:hover,
+.control-btn.note-btn:hover {
     background-color: #333333 !important;
     border-color: #333333 !important;
 }
 
 /* Force mobile styles */
 @media (max-width: 768px) {
-    .control-btn.action-review-btn {
+    .control-btn.action-review-btn,
+    .control-btn.note-btn {
         background-color: #000000 !important;
         color: white !important;
         border-color: #000000 !important;
+    }
+    
+    /* Mobile layout: separate secondary buttons to second row */
+    .game-controls {
+        margin-bottom: 5px;
+    }
+    
+    .game-controls .control-btn.action-review-btn,
+    .game-controls .control-btn.note-btn {
+        display: none; /* Hide from main row on mobile */
+    }
+    
+    /* Create second row for mobile secondary buttons */
+    .controls-row::after {
+        content: "";
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        justify-content: center;
+        margin-top: 5px;
+    }
+    
+    /* Show secondary buttons in separate row on mobile */
+    .mobile-secondary-controls {
+        display: flex;
+        gap: 0;
+        justify-content: center;
+        margin-top: 5px;
+    }
+    
+    .mobile-secondary-controls .control-btn {
+        background-color: #000000 !important;
+        color: white !important;
+        border-color: #000000 !important;
+        flex: 1;
+        max-width: 150px;
     }
 }
 

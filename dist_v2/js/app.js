@@ -2003,10 +2003,13 @@ function recordGeneralNoteAction() {
         return;
     }
     
-    const gameMinute = calculateGameMinute();
-    if (!validateGameMinute(gameMinute)) {
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
         return;
     }
+    
+    const gameMinute = calculateGameMinute();
+    // Allow notes even if game exceeds time limit - notes are observations
     
     const action = {
         timestamp: new Date().toISOString(),
@@ -2087,10 +2090,13 @@ function recordNoteAction() {
         return;
     }
     
-    const gameMinute = calculateGameMinute();
-    if (!validateGameMinute(gameMinute)) {
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
         return;
     }
+    
+    const gameMinute = calculateGameMinute();
+    // Allow notes even if game exceeds time limit - notes are observations
     
     const action = {
         timestamp: new Date().toISOString(),
