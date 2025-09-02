@@ -1620,6 +1620,48 @@ button.no-assist-btn {
     margin-bottom: 20px;
 }
 
+.stats-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #2196f3;
+}
+
+.stats-period-info {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+}
+
+.stats-reports-counter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.reports-counter-badge {
+    background: #2196f3;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.reports-counter-warning {
+    background: #ff9800;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
 .stats-controls {
     display: flex;
     justify-content: space-between;
@@ -1708,6 +1750,12 @@ button.no-assist-btn {
         justify-content: center;
         padding: 10px;
         font-size: 14px;
+    }
+    
+    .stats-info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
     
     .stats-controls {

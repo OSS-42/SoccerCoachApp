@@ -3829,6 +3829,51 @@ function clearDateFilter() {
     renderPlayerStatistics();
 }
 
+// Update statistics period info and reports counter
+function updateStatsPeriodInfo(startDate, endDate, filteredGames) {
+    const periodInfoElement = document.getElementById('stats-period-info');
+    const reportsCounterElement = document.getElementById('stats-reports-counter');
+    
+    if (!periodInfoElement || !reportsCounterElement) return;
+    
+    // Update period description
+    if (startDate || endDate) {
+        let periodText = 'Games from ';
+        if (startDate && endDate) {
+            periodText += `${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`;
+        } else if (startDate) {
+            periodText += `${new Date(startDate).toLocaleDateString()} onwards`;
+        } else if (endDate) {
+            periodText += `start to ${new Date(endDate).toLocaleDateString()}`;
+        }
+        periodInfoElement.textContent = periodText;
+    } else {
+        periodInfoElement.textContent = 'All completed games';
+    }
+    
+    // Count games and available reports
+    const totalGames = filteredGames.length;
+    const gamesWithReports = filteredGames.filter(game => 
+        game.actions && game.actions.length > 0
+    ).length;
+    
+    // Update reports counter
+    if (totalGames === 0) {
+        reportsCounterElement.innerHTML = '';
+    } else if (gamesWithReports === totalGames) {
+        reportsCounterElement.innerHTML = `
+            <span>Reports:</span>
+            <span class="reports-counter-badge">${gamesWithReports}/${totalGames}</span>
+        `;
+    } else {
+        reportsCounterElement.innerHTML = `
+            <span>Reports:</span>
+            <span class="reports-counter-warning">${gamesWithReports}/${totalGames}</span>
+            <span style="color: #ff9800; font-size: 12px;">${totalGames - gamesWithReports} missing</span>
+        `;
+    }
+}
+
 // Render player statistics table
 function renderPlayerStatistics() {
     const container = document.getElementById('player-statistics-container');
@@ -3852,6 +3897,9 @@ function renderPlayerStatistics() {
         });
     }
     const hasCompletedGames = completedGames && completedGames.length > 0;
+    
+    // Update period info and reports counter
+    updateStatsPeriodInfo(startDate, endDate, completedGames);
     
     if (!hasCompletedGames || appState.players.length === 0) {
         container.innerHTML = `
