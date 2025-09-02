@@ -2054,6 +2054,10 @@ function openNoteDialog() {
         return;
     }
     
+    // Store the player in a backup variable to prevent loss
+    window.noteDialogPlayer = appState.currentPlayer;
+    console.log('Stored backup player:', window.noteDialogPlayer); // Debug
+    
     const dialog = document.getElementById('note-dialog');
     const playerNameSpan = document.getElementById('note-player-name');
     const noteText = document.getElementById('note-text');
@@ -2094,11 +2098,17 @@ function recordNoteAction() {
     
     console.log('Processing player note'); // Debug
     console.log('appState.currentPlayer:', appState.currentPlayer); // Debug
+    console.log('Backup player:', window.noteDialogPlayer); // Debug
     
-    if (!appState.currentPlayer) {
-        console.log('No current player - returning'); // Debug
+    // Use backup player if currentPlayer was reset
+    const playerToUse = appState.currentPlayer || window.noteDialogPlayer;
+    
+    if (!playerToUse) {
+        console.log('No current player and no backup - returning'); // Debug
         return;
     }
+    
+    console.log('Using player:', playerToUse); // Debug
     
     const noteText = document.getElementById('note-text').value.trim();
     console.log('Note text:', noteText); // Debug
@@ -2122,7 +2132,7 @@ function recordNoteAction() {
     
     const action = {
         timestamp: new Date().toISOString(),
-        playerId: appState.currentPlayer.id,
+        playerId: playerToUse.id,
         actionType: 'note',
         gameMinute: gameMinute,
         noteText: noteText
@@ -2140,8 +2150,9 @@ function recordNoteAction() {
     closeNoteDialog();
     
     console.log('Showing success message...'); // Debug
-    showMessage(`Note added for ${appState.currentPlayer.name}`, 'success');
+    showMessage(`Note added for ${playerToUse.name}`, 'success');
     appState.currentPlayer = null;
+    window.noteDialogPlayer = null; // Clear backup
     
     console.log('recordNoteAction completed'); // Debug
 }
