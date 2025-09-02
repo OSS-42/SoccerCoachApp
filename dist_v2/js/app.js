@@ -408,6 +408,11 @@ function showScreen(screenId) {
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
     
+    // Always show players tab first when going to team-setup
+    if (screenId === 'team-setup') {
+        switchTeamTab('players');
+    }
+    
     // Reset message ribbon
     hideMessage();
 
@@ -1557,6 +1562,9 @@ function startGame() {
         };
     });
 
+    // Clear unavailable players for new game
+    appState.unavailablePlayers = [];
+    
     // Create the new game
     appState.currentGame = {
         id: Date.now().toString(),
@@ -3230,6 +3238,11 @@ function confirmResetStatistics() {
         const statsContainer = document.getElementById('stats-container');
         if (statsContainer) {
             statsContainer.innerHTML = '<div class="empty-state">No statistics available - play some games first!</div>';
+        }
+        
+        // Force refresh to players tab to avoid ghost data display
+        if (document.getElementById('team-setup').classList.contains('active')) {
+            switchTeamTab('players');
         }
 
         showMessage('Player statistics have been reset successfully', 'success');
