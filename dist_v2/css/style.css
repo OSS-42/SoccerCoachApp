@@ -1299,14 +1299,6 @@ input:checked + .slider:before {
     flex: 1;
 }
 
-.substitution-timer-options {
-    margin-top: 10px;
-}
-
-.substitution-timer-options .checkbox-label {
-    font-size: 14px;
-    color: #666;
-}
 
 .checkbox-container {
     display: flex;
