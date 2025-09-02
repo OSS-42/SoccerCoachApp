@@ -2003,13 +2003,10 @@ function recordGeneralNoteAction() {
         return;
     }
     
-    // Allow notes even if game timer isn't started - just use current time
-    if (!appState.currentGame) {
-        showMessage('No active game found', 'error');
+    const gameMinute = calculateGameMinute();
+    if (!validateGameMinute(gameMinute)) {
         return;
     }
-    
-    const gameMinute = calculateGameMinute();
     
     const action = {
         timestamp: new Date().toISOString(),
@@ -2090,13 +2087,10 @@ function recordNoteAction() {
         return;
     }
     
-    // Allow notes even if game timer isn't started - just use current time
-    if (!appState.currentGame) {
-        showMessage('No active game found', 'error');
+    const gameMinute = calculateGameMinute();
+    if (!validateGameMinute(gameMinute)) {
         return;
     }
-    
-    const gameMinute = calculateGameMinute();
     
     const action = {
         timestamp: new Date().toISOString(),

@@ -1280,15 +1280,6 @@ input:checked + .slider:before {
     margin-top: 5px;
 }
 
-/* Game controls row 2 for mobile layout */
-.game-controls-row-2 {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-}
 
 .action-btn {
     display: flex;
