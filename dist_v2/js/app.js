@@ -2180,9 +2180,7 @@ function recordAction(actionType, specificPlayerId = null) {
     
     saveAppData();
     
-    // Update action history and undo button
-    updateActionHistory();
-    updateUndoButton();
+    // No need to update buttons here anymore
     
     closePlayerActionDialog();
 }
@@ -3260,45 +3258,71 @@ function handleFileImport(event) {
     reader.readAsText(file);
 }
 
-// Action History and Undo Functions
-function undoLastAction() {
-    if (!appState.currentGame || !appState.currentGame.actions || appState.currentGame.actions.length === 0) {
-        showMessage('No actions to undo', 'error');
+// Action Review Dialog Functions
+function openActionReviewDialog() {
+    if (!appState.currentGame) {
+        showMessage('No active game to review actions', 'error');
         return;
     }
     
-    const lastAction = appState.currentGame.actions[appState.currentGame.actions.length - 1];
+    let reviewDialog = document.getElementById('action-review-dialog');
+    if (!reviewDialog) {
+        reviewDialog = document.createElement('div');
+        reviewDialog.id = 'action-review-dialog';
+        reviewDialog.className = 'dialog';
+        document.getElementById('app').appendChild(reviewDialog);
+    }
     
-    // Remove the action from the array
-    appState.currentGame.actions.pop();
+    const actions = appState.currentGame.actions || [];
     
-    // Reverse the action effects
-    reverseAction(lastAction);
+    let actionsHTML = '';
+    if (actions.length === 0) {
+        actionsHTML = '<div class="no-actions-dialog">No actions recorded yet</div>';
+    } else {
+        actionsHTML = actions.map((action, index) => {
+            const playerName = getPlayerName(action.playerId);
+            const actionDisplay = formatActionType(action.actionType);
+            
+            return `
+                <div class="action-item">
+                    <div class="action-info">
+                        <div class="action-player">${playerName}</div>
+                        <div class="action-details">${actionDisplay} • ${action.gameMinute}' • ${formatTimestamp(action.timestamp)}</div>
+                    </div>
+                    <div class="action-controls">
+                        <button class="action-icon-btn" onclick="editAction(${index})" title="Edit Action">
+                            <span class="material-icons edit-action-icon">edit</span>
+                        </button>
+                        <button class="action-icon-btn" onclick="deleteAction(${index})" title="Delete Action">
+                            <span class="material-icons delete-action-icon">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
     
-    // Save state
-    saveAppData();
+    reviewDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Action Review</h2>
+            <div class="action-review-list">
+                ${actionsHTML}
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeActionReviewDialog()">Close</button>
+            </div>
+        </div>
+    `;
     
-    // Update UI
-    updateActionHistory();
-    updateUndoButton();
-    renderPlayerGrid();
-    
-    // Show success message
-    const playerName = getPlayerName(lastAction.playerId);
-    showMessage(`Undone: ${lastAction.actionType} for ${playerName}`, 'success');
+    reviewDialog.style.display = 'flex';
+    reviewDialog.classList.add('active');
 }
 
-function toggleActionHistory() {
-    const panel = document.getElementById('action-history-panel');
-    const button = document.getElementById('history-btn');
-    
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-        button.classList.add('active');
-        updateActionHistory();
-    } else {
-        panel.style.display = 'none';
-        button.classList.remove('active');
+function closeActionReviewDialog() {
+    const dialog = document.getElementById('action-review-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
     }
 }
 
@@ -3318,9 +3342,13 @@ function deleteAction(actionIndex) {
     
     // Save and update
     saveAppData();
-    updateActionHistory();
-    updateUndoButton();
     renderPlayerGrid();
+    
+    // Refresh action review dialog if open
+    const reviewDialog = document.getElementById('action-review-dialog');
+    if (reviewDialog && reviewDialog.style.display === 'flex') {
+        openActionReviewDialog();
+    }
     
     const playerName = getPlayerName(action.playerId);
     showMessage(`Deleted: ${action.actionType} for ${playerName}`, 'success');
@@ -3427,9 +3455,14 @@ function saveEditedAction(actionIndex) {
     
     // Save and update
     saveAppData();
-    updateActionHistory();
     renderPlayerGrid();
     closeEditActionDialog();
+    
+    // Refresh action review dialog if open
+    const reviewDialog = document.getElementById('action-review-dialog');
+    if (reviewDialog && reviewDialog.style.display === 'flex') {
+        openActionReviewDialog();
+    }
     
     const playerName = getPlayerName(playerId);
     showMessage(`Updated: ${actionType} for ${playerName}`, 'success');
@@ -3572,49 +3605,7 @@ function applyAction(action) {
     }
 }
 
-function updateActionHistory() {
-    const historyList = document.getElementById('action-history-list');
-    if (!historyList) return;
-    
-    if (!appState.currentGame || !appState.currentGame.actions || appState.currentGame.actions.length === 0) {
-        historyList.innerHTML = '<p class="no-actions">No actions recorded yet</p>';
-        return;
-    }
-    
-    // Show last 10 actions in reverse chronological order
-    const recentActions = appState.currentGame.actions.slice(-10).reverse();
-    
-    historyList.innerHTML = recentActions.map((action, index) => {
-        const reverseIndex = appState.currentGame.actions.length - 1 - index;
-        const playerName = getPlayerName(action.playerId);
-        const actionDisplay = formatActionType(action.actionType);
-        
-        return `
-            <div class="action-item">
-                <div class="action-info">
-                    <div class="action-player">${playerName}</div>
-                    <div class="action-details">${actionDisplay} • ${action.gameMinute}' • ${formatTimestamp(action.timestamp)}</div>
-                </div>
-                <div class="action-controls">
-                    <button class="edit-action-btn" onclick="editAction(${reverseIndex})">
-                        <span class="material-icons">edit</span> Edit
-                    </button>
-                    <button class="delete-action-btn" onclick="deleteAction(${reverseIndex})">
-                        <span class="material-icons">delete</span> Delete
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function updateUndoButton() {
-    const undoBtn = document.getElementById('undo-btn');
-    if (!undoBtn) return;
-    
-    const hasActions = appState.currentGame && appState.currentGame.actions && appState.currentGame.actions.length > 0;
-    undoBtn.disabled = !hasActions;
-}
+// No longer needed - removed updateActionHistory and updateUndoButton functions
 
 function getPlayerName(playerId) {
     if (!playerId) return 'Unknown Player';
