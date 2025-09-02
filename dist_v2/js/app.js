@@ -914,6 +914,7 @@ function setupFormation() {
     const periodDurationInput = document.getElementById('period-duration');
     const substitutionTimeInput = document.getElementById('substitution-time');
     const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
+    const timerNotNeededCheckbox = document.getElementById('timer-not-needed');
 
     const opponentName = opponentNameInput.value.trim();
     const gameDate = gameDateInput.value;
@@ -921,6 +922,7 @@ function setupFormation() {
     const numPeriods = parseInt(numPeriodsInput.value, 10);
     const periodDuration = parseInt(periodDurationInput.value, 10);
     const substitutionTime = parseInt(substitutionTimeInput.value, 10);
+    const timerNotNeeded = timerNotNeededCheckbox.checked;
 
     // Validate inputs
     if (!opponentName) {
@@ -943,8 +945,8 @@ function setupFormation() {
         showMessage('Time per period must be between 1 and 45 minutes.', 'error');
         return;
     }
-    if (isNaN(substitutionTime) || substitutionTime < 1) {
-        showMessage('Substitution time must be at least 1 minute.', 'error');
+    if (!timerNotNeeded && (isNaN(substitutionTime) || substitutionTime < 1)) {
+        showMessage('Substitution time must be at least 1 minute, or check "Timer not needed".', 'error');
         return;
     }
 
@@ -977,7 +979,8 @@ function setupFormation() {
         totalGameTime: 0,
         numPeriods,
         periodDuration: periodDuration * 60,
-        substitutionDuration: substitutionTime * 60,
+        substitutionDuration: timerNotNeeded ? 0 : substitutionTime * 60,
+        timerNotNeeded: timerNotNeeded,
         formation: [],
         substitutes: []
     };
@@ -1836,11 +1839,20 @@ function updatePeriodCounter() {
 
 // Timer Functions
 function updateTimerDisplay() {
-    const minutes = Math.floor(appState.timer.timeLeft / 60);
-    const seconds = appState.timer.timeLeft % 60;
-    
     const timerDisplay = document.getElementById('substitution-timer');
     const timerValue = timerDisplay.querySelector('.timer-value');
+    
+    // If timer not needed, always show 0:00
+    if (appState.currentGame && appState.currentGame.timerNotNeeded) {
+        if (timerValue) {
+            timerValue.textContent = '0:00';
+        }
+        timerDisplay.classList.remove('timer-alert');
+        return;
+    }
+    
+    const minutes = Math.floor(appState.timer.timeLeft / 60);
+    const seconds = appState.timer.timeLeft % 60;
     
     if (timerValue) {
         timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -1865,6 +1877,11 @@ function updateGameTimeDisplay() {
 }
 
 function startTimer() {
+    // Don't start timer if not needed
+    if (appState.currentGame && appState.currentGame.timerNotNeeded) {
+        return;
+    }
+    
     if (!appState.timer.isRunning && appState.timer.timeLeft > 0) {
         appState.timer.isRunning = true;
         appState.timer.interval = setInterval(() => {
