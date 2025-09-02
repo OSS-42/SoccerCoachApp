@@ -116,6 +116,7 @@ function touchEnd(e) {
     const unavailableSlot = dropTarget.closest('.unavailable-slot');
     if (slot) {
         const position = slot.getAttribute('data-position');
+        console.log(`DEBUG: Dropping player ${playerId} to slot with position: ${position}`); // Debug
         const matchType = appState.currentGame.matchType;
         const maxPlayers = parseInt(matchType.split('v')[0]);
         let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
@@ -140,12 +141,14 @@ function touchEnd(e) {
         const x = parseFloat(slot.style.left);
         const y = parseFloat(slot.style.top);
 
+        console.log(`DEBUG: Saving to formation - playerId: ${playerId}, position: ${position}, x: ${x}, y: ${y}`); // Debug
         appState.formationTemp.push({
             playerId,
             position: position, // Always use the field slot position, not player's original position
             x,
             y
         });
+        console.log(`DEBUG: Formation after push:`, appState.formationTemp.map(f => `${f.playerId} at ${f.position}`)); // Debug
 
         slot.innerHTML = '';
         slot.setAttribute('data-player-id', playerId);
@@ -1258,6 +1261,7 @@ function dropToSlot(e) {
     const slot = e.target.closest('.player-slot');
     if (!slot) return;
     const position = slot.getAttribute('data-position');
+    console.log(`DEBUG: Touch drop - slot position: ${position}, slot id: ${slot.id}`); // Debug
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
 
