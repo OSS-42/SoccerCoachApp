@@ -3705,7 +3705,7 @@ function switchTeamTab(tabName) {
 }
 
 // Calculate accumulated player statistics across all completed games
-function calculatePlayerStatistics() {
+function calculatePlayerStatistics(startDate = null, endDate = null) {
     const playerStats = {};
     
     // Initialize stats for all players
@@ -3728,21 +3728,28 @@ function calculatePlayerStatistics() {
     });
     
     // Sum up stats from all completed games
-    const completedGames = appState.games.filter(game => game.isCompleted);
-    console.log('Debug - All games:', appState.games);
-    console.log('Debug - Completed games found:', completedGames);
+    let completedGames = appState.games.filter(game => game.isCompleted);
+    
+    // Apply date filtering if provided
+    if (startDate || endDate) {
+        completedGames = completedGames.filter(game => {
+            if (!game.date) return false;
+            const gameDate = new Date(game.date);
+            
+            if (startDate && gameDate < new Date(startDate)) return false;
+            if (endDate && gameDate > new Date(endDate)) return false;
+            
+            return true;
+        });
+    }
     
     if (completedGames && completedGames.length > 0) {
         completedGames.forEach((game, index) => {
-            console.log(`Debug - Game ${index + 1}:`, game);
-            console.log(`Debug - Game ${index + 1} actions:`, game.actions);
-            
             if (game.actions && game.actions.length > 0) {
                 // Track which players played in this game
                 const playersInGame = new Set();
                 
                 game.actions.forEach(action => {
-                    console.log('Debug - Processing action:', action);
                     if (action.playerId && playerStats[action.playerId]) {
                         playersInGame.add(action.playerId);
                         
@@ -3783,22 +3790,43 @@ function calculatePlayerStatistics() {
                     }
                 });
                 
+                // Update games played count based on formation data
+                // Players are considered to have played if they were in starting formation or subs
+                if (game.formation && game.formation.length > 0) {
+                    game.formation.forEach(player => {
+                        if (player.playerId && playerStats[player.playerId]) {
+                            playersInGame.add(player.playerId);
+                        }
+                    });
+                }
+                
+                // Also include substitute players
+                if (game.substitutePlayers && game.substitutePlayers.length > 0) {
+                    game.substitutePlayers.forEach(playerId => {
+                        if (playerStats[playerId]) {
+                            playersInGame.add(playerId);
+                        }
+                    });
+                }
+                
                 // Update games played count
                 playersInGame.forEach(playerId => {
                     if (playerStats[playerId]) {
                         playerStats[playerId].gamesPlayed++;
                     }
                 });
-            } else {
-                console.log(`Debug - Game ${index + 1} has no actions`);
             }
         });
-    } else {
-        console.log('Debug - No completed games found');
     }
     
-    console.log('Debug - Final player stats:', playerStats);
     return playerStats;
+}
+
+// Clear date filter function
+function clearDateFilter() {
+    document.getElementById('stats-start-date').value = '';
+    document.getElementById('stats-end-date').value = '';
+    renderPlayerStatistics();
 }
 
 // Render player statistics table
@@ -3806,14 +3834,24 @@ function renderPlayerStatistics() {
     const container = document.getElementById('player-statistics-container');
     if (!container) return;
     
-    const playerStats = calculatePlayerStatistics();
-    const completedGames = appState.games.filter(game => game.isCompleted);
-    const hasCompletedGames = completedGames && completedGames.length > 0;
+    // Get date filter values
+    const startDate = document.getElementById('stats-start-date')?.value || null;
+    const endDate = document.getElementById('stats-end-date')?.value || null;
     
-    // Debug information
-    console.log('Debug - Completed games:', completedGames.length);
-    console.log('Debug - Players:', appState.players.length);
-    console.log('Debug - Player stats:', playerStats);
+    const playerStats = calculatePlayerStatistics(startDate, endDate);
+    
+    // Check if we have completed games (considering date filter)
+    let completedGames = appState.games.filter(game => game.isCompleted);
+    if (startDate || endDate) {
+        completedGames = completedGames.filter(game => {
+            if (!game.date) return false;
+            const gameDate = new Date(game.date);
+            if (startDate && gameDate < new Date(startDate)) return false;
+            if (endDate && gameDate > new Date(endDate)) return false;
+            return true;
+        });
+    }
+    const hasCompletedGames = completedGames && completedGames.length > 0;
     
     if (!hasCompletedGames || appState.players.length === 0) {
         container.innerHTML = `
@@ -3853,19 +3891,19 @@ function renderPlayerStatistics() {
             <tbody>
                 ${sortedPlayers.map(player => `
                     <tr>
-                        <td class="jersey-cell">${player.jerseyNumber}</td>
+                        <td>${player.jerseyNumber}</td>
                         <td>${player.name}</td>
-                        <td class="number-cell">${player.gamesPlayed}</td>
-                        <td class="number-cell">${player.goals}</td>
-                        <td class="number-cell">${player.assists}</td>
-                        <td class="number-cell">${player.saves}</td>
-                        <td class="number-cell">${player.passes}</td>
-                        <td class="number-cell">${player.shots}</td>
-                        <td class="number-cell">${player.blocks}</td>
-                        <td class="number-cell">${player.fouls}</td>
-                        <td class="number-cell">${player.yellowCards}</td>
-                        <td class="number-cell">${player.redCards}</td>
-                        <td class="number-cell">${player.ownGoals}</td>
+                        <td>${player.gamesPlayed}</td>
+                        <td>${player.goals}</td>
+                        <td>${player.assists}</td>
+                        <td>${player.saves}</td>
+                        <td>${player.passes}</td>
+                        <td>${player.shots}</td>
+                        <td>${player.blocks}</td>
+                        <td>${player.fouls}</td>
+                        <td>${player.yellowCards}</td>
+                        <td>${player.redCards}</td>
+                        <td>${player.ownGoals}</td>
                     </tr>
                 `).join('')}
             </tbody>

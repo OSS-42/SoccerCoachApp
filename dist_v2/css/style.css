@@ -1617,10 +1617,34 @@ button.no-assist-btn {
 
 /* Statistics Styles */
 .statistics-header {
+    margin-bottom: 20px;
+}
+
+.stats-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-top: 15px;
+    gap: 20px;
+}
+
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.date-filter label {
+    font-size: 14px;
+    color: #666;
+}
+
+.date-filter input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
 }
 
 .stats-info {
@@ -1644,8 +1668,19 @@ button.no-assist-btn {
 .stats-table th,
 .stats-table td {
     padding: 12px;
-    text-align: left;
+    text-align: center;
     border-bottom: 1px solid #eee;
+}
+
+.stats-table th:nth-child(1),
+.stats-table td:nth-child(1) {
+    font-weight: bold;
+    color: #2196f3;
+}
+
+.stats-table th:nth-child(2),
+.stats-table td:nth-child(2) {
+    text-align: left;
 }
 
 .stats-table th {
@@ -1658,15 +1693,6 @@ button.no-assist-btn {
     background: #f8f9fa;
 }
 
-.stats-table .jersey-cell {
-    text-align: center;
-    font-weight: bold;
-    color: #2196f3;
-}
-
-.stats-table .number-cell {
-    text-align: center;
-}
 
 .no-stats-message {
     text-align: center;
@@ -1684,10 +1710,14 @@ button.no-assist-btn {
         font-size: 14px;
     }
     
-    .statistics-header {
+    .stats-controls {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
+        align-items: stretch;
+        gap: 15px;
+    }
+    
+    .date-filter {
+        justify-content: center;
     }
     
     .stats-table {

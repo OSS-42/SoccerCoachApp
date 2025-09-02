@@ -93,7 +93,18 @@
                 <div id="statistics-tab-content" class="tab-content">
                     <div class="statistics-header">
                         <h2>Player Statistics</h2>
-                        <span class="stats-info">Accumulated across all completed games</span>
+                        <div class="stats-controls">
+                            <div class="date-filter">
+                                <label for="stats-start-date">From:</label>
+                                <input type="date" id="stats-start-date" onchange="renderPlayerStatistics()">
+                                <label for="stats-end-date">To:</label>
+                                <input type="date" id="stats-end-date" onchange="renderPlayerStatistics()">
+                                <button class="secondary-btn" onclick="clearDateFilter()">Clear</button>
+                            </div>
+                            <button class="action-btn" onclick="showScreen('reports')">
+                                <span class="material-icons">assessment</span> View Reports
+                            </button>
+                        </div>
                     </div>
                     <div id="player-statistics-container" class="statistics-container">
                         <!-- Player statistics will be displayed here -->
