@@ -3150,6 +3150,12 @@ function confirmClearData() {
         updatePlayerCounter();
         updateGameReportCounter();
         renderReportsList(); // Update reports list to show empty state
+        
+        // Clear statistics display
+        const statsContainer = document.getElementById('stats-container');
+        if (statsContainer) {
+            statsContainer.innerHTML = '<div class="empty-state">No statistics available - play some games first!</div>';
+        }
 
         showMessage('All data has been cleared. The app has been reset.', 'success');
     };
@@ -3162,6 +3168,76 @@ function confirmClearData() {
 // Modified clearAppData to trigger dialog instead of confirm
 function clearAppData() {
     openClearDataDialog();
+}
+
+// Function to reset only player statistics (keep players, clear game data)
+function resetPlayerStatistics() {
+    let resetDialog = document.getElementById('reset-stats-dialog');
+    if (!resetDialog) {
+        resetDialog = document.createElement('div');
+        resetDialog.id = 'reset-stats-dialog';
+        resetDialog.className = 'dialog';
+        document.getElementById('app').appendChild(resetDialog);
+    }
+    
+    resetDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Reset Player Statistics</h2>
+            <p>This will clear all game data and statistics but keep your players and team. Are you sure?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeResetStatsDialog()">Cancel</button>
+                <button class="warning-btn" onclick="confirmResetStatistics()">Reset Statistics</button>
+            </div>
+        </div>
+    `;
+    
+    resetDialog.style.display = 'flex';
+    resetDialog.classList.add('active');
+}
+
+function closeResetStatsDialog() {
+    const resetDialog = document.getElementById('reset-stats-dialog');
+    if (resetDialog) {
+        resetDialog.style.display = 'none';
+        resetDialog.classList.remove('active');
+    }
+}
+
+function confirmResetStatistics() {
+    closeResetStatsDialog();
+    
+    if (!db) {
+        showMessage('Database not initialized', 'error');
+        return;
+    }
+
+    const transaction = db.transaction(['games'], 'readwrite');
+    const gamesStore = transaction.objectStore('games');
+
+    // Clear only games store (keep players, team, settings)
+    gamesStore.clear();
+
+    transaction.oncomplete = () => {
+        // Reset only games in app state
+        appState.games = [];
+        appState.currentGame = null;
+
+        // Update UI
+        updateGameReportCounter();
+        renderReportsList();
+        
+        // Clear statistics display
+        const statsContainer = document.getElementById('stats-container');
+        if (statsContainer) {
+            statsContainer.innerHTML = '<div class="empty-state">No statistics available - play some games first!</div>';
+        }
+
+        showMessage('Player statistics have been reset successfully', 'success');
+    };
+
+    transaction.onerror = () => {
+        showMessage('Failed to reset statistics', 'error');
+    };
 }
 
 // Export/Import functions for moving data between devices

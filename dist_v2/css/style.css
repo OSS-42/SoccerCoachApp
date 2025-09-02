@@ -430,6 +430,24 @@ input:checked + .slider:before {
     box-sizing: border-box;
 }
 
+.danger-btn {
+    color: white !important;
+    background-color: #e53e3e !important;
+}
+
+.danger-btn:hover {
+    background-color: #c53030 !important;
+}
+
+.warning-btn {
+    color: white !important;
+    background-color: #f5a623 !important;
+}
+
+.warning-btn:hover {
+    background-color: #e09400 !important;
+}
+
 /* Team Setup Styles */
 .team-name-section {
     margin-bottom: 20px;
