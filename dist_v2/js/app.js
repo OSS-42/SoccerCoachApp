@@ -3433,9 +3433,14 @@ function saveEditedAction(actionIndex) {
     const actionType = document.getElementById('edit-action-type').value;
     const gameMinute = parseInt(document.getElementById('edit-action-minute').value);
     
-    if (!playerId || !actionType || isNaN(gameMinute)) {
+    if (!playerId || !actionType || isNaN(gameMinute) || gameMinute < 1) {
         showMessage('Please fill all fields correctly', 'error');
         return;
+    }
+    
+    // Validate game minute against game settings
+    if (!validateGameMinute(gameMinute)) {
+        return; // Error message is shown in validateGameMinute function
     }
     
     const oldAction = appState.currentGame.actions[actionIndex];
@@ -3604,6 +3609,33 @@ function applyAction(action) {
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
             break;
     }
+}
+
+// Game minute validation function
+function validateGameMinute(gameMinute) {
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
+        return false;
+    }
+    
+    const periodDuration = appState.currentGame.periodDuration || 15; // Default to 15 minutes
+    const numPeriods = appState.currentGame.numPeriods || 2; // Default to 2 periods
+    const maxGameMinutes = periodDuration * numPeriods;
+    
+    if (gameMinute > maxGameMinutes) {
+        showMessage(`Game minute cannot exceed ${maxGameMinutes} minutes (${numPeriods} periods × ${periodDuration} min)`, 'error');
+        return false;
+    }
+    
+    if (gameMinute > periodDuration) {
+        const period = Math.ceil(gameMinute / periodDuration);
+        if (period > numPeriods) {
+            showMessage(`Minute ${gameMinute} would be in period ${period}, but game only has ${numPeriods} periods`, 'error');
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // No longer needed - removed updateActionHistory and updateUndoButton functions
