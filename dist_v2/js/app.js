@@ -2745,6 +2745,13 @@ function exportReport(gameId, format) {
                     align-items: flex-start;
                     min-width: 520px;
                 }
+                @media screen and (max-width: 768px) {
+                    .formation-container-report {
+                        flex-direction: column;
+                        align-items: center;
+                        min-width: auto;
+                    }
+                }
                 .formation-field-report {
                     width: 300px; height: 400px;
                     background: url('img/field-400.png') no-repeat center center;
