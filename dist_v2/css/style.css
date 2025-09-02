@@ -1634,17 +1634,22 @@ button.no-assist-btn {
 
 .stats-report-btn {
     display: flex !important;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+    min-width: auto !important;
 }
 
 .stats-report-btn .material-icons {
-    font-size: 18px;
+    font-size: 18px !important;
+    line-height: 1 !important;
 }
 
 .stats-report-btn .btn-text {
-    display: inline;
+    display: inline !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
 }
 
 .stats-controls {
@@ -1775,16 +1780,28 @@ button.no-assist-btn {
     .date-filter {
         justify-content: center;
         grid-row: 1;
-    }
-    
-    .date-filter {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
     }
     
     .date-filter .stats-period-info-inline {
         display: none;
+    }
+    
+    .date-filter input[type="date"] {
+        min-width: 120px;
+        font-size: 14px;
+    }
+    
+    .date-filter label {
+        font-size: 14px;
+        white-space: nowrap;
+    }
+    
+    .date-filter .secondary-btn {
+        font-size: 14px;
+        padding: 6px 12px;
     }
     
     .stats-controls-row-2::before {
