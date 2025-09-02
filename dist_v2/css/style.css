@@ -1487,52 +1487,32 @@ button.no-assist-btn {
     gap: 20px;
 }
 
-/* Action Management Controls */
-.action-management {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    justify-content: center;
-}
-
-.action-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.undo-btn {
+/* Action buttons integrated with control buttons */
+.control-btn.undo-btn {
     background-color: #ff5722;
     color: white;
 }
 
-.undo-btn:disabled {
+.control-btn.undo-btn:disabled {
     background-color: #ccc;
     color: #666;
     cursor: not-allowed;
 }
 
-.undo-btn:hover:not(:disabled) {
+.control-btn.undo-btn:hover:not(:disabled) {
     background-color: #e64919;
 }
 
-.history-btn {
+.control-btn.history-btn {
     background-color: #2196f3;
     color: white;
 }
 
-.history-btn:hover {
+.control-btn.history-btn:hover {
     background-color: #1976d2;
 }
 
-.history-btn.active {
+.control-btn.history-btn.active {
     background-color: #1976d2;
 }
 
@@ -1671,19 +1651,7 @@ button.no-assist-btn {
         gap: 10px;
     }
     
-    /* Mobile action management adjustments */
-    .action-management {
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 8px;
-    }
-    
-    .action-btn {
-        padding: 10px 15px;
-        font-size: 16px;
-        min-height: 44px; /* Apple's recommended touch target size */
-    }
-    
+    /* Mobile responsive adjustments for action history */
     .action-history-panel {
         margin-top: 8px;
         max-height: 250px;
