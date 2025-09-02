@@ -1489,12 +1489,12 @@ button.no-assist-btn {
 
 /* Action Review button */
 .control-btn.action-review-btn {
-    background-color: #9c27b0;
+    background-color: #000000;
     color: white;
 }
 
 .control-btn.action-review-btn:hover {
-    background-color: #7b1fa2;
+    background-color: #333333;
 }
 
 /* Action Review Dialog */
@@ -1522,18 +1522,21 @@ button.no-assist-btn {
 
 .action-info {
     flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .action-player {
     font-weight: bold;
     color: #333;
     font-size: 14px;
+    min-width: 120px;
 }
 
 .action-details {
     font-size: 12px;
     color: #666;
-    margin-top: 4px;
 }
 
 .action-controls {

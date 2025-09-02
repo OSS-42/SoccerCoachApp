@@ -204,7 +204,7 @@
                     <button class="control-btn end-game-btn" onclick="confirmEndGame()">
                         End Game
                     </button>
-                    <button class="control-btn action-review-btn" onclick="openActionReviewDialog()" id="action-review-btn">
+                    <button class="control-btn action-review-btn" onclick="window.openActionReviewDialog ? window.openActionReviewDialog() : openActionReviewDialog()" id="action-review-btn">
                         <span class="material-icons">rule</span> Action Review
                     </button>
                 </div>

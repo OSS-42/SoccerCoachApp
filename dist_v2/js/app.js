@@ -3259,7 +3259,7 @@ function handleFileImport(event) {
 }
 
 // Action Review Dialog Functions
-function openActionReviewDialog() {
+window.openActionReviewDialog = function openActionReviewDialog() {
     if (!appState.currentGame) {
         showMessage('No active game to review actions', 'error');
         return;
@@ -3287,7 +3287,7 @@ function openActionReviewDialog() {
                 <div class="action-item">
                     <div class="action-info">
                         <div class="action-player">${playerName}</div>
-                        <div class="action-details">${actionDisplay} • ${action.gameMinute}' • ${formatTimestamp(action.timestamp)}</div>
+                        <div class="action-details">${actionDisplay} • ${action.gameMinute}'</div>
                     </div>
                     <div class="action-controls">
                         <button class="action-icon-btn" onclick="editAction(${index})" title="Edit Action">
@@ -3318,7 +3318,7 @@ function openActionReviewDialog() {
     reviewDialog.classList.add('active');
 }
 
-function closeActionReviewDialog() {
+window.closeActionReviewDialog = function closeActionReviewDialog() {
     const dialog = document.getElementById('action-review-dialog');
     if (dialog) {
         dialog.style.display = 'none';
