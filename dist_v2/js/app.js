@@ -3627,19 +3627,25 @@ function validateGameMinute(gameMinute) {
         return false;
     }
     
-    const periodDuration = appState.currentGame.periodDuration || 15;
+    // Convert stored seconds back to minutes for validation
+    const periodDurationMinutes = Math.floor((appState.currentGame.periodDuration || 900) / 60);
     const numPeriods = appState.currentGame.numPeriods || 2;
-    const maxGameMinutes = periodDuration * numPeriods;
+    const maxGameMinutes = periodDurationMinutes * numPeriods;
     
-    console.log('Game settings:', { periodDuration, numPeriods, maxGameMinutes });
+    console.log('Game settings:', { 
+        periodDurationSeconds: appState.currentGame.periodDuration,
+        periodDurationMinutes, 
+        numPeriods, 
+        maxGameMinutes 
+    });
     
     if (gameMinute > maxGameMinutes) {
-        showMessage(`Game minute cannot exceed ${maxGameMinutes} minutes (${numPeriods} periods × ${periodDuration} min)`, 'error');
+        showMessage(`Game minute cannot exceed ${maxGameMinutes} minutes (${numPeriods} periods × ${periodDurationMinutes} min)`, 'error');
         return false;
     }
     
     // Check if the minute belongs to a valid period
-    const currentPeriod = Math.ceil(gameMinute / periodDuration);
+    const currentPeriod = Math.ceil(gameMinute / periodDurationMinutes);
     if (currentPeriod > numPeriods) {
         showMessage(`Minute ${gameMinute} would be in period ${currentPeriod}, but game only has ${numPeriods} periods`, 'error');
         return false;
