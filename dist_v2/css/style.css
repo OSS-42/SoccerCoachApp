@@ -1529,12 +1529,22 @@ button.no-assist-btn {
     align-items: flex-start;
 }
 
-/* Mobile: Stack substitutes below field in report */
-@media screen and (max-width: 768px) {
+/* Mobile: Stack substitutes below field in report - increased breakpoint */
+@media screen and (max-width: 1024px) {
     .formation-container-report {
         flex-direction: column !important;
         align-items: center !important;
         min-width: auto !important;
+    }
+}
+
+/* Force mobile layout for very small screens */
+@media screen and (max-width: 500px) {
+    .formation-container-report {
+        flex-direction: column !important;
+        align-items: center !important;
+        min-width: auto !important;
+        width: 100% !important;
     }
 }
 

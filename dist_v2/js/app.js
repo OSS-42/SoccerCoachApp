@@ -2547,7 +2547,7 @@ function viewReport(gameId) {
         formationHTML = `
             <div class="report-formation">
                 <h3>Starting Formation (${game.matchType})</h3>
-                <div class="formation-container-report">
+                <div class="formation-container-report" ${window.innerWidth <= 1024 ? 'style="flex-direction: column !important; align-items: center !important; min-width: auto !important;"' : ''}>
                     <div class="formation-field-report">
                         ${game.formation.map(f => {
                             const player = appState.players.find(p => p.id === f.playerId);
@@ -2745,11 +2745,19 @@ function exportReport(gameId, format) {
                     align-items: flex-start;
                     min-width: 520px;
                 }
-                @media screen and (max-width: 768px) {
+                @media screen and (max-width: 1024px) {
                     .formation-container-report {
                         flex-direction: column !important;
                         align-items: center !important;
                         min-width: auto !important;
+                    }
+                }
+                @media screen and (max-width: 500px) {
+                    .formation-container-report {
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        min-width: auto !important;
+                        width: 100% !important;
                     }
                 }
                 .formation-field-report {
