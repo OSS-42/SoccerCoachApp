@@ -2550,6 +2550,15 @@ function viewReport(gameId) {
         .map(p => p.name)
         .join(', ') || 'N/A';
 
+    // Generate missed players line
+    const missedLine = (game.unavailablePlayers || [])
+        .map(playerId => {
+            const player = appState.players.find(p => p.id === playerId);
+            return player ? player.name : null;
+        })
+        .filter(name => name)
+        .join(', ') || 'N/A';
+
     // Formation Section with correct stats and player names
     let formationHTML = '';
     if (game.formation && game.formation.length > 0) {
@@ -2689,6 +2698,7 @@ function viewReport(gameId) {
                 </table>
             </div>
             <div class="report-footer">
+                <div><strong>Missed the game:</strong> ${missedLine}</div>
                 <div><strong>Late to the game:</strong> ${lateLine}</div>
             </div>
             <div class="report-actions">
@@ -3816,15 +3826,18 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
                     game.unavailablePlayers.forEach(playerId => {
                         if (playerStats[playerId]) {
                             playerStats[playerId].missedGames++;
+                            console.log(`Missed game: ${playerStats[playerId].name} in game ${game.id}`);
                         }
                     });
                 }
                 
                 // Count late to game actions (only when explicitly marked)
                 if (game.actions && game.actions.length > 0) {
-                    game.actions.forEach(action => {
-                        if (action.actionType === 'late_to_game' && action.playerId && playerStats[action.playerId]) {
+                    const lateActions = game.actions.filter(action => action.actionType === 'late_to_game');
+                    lateActions.forEach(action => {
+                        if (action.playerId && playerStats[action.playerId]) {
                             playerStats[action.playerId].lateToGame++;
+                            console.log(`Late to game: ${playerStats[action.playerId].name} in game ${game.id}`);
                         }
                     });
                 }
