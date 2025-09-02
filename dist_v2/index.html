@@ -18,7 +18,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.43b</h1>
+                <h1>Soccer Coach Tracker v1.9.44</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -184,6 +184,29 @@
                         </div>
                     </div>
                     <div class="period-counter" id="period-counter">Period 1 of 4</div>
+                    
+                    <!-- Action Management Controls -->
+                    <div class="action-management">
+                        <button class="action-btn undo-btn" onclick="undoLastAction()" id="undo-btn" disabled>
+                            <span class="material-icons">undo</span> Undo Last
+                        </button>
+                        <button class="action-btn history-btn" onclick="toggleActionHistory()" id="history-btn">
+                            <span class="material-icons">history</span> Recent Actions
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Actions Panel -->
+                <div class="action-history-panel" id="action-history-panel" style="display: none;">
+                    <div class="action-history-header">
+                        <h3>Recent Actions</h3>
+                        <button class="close-panel-btn" onclick="toggleActionHistory()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                    <div class="action-history-list" id="action-history-list">
+                        <p class="no-actions">No actions recorded yet</p>
+                    </div>
                 </div>
             </div>
             <div class="controls-row">

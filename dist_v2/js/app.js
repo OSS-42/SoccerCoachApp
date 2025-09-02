@@ -2180,6 +2180,10 @@ function recordAction(actionType, specificPlayerId = null) {
     
     saveAppData();
     
+    // Update action history and undo button
+    updateActionHistory();
+    updateUndoButton();
+    
     closePlayerActionDialog();
 }
 
@@ -3254,4 +3258,387 @@ function handleFileImport(event) {
     };
     
     reader.readAsText(file);
+}
+
+// Action History and Undo Functions
+function undoLastAction() {
+    if (!appState.currentGame || !appState.currentGame.actions || appState.currentGame.actions.length === 0) {
+        showMessage('No actions to undo', 'error');
+        return;
+    }
+    
+    const lastAction = appState.currentGame.actions[appState.currentGame.actions.length - 1];
+    
+    // Remove the action from the array
+    appState.currentGame.actions.pop();
+    
+    // Reverse the action effects
+    reverseAction(lastAction);
+    
+    // Save state
+    saveAppData();
+    
+    // Update UI
+    updateActionHistory();
+    updateUndoButton();
+    renderPlayerGrid();
+    
+    // Show success message
+    const playerName = getPlayerName(lastAction.playerId);
+    showMessage(`Undone: ${lastAction.actionType} for ${playerName}`, 'success');
+}
+
+function toggleActionHistory() {
+    const panel = document.getElementById('action-history-panel');
+    const button = document.getElementById('history-btn');
+    
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        button.classList.add('active');
+        updateActionHistory();
+    } else {
+        panel.style.display = 'none';
+        button.classList.remove('active');
+    }
+}
+
+function deleteAction(actionIndex) {
+    if (!appState.currentGame || !appState.currentGame.actions || actionIndex < 0 || actionIndex >= appState.currentGame.actions.length) {
+        showMessage('Invalid action to delete', 'error');
+        return;
+    }
+    
+    const action = appState.currentGame.actions[actionIndex];
+    
+    // Reverse the action effects
+    reverseAction(action);
+    
+    // Remove from array
+    appState.currentGame.actions.splice(actionIndex, 1);
+    
+    // Save and update
+    saveAppData();
+    updateActionHistory();
+    updateUndoButton();
+    renderPlayerGrid();
+    
+    const playerName = getPlayerName(action.playerId);
+    showMessage(`Deleted: ${action.actionType} for ${playerName}`, 'success');
+}
+
+function editAction(actionIndex) {
+    if (!appState.currentGame || !appState.currentGame.actions || actionIndex < 0 || actionIndex >= appState.currentGame.actions.length) {
+        showMessage('Invalid action to edit', 'error');
+        return;
+    }
+    
+    const action = appState.currentGame.actions[actionIndex];
+    
+    // Create edit dialog
+    let editDialog = document.getElementById('edit-action-dialog');
+    if (!editDialog) {
+        editDialog = document.createElement('div');
+        editDialog.id = 'edit-action-dialog';
+        editDialog.className = 'dialog';
+        document.getElementById('app').appendChild(editDialog);
+    }
+    
+    const availablePlayers = appState.players.filter(p => p.active);
+    const currentPlayer = appState.players.find(p => p.id === action.playerId);
+    
+    editDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Edit Action</h2>
+            <div class="edit-action-form">
+                <div class="form-group">
+                    <label>Player:</label>
+                    <select id="edit-action-player">
+                        ${availablePlayers.map(p => 
+                            `<option value="${p.id}" ${p.id === action.playerId ? 'selected' : ''}>
+                                #${p.jerseyNumber} ${p.name}
+                            </option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Action Type:</label>
+                    <select id="edit-action-type">
+                        <option value="goal" ${action.actionType === 'goal' ? 'selected' : ''}>Goal</option>
+                        <option value="assist" ${action.actionType === 'assist' ? 'selected' : ''}>Assist</option>
+                        <option value="save" ${action.actionType === 'save' ? 'selected' : ''}>Save</option>
+                        <option value="goals_allowed" ${action.actionType === 'goals_allowed' ? 'selected' : ''}>Goal Allowed</option>
+                        <option value="yellow_card" ${action.actionType === 'yellow_card' ? 'selected' : ''}>Yellow Card</option>
+                        <option value="red_card" ${action.actionType === 'red_card' ? 'selected' : ''}>Red Card</option>
+                        <option value="fault" ${action.actionType === 'fault' ? 'selected' : ''}>Fault</option>
+                        <option value="blocked_shot" ${action.actionType === 'blocked_shot' ? 'selected' : ''}>Blocked Shot</option>
+                        <option value="late_to_game" ${action.actionType === 'late_to_game' ? 'selected' : ''}>Late to Game</option>
+                        <option value="own_goal" ${action.actionType === 'own_goal' ? 'selected' : ''}>Own Goal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Game Minute:</label>
+                    <input type="number" id="edit-action-minute" value="${action.gameMinute}" min="0" max="120">
+                </div>
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeEditActionDialog()">Cancel</button>
+                <button class="primary-btn" onclick="saveEditedAction(${actionIndex})">Save Changes</button>
+            </div>
+        </div>
+    `;
+    
+    editDialog.style.display = 'flex';
+    editDialog.classList.add('active');
+}
+
+function closeEditActionDialog() {
+    const dialog = document.getElementById('edit-action-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+    }
+}
+
+function saveEditedAction(actionIndex) {
+    const playerId = document.getElementById('edit-action-player').value;
+    const actionType = document.getElementById('edit-action-type').value;
+    const gameMinute = parseInt(document.getElementById('edit-action-minute').value);
+    
+    if (!playerId || !actionType || isNaN(gameMinute)) {
+        showMessage('Please fill all fields correctly', 'error');
+        return;
+    }
+    
+    const oldAction = appState.currentGame.actions[actionIndex];
+    
+    // Reverse old action effects
+    reverseAction(oldAction);
+    
+    // Update the action
+    appState.currentGame.actions[actionIndex] = {
+        ...oldAction,
+        playerId: playerId,
+        actionType: actionType,
+        gameMinute: gameMinute
+    };
+    
+    // Apply new action effects
+    applyAction(appState.currentGame.actions[actionIndex]);
+    
+    // Save and update
+    saveAppData();
+    updateActionHistory();
+    renderPlayerGrid();
+    closeEditActionDialog();
+    
+    const playerName = getPlayerName(playerId);
+    showMessage(`Updated: ${actionType} for ${playerName}`, 'success');
+}
+
+function reverseAction(action) {
+    if (!action.playerId && action.actionType !== 'own_goal') return;
+    
+    const playerIndex = action.playerId ? appState.players.findIndex(p => p.id === action.playerId) : -1;
+    
+    switch (action.actionType) {
+        case 'goal':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goals = Math.max(0, appState.players[playerIndex].stats.goals - 1);
+            }
+            appState.currentGame.homeScore = Math.max(0, appState.currentGame.homeScore - 1);
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+        case 'assist':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.assists = Math.max(0, appState.players[playerIndex].stats.assists - 1);
+            }
+            break;
+        case 'save':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.saves = Math.max(0, appState.players[playerIndex].stats.saves - 1);
+            }
+            break;
+        case 'goals_allowed':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goalsAllowed = Math.max(0, appState.players[playerIndex].stats.goalsAllowed - 1);
+            }
+            break;
+        case 'yellow_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.yellowCards = Math.max(0, appState.players[playerIndex].stats.yellowCards - 1);
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem && appState.players[playerIndex].stats.yellowCards === 0) {
+                    playerGridItem.classList.remove('yellow-card');
+                }
+            }
+            break;
+        case 'red_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.redCards = Math.max(0, appState.players[playerIndex].stats.redCards - 1);
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem && appState.players[playerIndex].stats.redCards === 0) {
+                    playerGridItem.classList.remove('red-card');
+                    if (appState.players[playerIndex].stats.yellowCards > 0) {
+                        playerGridItem.classList.add('yellow-card');
+                    }
+                }
+            }
+            break;
+        case 'fault':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.faults = Math.max(0, appState.players[playerIndex].stats.faults - 1);
+            }
+            break;
+        case 'blocked_shot':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.blockedShots = Math.max(0, appState.players[playerIndex].stats.blockedShots - 1);
+            }
+            break;
+        case 'own_goal':
+            appState.currentGame.homeScore = Math.max(0, appState.currentGame.homeScore - 1);
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+    }
+}
+
+function applyAction(action) {
+    if (!action.playerId && action.actionType !== 'own_goal') return;
+    
+    const playerIndex = action.playerId ? appState.players.findIndex(p => p.id === action.playerId) : -1;
+    
+    if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
+        appState.players[playerIndex].stats = {
+            goals: 0, assists: 0, saves: 0, goalsAllowed: 0,
+            yellowCards: 0, redCards: 0, faults: 0, blockedShots: 0
+        };
+    }
+    
+    switch (action.actionType) {
+        case 'goal':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goals++;
+            }
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+        case 'assist':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.assists++;
+            }
+            break;
+        case 'save':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.saves++;
+            }
+            break;
+        case 'goals_allowed':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goalsAllowed++;
+            }
+            break;
+        case 'yellow_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.yellowCards++;
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem) {
+                    playerGridItem.classList.add('yellow-card');
+                }
+            }
+            break;
+        case 'red_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.redCards++;
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem) {
+                    playerGridItem.classList.remove('yellow-card');
+                    playerGridItem.classList.add('red-card');
+                }
+            }
+            break;
+        case 'fault':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.faults++;
+            }
+            break;
+        case 'blocked_shot':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.blockedShots++;
+            }
+            break;
+        case 'own_goal':
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+    }
+}
+
+function updateActionHistory() {
+    const historyList = document.getElementById('action-history-list');
+    if (!historyList) return;
+    
+    if (!appState.currentGame || !appState.currentGame.actions || appState.currentGame.actions.length === 0) {
+        historyList.innerHTML = '<p class="no-actions">No actions recorded yet</p>';
+        return;
+    }
+    
+    // Show last 10 actions in reverse chronological order
+    const recentActions = appState.currentGame.actions.slice(-10).reverse();
+    
+    historyList.innerHTML = recentActions.map((action, index) => {
+        const reverseIndex = appState.currentGame.actions.length - 1 - index;
+        const playerName = getPlayerName(action.playerId);
+        const actionDisplay = formatActionType(action.actionType);
+        
+        return `
+            <div class="action-item">
+                <div class="action-info">
+                    <div class="action-player">${playerName}</div>
+                    <div class="action-details">${actionDisplay} • ${action.gameMinute}' • ${formatTimestamp(action.timestamp)}</div>
+                </div>
+                <div class="action-controls">
+                    <button class="edit-action-btn" onclick="editAction(${reverseIndex})">
+                        <span class="material-icons">edit</span> Edit
+                    </button>
+                    <button class="delete-action-btn" onclick="deleteAction(${reverseIndex})">
+                        <span class="material-icons">delete</span> Delete
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateUndoButton() {
+    const undoBtn = document.getElementById('undo-btn');
+    if (!undoBtn) return;
+    
+    const hasActions = appState.currentGame && appState.currentGame.actions && appState.currentGame.actions.length > 0;
+    undoBtn.disabled = !hasActions;
+}
+
+function getPlayerName(playerId) {
+    if (!playerId) return 'Unknown Player';
+    const player = appState.players.find(p => p.id === playerId);
+    return player ? `#${player.jerseyNumber} ${player.name}` : 'Unknown Player';
+}
+
+function formatActionType(actionType) {
+    const typeMap = {
+        'goal': '⚽ Goal',
+        'assist': '👟 Assist',
+        'save': '🧤 Save',
+        'goals_allowed': '🔴 Goal Allowed',
+        'yellow_card': '🟨 Yellow Card',
+        'red_card': '🟥 Red Card',
+        'fault': '⚠️ Fault',
+        'blocked_shot': '❌ Blocked Shot',
+        'late_to_game': '⏰ Late to Game',
+        'own_goal': '⚽ Own Goal'
+    };
+    return typeMap[actionType] || actionType;
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
