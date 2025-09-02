@@ -1440,6 +1440,8 @@ function startGameFromFormation() {
     // Check if user wants to save this formation as default
     const saveDefaultCheckbox = document.getElementById('save-default-formation');
     if (saveDefaultCheckbox && saveDefaultCheckbox.checked) {
+        // Debug formation before saving
+        console.log('formationTemp before save:', appState.formationTemp.map(f => `${f.playerId} at ${f.position}`));
         // Save current formation as default
         appState.defaultFormation = [...formation];
         console.log('Saving NEW default formation with positions:', appState.defaultFormation.map(f => `${f.playerId} at ${f.position}`));
