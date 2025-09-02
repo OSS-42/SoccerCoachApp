@@ -128,6 +128,7 @@ function touchEnd(e) {
 
         const existingPlayerId = slot.getAttribute('data-player-id');
         if (existingPlayerId && existingPlayerId !== playerId) {
+            // Remove existing player from formation and return to sidebar
             appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
             const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
             if (oldPlayer) {
@@ -1270,6 +1271,7 @@ function dropToSlot(e) {
 
     const existingPlayerId = slot.getAttribute('data-player-id');
     if (existingPlayerId && existingPlayerId !== playerId) {
+        // Remove existing player from formation and return to sidebar  
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
         const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
         if (oldPlayer) {
@@ -1432,6 +1434,57 @@ function backToGameSetup() {
     showScreen('game-setup');
 }
 
+function clearFormation() {
+    // Clear all players from formation and return them to sidebar
+    const placedPlayers = document.querySelectorAll('.player-number-placed');
+    
+    placedPlayers.forEach(placedPlayer => {
+        const playerId = placedPlayer.getAttribute('data-player-id');
+        
+        // Remove from formation
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        
+        // Re-enable in sidebar
+        const sidebarPlayer = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (sidebarPlayer) {
+            sidebarPlayer.classList.remove('disabled');
+            sidebarPlayer.draggable = true;
+        }
+        
+        // Clear the slot
+        const slot = placedPlayer.closest('.player-slot');
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    });
+    
+    // Clear unavailable players too
+    appState.unavailablePlayers = [];
+    const unavailableSlots = document.querySelectorAll('.unavailable-slot');
+    unavailableSlots.forEach(slot => {
+        const playerId = slot.getAttribute('data-player-id');
+        if (playerId) {
+            const sidebarPlayer = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+            if (sidebarPlayer) {
+                sidebarPlayer.classList.remove('disabled');
+                sidebarPlayer.draggable = true;
+            }
+        }
+        slot.innerHTML = '';
+        slot.removeAttribute('data-player-id');
+        slot.classList.remove('occupied');
+    });
+    
+    // Re-setup drag handlers
+    setupPlayerDrag();
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
+    
+    showMessage('Formation cleared', 'success');
+}
+
 function startGameFromFormation() {
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
@@ -1440,11 +1493,8 @@ function startGameFromFormation() {
     // Check if user wants to save this formation as default
     const saveDefaultCheckbox = document.getElementById('save-default-formation');
     if (saveDefaultCheckbox && saveDefaultCheckbox.checked) {
-        // Debug formation before saving
-        console.log('formationTemp before save:', appState.formationTemp.map(f => `${f.playerId} at ${f.position}`));
         // Save current formation as default
         appState.defaultFormation = [...formation];
-        console.log('Saving NEW default formation with positions:', appState.defaultFormation.map(f => `${f.playerId} at ${f.position}`));
         showMessage('Formation saved as default', 'success');
     }
 

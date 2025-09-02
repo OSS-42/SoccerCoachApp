@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.72</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.72">
+    <title>Soccer Coach Tracker v1.9.73</title>
+    <link rel="stylesheet" href="css/style.css?v=1.9.73">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.72</h1>
+                <h1>Soccer Coach Tracker v1.9.73</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -194,7 +194,10 @@
                         Save this formation as default for future games
                     </label>
                 </div>
-                <button class="primary-btn full-width-btn" onclick="startGameFromFormation()">Start Game</button>
+                <div class="formation-buttons">
+                    <button class="secondary-btn" onclick="clearFormation()">Clear Formation</button>
+                    <button class="primary-btn" onclick="startGameFromFormation()">Start Game</button>
+                </div>
             </div>
         </div>
 
@@ -517,5 +520,5 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=1.9.72"></script>
+    <script src="js/app.js?v=1.9.73"></script>
 </html>

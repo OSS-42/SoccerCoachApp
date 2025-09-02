@@ -1288,6 +1288,17 @@ input:checked + .slider:before {
     border-radius: 4px;
 }
 
+.formation-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.formation-buttons .secondary-btn,
+.formation-buttons .primary-btn {
+    flex: 1;
+}
+
 .checkbox-container {
     display: flex;
     align-items: center;
