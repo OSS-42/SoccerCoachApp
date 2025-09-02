@@ -999,7 +999,7 @@ function renderFormationSetup() {
     
     // Initialize formation temp - load default if exists (only field positions, not unavailable status)
     if (appState.defaultFormation && appState.defaultFormation.length > 0) {
-        console.log('Loading default formation:', appState.defaultFormation);
+        console.log('Loading default formation with positions:', appState.defaultFormation.map(f => `${f.playerId} at ${f.position}`));
         appState.formationTemp = [...appState.defaultFormation];
     } else {
         appState.formationTemp = [];
@@ -1442,7 +1442,7 @@ function startGameFromFormation() {
     if (saveDefaultCheckbox && saveDefaultCheckbox.checked) {
         // Save current formation as default
         appState.defaultFormation = [...formation];
-        console.log('Saved default formation:', appState.defaultFormation);
+        console.log('Saving NEW default formation with positions:', appState.defaultFormation.map(f => `${f.playerId} at ${f.position}`));
         showMessage('Formation saved as default', 'success');
     }
 
