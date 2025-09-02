@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.47</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.47">
+    <title>Soccer Coach Tracker v1.9.48</title>
+    <link rel="stylesheet" href="css/style.css?v=1.9.48">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <!-- Main Menu Screen -->
         <div id="main-screen" class="screen active">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.47</h1>
+                <h1>Soccer Coach Tracker v1.9.48</h1>
             </div>
             <div class="main-menu">
                 <div class="menu-row">
@@ -93,9 +93,6 @@
                 <div id="statistics-tab-content" class="tab-content">
                     <div class="statistics-header">
                         <h2>Player Statistics</h2>
-                        <div id="stats-period-info" class="stats-period-info">
-                            All completed games
-                        </div>
                         <div class="stats-controls">
                             <div class="date-filter">
                                 <label for="stats-start-date">From:</label>
@@ -103,13 +100,17 @@
                                 <label for="stats-end-date">To:</label>
                                 <input type="date" id="stats-end-date" onchange="renderPlayerStatistics()">
                                 <button class="secondary-btn" onclick="clearDateFilter()">Clear</button>
+                                <div id="stats-period-info" class="stats-period-info-inline">
+                                    All completed games
+                                </div>
                             </div>
                             <div class="stats-controls-row-2">
                                 <div id="stats-reports-counter" class="stats-reports-counter">
                                     <!-- Reports counter will be displayed here -->
                                 </div>
-                                <button class="action-btn" onclick="showScreen('reports')">
-                                    <span class="material-icons">assessment</span> View Reports
+                                <button class="action-btn stats-report-btn" onclick="showScreen('reports')">
+                                    <span class="material-icons">assessment</span>
+                                    <span class="btn-text">View Reports</span>
                                 </button>
                             </div>
                         </div>
@@ -473,5 +474,5 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=1.9.47"></script>
+    <script src="js/app.js?v=1.9.48"></script>
 </html>

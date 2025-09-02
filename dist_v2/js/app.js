@@ -3714,6 +3714,8 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
             name: player.name,
             jerseyNumber: player.jerseyNumber,
             gamesPlayed: 0,
+            missedGames: 0,
+            lateToGame: 0,
             goals: 0,
             assists: 0,
             saves: 0,
@@ -3809,6 +3811,31 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
                     });
                 }
                 
+                // Count missed games for unavailable players
+                if (game.unavailablePlayers && game.unavailablePlayers.length > 0) {
+                    game.unavailablePlayers.forEach(playerId => {
+                        if (playerStats[playerId]) {
+                            playerStats[playerId].missedGames++;
+                        }
+                    });
+                }
+                
+                // Count late arrivals (players who joined after game start but weren't in formation)
+                if (game.actions && game.actions.length > 0) {
+                    const latePlayerActions = game.actions.filter(action => 
+                        action.actionType === 'substitution' && 
+                        action.playerIn && 
+                        !playersInGame.has(action.playerIn)
+                    );
+                    
+                    latePlayerActions.forEach(action => {
+                        if (action.playerIn && playerStats[action.playerIn]) {
+                            playerStats[action.playerIn].lateToGame++;
+                            playersInGame.add(action.playerIn); // They still played
+                        }
+                    });
+                }
+                
                 // Update games played count
                 playersInGame.forEach(playerId => {
                     if (playerStats[playerId]) {
@@ -3833,12 +3860,14 @@ function clearDateFilter() {
 function updateStatsPeriodInfo(startDate, endDate, filteredGames) {
     const periodInfoElement = document.getElementById('stats-period-info');
     const reportsCounterElement = document.getElementById('stats-reports-counter');
+    const controlsRow2 = document.querySelector('.stats-controls-row-2');
     
     if (!periodInfoElement || !reportsCounterElement) return;
     
     // Update period description
+    let periodText;
     if (startDate || endDate) {
-        let periodText = 'Games from ';
+        periodText = 'Games from ';
         if (startDate && endDate) {
             periodText += `${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`;
         } else if (startDate) {
@@ -3846,9 +3875,15 @@ function updateStatsPeriodInfo(startDate, endDate, filteredGames) {
         } else if (endDate) {
             periodText += `start to ${new Date(endDate).toLocaleDateString()}`;
         }
-        periodInfoElement.textContent = periodText;
     } else {
-        periodInfoElement.textContent = 'All completed games';
+        periodText = 'All completed games';
+    }
+    
+    periodInfoElement.textContent = periodText;
+    
+    // Set data attribute for mobile pseudo-element
+    if (controlsRow2) {
+        controlsRow2.setAttribute('data-period-info', periodText);
     }
     
     // Count games and available reports
@@ -3924,6 +3959,8 @@ function renderPlayerStatistics() {
                     <th>#</th>
                     <th>Player</th>
                     <th>GP</th>
+                    <th>Missed</th>
+                    <th>Late</th>
                     <th>Goals</th>
                     <th>Assists</th>
                     <th>Saves</th>
@@ -3942,6 +3979,8 @@ function renderPlayerStatistics() {
                         <td>${player.jerseyNumber}</td>
                         <td>${player.name}</td>
                         <td>${player.gamesPlayed}</td>
+                        <td>${player.missedGames}</td>
+                        <td>${player.lateToGame}</td>
                         <td>${player.goals}</td>
                         <td>${player.assists}</td>
                         <td>${player.saves}</td>
