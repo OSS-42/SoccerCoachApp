@@ -3728,8 +3728,9 @@ function calculatePlayerStatistics() {
     });
     
     // Sum up stats from all completed games
-    if (appState.completedGames && appState.completedGames.length > 0) {
-        appState.completedGames.forEach(game => {
+    const completedGames = appState.games.filter(game => game.isCompleted);
+    if (completedGames && completedGames.length > 0) {
+        completedGames.forEach(game => {
             if (game.actions && game.actions.length > 0) {
                 // Track which players played in this game
                 const playersInGame = new Set();
@@ -3794,7 +3795,13 @@ function renderPlayerStatistics() {
     if (!container) return;
     
     const playerStats = calculatePlayerStatistics();
-    const hasCompletedGames = appState.completedGames && appState.completedGames.length > 0;
+    const completedGames = appState.games.filter(game => game.isCompleted);
+    const hasCompletedGames = completedGames && completedGames.length > 0;
+    
+    // Debug information
+    console.log('Debug - Completed games:', completedGames.length);
+    console.log('Debug - Players:', appState.players.length);
+    console.log('Debug - Player stats:', playerStats);
     
     if (!hasCompletedGames || appState.players.length === 0) {
         container.innerHTML = `
