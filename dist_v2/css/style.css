@@ -1489,12 +1489,12 @@ button.no-assist-btn {
 
 /* Action Review button */
 .control-btn.action-review-btn {
-    background-color: #000000;
-    color: white;
+    background-color: #000000 !important;
+    color: white !important;
 }
 
 .control-btn.action-review-btn:hover {
-    background-color: #333333;
+    background-color: #333333 !important;
 }
 
 /* Action Review Dialog */
@@ -1524,36 +1524,43 @@ button.no-assist-btn {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .action-player {
     font-weight: bold;
     color: #333;
     font-size: 14px;
-    min-width: 120px;
+    min-width: 100px;
+    flex-shrink: 0;
 }
 
 .action-details {
     font-size: 12px;
     color: #666;
+    flex-shrink: 0;
 }
 
 .action-controls {
     display: flex;
-    gap: 8px;
+    gap: 5px;
+    flex-shrink: 0;
 }
 
 .action-icon-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 6px;
+    padding: 4px;
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s;
+    min-width: 32px;
+    min-height: 32px;
 }
 
 .action-icon-btn:hover {

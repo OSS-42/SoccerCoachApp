@@ -3259,7 +3259,7 @@ function handleFileImport(event) {
 }
 
 // Action Review Dialog Functions
-window.openActionReviewDialog = function openActionReviewDialog() {
+function openActionReviewDialog() {
     if (!appState.currentGame) {
         showMessage('No active game to review actions', 'error');
         return;
@@ -3318,7 +3318,7 @@ window.openActionReviewDialog = function openActionReviewDialog() {
     reviewDialog.classList.add('active');
 }
 
-window.closeActionReviewDialog = function closeActionReviewDialog() {
+function closeActionReviewDialog() {
     const dialog = document.getElementById('action-review-dialog');
     if (dialog) {
         dialog.style.display = 'none';
