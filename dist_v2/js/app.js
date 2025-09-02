@@ -3371,7 +3371,8 @@ function editAction(actionIndex) {
         document.getElementById('app').appendChild(editDialog);
     }
     
-    const availablePlayers = appState.players.filter(p => p.active);
+    // Get all players, not just active ones for editing actions
+    const availablePlayers = appState.players || [];
     const currentPlayer = appState.players.find(p => p.id === action.playerId);
     
     editDialog.innerHTML = `
