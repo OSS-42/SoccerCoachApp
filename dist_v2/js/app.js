@@ -3820,18 +3820,11 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
                     });
                 }
                 
-                // Count late arrivals (players who joined after game start but weren't in formation)
+                // Count late to game actions (only when explicitly marked)
                 if (game.actions && game.actions.length > 0) {
-                    const latePlayerActions = game.actions.filter(action => 
-                        action.actionType === 'substitution' && 
-                        action.playerIn && 
-                        !playersInGame.has(action.playerIn)
-                    );
-                    
-                    latePlayerActions.forEach(action => {
-                        if (action.playerIn && playerStats[action.playerIn]) {
-                            playerStats[action.playerIn].lateToGame++;
-                            playersInGame.add(action.playerIn); // They still played
+                    game.actions.forEach(action => {
+                        if (action.actionType === 'late_to_game' && action.playerId && playerStats[action.playerId]) {
+                            playerStats[action.playerId].lateToGame++;
                         }
                     });
                 }
