@@ -3446,9 +3446,12 @@ function saveEditedAction(actionIndex) {
     }
     
     // Validate game minute against game settings
+    console.log('About to validate game minute:', gameMinute);
     if (!validateGameMinute(gameMinute)) {
+        console.log('Validation failed, stopping save');
         return; // Error message is shown in validateGameMinute function
     }
+    console.log('Validation passed, continuing with save');
     
     const oldAction = appState.currentGame.actions[actionIndex];
     
@@ -3462,6 +3465,9 @@ function saveEditedAction(actionIndex) {
         actionType: actionType,
         gameMinute: gameMinute
     };
+    
+    // Sync goal/assist times if needed
+    syncGoalAssistTimes(actionIndex, actionType, gameMinute, oldAction);
     
     // Apply new action effects
     applyAction(appState.currentGame.actions[actionIndex]);
@@ -3652,6 +3658,47 @@ function validateGameMinute(gameMinute) {
     }
     
     return true;
+}
+
+// Sync goal and assist times when one is edited
+function syncGoalAssistTimes(editedIndex, editedActionType, newGameMinute, oldAction) {
+    if (editedActionType !== 'goal' && editedActionType !== 'assist') {
+        return; // Only sync for goals and assists
+    }
+    
+    const actions = appState.currentGame.actions;
+    const editedTimestamp = oldAction.timestamp;
+    
+    // Find related actions within 10 seconds of the original timestamp
+    const relatedActions = actions
+        .map((action, index) => ({ action, index }))
+        .filter(({ action, index }) => {
+            if (index === editedIndex) return false; // Skip the action being edited
+            
+            const timeDiff = Math.abs(new Date(action.timestamp) - new Date(editedTimestamp));
+            const isWithinTimeWindow = timeDiff <= 10000; // 10 seconds
+            
+            // Check if it's a goal/assist pair
+            const isGoalAssistPair = (
+                (editedActionType === 'goal' && action.actionType === 'assist') ||
+                (editedActionType === 'assist' && action.actionType === 'goal')
+            );
+            
+            return isWithinTimeWindow && isGoalAssistPair;
+        });
+    
+    // Update related actions to the same game minute
+    relatedActions.forEach(({ action, index }) => {
+        console.log(`Syncing ${action.actionType} at index ${index} to minute ${newGameMinute}`);
+        actions[index] = {
+            ...action,
+            gameMinute: newGameMinute
+        };
+    });
+    
+    if (relatedActions.length > 0) {
+        showMessage(`Updated ${relatedActions.length} related ${editedActionType === 'goal' ? 'assist' : 'goal'} action(s) to the same minute`, 'info');
+    }
 }
 
 // No longer needed - removed updateActionHistory and updateUndoButton functions
