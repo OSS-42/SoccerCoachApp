@@ -1448,6 +1448,9 @@ function startGameFromFormation() {
     }
 
     appState.currentGame.formation = formation;
+    
+    // Store unavailable players in the game for reports
+    appState.currentGame.unavailablePlayers = [...(appState.unavailablePlayers || [])];
 
     // Check for goalkeeper (y = 95)
     const hasGoalkeeper = appState.currentGame.formation.some(f => f.y === 95 && f.playerId);
@@ -1459,7 +1462,11 @@ function startGameFromFormation() {
     // Set formation and substitutes
     
     appState.currentGame.substitutes = appState.players
-        .filter(p => !formation.some(f => f.playerId === p.id))
+        .filter(p => {
+            const isInFormation = formation.some(f => f.playerId === p.id);
+            const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+            return !isInFormation && !isUnavailable;
+        })
         .map(p => p.id);
 
     // Reset player stats
