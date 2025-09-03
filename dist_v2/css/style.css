@@ -2253,7 +2253,7 @@ button.no-assist-btn {
 }
 
 .player-stats-table {
-    width: 100px;
+    width: auto;
     font-size: 10px;
     margin-top: 5px;
     border-collapse: collapse;
@@ -2264,6 +2264,7 @@ button.no-assist-btn {
 .player-stats-table td {
     border: 1px solid #ddd;
     padding: 2px;
+    width: 20px;
 }
 
 .substitutes-list {
