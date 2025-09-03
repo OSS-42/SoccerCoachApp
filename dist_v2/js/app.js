@@ -2878,7 +2878,7 @@ function viewReport(gameId) {
     if (game.formation && game.formation.length > 0) {
         formationHTML = `
             <div class="report-formation">
-                <h3><i class="material-icons" style="vertical-align: middle; margin-right: 8px;">sports_soccer</i>Starting Formation (${game.matchType})</h3>
+                <h3>Starting Formation (${game.matchType})</h3>
                 <div class="formation-container-report" ${window.innerWidth <= 1024 ? 'style="flex-direction: column !important; align-items: center !important; min-width: auto !important;"' : ''}>
                     <div class="formation-field-report">
                         ${game.formation.map(f => {
@@ -2890,29 +2890,29 @@ function viewReport(gameId) {
                             let statTable = '<table class="player-stats-table">';
                             
                             if (stats.goals?.length > 0) {
-                                statTable += `<tr><th>Goals</th><td>${stats.goals.length}</td></tr>`;
+                                statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
                             }
                             if (stats.assists > 0) {
-                                statTable += `<tr><th>Assists</th><td>${stats.assists}</td></tr>`;
+                                statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
                             }
                             if (stats.saves > 0) {
-                                statTable += `<tr><th>Saves</th><td>${stats.saves}</td></tr>`;
+                                statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
                             }
                             if (stats.goalsAllowed > 0) {
-                                statTable += `<tr><th>Goals Allowed</th><td>${stats.goalsAllowed}</td></tr>`;
+                                statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
                             }
                             if (stats.blockedShots > 0) {
-                                statTable += `<tr><th>Blocked Shots</th><td>${stats.blockedShots}</td></tr>`;
+                                statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
                             }
                             if (stats.faults > 0) {
-                                statTable += `<tr><th>Faults</th><td>${stats.faults}</td></tr>`;
+                                statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
                             }
                             if (stats.yellowCards?.length > 0) {
-                                statTable += `<tr><th>Yellow Cards</th><td>${stats.yellowCards.length}</td></tr>`;
+                                statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
                             }
                             const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
                             if (redCards > 0) {
-                                statTable += `<tr><th>Red Cards</th><td>${redCards}</td></tr>`;
+                                statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
                             }
                             
                             statTable += '</table>';
@@ -2926,7 +2926,7 @@ function viewReport(gameId) {
                         }).join('')}
                     </div>
                     <div class="substitutes-list">
-                        <h4><i class="material-icons" style="vertical-align: middle; margin-right: 8px;">event_seat</i>Substitutes</h4>
+                        <h4>Substitutes</h4>
                         ${game.substitutes?.map(subId => {
                             const player = appState.players.find(p => p.id === subId);
                             if (!player) return '';
@@ -2936,29 +2936,29 @@ function viewReport(gameId) {
                             let statTable = '<table class="player-stats-table">';
                             
                             if (stats.goals?.length > 0) {
-                                statTable += `<tr><th>Goals</th><td>${stats.goals.length}</td></tr>`;
+                                statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
                             }
                             if (stats.assists > 0) {
-                                statTable += `<tr><th>Assists</th><td>${stats.assists}</td></tr>`;
+                                statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
                             }
                             if (stats.saves > 0) {
-                                statTable += `<tr><th>Saves</th><td>${stats.saves}</td></tr>`;
+                                statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
                             }
                             if (stats.goalsAllowed > 0) {
-                                statTable += `<tr><th>Goals Allowed</th><td>${stats.goalsAllowed}</td></tr>`;
+                                statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
                             }
                             if (stats.blockedShots > 0) {
-                                statTable += `<tr><th>Blocked Shots</th><td>${stats.blockedShots}</td></tr>`;
+                                statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
                             }
                             if (stats.faults > 0) {
-                                statTable += `<tr><th>Faults</th><td>${stats.faults}</td></tr>`;
+                                statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
                             }
                             if (stats.yellowCards?.length > 0) {
-                                statTable += `<tr><th>Yellow Cards</th><td>${stats.yellowCards.length}</td></tr>`;
+                                statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
                             }
                             const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
                             if (redCards > 0) {
-                                statTable += `<tr><th>Red Cards</th><td>${redCards}</td></tr>`;
+                                statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
                             }
                             
                             statTable += '</table>';
