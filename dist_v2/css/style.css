@@ -527,8 +527,7 @@ input:checked + .slider:before {
     padding: 5px;
 }
 
-/* Game Setup Screen */
-/* Substitution Timer Row: Ensure input, checkbox, and label are on the same line */
+/* Game Setup Screen - Substitution Timer Section */
 .substitution-timer-group {
     display: flex;
     flex-direction: column;
@@ -536,19 +535,22 @@ input:checked + .slider:before {
 
 .substitution-title-row {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 .substitution-title-row input[type="checkbox"] {
-    margin: 0;
+    margin: 2px 0 0 0;
     flex-shrink: 0;
 }
 
 .substitution-title-row label {
-    margin-bottom: 0;
+    display: inline;
+    margin: 0;
     cursor: pointer;
+    flex-grow: 0;
+    font-weight: bold;
 }
 
 .substitution-timer-row {
