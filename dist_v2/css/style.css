@@ -36,8 +36,6 @@ body {
 .message-ribbon.success {
     background-color: #4caf50;
 }
-
-
 .message-ribbon.hidden {
     display: none !important; /* Ensure hidden state is enforced */
     height: 0; /* Collapse height */
@@ -49,10 +47,9 @@ body {
 /* Ensure players-list has no padding by default */
 /* Reset players-list padding */
 #player-list {
-    /* max-width: 150px; */
     overflow-y: auto;
-    padding: #f0f3f0;
-    background: #d0f0f0;
+    padding: 10px;
+    background-color: #d0f0f0;
 }
 
 /* Yellow warning ribbon at top, below header */
@@ -158,49 +155,6 @@ body {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* 2–6 columns */
     }
 }
-
-/* .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 26px;
-    width: 26px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-} */
-
-/* input:checked + .slider {
-    background-color: #2196F3;
-}
-
-input:focus + .slider {
-    box-shadow: 0 0 1px #2196F3;
-}
-
-input:checked + .slider:before {
-    transform: translateX(26px);
-} */
-
-/* .slider.round {
-    border-radius: 34px;
-}
-
-.slider.round:before {
-    border-radius: 50%;
-} */
-
 .toggle-container {
     display: flex;
     align-items: center;
@@ -890,13 +844,6 @@ input:checked + .slider:before {
     font-size: 24px;
     font-weight: bold;
 }
-
-.game-time {
-    font-size: 30px;
-    font-weight: bold;
-    padding: 0 20px;
-}
-
 .game-content {
     display: flex;
     flex: 1;
@@ -928,14 +875,6 @@ input:checked + .slider:before {
     font-weight: bold;
     margin-bottom: 15px;
 }
-
-.substitution-timer-small .timer-value {
-    font-size: 25px;
-    font-weight: bold;
-    margin-bottom: 0;
-    display: inline;
-}
-
 .timer-controls {
     display: flex;
     flex-direction: row;
@@ -1051,7 +990,6 @@ input:checked + .slider:before {
     row-gap: 0;
     align-content: start;
     height: fit-content;
-    background-color: rgba(0, 0, 255, 0.1); /* Debug: Light blue background */
     justify-content: center;
 }
 
@@ -1131,11 +1069,6 @@ input:checked + .slider:before {
     height: 18px;
 }
 
-.stat-label img.red-soccer-icon {
-    width: 18px;
-    height: 18px;
-}
-
 .stat-emoji {
     font-size: 18px; /* Ensure consistent size for all emojis */
 }
@@ -1199,7 +1132,6 @@ input:checked + .slider:before {
         row-gap: 0;
         align-content: start;
         height: fit-content;
-        background-color: rgba(0, 255, 0, 0.1); /* Debug: Light green background */
     }
 }
 
@@ -1211,7 +1143,6 @@ input:checked + .slider:before {
         row-gap: 0;
         align-content: start;
         height: fit-content;
-        background-color: rgba(255, 0, 0, 0.1); /* Debug: Light red background */
     }
 }
 
@@ -1317,8 +1248,6 @@ input:checked + .slider:before {
 .formation-buttons .primary-btn {
     flex: 1;
 }
-
-
 .checkbox-container {
     display: flex;
     align-items: center;
@@ -1340,8 +1269,6 @@ input:checked + .slider:before {
 .mobile-secondary-controls {
     display: none;
 }
-
-
 .action-btn {
     display: flex;
     flex-direction: column;
@@ -1494,7 +1421,7 @@ button.no-assist-btn {
 .report-table th {
     background-color: #f5f5f5;
     padding: 10px;
-    text-align: left;
+    text-align: center;
     border-bottom: 2px solid #ddd;
 }
 
@@ -1512,12 +1439,6 @@ button.no-assist-btn {
     gap: 10px;
     justify-content: flex-end;
 }
-
-.report-table th {
-    text-align: center; /* Center-align icons in table headers */
-    padding: 0.5rem;
-}
-
 .report-table th .stat-emoji,
 .report-table th .red-soccer-icon {
     vertical-align: middle; /* Ensure icons are vertically centered */
@@ -1556,13 +1477,6 @@ button.no-assist-btn {
     font-weight: bold;
     color: #333;
 }
-
-/* Report actions (buttons) */
-.report-actions {
-    display: flex;
-    gap: 10px; /* Space between buttons */
-}
-
 /* Adjust formation and substitutes layout in report */
 /* Fix report formation layout */
 .report-formation {
@@ -1892,8 +1806,6 @@ button.no-assist-btn {
 .stats-table tr:hover {
     background: #f8f9fa;
 }
-
-
 .no-stats-message {
     text-align: center;
     padding: 40px;
