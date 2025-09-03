@@ -25,12 +25,25 @@ let appState = {
     formationTemp: null // Temporary storage for formation during setup
 };
 
-// Touch event handlers
-let draggedElement = null;
-let initialX = 0;
-let initialY = 0;
-let clone = null;
-let lastVibratedSlot = null; // Track last slot vibrated to debounce
+// ===============================================
+// DRAG AND DROP STATE MANAGEMENT
+// ===============================================
+
+const DragState = {
+    draggedElement: null,
+    initialX: 0,
+    initialY: 0,
+    clone: null,
+    lastVibratedSlot: null, // Track last slot vibrated to debounce
+    
+    reset() {
+        this.draggedElement = null;
+        this.initialX = 0;
+        this.initialY = 0;
+        this.clone = null;
+        this.lastVibratedSlot = null;
+    }
+};
 
 function touchStart(e) {
     if (e.target.classList.contains('disabled')) return;
@@ -258,7 +271,6 @@ function touchEnd(e) {
         saveAppData();
     }
 
-    // console.log('Formation after drag:', appState.formationTemp.map(f => ({
     //     playerId: f.playerId,
     //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
     //     position: f.position
@@ -374,11 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Team Name functions
 function updateTeamNameUI() {
-    // Update team name in the input field
-    const teamNameInput = document.getElementById('team-name-input');
-    if (teamNameInput) {
-        teamNameInput.value = appState.teamName;
-    }
+    UIManager.updateTeamNameUI();
     
     // Update team name in game screen
     const teamNameElements = document.querySelectorAll('.team-name');
@@ -438,17 +446,13 @@ function showScreen(screenId) {
 
 // Player Management
 function openAddPlayerDialog() {
-    const dialog = document.getElementById('add-player-dialog');
-    dialog.style.display = 'flex';
-    dialog.classList.add('active');
+    DialogManager.show('add-player-dialog');
 }
 
 function closeAddPlayerDialog() {
-    const dialog = document.getElementById('add-player-dialog');
-    dialog.style.display = 'none';
-    dialog.classList.remove('active');
-    document.getElementById('player-name').value = '';
-    document.getElementById('jersey-number').value = '';
+    DialogManager.hide('add-player-dialog', (dialog) => {
+        DialogManager.clearInputs(dialog, ['#player-name', '#jersey-number']);
+    });
 }
 
 function addPlayer() {
@@ -660,8 +664,6 @@ function confirmDeletePlayers() {
     });
     
     // Log state for debugging
-    // console.log('After deletion - Players:', appState.players);
-    // console.log('Reusable Player IDs:', appState.settings.reusablePlayerIds);
     
     // Save and update UI
     saveAppData();
@@ -895,18 +897,11 @@ function confirmDeletePlayer(playerId) {
 }
 
 function updatePlayerCounter() {
-    const counterElement = document.getElementById('player-counter');
-    if (counterElement) {
-        counterElement.textContent = appState.players.length;
-    }
+    UIManager.updatePlayerCounter();
 }
 
 function updateGameReportCounter() {
-    const counterElement = document.getElementById('game-report-counter');
-    if (counterElement) {
-        const completedGames = appState.games.filter(game => game.isCompleted).length;
-        counterElement.textContent = completedGames;
-    }
+    UIManager.updateGameReportCounter();
 }
 
 // Game Creation: Replace startGame with setupFormation
@@ -1008,7 +1003,6 @@ function renderFormationSetup() {
     
     // Initialize formation temp - load default if exists (only field positions, not unavailable status)
     if (appState.defaultFormation && appState.defaultFormation.length > 0) {
-        console.log('Loading default formation with positions:', appState.defaultFormation.map(f => `${f.playerId} at ${f.position}`));
         appState.formationTemp = [...appState.defaultFormation];
     } else {
         appState.formationTemp = [];
@@ -1086,7 +1080,6 @@ function renderFormationSetup() {
         const playerId = formationPlayer.playerId;
         const player = appState.players.find(p => p.id === playerId);
         
-        console.log(`Placing player ${player?.name} at position ${position}`); // Debug
         
         if (player) {
             // Find the correct slot based on position
@@ -1103,12 +1096,9 @@ function renderFormationSetup() {
                 slot.setAttribute('data-player-id', playerId);
                 slot.classList.add('occupied');
                 playersPlaced++;
-                console.log(`Successfully placed ${player.name} at ${position}`); // Debug
             } else {
-                console.log(`Slot not found for position ${position}`); // Debug
             }
         } else {
-            console.log(`Player not found for ID ${playerId}`); // Debug
         }
     });
     
@@ -1248,7 +1238,6 @@ function dropToSidebar(e) {
     // Save data
     saveAppData();
 
-    // console.log('Formation after sidebar drop:', appState.formationTemp.map(f => ({
     //     playerId: f.playerId,
     //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
     //     position: f.position
@@ -1511,7 +1500,6 @@ function startGameFromFormation() {
     }
 
     // Debug formation state
-    // console.log('Formation before start:', formation.map(f => ({
     //     playerId: f.playerId,
     //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
     //     position: f.position
@@ -1672,7 +1660,6 @@ function startGame() {
 
     // Validate game data
     if (!appState.currentGame.numPeriods || !appState.currentGame.periodDuration) {
-        console.error('Failed to set game duration parameters');
         showMessage('Error setting game duration parameters', 'error');
         return;
     }
@@ -1750,7 +1737,6 @@ function getPlayerPositionInGame(playerId) {
 function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
     if (!playerGrid) {
-        console.error('Player grid element not found');
         return;
     }
     
@@ -1766,7 +1752,7 @@ function renderPlayerGrid() {
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
         .forEach(player => {
         if (!player.id || !player.jerseyNumber || !player.name || !player.position) {
-            console.warn('Skipping invalid player:', player);
+
             return;
         }
         
@@ -2140,17 +2126,13 @@ function closePlayerActionDialog() {
 
 // Note handling functions
 function openNoteDialog() {
-    console.log('openNoteDialog called'); // Debug
-    console.log('Current player:', appState.currentPlayer); // Debug
     
     if (!appState.currentPlayer) {
-        console.log('No current player set'); // Debug
         return;
     }
     
     // Store the player in a backup variable to prevent loss
     window.noteDialogPlayer = appState.currentPlayer;
-    console.log('Stored backup player:', window.noteDialogPlayer); // Debug
     
     const dialog = document.getElementById('note-dialog');
     const playerNameSpan = document.getElementById('note-player-name');
@@ -2180,49 +2162,36 @@ function closeNoteDialog() {
 }
 
 function recordNoteAction() {
-    console.log('recordNoteAction called'); // Debug
-    console.log('appState.isGeneralNote:', appState.isGeneralNote); // Debug
     
     // Check if this is a general note or player-specific note
     if (appState.isGeneralNote) {
-        console.log('Calling recordGeneralNoteAction'); // Debug
         recordGeneralNoteAction();
         return;
     }
     
-    console.log('Processing player note'); // Debug
-    console.log('appState.currentPlayer:', appState.currentPlayer); // Debug
-    console.log('Backup player:', window.noteDialogPlayer); // Debug
     
     // Use backup player if currentPlayer was reset
     const playerToUse = appState.currentPlayer || window.noteDialogPlayer;
     
     if (!playerToUse) {
-        console.log('No current player and no backup - returning'); // Debug
         return;
     }
     
-    console.log('Using player:', playerToUse); // Debug
     
     const noteText = document.getElementById('note-text').value.trim();
-    console.log('Note text:', noteText); // Debug
     
     if (!noteText) {
-        console.log('Empty note text - showing error'); // Debug
         showMessage('Please enter a note', 'error');
         return;
     }
     
     if (!appState.currentGame) {
-        console.log('No current game - showing error'); // Debug
         showMessage('No active game found', 'error');
         return;
     }
     
-    console.log('Current game exists, proceeding...'); // Debug
     
     const gameMinute = calculateGameMinute();
-    console.log('Game minute:', gameMinute); // Debug
     
     const action = {
         timestamp: new Date().toISOString(),
@@ -2232,23 +2201,17 @@ function recordNoteAction() {
         noteText: noteText
     };
     
-    console.log('Created action:', action); // Debug
-    console.log('Adding to actions array...'); // Debug
     
     appState.currentGame.actions.push(action);
     
-    console.log('Calling saveAppData...'); // Debug
     saveAppData();
     
-    console.log('Calling closeNoteDialog...'); // Debug
     closeNoteDialog();
     
-    console.log('Showing success message...'); // Debug
     showMessage(`Note added for ${playerToUse.name}`, 'success');
     appState.currentPlayer = null;
     window.noteDialogPlayer = null; // Clear backup
     
-    console.log('recordNoteAction completed'); // Debug
 }
 
 // Goal with possible assist handling
@@ -2553,7 +2516,6 @@ function endGame() {
 
     // Validate game data
     if (!appState.currentGame.numPeriods || !appState.currentGame.periodDuration) {
-        console.warn('Game data incomplete, setting fallback values');
         appState.currentGame.numPeriods = appState.currentGame.numPeriods || 2;
         appState.currentGame.periodDuration = appState.currentGame.periodDuration || 15 * 60; // 15 minutes in seconds
     }
@@ -2701,13 +2663,10 @@ function confirmDeleteReports() {
     const reportIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-report-id'));
     
     if (reportIds.length === 0) {
-        console.warn('No reports selected for deletion');
         updateDeleteReportsRibbon();
         return;
     }
     
-    // console.log('Before deletion, appState.games:', JSON.stringify(appState.games, null, 2));
-    // console.log('Deleting reports with IDs:', reportIds);
     
     const deletedCount = reportIds.length;
     const transaction = db.transaction(['games'], 'readwrite');
@@ -2718,14 +2677,11 @@ function confirmDeleteReports() {
         if (reportIndex !== -1) {
             appState.games.splice(reportIndex, 1);
             gamesStore.delete(reportId);
-            console.log(`Deleted report at index ${reportIndex} (ID: ${reportId}) from appState and IndexedDB`);
         } else {
-            console.warn(`Report with ID ${reportId} not found in appState.games`);
         }
     });
 
     transaction.oncomplete = () => {
-        console.log('Deletion transaction completed');
         closeConfirmDeleteReportsDialog(); // Close dialog
         saveAppData(); // Ensure store is synced
         renderReportsList();
@@ -2734,11 +2690,9 @@ function confirmDeleteReports() {
     };
 
     transaction.onerror = (event) => {
-        console.error('Deletion transaction error:', event.target.error);
         showMessage('Failed to delete reports', 'error');
     };
 
-    // console.log('After deletion, appState.games:', JSON.stringify(appState.games, null, 2));
 }
 
 // Update viewReport to include formation
@@ -3154,47 +3108,39 @@ function exportReport(gameId, format) {
 
 // Settings
 function handleLanguageChange() {
-    // console.log('handleLanguageChange called'); // Debug
 
     const checkedRadio = document.querySelector('input[name="language"]:checked');
     if (!checkedRadio) {
-        console.error('No language radio button is checked');
         showMessage('Please select a language', 'error');
         return;
     }
 
     const selectedLanguage = checkedRadio.value;
-    // console.log('Selected language:', selectedLanguage); // Debug
 
     // Check if French is selected
     if (selectedLanguage === 'fr') {
-        // console.log('French selected, reverting to English'); // Debug
         // Show error message
         showMessage('French language is not implemented yet.', 'error');
         // Revert to English
         const englishRadio = document.querySelector('input[name="language"][value="en"]');
         if (englishRadio) {
-            // console.log('English radio found, setting checked to true'); // Debug
             englishRadio.checked = true;
             // Force UI update by dispatching a change event
             const changeEvent = new Event('change');
             englishRadio.dispatchEvent(changeEvent);
-            // console.log('English radio checked state:', englishRadio.checked); // Debug
         } else {
-            // console.error('English radio button not found'); // Debug
         }
         appState.settings.language = 'en';
-        // console.log('appState.settings.language set to:', appState.settings.language); // Debug
+
     } else {
         appState.settings.language = selectedLanguage;
-        // console.log('appState.settings.language set to:', appState.settings.language); // Debug
+
     }
     
     saveAppData(); // Save the state immediately
 }
 
 function saveSettings() {
-    // console.log('saveSettings called'); // Debug
 
     // Language is already handled by handleLanguageChange, so just save the current state
     saveAppData();
@@ -3206,7 +3152,6 @@ function saveSettings() {
 function saveAppData() {
     if (!db) {
         showMessage('Database not initialized', 'error');
-        console.error('IndexedDB not initialized');
         return;
     }
 
@@ -3219,7 +3164,6 @@ function saveAppData() {
     // Validate data
     if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
         showMessage('Invalid data format for saving', 'error');
-        console.error('Invalid appState:', appState);
         return;
     }
 
@@ -3233,7 +3177,7 @@ function saveAppData() {
             if (player.id && player.name && player.jerseyNumber !== undefined) {
                 playersStore.put(player);
             } else {
-                console.warn('Skipping invalid player:', player);
+    
             }
         });
     };
@@ -3241,42 +3185,34 @@ function saveAppData() {
     // Clear and save games
     const clearGamesRequest = gamesStore.clear();
     clearGamesRequest.onsuccess = () => {
-        // console.log('Games store cleared');
         appState.games.forEach(game => {
             if (game.id) {
                 gamesStore.put(game);
-                // console.log('Saved game:', game.id);
             } else {
-                console.warn('Skipping invalid game:', game);
             }
         });
         // Verify games store
         const allGamesRequest = gamesStore.getAll();
         allGamesRequest.onsuccess = () => {
-            console.log('Games in store after save:', allGamesRequest.result);
         };
     };
     clearGamesRequest.onerror = (event) => {
-        console.error('Failed to clear games store:', event.target.error);
     };
 
     // Save settings
     settingsStore.put({ id: 'settings', ...appState.settings });
 
     transaction.oncomplete = () => {
-        console.log('Data saved successfully to IndexedDB:', appState.games);
     };
 
     transaction.onerror = (event) => {
         showMessage('Failed to save data', 'error');
-        console.error('IndexedDB save error:', event.target.error);
     };
 }
 
 function loadAppData() {
     return new Promise((resolve, reject) => {
         if (!window.indexedDB) {
-            console.error('IndexedDB not supported');
             appState.teamName = "My Team";
             appState.players = [];
             appState.games = [];
@@ -3318,7 +3254,6 @@ function loadAppData() {
             // Load games
             gamesStore.getAll().onsuccess = (event) => {
                 appState.games = event.target.result || [];
-                // console.log('Loaded games from IndexedDB:', JSON.stringify(appState.games, null, 2));
                 updateGameReportCounter();
             };
 
@@ -3340,7 +3275,6 @@ function loadAppData() {
             };
 
             transaction.onerror = () => {
-                console.error('Transaction error');
                 appState.teamName = "My Team";
                 appState.players = [];
                 appState.games = [];
@@ -3358,7 +3292,6 @@ function loadAppData() {
                 resolve();
             };
         }).catch((error) => {
-            console.error('IndexedDB initialization failed:', error);
             appState.teamName = "My Team";
             appState.players = [];
             appState.games = [];
@@ -3666,7 +3599,6 @@ function handleFileImport(event) {
             openImportConfirmDialog();
         } catch (error) {
             showMessage('Error importing data. Please check the file format.', 'error');
-            console.error('Import error:', error);
         }
         
         // Reset file input
@@ -4231,7 +4163,6 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
                     game.unavailablePlayers.forEach(playerId => {
                         if (playerStats[playerId]) {
                             playerStats[playerId].missedGames++;
-                            console.log(`Missed game: ${playerStats[playerId].name} in game ${game.id}`);
                         }
                     });
                 }
@@ -4242,7 +4173,6 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
                     lateActions.forEach(action => {
                         if (action.playerId && playerStats[action.playerId]) {
                             playerStats[action.playerId].lateToGame++;
-                            console.log(`Late to game: ${playerStats[action.playerId].name} in game ${game.id}`);
                         }
                     });
                 }
@@ -4435,6 +4365,10 @@ function formatActionType(actionType) {
     return typeMap[actionType] || actionType;
 }
 
+// ===============================================
+// UTILITY FUNCTIONS
+// ===============================================
+
 // Helper function to build player stat table HTML - consolidates duplicate code
 function buildPlayerStatTable(stats) {
     let statTable = '<table class="player-stats-table">';
@@ -4468,6 +4402,75 @@ function buildPlayerStatTable(stats) {
     statTable += '</table>';
     return statTable;
 }
+
+// ===============================================
+// DIALOG MANAGEMENT SYSTEM
+// ===============================================
+
+const DialogManager = {
+    show(dialogId, setupCallback = null) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+        
+        if (setupCallback) setupCallback(dialog);
+        
+        dialog.style.display = 'flex';
+        dialog.classList.add('active');
+    },
+    
+    hide(dialogId, cleanupCallback = null) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+        
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+        
+        if (cleanupCallback) cleanupCallback(dialog);
+    },
+    
+    clearInputs(dialog, inputSelectors = ['input[type="text"]', 'input[type="number"]', 'textarea', 'select']) {
+        inputSelectors.forEach(selector => {
+            dialog.querySelectorAll(selector).forEach(input => {
+                input.value = '';
+            });
+        });
+    }
+};
+
+// ===============================================
+// UI UPDATE MANAGEMENT SYSTEM
+// ===============================================
+
+const UIManager = {
+    updateAll() {
+        this.updatePlayerCounter();
+        this.updateGameReportCounter();
+        this.updateTeamNameUI();
+    },
+    
+    updatePlayerCounter() {
+        const playerCount = appState.players.length;
+        const mainCounter = document.getElementById('player-counter');
+        const teamCounter = document.getElementById('team-player-counter');
+        
+        if (mainCounter) mainCounter.textContent = playerCount;
+        if (teamCounter) teamCounter.textContent = playerCount;
+    },
+    
+    updateGameReportCounter() {
+        const reportCount = appState.games.filter(game => game.completed).length;
+        const reportCounter = document.getElementById('game-report-counter');
+        
+        if (reportCounter) reportCounter.textContent = reportCount;
+    },
+    
+    updateTeamNameUI() {
+        const teamNameInput = document.getElementById('team-name-input');
+        if (teamNameInput && appState.teamName) {
+            teamNameInput.value = appState.teamName;
+        }
+    }
+};
 
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);

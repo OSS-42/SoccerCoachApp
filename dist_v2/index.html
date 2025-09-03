@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.77</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.77">
+    <title>Soccer Coach Tracker v1.9.78</title>
+    <link rel="stylesheet" href="css/style.css?v=1.9.78">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -19,11 +19,11 @@
         </div>
         
         <!-- Main Menu Screen -->
-        <div id="main-screen" class="screen active">
+        <main id="main-screen" class="screen active" role="main" aria-label="Main menu">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.9.77</h1>
+                <h1>Soccer Coach Tracker v1.9.78</h1>
             </div>
-            <div class="main-menu">
+            <nav class="main-menu" role="navigation" aria-label="Main navigation">
                 <div class="menu-row">
                     <button class="menu-btn" onclick="showScreen('team-setup')">
                         <span class="material-icons">people</span> Team Setup
@@ -42,11 +42,11 @@
                 <button class="menu-btn" onclick="showScreen('settings')">
                     <span class="material-icons">settings</span> Settings
                 </button>
-            </div>
-        </div>
+            </nav>
+        </main>
 
         <!-- Team Setup Screen -->
-        <div id="team-setup" class="screen">
+        <section id="team-setup" class="screen" role="main" aria-label="Team setup">
             <div class="app-header">
                 <button class="back-btn" onclick="showScreen('main-screen')">
                     <span class="material-icons">arrow_back</span>
@@ -66,17 +66,17 @@
                 </div>
                 
                 <!-- Tab Navigation -->
-                <div class="tab-navigation">
-                    <button class="tab-btn active" onclick="switchTeamTab('players')" id="players-tab">
+                <nav class="tab-navigation" role="tablist" aria-label="Team setup tabs">
+                    <button class="tab-btn active" onclick="switchTeamTab('players')" id="players-tab" role="tab" aria-selected="true" aria-controls="players-tab-content">
                         <span class="material-icons">people</span> Players
                     </button>
-                    <button class="tab-btn" onclick="switchTeamTab('statistics')" id="statistics-tab">
+                    <button class="tab-btn" onclick="switchTeamTab('statistics')" id="statistics-tab" role="tab" aria-selected="false" aria-controls="statistics-tab-content">
                         <span class="material-icons">analytics</span> Statistics
                     </button>
-                </div>
+                </nav>
                 
                 <!-- Players Tab Content -->
-                <div id="players-tab-content" class="tab-content active">
+                <section id="players-tab-content" class="tab-content active" role="tabpanel" aria-labelledby="players-tab">
                     <div class="players-header">
                         <h2>Players</h2>
                         <span class="player-counter-team">
@@ -87,10 +87,10 @@
                     <div id="players-list" class="players-list">
                         <!-- Players will be added here dynamically -->
                     </div>
-                </div>
+                </section>
                 
                 <!-- Statistics Tab Content -->
-                <div id="statistics-tab-content" class="tab-content">
+                <section id="statistics-tab-content" class="tab-content" role="tabpanel" aria-labelledby="statistics-tab">
                     <div class="statistics-header">
                         <h2>Player Statistics</h2>
                         <div class="stats-controls">
@@ -118,9 +118,9 @@
                     <div id="player-statistics-container" class="statistics-container">
                         <!-- Player statistics will be displayed here -->
                     </div>
-                </div>
+                </section>
             </div>
-        </div>
+        </section>
 
         <!-- Game Setup Screen -->
         <div id="game-setup" class="screen">
