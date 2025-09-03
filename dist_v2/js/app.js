@@ -325,29 +325,13 @@ function renderGameSetup() {
     if (appState.settings.isSubstitutionDefaultChecked && appState.settings.defaultSubstitutionTime !== null) {
         substitutionTimeInput.value = appState.settings.defaultSubstitutionTime;
         saveSubstitutionDefaultCheckbox.checked = true;
-        useSubstitutionTimerCheckbox.checked = true;
     } else {
         substitutionTimeInput.value = ''; // Default to empty if no persisted default
         saveSubstitutionDefaultCheckbox.checked = false;
-        useSubstitutionTimerCheckbox.checked = true; // Default to using timer
     }
     
-    // Set up event listener for checkbox
-    useSubstitutionTimerCheckbox.addEventListener('change', toggleSubstitutionTimerControls);
-    
-    // Initialize visibility
-    toggleSubstitutionTimerControls();
-}
-
-function toggleSubstitutionTimerControls() {
-    const useSubstitutionTimerCheckbox = document.getElementById('use-substitution-timer');
-    const timerControls = document.getElementById('substitution-timer-controls');
-    
-    if (useSubstitutionTimerCheckbox.checked) {
-        timerControls.style.display = 'flex';
-    } else {
-        timerControls.style.display = 'none';
-    }
+    // Default to using timer (unchecked = timer enabled)
+    useSubstitutionTimerCheckbox.checked = false;
 }
 
 function updateUI() {
@@ -942,7 +926,7 @@ function setupFormation() {
     const numPeriods = parseInt(numPeriodsInput.value, 10);
     const periodDuration = parseInt(periodDurationInput.value, 10);
     const substitutionTime = parseInt(substitutionTimeInput.value, 10);
-    const timerNotNeeded = !useSubstitutionTimerCheckbox.checked;
+    const timerNotNeeded = useSubstitutionTimerCheckbox.checked;
 
     // Validate inputs
     if (!opponentName) {
@@ -965,8 +949,8 @@ function setupFormation() {
         showMessage('Time per period must be between 1 and 45 minutes.', 'error');
         return;
     }
-    if (useSubstitutionTimerCheckbox.checked && (isNaN(substitutionTime) || substitutionTime < 1)) {
-        showMessage('Substitution time must be at least 1 minute, or uncheck "Substitution Timer".', 'error');
+    if (!useSubstitutionTimerCheckbox.checked && (isNaN(substitutionTime) || substitutionTime < 1)) {
+        showMessage('Substitution time must be at least 1 minute, or check "Timer not needed".', 'error');
         return;
     }
 
@@ -978,7 +962,7 @@ function setupFormation() {
     }
 
     // Save substitution settings
-    if (saveSubstitutionDefaultCheckbox.checked && useSubstitutionTimerCheckbox.checked) {
+    if (saveSubstitutionDefaultCheckbox.checked && !useSubstitutionTimerCheckbox.checked) {
         appState.settings.defaultSubstitutionTime = substitutionTime;
     }
     appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
@@ -1644,7 +1628,7 @@ function startGame() {
     }
 
     // Save the default substitution time and checkbox state
-    if (saveSubstitutionDefaultCheckbox.checked && useSubstitutionTimerCheckbox.checked) {
+    if (saveSubstitutionDefaultCheckbox.checked && !useSubstitutionTimerCheckbox.checked) {
         appState.settings.defaultSubstitutionTime = substitutionTime;
     }
     appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
