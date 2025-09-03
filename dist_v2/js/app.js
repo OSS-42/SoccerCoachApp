@@ -2878,7 +2878,7 @@ function viewReport(gameId) {
     if (game.formation && game.formation.length > 0) {
         formationHTML = `
             <div class="report-formation">
-                <h3>Starting Formation (${game.matchType})</h3>
+                <h3><i class="material-icons" style="vertical-align: middle; margin-right: 8px;">sports_soccer</i>Starting Formation (${game.matchType})</h3>
                 <div class="formation-container-report" ${window.innerWidth <= 1024 ? 'style="flex-direction: column !important; align-items: center !important; min-width: auto !important;"' : ''}>
                     <div class="formation-field-report">
                         ${game.formation.map(f => {
@@ -2926,7 +2926,7 @@ function viewReport(gameId) {
                         }).join('')}
                     </div>
                     <div class="substitutes-list">
-                        <h4>Substitutes</h4>
+                        <h4><i class="material-icons" style="vertical-align: middle; margin-right: 8px;">event_seat</i>Substitutes</h4>
                         ${game.substitutes?.map(subId => {
                             const player = appState.players.find(p => p.id === subId);
                             if (!player) return '';
