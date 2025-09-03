@@ -1446,22 +1446,34 @@ button.no-assist-btn {
 
 /* Player stats table in formation and substitutes */
 .player-stats-table {
-    width: 100%;
-    font-size: 12px;
+    width: auto;
+    font-size: 11px;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.player-name-report {
+    text-transform: uppercase;
 }
 
 .player-stats-table th {
-    width: 16px;
-    padding: 1px 2px;
+    width: 10px;
+    max-width: 10px;
+    min-width: 10px;
+    padding: 0px 1px;
     text-align: center;
     white-space: nowrap;
+    font-size: 11px;
 }
 
 .player-stats-table td {
-    width: 18px;
-    padding: 1px 2px;
+    width: 10px;
+    max-width: 10px;
+    min-width: 10px;
+    padding: 0px 1px;
     text-align: center;
     font-weight: bold;
+    font-size: 11px;
 }
 
 /* Report item container */
