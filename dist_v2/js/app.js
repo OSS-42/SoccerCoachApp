@@ -3116,11 +3116,11 @@ function exportReport(gameId, format) {
                     text-shadow: 1px 1px 1px #000;
                 }
                 .player-stats-table {
-                    width: 100px; font-size: 10px; margin-top: 5px;
+                    width: auto; font-size: 10px; margin-top: 5px;
                     border-collapse: collapse; background: #fff;
                 }
                 .player-stats-table th, .player-stats-table td {
-                    border: 1px solid #ddd; padding: 2px;
+                    border: 1px solid #ddd; padding: 2px; width: 20px;
                 }
                 .substitutes-list {
                     width: 200px; background: #f5f5f5; padding: 10px;
