@@ -1446,7 +1446,7 @@ button.no-assist-btn {
 
 /* Player stats table in formation and substitutes */
 .player-stats-table {
-    width: 100%;
+    width: auto;
     font-size: 12px;
 }
 
