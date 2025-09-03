@@ -534,22 +534,19 @@ input:checked + .slider:before {
     flex-direction: column;
 }
 
-.substitution-title-row {
-    margin-bottom: 10px;
-}
-
 .substitution-title-row .checkbox-label {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    color: #333;
+    gap: 5px;
+    font-weight: bold;
+    margin-bottom: 5px;
     cursor: pointer;
 }
 
 .substitution-title-row input[type="checkbox"] {
     margin: 0;
+    width: 16px;
+    height: 16px;
 }
 
 .substitution-timer-row {
