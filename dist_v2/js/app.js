@@ -1120,16 +1120,16 @@ function renderFormationSetup() {
     // Set up drag-and-drop and touch events
     const numbers = document.querySelectorAll('.player-number');
     numbers.forEach(number => {
-        // Desktop drag events
-        number.removeEventListener('dragstart', dragStart);
-        number.addEventListener('dragstart', dragStart);
-        // Mobile touch events
-        number.removeEventListener('touchstart', touchStart);
-        number.removeEventListener('touchmove', touchMove);
-        number.removeEventListener('touchend', touchEnd);
-        number.addEventListener('touchstart', touchStart, { passive: false });
-        number.addEventListener('touchmove', touchMove, { passive: false });
-        number.addEventListener('touchend', touchEnd);
+        // Only add listeners if not already present
+        if (!number.hasAttribute('data-events-setup')) {
+            // Desktop drag events
+            number.addEventListener('dragstart', dragStart);
+            // Mobile touch events
+            number.addEventListener('touchstart', touchStart, { passive: false });
+            number.addEventListener('touchmove', touchMove, { passive: false });
+            number.addEventListener('touchend', touchEnd);
+            number.setAttribute('data-events-setup', 'true');
+        }
     });
 
     const slots = document.querySelectorAll('.player-slot');
@@ -1399,20 +1399,24 @@ function dropToUnavailableSlot(e) {
 function setupPlacedPlayerDrag() {
     const placedNumbers = document.querySelectorAll('.player-number-placed');
     placedNumbers.forEach(number => {
-        number.removeEventListener('dragstart', dragStart);
-        number.addEventListener('dragstart', dragStart);
+        // Only add listeners if not already present
+        if (!number.hasAttribute('data-drag-setup')) {
+            number.addEventListener('dragstart', dragStart);
+            number.setAttribute('data-drag-setup', 'true');
+        }
     });
 }
 
 function setupPlacedPlayerTouch() {
     const placedNumbers = document.querySelectorAll('.player-number-placed');
     placedNumbers.forEach(number => {
-        number.removeEventListener('touchstart', touchStart);
-        number.removeEventListener('touchmove', touchMove);
-        number.removeEventListener('touchend', touchEnd);
-        number.addEventListener('touchstart', touchStart, { passive: false });
-        number.addEventListener('touchmove', touchMove, { passive: false });
-        number.addEventListener('touchend', touchEnd);
+        // Only add listeners if not already present
+        if (!number.hasAttribute('data-touch-setup')) {
+            number.addEventListener('touchstart', touchStart, { passive: false });
+            number.addEventListener('touchmove', touchMove, { passive: false });
+            number.addEventListener('touchend', touchEnd);
+            number.setAttribute('data-touch-setup', 'true');
+        }
     });
 }
 
@@ -4429,6 +4433,40 @@ function formatActionType(actionType) {
         'own_goal': '⚽ Own Goal'
     };
     return typeMap[actionType] || actionType;
+}
+
+// Helper function to build player stat table HTML - consolidates duplicate code
+function buildPlayerStatTable(stats) {
+    let statTable = '<table class="player-stats-table">';
+    
+    if (stats.goals?.length > 0) {
+        statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
+    }
+    if (stats.assists > 0) {
+        statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
+    }
+    if (stats.saves > 0) {
+        statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
+    }
+    if (stats.goalsAllowed > 0) {
+        statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
+    }
+    if (stats.blockedShots > 0) {
+        statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
+    }
+    if (stats.faults > 0) {
+        statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
+    }
+    if (stats.yellowCards?.length > 0) {
+        statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
+    }
+    const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
+    if (redCards > 0) {
+        statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
+    }
+    
+    statTable += '</table>';
+    return statTable;
 }
 
 function formatTimestamp(timestamp) {
