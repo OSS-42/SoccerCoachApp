@@ -1458,6 +1458,7 @@ button.no-assist-btn {
 }
 
 .player-stats-table td {
+    width: 20px;
     padding: 2px 6px;
     text-align: center;
     font-weight: bold;
