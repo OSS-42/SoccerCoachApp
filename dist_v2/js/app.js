@@ -7,14 +7,20 @@ let appState = {
     timer: {
         duration: 6 * 60, // 6 minutes in seconds
         timeLeft: 6 * 60,
+        endTime: 0, // New: Timestamp when countdown ends
+        pausedTime: 0, // New: Cumulative paused duration in ms
         interval: null,
-        isRunning: false
+        isRunning: false,
+        isPaused: false
     },
     gameTimer: {
         elapsed: 0, // total seconds elapsed in the game
+        startTime: 0, // New: Timestamp when game starts
+        pausedTime: 0, // New: Cumulative paused duration in ms
         interval: null,
         isRunning: false,
-        startTime: null  // used to calculate elapsed time
+        isPaused: false,
+        startTime: null  // Keep if already used elsewhere, but we'll use the new startTime
     },
     settings: {
         language: 'en',
@@ -381,6 +387,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('game-date').value = today;
         showScreen('main-screen');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            if (appState.gameTimer.isRunning && !appState.gameTimer.isPaused) pauseGameTimer();
+            if (appState.timer.isRunning && !appState.timer.isPaused) pauseTimer();
+        } else {
+            if (appState.gameTimer.isRunning && appState.gameTimer.isPaused) resumeGameTimer();
+            if (appState.timer.isRunning && appState.timer.isPaused) startTimer(); // Resume
+            updateTimers();
+        }
     });
 });
 
@@ -1834,26 +1851,20 @@ function updatePeriodCounter() {
 // Timer Functions
 function updateTimerDisplay() {
     const timerDisplay = document.getElementById('substitution-timer');
-    const timerValue = timerDisplay.querySelector('.timer-value');
+    const timerValue = timerDisplay?.querySelector('.timer-value');
     
-    // If timer not needed, always show 0:00
-    if (appState.currentGame && appState.currentGame.timerNotNeeded) {
-        if (timerValue) {
-            timerValue.textContent = '0:00';
-        }
+    if (!timerValue) return;
+
+    if (appState.currentGame?.timerNotNeeded) {
+        timerValue.textContent = '0:00';
         timerDisplay.classList.remove('timer-alert');
         return;
     }
-    
-    const minutes = Math.floor(appState.timer.timeLeft / 60);
-    const seconds = appState.timer.timeLeft % 60;
-    
-    if (timerValue) {
-        timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    
-    // Add alert styling if timer is at zero
-    if (appState.timer.timeLeft === 0) {
+
+    const remaining = getRemainingSubTime();
+    timerValue.textContent = formatTime(remaining);
+
+    if (remaining <= 0) {
         timerDisplay.classList.add('timer-alert');
     } else {
         timerDisplay.classList.remove('timer-alert');
@@ -1861,85 +1872,90 @@ function updateTimerDisplay() {
 }
 
 function updateGameTimeDisplay() {
-    const minutes = Math.floor(appState.gameTimer.elapsed / 60);
-    const seconds = appState.gameTimer.elapsed % 60;
     const gameTimeElement = document.getElementById('game-time');
-    if (gameTimeElement) {
-        gameTimeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    updatePeriodCounter(); // Update period counter on every tick
+    if (!gameTimeElement) return;
+
+    const elapsed = getElapsedGameTime();
+    gameTimeElement.textContent = formatTime(elapsed);
+    updatePeriodCounter();
 }
 
 function startTimer() {
-    // Don't start timer if not needed
-    if (appState.currentGame && appState.currentGame.timerNotNeeded) {
-        return;
-    }
-    
-    if (!appState.timer.isRunning && appState.timer.timeLeft > 0) {
+    if (!appState.timer.isRunning) {
+        // Fresh start
+        appState.timer.endTime = Date.now() + (appState.timer.duration * 1000);
+        appState.timer.pausedTime = 0;
         appState.timer.isRunning = true;
-        appState.timer.interval = setInterval(() => {
-            if (appState.timer.timeLeft > 0) {
-                appState.timer.timeLeft--;
-                updateTimerDisplay();
-            } else {
-                clearInterval(appState.timer.interval);
-                appState.timer.isRunning = false;
-            }
-        }, 1000);
-        
-        // Also start the game timer if not already running
-        startGameTimer();
+        appState.timer.isPaused = false;
+    } else if (appState.timer.isPaused) {
+        // Resume from pause
+        resumeTimer();
     }
+    updateTimers();
 }
 
 function pauseTimer() {
-    clearInterval(appState.timer.interval);
-    appState.timer.isRunning = false;
-    
-    // We don't pause the game timer when the substitution timer is paused
-    // The game continues even if substitutions are paused
+    if (appState.timer.isRunning && !appState.timer.isPaused) {
+        appState.timer.isPaused = true;
+        // Record the moment we paused
+        appState.timer.pauseStart = Date.now();
+    }
+}
+
+function resumeTimer() {
+    if (appState.timer.isRunning && appState.timer.isPaused) {
+        // Add the paused duration to total pausedTime
+        appState.timer.pausedTime += Date.now() - appState.timer.pauseStart;
+        appState.timer.isPaused = false;
+        // No need to reset pauseStart — we'll use it again next pause
+        updateTimers();
+    }
 }
 
 function resetTimer() {
-    pauseTimer();
     appState.timer.timeLeft = appState.timer.duration;
-    updateTimerDisplay();
+    appState.timer.pausedTime = 0;
+    appState.timer.isRunning = false;
+    appState.timer.isPaused = false;
+    document.getElementById('substitution-timer').querySelector('.timer-value').textContent = formatTime(appState.timer.timeLeft);
 }
 
 function startGameTimer() {
     if (!appState.gameTimer.isRunning) {
+        // Fresh start
+        appState.gameTimer.startTime = Date.now();
+        appState.gameTimer.pausedTime = 0;
+        appState.gameTimer.elapsed = 0;
         appState.gameTimer.isRunning = true;
-        appState.gameTimer.startTime = new Date();
-
-        appState.gameTimer.interval = setInterval(() => {
-            appState.gameTimer.elapsed++;
-            updateGameTimeDisplay();
-
-            // Update the current game's total time
-            if (appState.currentGame) {
-                appState.currentGame.totalGameTime = appState.gameTimer.elapsed;
-            }
-        }, 1000);
-
-        // Show success message
-        showMessage('Period started successfully', 'success');
+        appState.gameTimer.isPaused = false;
+    } else if (appState.gameTimer.isPaused) {
+        // Resume from pause
+        resumeGameTimer();
     }
+    updateTimers();
 }
 
 function pauseGameTimer() {
-    if (appState.gameTimer.isRunning) {
-        clearInterval(appState.gameTimer.interval);
-        appState.gameTimer.isRunning = false;
+    if (appState.gameTimer.isRunning && !appState.gameTimer.isPaused) {
+        appState.gameTimer.isPaused = true;
+        appState.gameTimer.pauseStart = Date.now();
+    }
+}
+
+function resumeGameTimer() {
+    if (appState.gameTimer.isRunning && appState.gameTimer.isPaused) {
+        appState.gameTimer.pausedTime += Date.now() - appState.gameTimer.pauseStart;
+        appState.gameTimer.isPaused = false;
+        updateTimers();
     }
 }
 
 function stopGameTimer() {
-    // Check if the game timer is running
-    if (!appState.gameTimer.isRunning) {
-        showMessage('Cannot stop: Game clock has not been started', 'error');
-        return;
-    }
+    appState.gameTimer.isRunning = false;
+    appState.gameTimer.isPaused = false;
+    appState.gameTimer.elapsed = getElapsedGameTime();
+    updateGameTimeDisplay();
+}
 
     // Stop both timers
     pauseGameTimer();
@@ -2005,7 +2021,6 @@ function stopGameTimer() {
 
     periodDialog.style.display = 'flex';
     periodDialog.classList.add('active');
-}
 
 function closePeriodFinishedDialog() {
     const dialog = document.getElementById('period-finished-dialog');
@@ -4475,4 +4490,48 @@ const UIManager = {
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Function to calculate elapsed game time
+function getElapsedGameTime() {
+    if (!appState.gameTimer.isRunning || appState.gameTimer.isPaused) return appState.gameTimer.elapsed;
+    const now = Date.now();
+    const rawElapsed = now - appState.gameTimer.startTime - appState.gameTimer.pausedTime;
+    return Math.max(0, Math.floor(rawElapsed / 1000));  // In seconds
+}
+
+// Function to calculate remaining substitution time
+function getRemainingSubTime() {
+    if (!appState.timer.isRunning || appState.timer.isPaused) return appState.timer.timeLeft;
+    const now = Date.now();
+    const remainingMs = appState.timer.endTime - now + appState.timer.pausedTime;
+    return Math.max(0, Math.floor(remainingMs / 1000));  // In seconds
+}
+
+// Update display function (call this when visible)
+function updateTimers() {
+    const elapsed = getElapsedGameTime();
+    const remaining = getRemainingSubTime();
+    
+    // Update game time UI
+    document.getElementById('game-time').textContent = formatTime(elapsed);
+    
+    // Update substitution timer UI
+    document.getElementById('substitution-timer').querySelector('.timer-value').textContent = formatTime(remaining);
+    
+    // Check for substitution timer end
+    if (remaining <= 0 && appState.timer.isRunning) {
+        pauseTimer(); // Or handle alert/vibration
+        showMessage('Time for substitution!', 'info');
+    }
+    
+    if (appState.gameTimer.isRunning || appState.timer.isRunning) {
+        requestAnimationFrame(updateTimers);  // Efficient loop, only when visible
+    }
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
