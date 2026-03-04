@@ -1,4 +1,13 @@
 // StorageService - IndexedDB persistence layer
+// Note: showMessage may not be defined at this stage, so we use a safe wrapper
+window._StorageErrorLog = function(msg) {
+    if (typeof showMessage === 'function') {
+        showMessage(msg, 'error');
+    } else {
+        console.error('[StorageService]', msg);
+    }
+};
+
 window.StorageService = {
     db: null,
     
@@ -27,7 +36,7 @@ window.StorageService = {
             };
 
             request.onerror = (event) => {
-                showMessage('Failed to initialize database', 'error');
+                _StorageErrorLog('Failed to initialize database');
                 reject(event.target.error);
             };
         });
@@ -35,7 +44,7 @@ window.StorageService = {
     
     save() {
         if (!this.db) {
-            showMessage('Database not initialized', 'error');
+            _StorageErrorLog('Database not initialized');
             return;
         }
 
@@ -48,7 +57,7 @@ window.StorageService = {
 
         // Validate data
         if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
-            showMessage('Invalid data format for saving', 'error');
+            _StorageErrorLog('Invalid data format for saving');
             return;
         }
 
@@ -90,7 +99,7 @@ window.StorageService = {
 
         transaction.oncomplete = () => {};
         transaction.onerror = (event) => {
-            showMessage('Failed to save data', 'error');
+            _StorageErrorLog('Failed to save data');
         };
     },
     
@@ -212,9 +221,4 @@ window.StorageService = {
     }
 };
 
-// Maintain global db reference for backward compatibility in app.js
-let db = null;
-Object.defineProperty(window, 'dbProxy', {
-    get: function() { return StorageService.db; },
-    set: function(val) { StorageService.db = val; }
-});
+// appState is now guaranteed to be loaded before this script via StateInit.js

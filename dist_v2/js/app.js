@@ -1,29 +1,5 @@
-// Application State
-let appState = {
-    teamName: "My Team",
-    players: [],
-    games: [],
-    currentGame: null,
-    timer: {
-        duration: 6 * 60, // 6 minutes in seconds
-        timeLeft: 6 * 60,
-        interval: null,
-        isRunning: false
-    },
-    gameTimer: {
-        elapsed: 0, // total seconds elapsed in the game
-        interval: null,
-        isRunning: false,
-        startTime: null  // used to calculate elapsed time
-    },
-    settings: {
-        language: 'en',
-        defaultSubstitutionTime: null, // Replace defaultTimer with defaultSubstitutionTime
-        isSubstitutionDefaultChecked: false
-    },
-    currentPlayer: null,
-    formationTemp: null // Temporary storage for formation during setup
-};
+// Application State - defined in core/StateInit.js (loaded before services)
+// appState is available globally via window.appState
 
 // ===============================================
 // DRAG AND DROP STATE MANAGEMENT
@@ -283,6 +259,7 @@ function touchEnd(e) {
 // Initialize IndexedDB
 // Delegated to StorageService (services/StorageService.js)
 let db = null; // Keep for backward compatibility; synced with StorageService.db
+
 function initIndexedDB() {
     return StorageService.initDB().then(result => {
         db = result;
