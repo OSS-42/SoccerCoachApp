@@ -176,6 +176,8 @@ window.StorageService = {
 
                 transaction.oncomplete = () => {
                     renderPlayersList();
+                    // Ensure global db is synced for backward compatibility
+                    window.db = this.db;
                     resolve();
                 };
 
@@ -215,6 +217,8 @@ window.StorageService = {
                 updatePlayerCounter();
                 updateGameReportCounter();
                 showMessage('Database initialization failed, using defaults', 'error');
+                // Sync global db even on error
+                if (this.db) window.db = this.db;
                 resolve();
             });
         });

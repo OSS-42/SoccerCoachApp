@@ -336,6 +336,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load saved data and update UI
     loadAppData().then(() => {
+        // Sync db from StorageService after loading
+        if (!db && StorageService && StorageService.db) {
+            db = StorageService.db;
+        }
         updateUI();
         renderReportsList(); // Ensure reports list is rendered on load
         const today = new Date().toISOString().split('T')[0];
@@ -2662,6 +2666,14 @@ function confirmDeleteReports() {
         return;
     }
     
+    // Safety check - ensure db is available
+    if (!db) {
+        db = StorageService.db;
+    }
+    if (!db) {
+        showMessage('Database not initialized. Please refresh the page.', 'error');
+        return;
+    }
     
     const deletedCount = reportIds.length;
     const transaction = db.transaction(['games'], 'readwrite');
@@ -3202,8 +3214,12 @@ function closeClearDataDialog() {
 function confirmClearData() {
     closeClearDataDialog();
     
+    // Safety check - ensure db is available
     if (!db) {
-        showMessage('Database not initialized', 'error');
+        db = StorageService.db;
+    }
+    if (!db) {
+        showMessage('Database not initialized. Please refresh the page.', 'error');
         return;
     }
 
@@ -3311,8 +3327,12 @@ function closeResetStatsDialog() {
 function confirmResetStatistics() {
     closeResetStatsDialog();
     
+    // Safety check - ensure db is available
     if (!db) {
-        showMessage('Database not initialized', 'error');
+        db = StorageService.db;
+    }
+    if (!db) {
+        showMessage('Database not initialized. Please refresh the page.', 'error');
         return;
     }
 
