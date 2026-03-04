@@ -1802,9 +1802,16 @@ button.no-assist-btn {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.stats-table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    -webkit-overflow-scrolling: touch;
+}
+
 .stats-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 700px;
 }
 
 .stats-table th,

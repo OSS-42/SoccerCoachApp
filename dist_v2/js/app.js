@@ -2763,6 +2763,7 @@ function viewReport(gameId) {
                 assists: 0,
                 saves: 0,
                 goalsAllowed: 0,
+                shotOnGoal: 0,
                 yellowCards: [],
                 redCards: [],
                 lateToGame: false,
@@ -2996,7 +2997,7 @@ function viewReport(gameId) {
                             <th><span class="stat-emoji">👟</span></th>
                             <th><span class="stat-emoji">🧤</span></th>
                             <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
-                            <th><span class="stat-emoji">📍</span></th>
+                            <th><span class="stat-emoji">🎯</span></th>
                             <th><span class="stat-emoji">❌</span></th>
                             <th><span class="stat-emoji">⚠️</span></th>
                             <th><span class="stat-emoji">🟨</span></th>
@@ -4349,48 +4350,50 @@ function renderPlayerStatistics() {
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
     
     const tableHTML = `
-        <table class="stats-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>GP</th>
-                    <th>Missed</th>
-                    <th>Late</th>
-                    <th>Goals</th>
-                    <th>Assists</th>
-                    <th>Saves</th>
-                    <th>Passes</th>
-                    <th>Shots</th>
-                    <th>Blocks</th>
-                    <th>Fouls</th>
-                    <th>YC</th>
-                    <th>RC</th>
-                    <th>OG</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${sortedPlayers.map(player => `
+        <div class="stats-table-container">
+            <table class="stats-table">
+                <thead>
                     <tr>
-                        <td>${player.jerseyNumber}</td>
-                        <td>${player.name}</td>
-                        <td>${player.gamesPlayed}</td>
-                        <td>${player.missedGames}</td>
-                        <td>${player.lateToGame}</td>
-                        <td>${player.goals}</td>
-                        <td>${player.assists}</td>
-                        <td>${player.saves}</td>
-                        <td>${player.passes}</td>
-                        <td>${player.shots}</td>
-                        <td>${player.blocks}</td>
-                        <td>${player.fouls}</td>
-                        <td>${player.yellowCards}</td>
-                        <td>${player.redCards}</td>
-                        <td>${player.ownGoals}</td>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>GP</th>
+                        <th>Missed</th>
+                        <th>Late</th>
+                        <th>Goals</th>
+                        <th>Assists</th>
+                        <th>Saves</th>
+                        <th>Passes</th>
+                        <th>Shots</th>
+                        <th>Blocks</th>
+                        <th>Fouls</th>
+                        <th>YC</th>
+                        <th>RC</th>
+                        <th>OG</th>
                     </tr>
-                `).join('')}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    ${sortedPlayers.map(player => `
+                        <tr>
+                            <td>${player.jerseyNumber}</td>
+                            <td>${player.name}</td>
+                            <td>${player.gamesPlayed}</td>
+                            <td>${player.missedGames}</td>
+                            <td>${player.lateToGame}</td>
+                            <td>${player.goals}</td>
+                            <td>${player.assists}</td>
+                            <td>${player.saves}</td>
+                            <td>${player.passes}</td>
+                            <td>${player.shots}</td>
+                            <td>${player.blocks}</td>
+                            <td>${player.fouls}</td>
+                            <td>${player.yellowCards}</td>
+                            <td>${player.redCards}</td>
+                            <td>${player.ownGoals}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
     
     container.innerHTML = tableHTML;
