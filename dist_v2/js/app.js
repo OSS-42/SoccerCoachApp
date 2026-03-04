@@ -7,768 +7,579 @@ let appState = {
     timer: {
         duration: 6 * 60, // 6 minutes in seconds
         timeLeft: 6 * 60,
-        endTime: 0, // New: Timestamp when countdown ends
-        pausedTime: 0, // New: Cumulative paused duration in ms
         interval: null,
-        isRunning: false,
-        isPaused: false
+        isRunning: false
     },
     gameTimer: {
         elapsed: 0, // total seconds elapsed in the game
-        startTime: 0, // New: Timestamp when game starts
-        pausedTime: 0, // New: Cumulative paused duration in ms
         interval: null,
         isRunning: false,
-        isPaused: false
+        startTime: null  // used to calculate elapsed time
     },
     settings: {
         language: 'en',
-        defaultSubstitutionTime: null, // Replace defaultTimer with defaultSubstitutionTime
-        isSubstitutionDefaultChecked: false
+        defaultTimer: 6
     },
-    currentPlayer: null,
-    formationTemp: null // Temporary storage for formation during setup
+    currentPlayer: null
 };
 
-// We track pause start times using the high-resolution device timer (performance.now())
-let gamePauseStart = 0; // For gameTimer
-let subPauseStart = 0;  // For timer (substitution)
-
-// ===============================================
-// DRAG AND DROP STATE MANAGEMENT
-// ===============================================
-
-const DragState = {
-    draggedElement: null,
-    initialX: 0,
-    initialY: 0,
-    clone: null,
-    lastVibratedSlot: null, // Track last slot vibrated to debounce
-    
-    reset() {
-        this.draggedElement = null;
-        this.initialX = 0;
-        this.initialY = 0;
-        this.clone = null;
-        this.lastVibratedSlot = null;
-    }
-};
-
-function touchStart(e) {
-    if (e.target.classList.contains('disabled')) return;
-    e.preventDefault();
-    draggedElement = e.target;
-    const touch = e.targetTouches[0];
-
-    // Haptic feedback on selection
-    if (navigator.vibrate) {
-        navigator.vibrate(50); // 50ms vibration
-    }
-
-    // Create a clone for visual feedback
-    clone = draggedElement.cloneNode(true);
-    clone.style.position = 'absolute';
-    clone.style.opacity = '0.7';
-    clone.style.pointerEvents = 'none';
-    clone.style.zIndex = '1000';
-    clone.style.width = '72px'; // 3x larger than original 24px
-    clone.style.height = '72px'; // 3x larger than original 24px
-    clone.style.lineHeight = '72px'; // Center text vertically
-    clone.style.fontSize = '36px'; // Scale font size for readability
-    clone.style.borderRadius = '50%'; // Ensure circular shape
-    clone.style.background = '#000'; // Retain black background
-    clone.style.color = '#fff'; // Retain white text
-    document.body.appendChild(clone);
-    updateClonePosition(touch.clientX, touch.clientY);
+// Initialize the app
+// Utility functions for common operations
+function getElement(id) {
+    return document.getElementById(id);
 }
 
-function touchMove(e) {
-    if (!draggedElement) return;
-    e.preventDefault();
-    const touch = e.targetTouches[0];
-    updateClonePosition(touch.clientX, touch.clientY);
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
 
-    // Haptic feedback when passing over a slot (field or unavailable)
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const slot = dropTarget.closest('.player-slot, .unavailable-slot');
-    if (slot && slot !== lastVibratedSlot) {
-        if (navigator.vibrate) {
-            navigator.vibrate(30); // 30ms vibration
-        }
-        lastVibratedSlot = slot;
-    } else if (!slot) {
-        lastVibratedSlot = null; // Reset when not over a slot
+// Initialize app styling - light mode only
+function initializeStyling() {
+    // No styling needed, we're using light mode only
+}
+
+// Message functions
+function showMessage(message, type = 'error') {
+    const ribbon = document.getElementById('message-ribbon');
+    const messageText = document.getElementById('message-text');
+    
+    messageText.textContent = message;
+    ribbon.className = `message-ribbon ${type}`;
+    
+    // Show message
+    setTimeout(() => {
+        ribbon.classList.remove('hidden');
+    }, 10);
+    
+    // Auto-hide after 5 seconds
+    if (type === 'success') {
+        setTimeout(hideMessage, 5000);
     }
 }
 
-function updateClonePosition(clientX, clientY) {
-    if (clone) {
-        clone.style.left = `${clientX - 36}px`; // Center clone at touch point (72px / 2)
-        clone.style.top = `${clientY - 36}px`; // Center clone at touch point (72px / 2)
-    }
+function hideMessage() {
+    const ribbon = document.getElementById('message-ribbon');
+    ribbon.classList.add('hidden');
 }
 
-function touchEnd(e) {
-    if (!draggedElement) return;
-    e.preventDefault();
-
-    // Remove clone
-    if (clone) {
-        document.body.removeChild(clone);
-        clone = null;
-    }
-
-    const touch = e.changedTouches[0];
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const playerId = draggedElement.getAttribute('data-player-id');
-    const isPlaced = draggedElement.classList.contains('player-number-placed');
-    const parentSlot = draggedElement.closest('.player-slot, .unavailable-slot');
-    const isFromUnavailable = parentSlot && parentSlot.classList.contains('unavailable-slot');
+document.addEventListener('DOMContentLoaded', function() {
+    // Load saved data if available
+    loadAppData();
     
-    let source = 'sidebar';
-    if (isPlaced && isFromUnavailable) {
-        source = 'unavailable';
-    } else if (isPlaced) {
-        source = 'field';
+    // Populate UI with existing data
+    renderPlayersList();
+    updateTeamNameUI();
+    
+    // Add demo players if none exist
+    if (appState.players.length === 0) {
+        addDemoPlayers();
     }
     
-    const slotId = draggedElement.parentElement.id || '';
+    // Set today's date as the default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('game-date').value = today;
+});
 
-    const slot = dropTarget.closest('.player-slot');
-    const unavailableSlot = dropTarget.closest('.unavailable-slot');
-    if (slot) {
-        const position = slot.getAttribute('data-position');
-        const matchType = appState.currentGame.matchType;
-        const maxPlayers = parseInt(matchType.split('v')[0]);
-        let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
-
-        const existingPlayerId = slot.getAttribute('data-player-id');
-        
-        // Only check player limit if adding to empty slot (not replacing)
-        if (source === 'sidebar' && !existingPlayerId && currentPlayers >= maxPlayers) {
-            showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
-            draggedElement = null;
-            return;
-        }
-        if (existingPlayerId && existingPlayerId !== playerId) {
-            // Remove existing player from formation and return to sidebar
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
-            const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
-            if (oldPlayer) {
-                oldPlayer.classList.remove('disabled');
-                oldPlayer.draggable = true;
-            }
-        }
-
-        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-        const x = parseFloat(slot.style.left);
-        const y = parseFloat(slot.style.top);
-
-        appState.formationTemp.push({
-            playerId,
-            position: position, // Always use the field slot position, not player's original position
-            x,
-            y
-        });
-
-        slot.innerHTML = '';
-        slot.setAttribute('data-player-id', playerId);
-        slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>`;
-        slot.classList.add('occupied');
-
-        if (source === 'sidebar') {
-            disablePlayerNumber(playerId);
-        } else if (source === 'field' && slotId !== slot.id) {
-            const prevSlot = document.getElementById(slotId);
-            if (prevSlot) {
-                prevSlot.innerHTML = '';
-                prevSlot.removeAttribute('data-player-id');
-                prevSlot.classList.remove('occupied');
-            }
-        }
-
-        setupPlacedPlayerDrag();
-        setupPlacedPlayerTouch(); // Reattach touch event listeners
-    } else if (unavailableSlot) {
-        // Handle drop to unavailable slot (mobile touch)
-        const existingPlayerId = unavailableSlot.getAttribute('data-player-id');
-        if (existingPlayerId && existingPlayerId !== playerId) {
-            // Remove displaced player from unavailable list
-            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
-            
-            // Re-enable the displaced player in sidebar
-            const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
-            if (displacedNumber) {
-                displacedNumber.classList.remove('disabled');
-                displacedNumber.draggable = true;
-            }
-        }
-        
-        const player = appState.players.find(p => p.id === playerId);
-        if (player) {
-            // Remove from source
-            if (source === 'field') {
-                const sourceSlot = document.getElementById(slotId);
-                if (sourceSlot) {
-                    sourceSlot.innerHTML = '';
-                    sourceSlot.removeAttribute('data-player-id');
-                    sourceSlot.classList.remove('occupied');
-                }
-                appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-                // Re-enable player number if moving from field
-                const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-                if (number) {
-                    number.classList.remove('disabled');
-                    number.draggable = true;
-                }
-            } else if (source === 'unavailable') {
-                // Moving between unavailable slots
-                const sourceSlot = document.getElementById(slotId);
-                if (sourceSlot) {
-                    sourceSlot.innerHTML = '';
-                    sourceSlot.removeAttribute('data-player-id');
-                    sourceSlot.classList.remove('occupied');
-                }
-            }
-            
-            // Add to unavailable players if not already there
-            if (!appState.unavailablePlayers.includes(playerId)) {
-                appState.unavailablePlayers.push(playerId);
-            }
-            
-            // Add to target slot
-            unavailableSlot.innerHTML = `
-                <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>
-            `;
-            unavailableSlot.setAttribute('data-player-id', playerId);
-            unavailableSlot.classList.add('occupied');
-            
-            // Re-setup drag events and disable player in sidebar if from sidebar
-            setupPlacedPlayerDrag();
-            setupPlacedPlayerTouch();
-            if (source === 'sidebar') {
-                disablePlayerNumber(playerId);
-            }
-            
-            // Save data
-            saveAppData();
-        }
+// Team Name functions
+function updateTeamNameUI() {
+    // Update team name in the input field
+    const teamNameInput = document.getElementById('team-name-input');
+    if (teamNameInput) {
+        teamNameInput.value = appState.teamName;
     }
+    
+    // Update team name in game screen
+    const teamNameElements = document.querySelectorAll('.team-name');
+    teamNameElements.forEach(element => {
+        if (element.id !== 'opponent-team-name') {
+            element.textContent = appState.teamName.toUpperCase();
+        }
+    });
+}
 
-    const sidebar = document.querySelector('#player-list');
-    if (sidebar && (source === 'field' || source === 'unavailable') && dropTarget.closest('#player-list')) {
-        // Handle dropping back to sidebar from field or unavailable area
-        if (source === 'field') {
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-        } else if (source === 'unavailable') {
-            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
-        }
-        
-        const slot = document.getElementById(slotId);
-        if (slot) {
-            slot.innerHTML = '';
-            slot.removeAttribute('data-player-id');
-            slot.classList.remove('occupied');
-        }
-        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-        if (number) {
-            number.classList.remove('disabled');
-            number.draggable = true;
-        }
-        
-        // Save data
+function saveTeamName() {
+    const teamNameInput = document.getElementById('team-name-input');
+    const newTeamName = teamNameInput.value.trim();
+    
+    if (newTeamName) {
+        appState.teamName = newTeamName;
         saveAppData();
-    }
-
-    //     playerId: f.playerId,
-    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
-    // ...(truncated 148753 characters)...te).toLocaleDateString()} onwards`;
-    else if (endDate) {
-            periodText += `start to ${new Date(endDate).toLocaleDateString()}`;
-        }
-    else {
-        periodText = 'All completed games';
-    }
-    
-    periodInfoElement.textContent = periodText;
-    
-    // Set data attribute for mobile pseudo-element
-    if (controlsRow2) {
-        controlsRow2.setAttribute('data-period-info', periodText);
-    }
-    
-    // Count games and available reports
-    const totalGames = filteredGames.length;
-    const gamesWithReports = filteredGames.filter(game => 
-        game.actions && game.actions.length > 0
-    ).length;
-    
-    // Update reports counter
-    if (totalGames === 0) {
-        reportsCounterElement.innerHTML = '';
-    } else if (gamesWithReports === totalGames) {
-        reportsCounterElement.innerHTML = `
-            <span>Reports:</span>
-            <span class="reports-counter-badge">${gamesWithReports}/${totalGames}</span>
-        `;
+        updateTeamNameUI();
+        showMessage('Team name saved successfully', 'success');
     } else {
-        reportsCounterElement.innerHTML = `
-            <span>Reports:</span>
-            <span class="reports-counter-warning">${gamesWithReports}/${totalGames}</span>
-            <span style="color: #ff9800; font-size: 12px;">${totalGames - gamesWithReports} missing</span>
-        `;
+        showMessage('Please enter a team name', 'error');
     }
 }
 
-
-// Render player statistics table
-function renderPlayerStatistics() {
-    const container = document.getElementById('player-statistics-container');
-    if (!container) return;
+// Screen Navigation
+function showScreen(screenId) {
+    // Hide all screens
+    const screens = document.querySelectorAll('.screen');
+    screens.forEach(screen => {
+        screen.classList.remove('active');
+    });
     
-    // Get date filter values
-    const startDate = document.getElementById('stats-start-date')?.value || null;
-    const endDate = document.getElementById('stats-end-date')?.value || null;
+    // Show the selected screen
+    document.getElementById(screenId).classList.add('active');
     
-    const playerStats = calculatePlayerStatistics(startDate, endDate);
-    
-    // Check if we have completed games (considering date filter)
-    let completedGames = appState.games.filter(game => game.isCompleted);
-    if (startDate || endDate) {
-        completedGames = completedGames.filter(game => {
-            if (!game.date) return false;
-            const gameDate = new Date(game.date);
-            if (startDate && gameDate < new Date(startDate)) return false;
-            if (endDate && gameDate > new Date(endDate)) return false;
-            return true;
-        });
+    // Special handling for specific screens
+    if (screenId === 'reports') {
+        renderReportsList();
+    } else if (screenId === 'game-setup') {
+        // Auto-fill today's date when opening the game setup screen
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        document.getElementById('game-date').value = `${year}-${month}-${day}`;
     }
-    const hasCompletedGames = completedGames && completedGames.length > 0;
+}
+
+// Player Management
+function openAddPlayerDialog() {
+    toggleDialog('add-player-dialog', true);
+}
+
+function closeAddPlayerDialog() {
+    toggleDialog('add-player-dialog', false);
+    document.getElementById('player-name').value = '';
+    document.getElementById('jersey-number').value = '';
+}
+
+function addPlayer() {
+    const name = document.getElementById('player-name').value.trim();
+    const jerseyNumber = document.getElementById('jersey-number').value;
     
-    // Update period info and reports counter
-    updateStatsPeriodInfo(startDate, endDate, completedGames);
-    
-    if (!hasCompletedGames || appState.players.length === 0) {
-        container.innerHTML = `
-            <div class="no-stats-message">
-                ${appState.players.length === 0 
-                    ? 'No players added to the team yet.' 
-                    : 'No completed games yet. Statistics will appear after completing games.'}
-            </div>
-        `;
+    if (!name || !jerseyNumber) {
+        showMessage('Please fill in all required fields', 'error');
         return;
     }
     
-    // Sort players by jersey number
-    const sortedPlayers = Object.values(playerStats)
-        .filter(player => appState.players.find(p => p.id === Object.keys(playerStats).find(id => playerStats[id] === player)))
-        .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
+    // Check for duplicate jersey numbers
+    if (appState.players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
+        showMessage('A player with this jersey number already exists', 'error');
+        return;
+    }
     
-    const tableHTML = `
-        <table class="stats-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>GP</th>
-                    <th>Missed</th>
-                    <th>Late</th>
-                    <th>Goals</th>
-                    <th>Assists</th>
-                    <th>Saves</th>
-                    <th>Passes</th>
-                    <th>Shots</th>
-                    <th>Blocks</th>
-                    <th>Fouls</th>
-                    <th>YC</th>
-                    <th>RC</th>
-                    <th>OG</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${sortedPlayers.map(player => `
-                    <tr>
-                        <td>${player.jerseyNumber}</td>
-                        <td>${player.name}</td>
-                        <td>${player.gamesPlayed}</td>
-                        <td>${player.missedGames}</td>
-                        <td>${player.lateToGame}</td>
-                        <td>${player.goals}</td>
-                        <td>${player.assists}</td>
-                        <td>${player.saves}</td>
-                        <td>${player.passes}</td>
-                        <td>${player.shots}</td>
-                        <td>${player.blocks}</td>
-                        <td>${player.fouls}</td>
-                        <td>${player.yellowCards}</td>
-                        <td>${player.redCards}</td>
-                        <td>${player.ownGoals}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+    // Generate a unique ID that isn't already in use
+    let playerId;
+    do {
+        playerId = Math.floor(Math.random() * 1000000).toString();
+    } while (appState.players.some(p => p.id === playerId));
+    
+    const player = {
+        id: playerId, // Using a random number instead of timestamp for better reusability
+        name,
+        jerseyNumber: Number(jerseyNumber),
+        stats: {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        }
+    };
+    
+    appState.players.push(player);
+    saveAppData();
+    renderPlayersList();
+    closeAddPlayerDialog();
+}
+
+function renderPlayersList() {
+    const playersList = document.getElementById('players-list');
+    playersList.innerHTML = '';
+    
+    if (appState.players.length === 0) {
+        playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
+        return;
+    }
+    
+    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item';
+        playerItem.innerHTML = `
+            <div class="jersey-number">${player.jerseyNumber}</div>
+            <div class="player-info">
+                <div class="player-name">${player.name}</div>
+            </div>
+            <div class="player-actions">
+                <button class="player-action-btn" onclick="editPlayer('${player.id}')">
+                    <span class="material-icons">edit</span>
+                </button>
+                <button class="player-action-btn" onclick="deletePlayer('${player.id}')">
+                    <span class="material-icons">delete</span>
+                </button>
+            </div>
+        `;
+        playersList.appendChild(playerItem);
+    });
+}
+
+function editPlayer(playerId) {
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Create edit player dialog if it doesn't exist
+    let editDialog = document.getElementById('edit-player-dialog');
+    if (!editDialog) {
+        editDialog = document.createElement('div');
+        editDialog.id = 'edit-player-dialog';
+        editDialog.className = 'dialog';
+        document.getElementById('app').appendChild(editDialog);
+    }
+    
+    editDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Edit Player</h2>
+            <div class="form-group">
+                <label for="edit-player-name">First Name:</label>
+                <input type="text" id="edit-player-name" value="${player.name}" placeholder="Enter player's first name">
+            </div>
+            <div class="form-group">
+                <label for="edit-jersey-number">Jersey Number:</label>
+                <input type="number" id="edit-jersey-number" value="${player.jerseyNumber}" min="1" max="99">
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeEditPlayerDialog()">Cancel</button>
+                <button class="primary-btn" onclick="savePlayerEdit('${player.id}')">Save</button>
+            </div>
+        </div>
     `;
     
-    container.innerHTML = tableHTML;
+    editDialog.style.display = 'flex';
 }
 
-// No longer needed - removed updateActionHistory and updateUndoButton functions
+function closeEditPlayerDialog() {
+    const editDialog = document.getElementById('edit-player-dialog');
+    if (editDialog) {
+        editDialog.style.display = 'none';
+    }
+}
 
-function getPlayerName(playerId) {
-    if (!playerId) return 'Unknown Player';
+function savePlayerEdit(playerId) {
     const player = appState.players.find(p => p.id === playerId);
-    return player ? `#${player.jerseyNumber} ${player.name}` : 'Unknown Player';
+    if (!player) return;
+    
+    const newName = document.getElementById('edit-player-name').value.trim();
+    const newJerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
+    
+    if (!newName) {
+        showMessage('Please enter a name for the player', 'error');
+        return;
+    }
+    
+    if (!newJerseyNumber || newJerseyNumber < 1 || newJerseyNumber > 99) {
+        showMessage('Please enter a valid jersey number between 1 and 99', 'error');
+        return;
+    }
+    
+    // Check for duplicate jersey numbers (excluding this player)
+    if (appState.players.some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
+        showMessage('Another player already has this jersey number', 'error');
+        return;
+    }
+    
+    // Update player data
+    player.name = newName;
+    player.jerseyNumber = newJerseyNumber;
+    
+    // Save and refresh
+    saveAppData();
+    renderPlayersList();
+    closeEditPlayerDialog();
 }
 
-function formatActionType(actionType) {
-    const typeMap = {
-        'goal': '⚽ Goal',
-        'assist': '👟 Assist',
-        'save': '🧤 Save',
-        'goals_allowed': '🔴 Goal Allowed',
-        'yellow_card': '🟨 Yellow Card',
-        'red_card': '🟥 Red Card',
-        'fault': '⚠️ Fault',
-        'blocked_shot': '❌ Blocked Shot',
-        'late_to_game': '⏰ Late to Game',
-        'own_goal': '⚽ Own Goal'
+function deletePlayer(playerId) {
+    // Create confirmation dialog if it doesn't exist
+    let confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('div');
+        confirmDialog.id = 'confirm-delete-dialog';
+        confirmDialog.className = 'dialog';
+        document.getElementById('app').appendChild(confirmDialog);
+    }
+    
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    confirmDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to remove ${player.name} (#${player.jerseyNumber})?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="document.getElementById('confirm-delete-dialog').style.display='none'">Cancel</button>
+                <button class="primary-btn delete-btn" onclick="confirmDeletePlayer('${playerId}')">Remove Player</button>
+            </div>
+        </div>
+    `;
+    
+    confirmDialog.style.display = 'flex';
+}
+
+function confirmDeletePlayer(playerId) {
+    // Close the confirmation dialog
+    document.getElementById('confirm-delete-dialog').style.display = 'none';
+    
+    // Actually remove the player completely instead of just marking inactive
+    const playerIndex = appState.players.findIndex(p => p.id === playerId);
+    if (playerIndex !== -1) {
+        // Get player information for the message
+        const player = appState.players[playerIndex];
+        
+        // Remove the player completely (not just set inactive)
+        appState.players.splice(playerIndex, 1);
+        
+        // Update data and UI
+        saveAppData();
+        renderPlayersList();
+        
+        // Show success message with the ribbon
+        showMessage(`Player ${player.name} (#${player.jerseyNumber}) has been removed`, 'success');
+    }
+}
+
+// Game Management
+function startGame() {
+    const opponentName = document.getElementById('opponent-name').value.trim();
+    const gameDate = document.getElementById('game-date').value;
+    const substitutionTime = document.getElementById('substitution-time').value;
+    
+    if (!opponentName) {
+        showMessage('Please enter the opponent team name', 'error');
+        return;
+    }
+    
+    // Reset player stats for this new game
+    appState.players.forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        };
+    });
+    
+    // Create the new game
+    appState.currentGame = {
+        id: Date.now().toString(),
+        date: gameDate,
+        opponentName,
+        homeScore: 0,
+        awayScore: 0,
+        startTime: new Date().toISOString(),
+        endTime: null,
+        actions: [],
+        activePlayers: [...appState.players.map(p => p.id)],
+        isCompleted: false,
+        totalGameTime: 0 // Track total game time in seconds
     };
-    return typeMap[actionType] || actionType;
-}
-
-// ===============================================
-// UTILITY FUNCTIONS
-// ===============================================
-
-// Helper function to build player stat table HTML - consolidates duplicate code
-function buildPlayerStatTable(stats) {
-    let statTable = '<table class="player-stats-table">';
     
-    if (stats.goals?.length > 0) {
-        statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
-    }
-    if (stats.assists > 0) {
-        statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
-    }
-    if (stats.saves > 0) {
-        statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
-    }
-    if (stats.goalsAllowed > 0) {
-        statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
-    }
-    if (stats.blockedShots > 0) {
-        statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
-    }
-    if (stats.faults > 0) {
-        statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
-    }
-    if (stats.yellowCards?.length > 0) {
-        statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
-    }
-    const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
-    if (redCards > 0) {
-        statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
-    }
+    // Setup substitution timer
+    appState.timer.duration = parseInt(substitutionTime) * 60;
+    appState.timer.timeLeft = appState.timer.duration;
+    updateTimerDisplay();
     
-    statTable += '</table>';
-    return statTable;
-}
-
-// ===============================================
-// DIALOG MANAGEMENT SYSTEM
-// ===============================================
-
-const DialogManager = {
-    show(dialogId, setupCallback = null) {
-        const dialog = document.getElementById(dialogId);
-        if (!dialog) return;
-        
-        if (setupCallback) setupCallback(dialog);
-        
-        dialog.style.display = 'flex';
-        dialog.classList.add('active');
-    },
-    
-    hide(dialogId, cleanupCallback = null) {
-        const dialog = document.getElementById(dialogId);
-        if (!dialog) return;
-        
-        dialog.style.display = 'none';
-        dialog.classList.remove('active');
-        
-        if (cleanupCallback) cleanupCallback(dialog);
-    },
-    
-    clearInputs(dialog, inputSelectors = ['input[type="text"]', 'input[type="number"]', 'textarea', 'select']) {
-        inputSelectors.forEach(selector => {
-            dialog.querySelectorAll(selector).forEach(input => {
-                input.value = '';
-            });
-        });
-    }
-};
-
-// ===============================================
-// UI UPDATE MANAGEMENT SYSTEM
-// ===============================================
-
-const UIManager = {
-    updateAll() {
-        this.updatePlayerCounter();
-        this.updateGameReportCounter();
-        this.updateTeamNameUI();
-    },
-    
-    updatePlayerCounter() {
-        const playerCount = appState.players.length;
-        const mainCounter = document.getElementById('player-counter');
-        const teamCounter = document.getElementById('team-player-counter');
-        
-        if (mainCounter) mainCounter.textContent = playerCount;
-        if (teamCounter) teamCounter.textContent = playerCount;
-    },
-    
-    updateGameReportCounter() {
-        const reportCount = appState.games.filter(game => game.completed).length;
-        const reportCounter = document.getElementById('game-report-counter');
-        
-        if (reportCounter) reportCounter.textContent = reportCount;
-    },
-    
-    updateTeamNameUI() {
-        const teamNameInput = document.getElementById('team-name-input');
-        if (teamNameInput && appState.teamName) {
-            teamNameInput.value = appState.teamName;
-        }
-    }
-};
-
-function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-// ------------------------------------------------------------------
-// Page refresh lock helpers
-// Prevent the user from accidentally reloading or pulling-to-refresh
-// once the match timer has started. We use a beforeunload handler and
-// dynamically toggle the CSS overscroll behavior on <body>.
-
-function beforeUnloadHandler(e) {
-    if (appState.gameTimer.isRunning) {
-        // standard compliant browsers
-        e.preventDefault();
-        // Chrome requires returnValue to be set
-        e.returnValue = '';
-    }
-}
-
-// touchmove listener that prevents the default pull-down gesture when
-// the page is already scrolled to the top. Only active while the lock
-// is enabled; removes itself when unlocked.
-function onTouchMovePreventRefresh(e) {
-    if (window.scrollY === 0 && e.touches && e.touches.length && e.touches[0].clientY > 0) {
-        e.preventDefault();
-    }
-}
-
-// popstate listener that intercepts back/forward navigation (including swipe gesture)
-// and shows a confirmation dialog if the game is still running.
-function onPopStatePreventBack(e) {
-    if (appState.gameTimer.isRunning) {
-        e.preventDefault();
-        // Push state back to prevent the navigation
-        history.pushState({ gameActive: true }, '');
-        // Show confirmation dialog
-        if (confirm('Game is in progress. Are you sure you want to go back and lose the timer?')) {
-            // User confirmed – allow navigation by manually removing the listener and going back
-            window.removeEventListener('popstate', onPopStatePreventBack);
-            window.history.back();
-        }
-    }
-}
-
-function lockPageRefresh(enable) {
-    if (enable) {
-        window.addEventListener('beforeunload', beforeUnloadHandler);
-        document.body.style.overscrollBehavior = 'none';
-        window.addEventListener('touchmove', onTouchMovePreventRefresh, { passive: false });
-        // Push a new history state and attach back-navigation guard
-        history.pushState({ gameActive: true }, '');
-        window.addEventListener('popstate', onPopStatePreventBack);
-    } else {
-        window.removeEventListener('beforeunload', beforeUnloadHandler);
-        document.body.style.overscrollBehavior = '';
-        window.removeEventListener('touchmove', onTouchMovePreventRefresh);
-        window.removeEventListener('popstate', onPopStatePreventBack);
-    }
-}
-
-function startGameTimer() {
-    if (appState.gameTimer.isRunning) return; // Already running
-    
-    if (appState.gameTimer.isPaused) {
-        // Resume: accumulate paused time using device timer
-        appState.gameTimer.pausedTime += performance.now() - gamePauseStart;
-        appState.gameTimer.isPaused = false;
-        gamePauseStart = 0;
-    } else {
-        // First start: record the high-resolution start timestamp
-        appState.gameTimer.startTime = performance.now();
-        appState.gameTimer.pausedTime = 0;
-        appState.gameTimer.elapsed = 0; // Reset stored elapsed
-    }
-    
-    appState.gameTimer.isRunning = true;
-
-    // Once the game is live we want to prevent the user from accidentally
-    // pulling-to-refresh or closing the page. Lock the page refresh behavior.
-    lockPageRefresh(true);
-    
-    // Start UI update loop if not already running
-    if (!appState.timer.isRunning) {
-        updateTimers(); // Kick off requestAnimationFrame loop
-    }
-}
-
-function pauseGameTimer() {
-    if (!appState.gameTimer.isRunning || appState.gameTimer.isPaused) return;
-    
-    // Update stored elapsed before pausing
-    appState.gameTimer.elapsed = getElapsedGameTime();
-    
-    // Record pause start using device timer and set flag
-    gamePauseStart = performance.now();
-    appState.gameTimer.isPaused = true;
-}
-
-function stopGameTimer() {
-    if (!appState.gameTimer.isRunning) return;
-    
-    // If paused, accumulate final paused time
-    if (appState.gameTimer.isPaused) {
-        appState.gameTimer.pausedTime += performance.now() - gamePauseStart;
-    }
-    
-    // Update final elapsed
-    appState.gameTimer.elapsed = getElapsedGameTime();
-    
-    // Reset state
+    // Reset and setup game timer
+    appState.gameTimer.elapsed = 0;
     appState.gameTimer.isRunning = false;
-    appState.gameTimer.isPaused = false;
-    appState.gameTimer.startTime = 0;
-    appState.gameTimer.pausedTime = 0;
-    gamePauseStart = 0;
-
-    // Remove page lock when timer stops
-    lockPageRefresh(false);
+    appState.gameTimer.startTime = null;
+    updateGameTimeDisplay();
     
-    // Update UI immediately
-    document.getElementById('game-time').textContent = formatTime(0);
+    // Update opponent name in UI
+    document.getElementById('opponent-team-name').textContent = opponentName.toUpperCase();
+    
+    // Reset scores
+    document.getElementById('home-score').textContent = '0';
+    document.getElementById('away-score').textContent = '0';
+    
+    // Populate player grid
+    renderPlayerGrid();
+    
+    // Switch to game screen
+    showScreen('game-tracking');
+}
+
+function renderPlayerGrid() {
+    const playerGrid = document.getElementById('player-grid');
+    playerGrid.innerHTML = '';
+    
+    // Using all players, not filtering by active status anymore
+    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        // Ensure player has stats object
+        if (!player.stats) {
+            player.stats = {
+                goals: 0,
+                assists: 0,
+                saves: 0,
+                goalsAllowed: 0
+            };
+        }
+        
+        const playerGridItem = document.createElement('div');
+        playerGridItem.className = 'player-grid-item';
+        playerGridItem.setAttribute('data-player-id', player.id);
+        
+        // Create a completely redesigned player card (now square shaped)
+        playerGridItem.innerHTML = `
+            <div class="player-header">
+                <div class="player-number">${player.jerseyNumber}</div>
+                <div class="player-name">${player.name}</div>
+            </div>
+            <div class="player-stats-container">
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="material-icons">sports_soccer</span>
+                    </div>
+                    <div class="stat-value">${player.stats.goals}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="stat-emoji">👟</span>
+                    </div>
+                    <div class="stat-value">${player.stats.assists}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <span class="material-icons">back_hand</span>
+                    </div>
+                    <div class="stat-value">${player.stats.saves}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">
+                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed">
+                    </div>
+                    <div class="stat-value">${player.stats.goalsAllowed}</div>
+                </div>
+            </div>
+        `;
+        
+        playerGridItem.addEventListener('click', () => {
+            openPlayerActionDialog(player);
+        });
+        
+        playerGrid.appendChild(playerGridItem);
+    });
+}
+
+// Timer Functions
+function updateTimerDisplay() {
+    const timerDisplay = getElement('substitution-timer');
+    const timerValue = timerDisplay.querySelector('.timer-value');
+    
+    if (timerValue) {
+        timerValue.textContent = formatTime(appState.timer.timeLeft);
+    }
+    
+    // Add alert styling if timer is at zero
+    if (appState.timer.timeLeft === 0) {
+        timerDisplay.classList.add('timer-alert');
+    } else {
+        timerDisplay.classList.remove('timer-alert');
+    }
+}
+
+function updateGameTimeDisplay() {
+    const gameTimeElement = getElement('game-time');
+    if (gameTimeElement) {
+        gameTimeElement.textContent = `Time: ${formatTime(appState.gameTimer.elapsed)}`;
+    }
 }
 
 function startTimer() {
-    if (appState.timer.isRunning) return;
-    
-    if (appState.timer.isPaused) {
-        // Resume: adjust endTime by pause duration using device timer
-        const pauseDuration = performance.now() - subPauseStart;
-        appState.timer.endTime += pauseDuration;
-        appState.timer.isPaused = false;
-        subPauseStart = 0;
-    } else {
-        // First start: set endTime using high-resolution timestamp
-        const durationMs = appState.timer.duration * 1000;
-        appState.timer.endTime = performance.now() + durationMs;
-        appState.timer.pausedTime = 0;
-        appState.timer.timeLeft = appState.timer.duration; // Initial stored value
-    }
-    
-    appState.timer.isRunning = true;
-    
-    // Start UI update loop if not already running
-    if (!appState.gameTimer.isRunning) {
-        updateTimers();
+    if (!appState.timer.isRunning && appState.timer.timeLeft > 0) {
+        appState.timer.isRunning = true;
+        appState.timer.interval = setInterval(() => {
+            if (appState.timer.timeLeft > 0) {
+                appState.timer.timeLeft--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(appState.timer.interval);
+                appState.timer.isRunning = false;
+            }
+        }, 1000);
+        
+        // Also start the game timer if not already running
+        startGameTimer();
     }
 }
 
 function pauseTimer() {
-    if (!appState.timer.isRunning || appState.timer.isPaused) return;
+    clearInterval(appState.timer.interval);
+    appState.timer.isRunning = false;
     
-    // Update stored timeLeft before pausing
-    appState.timer.timeLeft = getRemainingSubTime();
-    
-    // Record pause start using device timer and set flag
-    subPauseStart = performance.now();
-    appState.timer.isPaused = true;
+    // We don't pause the game timer when the substitution timer is paused
+    // The game continues even if substitutions are paused
 }
 
 function resetTimer() {
-    // Pause if running
-    if (appState.timer.isRunning && !appState.timer.isPaused) {
-        pauseTimer();
-    }
-    
-    // Reset state
-    appState.timer.isRunning = false;
-    appState.timer.isPaused = false;
-    appState.timer.endTime = 0;
-    appState.timer.pausedTime = 0;
+    pauseTimer();
     appState.timer.timeLeft = appState.timer.duration;
-    subPauseStart = 0;
-    
-    // Update UI
-    document.getElementById('substitution-timer').querySelector('.timer-value').textContent = formatTime(appState.timer.duration);
+    updateTimerDisplay();
 }
 
-// Function to calculate elapsed game time using device timer
-function getElapsedGameTime() {
-    if (!appState.gameTimer.isRunning || appState.gameTimer.isPaused) return appState.gameTimer.elapsed;
-    const now = performance.now();
-    const rawElapsed = now - appState.gameTimer.startTime - appState.gameTimer.pausedTime;
-    return Math.max(0, Math.floor(rawElapsed / 1000));  // In seconds
-}
-
-// Function to calculate remaining substitution time using device timer
-function getRemainingSubTime() {
-    if (!appState.timer.isRunning || appState.timer.isPaused) return appState.timer.timeLeft;
-    const now = performance.now();
-    const remainingMs = appState.timer.endTime - now + appState.timer.pausedTime;
-    return Math.max(0, Math.floor(remainingMs / 1000));  // In seconds
-}
-
-// Update display function (call this when visible)
-function updateTimers() {
-    const elapsed = getElapsedGameTime();
-    const remaining = getRemainingSubTime();
-    
-    // Update game time UI
-    document.getElementById('game-time').textContent = formatTime(elapsed);
-    
-    // Update substitution timer UI
-    document.getElementById('substitution-timer').querySelector('.timer-value').textContent = formatTime(remaining);
-    
-    // Check for substitution timer end
-    if (remaining <= 0 && appState.timer.isRunning) {
-        pauseTimer(); // Or handle alert/vibration
-        showMessage('Time for substitution!', 'info');
-    }
-    
-    if (appState.gameTimer.isRunning || appState.timer.isRunning) {
-        requestAnimationFrame(updateTimers);  // Efficient loop, only when visible
+function startGameTimer() {
+    if (!appState.gameTimer.isRunning) {
+        appState.gameTimer.isRunning = true;
+        appState.gameTimer.startTime = new Date();
+        
+        appState.gameTimer.interval = setInterval(() => {
+            appState.gameTimer.elapsed++;
+            updateGameTimeDisplay();
+            
+            // Update the current game's total time
+            if (appState.currentGame) {
+                appState.currentGame.totalGameTime = appState.gameTimer.elapsed;
+            }
+        }, 1000);
     }
 }
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+function pauseGameTimer() {
+    if (appState.gameTimer.isRunning) {
+        clearInterval(appState.gameTimer.interval);
+        appState.gameTimer.isRunning = false;
+    }
 }
 
-// ===============================================
-// ACTION RECORDING SYSTEM
-// ===============================================
+function stopGameTimer() {
+    // Stop the timer first
+    if (appState.gameTimer.isRunning) {
+        clearInterval(appState.gameTimer.interval);
+        appState.gameTimer.isRunning = false;
+    }
+    
+    // Do not reset the game timer to 0, just stop it
+    // Keeping the current elapsed time
+    appState.gameTimer.interval = null;
+    
+    // Stop substitution timer AND reset it to default value
+    pauseTimer();
+    resetTimer();
+    
+    // Save the state
+    saveAppData();
+}
 
+// Player Actions
+// Helper function to handle dialog operations
+function toggleDialog(dialogId, isOpen) {
+    document.getElementById(dialogId).style.display = isOpen ? 'flex' : 'none';
+}
+
+function openPlayerActionDialog(player) {
+    appState.currentPlayer = player;
+    document.getElementById('action-player-name').textContent = player.name;
+    toggleDialog('player-action-dialog', true);
+}
+
+function closePlayerActionDialog() {
+    toggleDialog('player-action-dialog', false);
+    appState.currentPlayer = null;
+}
+
+// Goal with possible assist handling
 function handleGoalAction() {
     if (!appState.currentPlayer) return;
     
@@ -805,13 +616,6 @@ function openAssistSelectionDialog() {
         playersGrid.appendChild(playerItem);
     });
     
-    // Add "No Assist" button
-    const noAssistBtn = document.createElement('div');
-    noAssistBtn.className = 'player-select-item no-assist-btn';
-    noAssistBtn.innerHTML = 'No Assist';
-    noAssistBtn.addEventListener('click', completeGoalWithoutAssist);
-    playersGrid.appendChild(noAssistBtn);
-    
     toggleDialog('assist-selection-dialog', true);
 }
 
@@ -823,7 +627,7 @@ function closeAssistSelectionDialog() {
 function completeGoalWithAssist(assistPlayerId) {
     if (!appState.goalScorer || !assistPlayerId) return;
     
-    // Record the goal for the scorer (this also increments shot_on_goal)
+    // Record the goal for the scorer
     recordAction('goal', appState.goalScorer.id);
     
     // Record the assist for the assisting player
@@ -843,6 +647,7 @@ function completeGoalWithoutAssist() {
     closeAssistSelectionDialog();
 }
 
+// Assist with goal scorer handling
 function handleAssistAction() {
     if (!appState.currentPlayer) return;
     
@@ -890,11 +695,11 @@ function closeScorerSelectionDialog() {
 function completeAssistWithScorer(scorerId) {
     if (!appState.assister || !scorerId) return;
     
-    // Record the goal for the scorer (this also increments shot_on_goal)
-    recordAction('goal', scorerId);
-    
     // Record the assist for the assisting player
     recordAction('assist', appState.assister.id);
+    
+    // Record the goal for the scorer
+    recordAction('goal', scorerId);
     
     // Close the dialog
     closeScorerSelectionDialog();
@@ -916,13 +721,7 @@ function recordAction(actionType, specificPlayerId = null) {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0,
-            shotOnGoal: 0,
-            blockedShots: 0,
-            faults: 0,
-            yellowCards: 0,
-            redCards: 0,
-            ownGoals: 0
+            goalsAllowed: 0
         };
     }
     
@@ -939,16 +738,11 @@ function recordAction(actionType, specificPlayerId = null) {
     switch (actionType) {
         case 'goal':
             appState.players[playerIndex].stats.goals++;
-            // Shot on goal is incremented when a goal is scored
-            appState.players[playerIndex].stats.shotOnGoal++;
             appState.currentGame.homeScore++;
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
             break;
         case 'assist':
             appState.players[playerIndex].stats.assists++;
-            break;
-        case 'shot_on_goal':
-            appState.players[playerIndex].stats.shotOnGoal++;
             break;
         case 'save':
             appState.players[playerIndex].stats.saves++;
@@ -957,21 +751,6 @@ function recordAction(actionType, specificPlayerId = null) {
             appState.players[playerIndex].stats.goalsAllowed++;
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
-            break;
-        case 'blocked_shot':
-            appState.players[playerIndex].stats.blockedShots++;
-            break;
-        case 'fault':
-            appState.players[playerIndex].stats.faults++;
-            break;
-        case 'yellow_card':
-            appState.players[playerIndex].stats.yellowCards++;
-            break;
-        case 'red_card':
-            appState.players[playerIndex].stats.redCards++;
-            break;
-        case 'own_goal':
-            appState.players[playerIndex].stats.ownGoals++;
             break;
     }
     
@@ -990,33 +769,444 @@ function updatePlayerGridItem(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // Update stats display - check what stats are visible in the current layout
+    // Directly update the stat values in the player card
     const statValues = document.querySelectorAll(`.player-grid-item[data-player-id="${playerId}"] .stat-value`);
-    if (statValues && statValues.length > 0) {
-        // Update visible stats in order
-        if (statValues[0]) statValues[0].textContent = player.stats.goals || 0;
-        if (statValues[1]) statValues[1].textContent = player.stats.assists || 0;
-        if (statValues[2]) statValues[2].textContent = player.stats.saves || 0;
-        if (statValues[3]) statValues[3].textContent = player.stats.goalsAllowed || 0;
-        if (statValues[4]) statValues[4].textContent = player.stats.shotOnGoal || 0;
+    if (statValues && statValues.length >= 4) {
+        statValues[0].textContent = player.stats.goals;
+        statValues[1].textContent = player.stats.assists;
+        statValues[2].textContent = player.stats.saves;
+        statValues[3].textContent = player.stats.goalsAllowed;
     } else {
         // Fallback to re-rendering the entire player grid if we can't find stat elements
         renderPlayerGrid();
     }
 }
 
-function closePlayerActionDialog() {
-    DialogManager.hide('player-action-dialog');
-    appState.currentPlayer = null;
+function calculateGameMinute() {
+    if (!appState.currentGame) return 0;
+    
+    const startTime = new Date(appState.currentGame.startTime);
+    const now = new Date();
+    const diffMs = now - startTime;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    return diffMins;
 }
 
-function calculateGameMinute() {
-    if (!appState.currentGame || !appState.currentGame.startTime) return 0;
+// End Game
+function confirmEndGame() {
+    toggleDialog('end-game-dialog', true);
+}
+
+function closeEndGameDialog() {
+    toggleDialog('end-game-dialog', false);
+}
+
+function endGame() {
+    if (!appState.currentGame) return;
     
-    const startTime = appState.currentGame.startTime instanceof Date 
-        ? appState.currentGame.startTime 
-        : new Date(appState.currentGame.startTime);
+    appState.currentGame.endTime = new Date().toISOString();
+    appState.currentGame.isCompleted = true;
     
-    const elapsed = getElapsedGameTime();
-    return elapsed;
+    // Store the game in our games array
+    const finishedGameId = appState.currentGame.id;
+    appState.games.push({...appState.currentGame});
+    
+    // Stop both timers
+    pauseTimer();
+    pauseGameTimer();
+    
+    // Save data before showing report
+    saveAppData();
+    
+    // Close the dialog
+    closeEndGameDialog();
+    
+    // Show the reports screen
+    showScreen('reports');
+    
+    // Generate and show the detailed report for this game
+    setTimeout(() => {
+        viewReport(finishedGameId);
+    }, 300);
+    
+    // Clear current game
+    appState.currentGame = null;
+}
+
+// Reports
+function renderReportsList() {
+    const reportsList = document.getElementById('reports-list');
+    reportsList.innerHTML = '';
+    
+    const completedGames = appState.games.filter(game => game.isCompleted);
+    
+    if (completedGames.length === 0) {
+        reportsList.innerHTML = '<div class="empty-state">No completed games yet</div>';
+        return;
+    }
+    
+    completedGames.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(game => {
+        const reportItem = document.createElement('div');
+        reportItem.className = 'report-item';
+        
+        const gameDate = new Date(game.date).toLocaleDateString();
+        reportItem.innerHTML = `
+            <div class="report-header">
+                <div class="report-date">${gameDate}</div>
+                <div class="report-score">My Team ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
+            </div>
+            <div class="report-actions">
+                <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
+                <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
+            </div>
+        `;
+        reportsList.appendChild(reportItem);
+    });
+}
+
+function viewReport(gameId) {
+    const game = appState.games.find(g => g.id === gameId);
+    if (!game) return;
+    
+    // Create a report dialog if it doesn't exist
+    let reportDialog = document.getElementById('detailed-report-dialog');
+    if (!reportDialog) {
+        reportDialog = document.createElement('div');
+        reportDialog.id = 'detailed-report-dialog';
+        reportDialog.className = 'dialog';
+        document.getElementById('app').appendChild(reportDialog);
+    }
+    
+    // Format date
+    const gameDate = new Date(game.date).toLocaleDateString();
+    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+    
+    // Calculate game duration
+    let gameDuration = '';
+    if (game.startTime && game.endTime) {
+        const start = new Date(game.startTime);
+        const end = new Date(game.endTime);
+        const durationMs = end - start;
+        const durationMins = Math.floor(durationMs / 60000);
+        gameDuration = `${durationMins} minutes`;
+    }
+
+    // Get player actions from the game
+    const playerActions = {};
+    
+    // Initialize player actions
+    game.activePlayers.forEach(playerId => {
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            playerActions[playerId] = {
+                name: player.name,
+                jerseyNumber: player.jerseyNumber,
+                goals: 0,
+                assists: 0,
+                saves: 0,
+                goalsAllowed: 0
+            };
+        }
+    });
+    
+    // Count actions
+    game.actions.forEach(action => {
+        if (playerActions[action.playerId]) {
+            switch (action.actionType) {
+                case 'goal':
+                    playerActions[action.playerId].goals++;
+                    break;
+                case 'assist':
+                    playerActions[action.playerId].assists++;
+                    break;
+                case 'save':
+                    playerActions[action.playerId].saves++;
+                    break;
+                case 'goal_allowed':
+                    playerActions[action.playerId].goalsAllowed++;
+                    break;
+            }
+        }
+    });
+    
+    // Build player stats table
+    let playerStatsHTML = '';
+    Object.values(playerActions)
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+        .forEach(playerStat => {
+            playerStatsHTML += `
+                <tr>
+                    <td>${playerStat.jerseyNumber}</td>
+                    <td>${playerStat.name}</td>
+                    <td>${playerStat.goals}</td>
+                    <td>${playerStat.assists}</td>
+                    <td>${playerStat.saves}</td>
+                    <td>${playerStat.goalsAllowed}</td>
+                </tr>
+            `;
+        });
+    
+    // Generate report HTML
+    reportDialog.innerHTML = `
+        <div class="dialog-content report-dialog">
+            <h2>Game Report</h2>
+            <div class="report-header-info">
+                <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
+                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
+                <div><strong>Duration:</strong> ${gameDuration}</div>
+            </div>
+            
+            <h3>Player Statistics</h3>
+            <div class="report-table-container">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Goals</th>
+                            <th>Assists</th>
+                            <th>Saves</th>
+                            <th>Goals Allowed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${playerStatsHTML}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="report-actions">
+                <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
+                <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    // Show the dialog
+    reportDialog.style.display = 'flex';
+}
+
+function closeDetailedReport() {
+    const reportDialog = document.getElementById('detailed-report-dialog');
+    if (reportDialog) {
+        reportDialog.style.display = 'none';
+    }
+}
+
+function exportReport(gameId, format) {
+    const game = appState.games.find(g => g.id === gameId);
+    if (!game) {
+        showMessage('Game not found', 'error');
+        return;
+    }
+    
+    // Get the report content from the dialog
+    const reportContent = document.querySelector('.report-dialog').innerHTML;
+    
+    // For PDF, we'll use a printable version that users can save as PDF
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Game Report - ${game.date}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                h2, h3 { color: #333; }
+            </style>
+        </head>
+        <body>
+            ${reportContent}
+            <p style="margin-top: 30px; text-align: center; color: #666;">
+                Generated by Soccer Coach Tracker - ${new Date().toLocaleString()}
+            </p>
+            <script>
+                // Auto-print
+                window.onload = function() {
+                    window.print();
+                }
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    showMessage('Report opened in new tab for printing/saving as PDF', 'success');
+}
+
+// Settings
+function saveSettings() {
+    const language = document.querySelector('input[name="language"]:checked').value;
+    const defaultTimer = document.getElementById('default-timer').value;
+    
+    appState.settings.language = language;
+    appState.settings.defaultTimer = parseInt(defaultTimer);
+    
+    saveAppData();
+    showMessage('Settings saved successfully', 'success');
+}
+
+// Data persistence (using localStorage in the prototype)
+function saveAppData() {
+    localStorage.setItem('soccerCoachApp', JSON.stringify({
+        teamName: appState.teamName,
+        players: appState.players,
+        games: appState.games,
+        settings: appState.settings
+    }));
+}
+
+function loadAppData() {
+    const savedData = localStorage.getItem('soccerCoachApp');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        appState.teamName = data.teamName || "My Team";
+        appState.players = data.players || [];
+        appState.games = data.games || [];
+        appState.settings = data.settings || appState.settings;
+        
+        // Initialize UI styling
+        initializeStyling();
+        
+        updateTeamNameUI();
+    }
+}
+
+// Function to clear all app data and start fresh
+function clearAppData() {
+    if (confirm('Are you sure you want to clear all data? This will remove all players, games, and settings.')) {
+        localStorage.removeItem('soccerCoachApp');
+        
+        // Reset app state to defaults
+        appState = {
+            teamName: "My Team",
+            players: [],
+            games: [],
+            currentGame: null,
+            timer: {
+                duration: 6 * 60,
+                timeLeft: 6 * 60,
+                interval: null,
+                isRunning: false
+            },
+            gameTimer: {
+                elapsed: 0,
+                interval: null,
+                isRunning: false,
+                startTime: null
+            },
+            settings: {
+                language: 'en',
+                defaultTimer: 6
+            },
+            currentPlayer: null
+        };
+        
+        // Update UI
+        updateTeamNameUI();
+        showMessage('All data has been cleared. The app has been reset.', 'success');
+        
+        // Return to main screen
+        showScreen('main-screen');
+    }
+}
+
+// Export/Import functions for moving data between devices
+function exportTeamData() {
+    // Prepare data for export
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        appVersion: "1.0.0",
+        teamName: appState.teamName,
+        players: appState.players,
+        games: appState.games,
+        settings: appState.settings
+    };
+    
+    // Convert to JSON string
+    const dataStr = JSON.stringify(exportData, null, 2);
+    
+    // Create download link
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    // Create a temporary link element
+    const exportFileDefaultName = `${appState.teamName.replace(/\s+/g, '_')}_data.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.style.display = 'none';
+    
+    // Add to document, click, and remove
+    document.body.appendChild(linkElement);
+    linkElement.click();
+    document.body.removeChild(linkElement);
+}
+
+function importTeamData() {
+    // Trigger file input click
+    document.getElementById('import-file').click();
+}
+
+function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Validate imported data has required fields
+            if (!importedData.teamName || !Array.isArray(importedData.players)) {
+                throw new Error('Invalid data format');
+            }
+            
+            // Confirm data import
+            if (confirm('This will replace your current team data. Continue?')) {
+                // Update app state with imported data
+                appState.teamName = importedData.teamName;
+                appState.players = importedData.players;
+                appState.games = importedData.games || [];
+                if (importedData.settings) {
+                    appState.settings = importedData.settings;
+                }
+                
+                // Save to local storage
+                saveAppData();
+                
+                // Update UI
+                updateTeamNameUI();
+                renderPlayersList();
+                
+                showMessage('Team data imported successfully!', 'success');
+            }
+        } catch (error) {
+            showMessage('Error importing data. Please check the file format.', 'error');
+            console.error('Import error:', error);
+        }
+        
+        // Reset file input
+        event.target.value = '';
+    };
+    
+    reader.readAsText(file);
+}
+
+// Add demo players for testing
+function addDemoPlayers() {
+    const demoPlayers = [
+        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
+    ];
+    
+    appState.players = demoPlayers;
+    saveAppData();
+    renderPlayersList();
 }
