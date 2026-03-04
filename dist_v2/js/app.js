@@ -1338,15 +1338,38 @@ function renderFormationSetup() {
     const playerList = document.getElementById('player-list');
     const formationField = document.getElementById('formation-field');
     if (!playerList || !formationField) return;
+
+    // ensure a roster exists
+    if (!appState.players || appState.players.length === 0) {
+        showMessage('No players available, adding demo roster for you', 'info');
+        addDemoPlayers();
+    }
+
     playerList.innerHTML = '';
     formationField.innerHTML = '';
-    (appState.players||[]).forEach(player => {
-        const el = document.createElement('div'); el.className = 'player-number'; el.textContent = player.jerseyNumber; el.setAttribute('data-player-id', player.id); playerList.appendChild(el);
+
+    // add each player with number+name (draggable style)
+    (appState.players || []).forEach(player => {
+        const el = document.createElement('div');
+        el.className = 'player-item-draggable';
+        el.setAttribute('data-player-id', player.id);
+        el.innerHTML = `<div class="player-number">${player.jerseyNumber}</div><div class="player-name">${player.name}</div>`;
+        playerList.appendChild(el);
     });
+
+    // determine how many slots to render (use match type or default 11)
+    let maxPlayers = 11;
     if (appState.gameSetup && appState.gameSetup.matchType) {
-        const maxPlayers = parseInt((appState.gameSetup.matchType||'').split('v')[0]) || 11;
-        for (let i=0;i<maxPlayers;i++){ const slot = document.createElement('div'); slot.className='player-slot'; slot.setAttribute('data-position', i); formationField.appendChild(slot); }
+        maxPlayers = parseInt((appState.gameSetup.matchType || '').split('v')[0]) || maxPlayers;
     }
+    for (let i = 0; i < maxPlayers; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'player-slot';
+        slot.setAttribute('data-position', i);
+        formationField.appendChild(slot);
+    }
+
+    updateCounters();
 }
 
 function clearFormation() { const formationField = document.getElementById('formation-field'); if (formationField) formationField.querySelectorAll('.player-slot').forEach(s=> s.innerHTML=''); appState.formationTemp = []; }
