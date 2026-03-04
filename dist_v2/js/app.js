@@ -2895,6 +2895,9 @@ function viewReport(gameId) {
                             if (stats.saves > 0) {
                                 statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
                             }
+                            if (stats.shotOnGoal > 0) {
+                                statTable += `<tr><th>🎯</th><td>${stats.shotOnGoal}</td></tr>`;
+                            }
                             if (stats.goalsAllowed > 0) {
                                 statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
                             }
@@ -2940,6 +2943,9 @@ function viewReport(gameId) {
                             }
                             if (stats.saves > 0) {
                                 statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
+                            }
+                            if (stats.shotOnGoal > 0) {
+                                statTable += `<tr><th>🎯</th><td>${stats.shotOnGoal}</td></tr>`;
                             }
                             if (stats.goalsAllowed > 0) {
                                 statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
@@ -4122,6 +4128,7 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
             goals: 0,
             assists: 0,
             saves: 0,
+            goalsAllowed: 0,
             passes: 0,
             shots: 0,
             blocks: 0,
@@ -4167,6 +4174,9 @@ function calculatePlayerStatistics(startDate = null, endDate = null) {
                                 break;
                             case 'save':
                                 playerStats[action.playerId].saves++;
+                                break;
+                            case 'goal_allowed':
+                                playerStats[action.playerId].goalsAllowed++;
                                 break;
                             case 'pass':
                                 playerStats[action.playerId].passes++;
@@ -4362,6 +4372,7 @@ function renderPlayerStatistics() {
                         <th>Goals</th>
                         <th>Assists</th>
                         <th>Saves</th>
+                        <th>GA</th>
                         <th>Passes</th>
                         <th>Shots</th>
                         <th>Blocks</th>
@@ -4382,6 +4393,7 @@ function renderPlayerStatistics() {
                             <td>${player.goals}</td>
                             <td>${player.assists}</td>
                             <td>${player.saves}</td>
+                            <td>${player.goalsAllowed}</td>
                             <td>${player.passes}</td>
                             <td>${player.shots}</td>
                             <td>${player.blocks}</td>
