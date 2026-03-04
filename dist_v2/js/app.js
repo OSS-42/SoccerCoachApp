@@ -18,77 +18,375 @@ let appState = {
     },
     settings: {
         language: 'en',
-        defaultTimer: 6
+        defaultSubstitutionTime: null, // Replace defaultTimer with defaultSubstitutionTime
+        isSubstitutionDefaultChecked: false
     },
-    currentPlayer: null
+    currentPlayer: null,
+    formationTemp: null // Temporary storage for formation during setup
 };
 
+// ===============================================
+// DRAG AND DROP STATE MANAGEMENT
+// ===============================================
+
+const DragState = {
+    draggedElement: null,
+    initialX: 0,
+    initialY: 0,
+    clone: null,
+    lastVibratedSlot: null, // Track last slot vibrated to debounce
+    
+    reset() {
+        this.draggedElement = null;
+        this.initialX = 0;
+        this.initialY = 0;
+        this.clone = null;
+        this.lastVibratedSlot = null;
+    }
+};
+
+function touchStart(e) {
+    if (e.target.classList.contains('disabled')) return;
+    e.preventDefault();
+    draggedElement = e.target;
+    const touch = e.targetTouches[0];
+
+    // Haptic feedback on selection
+    if (navigator.vibrate) {
+        navigator.vibrate(50); // 50ms vibration
+    }
+
+    // Create a clone for visual feedback
+    clone = draggedElement.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.opacity = '0.7';
+    clone.style.pointerEvents = 'none';
+    clone.style.zIndex = '1000';
+    clone.style.width = '72px'; // 3x larger than original 24px
+    clone.style.height = '72px'; // 3x larger than original 24px
+    clone.style.lineHeight = '72px'; // Center text vertically
+    clone.style.fontSize = '36px'; // Scale font size for readability
+    clone.style.borderRadius = '50%'; // Ensure circular shape
+    clone.style.background = '#000'; // Retain black background
+    clone.style.color = '#fff'; // Retain white text
+    document.body.appendChild(clone);
+    updateClonePosition(touch.clientX, touch.clientY);
+}
+
+function touchMove(e) {
+    if (!draggedElement) return;
+    e.preventDefault();
+    const touch = e.targetTouches[0];
+    updateClonePosition(touch.clientX, touch.clientY);
+
+    // Haptic feedback when passing over a slot (field or unavailable)
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = dropTarget.closest('.player-slot, .unavailable-slot');
+    if (slot && slot !== lastVibratedSlot) {
+        if (navigator.vibrate) {
+            navigator.vibrate(30); // 30ms vibration
+        }
+        lastVibratedSlot = slot;
+    } else if (!slot) {
+        lastVibratedSlot = null; // Reset when not over a slot
+    }
+}
+
+function updateClonePosition(clientX, clientY) {
+    if (clone) {
+        clone.style.left = `${clientX - 36}px`; // Center clone at touch point (72px / 2)
+        clone.style.top = `${clientY - 36}px`; // Center clone at touch point (72px / 2)
+    }
+}
+
+function touchEnd(e) {
+    if (!draggedElement) return;
+    e.preventDefault();
+
+    // Remove clone
+    if (clone) {
+        document.body.removeChild(clone);
+        clone = null;
+    }
+
+    const touch = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const playerId = draggedElement.getAttribute('data-player-id');
+    const isPlaced = draggedElement.classList.contains('player-number-placed');
+    const parentSlot = draggedElement.closest('.player-slot, .unavailable-slot');
+    const isFromUnavailable = parentSlot && parentSlot.classList.contains('unavailable-slot');
+    
+    let source = 'sidebar';
+    if (isPlaced && isFromUnavailable) {
+        source = 'unavailable';
+    } else if (isPlaced) {
+        source = 'field';
+    }
+    
+    const slotId = draggedElement.parentElement.id || '';
+
+    const slot = dropTarget.closest('.player-slot');
+    const unavailableSlot = dropTarget.closest('.unavailable-slot');
+    if (slot) {
+        const position = slot.getAttribute('data-position');
+        const matchType = appState.currentGame.matchType;
+        const maxPlayers = parseInt(matchType.split('v')[0]);
+        let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
+
+        const existingPlayerId = slot.getAttribute('data-player-id');
+        
+        // Only check player limit if adding to empty slot (not replacing)
+        if (source === 'sidebar' && !existingPlayerId && currentPlayers >= maxPlayers) {
+            showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
+            draggedElement = null;
+            return;
+        }
+        if (existingPlayerId && existingPlayerId !== playerId) {
+            // Remove existing player from formation and return to sidebar
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
+            const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+            if (oldPlayer) {
+                oldPlayer.classList.remove('disabled');
+                oldPlayer.draggable = true;
+            }
+        }
+
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        const x = parseFloat(slot.style.left);
+        const y = parseFloat(slot.style.top);
+
+        appState.formationTemp.push({
+            playerId,
+            position: position, // Always use the field slot position, not player's original position
+            x,
+            y
+        });
+
+        slot.innerHTML = '';
+        slot.setAttribute('data-player-id', playerId);
+        slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>`;
+        slot.classList.add('occupied');
+
+        if (source === 'sidebar') {
+            disablePlayerNumber(playerId);
+        } else if (source === 'field' && slotId !== slot.id) {
+            const prevSlot = document.getElementById(slotId);
+            if (prevSlot) {
+                prevSlot.innerHTML = '';
+                prevSlot.removeAttribute('data-player-id');
+                prevSlot.classList.remove('occupied');
+            }
+        }
+
+        setupPlacedPlayerDrag();
+        setupPlacedPlayerTouch(); // Reattach touch event listeners
+    } else if (unavailableSlot) {
+        // Handle drop to unavailable slot (mobile touch)
+        const existingPlayerId = unavailableSlot.getAttribute('data-player-id');
+        if (existingPlayerId && existingPlayerId !== playerId) {
+            // Remove displaced player from unavailable list
+            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
+            
+            // Re-enable the displaced player in sidebar
+            const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+            if (displacedNumber) {
+                displacedNumber.classList.remove('disabled');
+                displacedNumber.draggable = true;
+            }
+        }
+        
+        const player = appState.players.find(p => p.id === playerId);
+        if (player) {
+            // Remove from source
+            if (source === 'field') {
+                const sourceSlot = document.getElementById(slotId);
+                if (sourceSlot) {
+                    sourceSlot.innerHTML = '';
+                    sourceSlot.removeAttribute('data-player-id');
+                    sourceSlot.classList.remove('occupied');
+                }
+                appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+                // Re-enable player number if moving from field
+                const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+                if (number) {
+                    number.classList.remove('disabled');
+                    number.draggable = true;
+                }
+            } else if (source === 'unavailable') {
+                // Moving between unavailable slots
+                const sourceSlot = document.getElementById(slotId);
+                if (sourceSlot) {
+                    sourceSlot.innerHTML = '';
+                    sourceSlot.removeAttribute('data-player-id');
+                    sourceSlot.classList.remove('occupied');
+                }
+            }
+            
+            // Add to unavailable players if not already there
+            if (!appState.unavailablePlayers.includes(playerId)) {
+                appState.unavailablePlayers.push(playerId);
+            }
+            
+            // Add to target slot
+            unavailableSlot.innerHTML = `
+                <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${draggedElement.textContent}</span>
+            `;
+            unavailableSlot.setAttribute('data-player-id', playerId);
+            unavailableSlot.classList.add('occupied');
+            
+            // Re-setup drag events and disable player in sidebar if from sidebar
+            setupPlacedPlayerDrag();
+            setupPlacedPlayerTouch();
+            if (source === 'sidebar') {
+                disablePlayerNumber(playerId);
+            }
+            
+            // Save data
+            saveAppData();
+        }
+    }
+
+    const sidebar = document.querySelector('#player-list');
+    if (sidebar && (source === 'field' || source === 'unavailable') && dropTarget.closest('#player-list')) {
+        // Handle dropping back to sidebar from field or unavailable area
+        if (source === 'field') {
+            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        } else if (source === 'unavailable') {
+            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        }
+        
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (number) {
+            number.classList.remove('disabled');
+            number.draggable = true;
+        }
+        
+        // Save data
+        saveAppData();
+    }
+
+    //     playerId: f.playerId,
+    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+    //     position: f.position
+    // })));
+
+    draggedElement = null;
+    lastVibratedSlot = null; // Reset after drop
+}
+
+// Initialize IndexedDB
+let db = null;
+function initIndexedDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('SoccerCoachDB', 1);
+
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            // Create object stores
+            db.createObjectStore('team', { keyPath: 'id' });
+            db.createObjectStore('players', { keyPath: 'id' });
+            db.createObjectStore('games', { keyPath: 'id' });
+            db.createObjectStore('settings', { keyPath: 'id' });
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+        };
+
+        request.onerror = (event) => {
+            showMessage('Failed to initialize database', 'error');
+            reject(event.target.error);
+        };
+    });
+}
+
 // Initialize the app
-// Utility functions for common operations
-function getElement(id) {
-    return document.getElementById(id);
-}
-
-function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
-
 // Initialize app styling - light mode only
 function initializeStyling() {
     // No styling needed, we're using light mode only
 }
 
-// Message functions
-function showMessage(message, type = 'error') {
-    const ribbon = document.getElementById('message-ribbon');
-    const messageText = document.getElementById('message-text');
-    
-    messageText.textContent = message;
-    ribbon.className = `message-ribbon ${type}`;
-    
-    // Show message
-    setTimeout(() => {
-        ribbon.classList.remove('hidden');
-    }, 10);
-    
-    // Auto-hide after 5 seconds
-    if (type === 'success') {
-        setTimeout(hideMessage, 5000);
+function updatePlayerGridOrientation() {
+    const playerGrid = document.getElementById('player-grid');
+    if (!playerGrid) return;
+
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    if (isLandscape) {
+        playerGrid.classList.add('landscape-mode');
+    } else {
+        playerGrid.classList.remove('landscape-mode');
     }
 }
 
-function hideMessage() {
-    const ribbon = document.getElementById('message-ribbon');
-    ribbon.classList.add('hidden');
+let messageTimeout;
+
+// Function to render the Game Setup screen and pre-fill the substitution time
+function renderGameSetup() {
+    const substitutionTimeInput = document.getElementById('substitution-time');
+    const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
+    const useSubstitutionTimerCheckbox = document.getElementById('use-substitution-timer');
+    
+    // Pre-fill substitution time and checkbox state from settings
+    if (appState.settings.isSubstitutionDefaultChecked && appState.settings.defaultSubstitutionTime !== null) {
+        substitutionTimeInput.value = appState.settings.defaultSubstitutionTime;
+        saveSubstitutionDefaultCheckbox.checked = true;
+    } else {
+        substitutionTimeInput.value = ''; // Default to empty if no persisted default
+        saveSubstitutionDefaultCheckbox.checked = false;
+    }
+    
+    // Default to using timer (unchecked = timer enabled)
+    useSubstitutionTimerCheckbox.checked = false;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Load saved data if available
-    loadAppData();
-    
-    // Populate UI with existing data
-    renderPlayersList();
+function updateUI() {
+    updatePlayerCounter();
+    updateGameReportCounter();
     updateTeamNameUI();
-    
-    // Add demo players if none exist
-    if (appState.players.length === 0) {
-        addDemoPlayers();
+    renderPlayersList();
+}
+
+// Update the DOMContentLoaded listener to ensure Settings screen updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Set dynamic header height
+    const header = document.querySelector('.game-header') || document.querySelector('.app-header');
+    if (header) {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
     }
-    
-    // Set today's date as the default
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('game-date').value = today;
+
+    // Hide all dialogs
+    const dialogs = document.querySelectorAll('.dialog');
+    dialogs.forEach(dialog => {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+    });
+
+    // Update player grid orientation on load
+    updatePlayerGridOrientation();
+    window.addEventListener('resize', updatePlayerGridOrientation);
+    window.addEventListener('orientationchange', updatePlayerGridOrientation);
+
+    // Load saved data and update UI
+    loadAppData().then(() => {
+        updateUI();
+        renderReportsList(); // Ensure reports list is rendered on load
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('game-date').value = today;
+        showScreen('main-screen');
+    });
 });
 
 // Team Name functions
 function updateTeamNameUI() {
-    // Update team name in the input field
-    const teamNameInput = document.getElementById('team-name-input');
-    if (teamNameInput) {
-        teamNameInput.value = appState.teamName;
-    }
+    UIManager.updateTeamNameUI();
     
     // Update team name in game screen
     const teamNameElements = document.querySelectorAll('.team-name');
@@ -124,36 +422,46 @@ function showScreen(screenId) {
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
     
+    // Always show players tab first when going to team-setup
+    if (screenId === 'team-setup') {
+        switchTeamTab('players');
+    }
+    
+    // Reset message ribbon
+    hideMessage();
+
     // Special handling for specific screens
-    if (screenId === 'reports') {
-        renderReportsList();
-    } else if (screenId === 'game-setup') {
+    if (screenId === 'game-setup') {
         // Auto-fill today's date when opening the game setup screen
         const today = new Date();
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         document.getElementById('game-date').value = `${year}-${month}-${day}`;
+        renderGameSetup(); // Pre-fill the substitution time
+    } else if (screenId === 'reports') {
+        renderReportsList();
     }
 }
 
 // Player Management
 function openAddPlayerDialog() {
-    toggleDialog('add-player-dialog', true);
+    DialogManager.show('add-player-dialog');
 }
 
 function closeAddPlayerDialog() {
-    toggleDialog('add-player-dialog', false);
-    document.getElementById('player-name').value = '';
-    document.getElementById('jersey-number').value = '';
+    DialogManager.hide('add-player-dialog', (dialog) => {
+        DialogManager.clearInputs(dialog, ['#player-name', '#jersey-number']);
+    });
 }
 
 function addPlayer() {
     const name = document.getElementById('player-name').value.trim();
     const jerseyNumber = document.getElementById('jersey-number').value;
+    const position = document.getElementById('player-position').value;
     
-    if (!name || !jerseyNumber) {
-        showMessage('Please fill in all required fields', 'error');
+    if (!name || !jerseyNumber || !position) {
+        showMessage('Please fill in all required fields, including position', 'error');
         return;
     }
     
@@ -163,39 +471,66 @@ function addPlayer() {
         return;
     }
     
-    // Generate a unique ID that isn't already in use
+    // Get player ID (reuse or generate new)
     let playerId;
-    do {
-        playerId = Math.floor(Math.random() * 1000000).toString();
-    } while (appState.players.some(p => p.id === playerId));
+    if (appState.settings.reusablePlayerIds && appState.settings.reusablePlayerIds.length > 0) {
+        playerId = appState.settings.reusablePlayerIds.shift();
+    } else {
+        do {
+            playerId = Math.floor(Math.random() * 1000000).toString();
+        } while (appState.players.some(p => p.id === playerId));
+    }
     
     const player = {
-        id: playerId, // Using a random number instead of timestamp for better reusability
+        id: playerId,
         name,
         jerseyNumber: Number(jerseyNumber),
+        position,
         stats: {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         }
     };
     
     appState.players.push(player);
     saveAppData();
     renderPlayersList();
+    updatePlayerCounter();
     closeAddPlayerDialog();
+
+    // Show success message
+    showMessage(`Player ${name} (#${jerseyNumber}) added successfully`, 'success');
 }
 
+// New function to update edit button states without re-rendering
+function updateEditButtonStates() {
+    const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
+    const editButtons = document.querySelectorAll('.player-action-btn[onclick*="editPlayer"]');
+    editButtons.forEach(button => {
+        button.disabled = anyChecked;
+    });
+}
+
+// Update renderPlayersList to disable edit button when checkboxes are checked
 function renderPlayersList() {
     const playersList = document.getElementById('players-list');
     playersList.innerHTML = '';
-    
+    const teamPlayerCounter = document.getElementById('team-player-counter');
+    playersList.innerHTML = '';
+
     if (appState.players.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
-        updateCounters();
         return;
     }
+    if (teamPlayerCounter) {
+        teamPlayerCounter.textContent = appState.players.length;
+    }
+    
+    const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
     
     appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         const playerItem = document.createElement('div');
@@ -203,40 +538,207 @@ function renderPlayersList() {
         playerItem.innerHTML = `
             <div class="jersey-number">${player.jerseyNumber}</div>
             <div class="player-info">
-                <div class="player-name">${player.name}</div>
+                <div class="player-name">${player.name} (${player.position})</div>
             </div>
             <div class="player-actions">
-                <button class="player-action-btn" onclick="editPlayer('${player.id}')">
+                <button class="player-action-btn" onclick="editPlayer('${player.id}')" ${anyChecked ? 'disabled' : ''}>
                     <span class="material-icons">edit</span>
                 </button>
-                <button class="player-action-btn" onclick="deletePlayer('${player.id}')">
-                    <span class="material-icons">delete</span>
-                </button>
+                <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="updateDeletePlayerRibbon()">
             </div>
         `;
         playersList.appendChild(playerItem);
     });
-    // Update counters in the UI (main menu and team header)
-    updateCounters();
 }
 
-// Update global counters shown in the UI
-function updateCounters() {
-    const mainCounter = document.getElementById('player-counter');
-    const teamCounter = document.getElementById('team-player-counter');
-    const reportCounter = document.getElementById('game-report-counter');
-    const playerCount = (appState.players || []).length;
-    const reportCount = ((appState.games || []).filter(g => g.isCompleted)).length;
-    if (mainCounter) mainCounter.textContent = playerCount;
-    if (teamCounter) teamCounter.textContent = playerCount;
-    if (reportCounter) reportCounter.textContent = reportCount;
+// Show/hide yellow ribbon based on checkbox states
+// Update updateDeletePlayerRibbon to reinforce yellow ribbon precedence
+function updateDeletePlayerRibbon() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    const ribbon = document.getElementById('message-ribbon');
+    
+    if (checkboxes.length > 0) {
+        clearTimeout(messageTimeout); // Cancel any existing timeout
+        ribbon.innerHTML = `
+            <span id="message-text">Selected players will be deleted.</span>
+            <div class="ribbon-buttons">
+                <button class="warning-delete-btn" onclick="openDeletePlayersDialog()">Delete</button>
+                <span class="close-btn" onclick="closeWarningRibbon()">×</span>
+            </div>
+        `;
+        ribbon.className = 'message-ribbon warning';
+        ribbon.classList.remove('hidden');
+        ribbon.style.display = 'flex'; // Ensure ribbon is visible
+        updateEditButtonStates(); // Update edit button states
+    } else {
+        ribbon.classList.add('hidden');
+        ribbon.style.display = 'none'; // Explicitly hide
+        ribbon.innerHTML = `
+            <span id="message-text"></span>
+            <button class="close-btn" onclick="hideMessage()">×</button>
+        `; // Restore default structure
+        updateEditButtonStates(); // Re-enable edit buttons
+    }
+}
+
+function closeWarningRibbon() {
+    const checkboxes = document.querySelectorAll('.player-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false; // Uncheck all player checkboxes
+    });
+    updateDeletePlayerRibbon(); // Update ribbon to hide it
+}
+
+// Open confirmation dialog for multiple players
+function openDeletePlayersDialog() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    if (checkboxes.length === 0) {
+        hideMessage();
+        return;
+    }
+    
+    let confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('div');
+        confirmDialog.id = 'confirm-delete-dialog';
+        confirmDialog.className = 'dialog';
+        document.getElementById('app').appendChild(confirmDialog);
+    }
+    
+    const playerCount = checkboxes.length;
+    confirmDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to remove ${playerCount} player${playerCount > 1 ? 's' : ''}?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeConfirmDeleteDialog()">Cancel</button>
+                <button class="primary-btn delete-btn" onclick="confirmDeletePlayers()">Confirm</button>
+            </div>
+        </div>
+    `;
+    
+    confirmDialog.style.display = 'flex';
+    confirmDialog.classList.add('active');
+}
+
+// Update closeConfirmDeleteDialog to reset checkboxes
+function closeConfirmDeleteDialog() {
+    const confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (confirmDialog) {
+        confirmDialog.style.display = 'none';
+        confirmDialog.classList.remove('active');
+    }
+    // Reset all checkboxes
+    document.querySelectorAll('.player-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateDeletePlayerRibbon();
+}
+
+// Delete multiple selected players
+// Update confirmDeletePlayers to ensure proper state updates
+function confirmDeletePlayers() {
+    const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+    const playerIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-player-id'));
+    
+    if (playerIds.length === 0) {
+        hideMessage();
+        return;
+    }
+    
+    // Close the dialog
+    closeConfirmDeleteDialog();
+    
+    // Delete selected players
+    const deletedCount = playerIds.length;
+    playerIds.forEach(playerId => {
+        const playerIndex = appState.players.findIndex(p => p.id === playerId);
+        if (playerIndex !== -1) {
+            const player = appState.players[playerIndex];
+            if (!appState.settings.reusablePlayerIds) {
+                appState.settings.reusablePlayerIds = [];
+            }
+            appState.settings.reusablePlayerIds.push(player.id);
+            appState.players.splice(playerIndex, 1);
+        }
+    });
+    
+    // Log state for debugging
+    
+    // Save and update UI
+    saveAppData();
+    renderPlayersList();
+    updatePlayerCounter();
+    
+    // Show success message
+    showMessage(`${deletedCount} player${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
+}
+
+// Update showMessage to handle players-list padding
+// Update showMessage to prevent timeout if yellow ribbon is needed
+function showMessage(message, type = 'error') {
+    const ribbon = document.getElementById('message-ribbon');
+    let messageText = document.getElementById('message-text');
+    
+    clearTimeout(messageTimeout);
+    
+    const playerCheckboxes = document.querySelectorAll('.player-checkbox:checked');
+    const reportCheckboxes = document.querySelectorAll('.report-checkbox:checked');
+    if ((playerCheckboxes.length > 0 || reportCheckboxes.length > 0) && type !== 'warning') {
+        // Skip non-warning ribbons if any checkboxes are checked
+        return;
+    }
+    
+    // Reset ribbon content for non-warning messages
+    ribbon.innerHTML = `
+        <span id="message-text"></span>
+        <button class="close-btn" onclick="hideMessage()">×</button>
+    `;
+    messageText = document.getElementById('message-text'); // Re-query after resetting
+    
+    messageText.textContent = message;
+    ribbon.className = `message-ribbon ${type}`;
+    ribbon.classList.remove('hidden');
+    ribbon.style.display = 'flex'; // Ensure ribbon is visible
+    
+    if (type !== 'warning') {
+        messageTimeout = setTimeout(() => {
+            if (document.querySelectorAll('.player-checkbox:checked').length === 0 && 
+                document.querySelectorAll('.report-checkbox:checked').length === 0) {
+                hideMessage();
+            }
+        }, 5000);
+    }
+}
+
+// Update hideMessage to reset players-list padding
+// Update hideMessage to check checkbox state
+function hideMessage() {
+    const playerCheckboxes = document.querySelectorAll('.player-checkbox:checked');
+    const reportCheckboxes = document.querySelectorAll('.report-checkbox:checked');
+    if (playerCheckboxes.length > 0) {
+        updateDeletePlayerRibbon();
+        return;
+    }
+    if (reportCheckboxes.length > 0) {
+        updateDeleteReportsRibbon();
+        return;
+    }
+    
+    const ribbon = document.getElementById('message-ribbon');
+    ribbon.classList.add('hidden');
+    ribbon.style.display = 'none'; // Explicitly hide
+    ribbon.innerHTML = `
+        <span id="message-text"></span>
+        <button class="close-btn" onclick="hideMessage()">×</button>
+    `; // Restore default structure
+    updateEditButtonStates(); // Ensure edit buttons are enabled
 }
 
 function editPlayer(playerId) {
     const player = appState.players.find(p => p.id === playerId);
     if (!player) return;
     
-    // Create edit player dialog if it doesn't exist
     let editDialog = document.getElementById('edit-player-dialog');
     if (!editDialog) {
         editDialog = document.createElement('div');
@@ -244,6 +746,11 @@ function editPlayer(playerId) {
         editDialog.className = 'dialog';
         document.getElementById('app').appendChild(editDialog);
     }
+    
+    const positions = ['GK', 'SW', 'LB', 'LCB', 'CB', 'RCB', 'RB', 'LWB', 'CDM', 'RWB', 'LM', 'LCM', 'CM', 'RCM', 'RM', 'LW', 'CAM', 'RW', 'SS', 'CF', 'ST'];
+    const positionOptions = positions.map(pos => 
+        `<option value="${pos}" ${player.position === pos ? 'selected' : ''}>${pos}</option>`
+    ).join('');
     
     editDialog.innerHTML = `
         <div class="dialog-content">
@@ -256,6 +763,12 @@ function editPlayer(playerId) {
                 <label for="edit-jersey-number">Jersey Number:</label>
                 <input type="number" id="edit-jersey-number" value="${player.jerseyNumber}" min="1" max="99">
             </div>
+            <div class="form-group">
+                <label for="edit-player-position">Position:</label>
+                <select id="edit-player-position">
+                    ${positionOptions}
+                </select>
+            </div>
             <div class="dialog-buttons">
                 <button class="secondary-btn" onclick="closeEditPlayerDialog()">Cancel</button>
                 <button class="primary-btn" onclick="savePlayerEdit('${player.id}')">Save</button>
@@ -264,12 +777,14 @@ function editPlayer(playerId) {
     `;
     
     editDialog.style.display = 'flex';
+    editDialog.classList.add('active');
 }
 
 function closeEditPlayerDialog() {
     const editDialog = document.getElementById('edit-player-dialog');
     if (editDialog) {
         editDialog.style.display = 'none';
+        editDialog.classList.remove('active');
     }
 }
 
@@ -279,6 +794,7 @@ function savePlayerEdit(playerId) {
     
     const newName = document.getElementById('edit-player-name').value.trim();
     const newJerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
+    const newPosition = document.getElementById('edit-player-position').value;
     
     if (!newName) {
         showMessage('Please enter a name for the player', 'error');
@@ -287,6 +803,11 @@ function savePlayerEdit(playerId) {
     
     if (!newJerseyNumber || newJerseyNumber < 1 || newJerseyNumber > 99) {
         showMessage('Please enter a valid jersey number between 1 and 99', 'error');
+        return;
+    }
+    
+    if (!newPosition) {
+        showMessage('Please select a position', 'error');
         return;
     }
     
@@ -299,15 +820,19 @@ function savePlayerEdit(playerId) {
     // Update player data
     player.name = newName;
     player.jerseyNumber = newJerseyNumber;
+    player.position = newPosition;
     
     // Save and refresh
     saveAppData();
     renderPlayersList();
+    updatePlayerCounter();
     closeEditPlayerDialog();
+
+    // Show success message
+    showMessage(`Player ${newName} (#${newJerseyNumber}) updated successfully`, 'success');
 }
 
 function deletePlayer(playerId) {
-    // Create confirmation dialog if it doesn't exist
     let confirmDialog = document.getElementById('confirm-delete-dialog');
     if (!confirmDialog) {
         confirmDialog = document.createElement('div');
@@ -324,57 +849,796 @@ function deletePlayer(playerId) {
             <h2>Confirm Delete</h2>
             <p>Are you sure you want to remove ${player.name} (#${player.jerseyNumber})?</p>
             <div class="dialog-buttons">
-                <button class="secondary-btn" onclick="document.getElementById('confirm-delete-dialog').style.display='none'">Cancel</button>
+                <button class="secondary-btn" onclick="closeConfirmDeleteDialog()">Cancel</button>
                 <button class="primary-btn delete-btn" onclick="confirmDeletePlayer('${playerId}')">Remove Player</button>
             </div>
         </div>
     `;
     
     confirmDialog.style.display = 'flex';
+    confirmDialog.classList.add('active');
+}
+
+function closeConfirmDeleteDialog() {
+    const confirmDialog = document.getElementById('confirm-delete-dialog');
+    if (confirmDialog) {
+        confirmDialog.style.display = 'none';
+        confirmDialog.classList.remove('active');
+    }
 }
 
 function confirmDeletePlayer(playerId) {
     // Close the confirmation dialog
     document.getElementById('confirm-delete-dialog').style.display = 'none';
     
-    // Actually remove the player completely instead of just marking inactive
+    // Remove the player and add their ID to reusablePlayerIds
     const playerIndex = appState.players.findIndex(p => p.id === playerId);
     if (playerIndex !== -1) {
         // Get player information for the message
         const player = appState.players[playerIndex];
         
-        // Remove the player completely (not just set inactive)
+        // Add player ID to reusable IDs
+        if (!appState.settings.reusablePlayerIds) {
+            appState.settings.reusablePlayerIds = [];
+        }
+        appState.settings.reusablePlayerIds.push(player.id);
+        
+        // Remove the player
         appState.players.splice(playerIndex, 1);
         
         // Update data and UI
         saveAppData();
         renderPlayersList();
+        updatePlayerCounter();
         
         // Show success message with the ribbon
         showMessage(`Player ${player.name} (#${player.jerseyNumber}) has been removed`, 'success');
     }
 }
 
-// Game Management
-function startGame() {
-    const opponentName = document.getElementById('opponent-name').value.trim();
-    const gameDate = document.getElementById('game-date').value;
-    const substitutionTime = document.getElementById('substitution-time').value;
-    
+function updatePlayerCounter() {
+    UIManager.updatePlayerCounter();
+}
+
+function updateGameReportCounter() {
+    UIManager.updateGameReportCounter();
+}
+
+// Game Creation: Replace startGame with setupFormation
+function setupFormation() {
+    const opponentNameInput = document.getElementById('opponent-name');
+    const gameDateInput = document.getElementById('game-date');
+    const matchTypeInput = document.getElementById('match-type');
+    const numPeriodsInput = document.getElementById('num-periods');
+    const periodDurationInput = document.getElementById('period-duration');
+    const substitutionTimeInput = document.getElementById('substitution-time');
+    const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
+    const useSubstitutionTimerCheckbox = document.getElementById('use-substitution-timer');
+
+    const opponentName = opponentNameInput.value.trim();
+    const gameDate = gameDateInput.value;
+    const matchType = matchTypeInput.value;
+    const numPeriods = parseInt(numPeriodsInput.value, 10);
+    const periodDuration = parseInt(periodDurationInput.value, 10);
+    const substitutionTime = parseInt(substitutionTimeInput.value, 10);
+    const timerNotNeeded = useSubstitutionTimerCheckbox.checked;
+
+    // Validate inputs
     if (!opponentName) {
-        showMessage('Please enter the opponent team name', 'error');
+        showMessage('Please enter an opponent team name.', 'error');
         return;
     }
+    if (!gameDate) {
+        showMessage('Please select a game date.', 'error');
+        return;
+    }
+    if (!matchType) {
+        showMessage('Please select a match type.', 'error');
+        return;
+    }
+    if (isNaN(numPeriods) || numPeriods < 1) {
+        showMessage('Number of periods must be at least 1.', 'error');
+        return;
+    }
+    if (isNaN(periodDuration) || periodDuration < 1 || periodDuration > 45) {
+        showMessage('Time per period must be between 1 and 45 minutes.', 'error');
+        return;
+    }
+    if (!useSubstitutionTimerCheckbox.checked && (isNaN(substitutionTime) || substitutionTime < 1)) {
+        showMessage('Substitution time must be at least 1 minute, or check "Timer not needed".', 'error');
+        return;
+    }
+
+    // Validate player count
+    const minPlayers = parseInt(matchType.split('v')[0]);
+    if (appState.players.length < minPlayers) {
+        showMessage(`At least ${minPlayers} players are required for ${matchType}.`, 'error');
+        return;
+    }
+
+    // Save substitution settings
+    if (saveSubstitutionDefaultCheckbox.checked && !useSubstitutionTimerCheckbox.checked) {
+        appState.settings.defaultSubstitutionTime = substitutionTime;
+    }
+    appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+
+    // Initialize currentGame
+    appState.currentGame = {
+        id: Date.now().toString(),
+        date: gameDate,
+        opponentName,
+        matchType,
+        homeScore: 0,
+        awayScore: 0,
+        startTime: new Date().toISOString(),
+        endTime: null,
+        actions: [],
+        activePlayers: [...appState.players.map(p => p.id)],
+        isCompleted: false,
+        totalGameTime: 0,
+        numPeriods,
+        periodDuration: periodDuration * 60,
+        substitutionDuration: timerNotNeeded ? 0 : substitutionTime * 60,
+        timerNotNeeded: timerNotNeeded,
+        formation: [],
+        substitutes: []
+    };
+
+    // Show formation screen
+    showScreen('formation-setup');
+    renderFormationSetup();
+}
+
+// Formation Setup
+function renderFormationSetup() {
+    const playerList = document.getElementById('player-list');
+    const formationField = document.getElementById('formation-field');
+    const unavailableSlots = document.getElementById('unavailable-slots');
+    playerList.innerHTML = '';
+    formationField.innerHTML = '';
+    unavailableSlots.innerHTML = '';
     
+    // Initialize unavailable players array - always reset when loading formation setup
+    appState.unavailablePlayers = [];
+    
+    // Initialize formation temp - load default if exists (only field positions, not unavailable status)
+    if (appState.defaultFormation && appState.defaultFormation.length > 0) {
+        appState.formationTemp = [...appState.defaultFormation];
+    } else {
+        appState.formationTemp = [];
+    }
+
+    // Define spots for 260x400px field
+    const spots = [
+        { position: 'GK', x: 50, y: 95 }, // Goalkeeper
+        { position: 'SW', x: 50, y: 86.5 }, // Sweeper
+        // Defense row
+        { position: 'DEF-1', x: 10, y: 78.5 }, { position: 'DEF-2', x: 30, y: 78.5 },
+        { position: 'DEF-3', x: 50, y: 78.5 }, { position: 'DEF-4', x: 70, y: 78.5 },
+        { position: 'DEF-5', x: 90, y: 78.5 },
+        // Defense Midfielder row
+        { position: 'DM-1', x: 10, y: 61.38 }, { position: 'DM-2', x: 30, y: 61.38 },
+        { position: 'DM-3', x: 50, y: 61.38 }, { position: 'DM-4', x: 70, y: 61.38 },
+        { position: 'DM-5', x: 90, y: 61.38 },
+        // Midfielder row
+        { position: 'MID-1', x: 10, y: 44.25 }, { position: 'MID-2', x: 30, y: 44.25 },
+        { position: 'MID-3', x: 50, y: 44.25 }, { position: 'MID-4', x: 70, y: 44.25 },
+        { position: 'MID-5', x: 90, y: 44.25 },
+        // Offensive Midfielder row
+        { position: 'OM-1', x: 10, y: 27.13 }, { position: 'OM-2', x: 30, y: 27.13 },
+        { position: 'OM-3', x: 50, y: 27.13 }, { position: 'OM-4', x: 70, y: 27.13 },
+        { position: 'OM-5', x: 90, y: 27.13 },
+        // Forwards row
+        { position: 'FWD-1', x: 10, y: 10 }, { position: 'FWD-2', x: 30, y: 10 },
+        { position: 'FWD-3', x: 50, y: 10 }, { position: 'FWD-4', x: 70, y: 10 },
+        { position: 'FWD-5', x: 90, y: 10 }
+    ];
+
+    // Render spots
+    spots.forEach(spot => {
+        const slot = document.createElement('div');
+        slot.className = `player-slot ${spot.position === 'GK' ? 'gk-slot' : spot.position === 'SW' ? 'sw-slot' : ''}`;
+        slot.id = spot.position === 'GK' ? 'gk-slot' : spot.position === 'SW' ? 'sw-slot' : `slot-${spot.position}`;
+        slot.setAttribute('data-position', spot.position);
+        slot.style.left = `${spot.x}%`;
+        slot.style.top = `${spot.y}%`;
+        slot.draggable = false;
+        formationField.appendChild(slot);
+    });
+
+    // Render player list (show all players, gray out unavailable and placed ones)
+    appState.players.forEach(player => {
+        const isOnField = appState.formationTemp.some(f => f.playerId === player.id);
+        const isUnavailable = appState.unavailablePlayers.includes(player.id);
+        const shouldDisable = isOnField || isUnavailable;
+        
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item-draggable';
+        playerItem.innerHTML = `
+            <span class="player-number ${shouldDisable ? 'disabled' : ''}" draggable="${!shouldDisable}" data-player-id="${player.id}">${player.jerseyNumber}</span>
+            <span class="player-name">${player.name}</span>
+        `;
+        playerList.appendChild(playerItem);
+    });
+
+    // Create 5 unavailable player slots (empty when loading default formation)
+    for (let i = 1; i <= 5; i++) {
+        const unavailableSlot = document.createElement('div');
+        unavailableSlot.className = 'unavailable-slot';
+        unavailableSlot.id = `unavailable-slot-${i}`;
+        unavailableSlot.setAttribute('data-slot-type', 'unavailable');
+        unavailableSlots.appendChild(unavailableSlot);
+    }
+
+    // Note: unavailable players are deliberately NOT rendered here when loading default formation
+    // This ensures all players start as available, only field positions are restored
+
+    // Restore formation positions on field (for default formation loading)
+    let playersPlaced = 0;
+    appState.formationTemp.forEach(formationPlayer => {
+        const position = formationPlayer.position;
+        const playerId = formationPlayer.playerId;
+        const player = appState.players.find(p => p.id === playerId);
+        
+        
+        if (player) {
+            // Find the correct slot based on position
+            let slotId;
+            if (position === 'GK') slotId = 'gk-slot';
+            else if (position === 'SW') slotId = 'sw-slot';
+            else slotId = `slot-${position}`;
+            
+            const slot = document.getElementById(slotId);
+            if (slot) {
+                slot.innerHTML = `
+                    <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>
+                `;
+                slot.setAttribute('data-player-id', playerId);
+                slot.classList.add('occupied');
+                playersPlaced++;
+            } else {
+            }
+        } else {
+        }
+    });
+    
+    // Show success message after placing players
+    if (playersPlaced > 0 && appState.defaultFormation && appState.defaultFormation.length > 0) {
+        showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
+    }
+
+    // Set up drag-and-drop and touch events
+    const numbers = document.querySelectorAll('.player-number');
+    numbers.forEach(number => {
+        // Only add listeners if not already present
+        if (!number.hasAttribute('data-events-setup')) {
+            // Desktop drag events
+            number.addEventListener('dragstart', dragStart);
+            // Mobile touch events
+            number.addEventListener('touchstart', touchStart, { passive: false });
+            number.addEventListener('touchmove', touchMove, { passive: false });
+            number.addEventListener('touchend', touchEnd);
+            number.setAttribute('data-events-setup', 'true');
+        }
+    });
+
+    const slots = document.querySelectorAll('.player-slot');
+    slots.forEach(slot => {
+        slot.removeEventListener('dragover', dragOver);
+        slot.removeEventListener('drop', dropToSlot);
+        slot.addEventListener('dragover', dragOver);
+        slot.addEventListener('drop', dropToSlot);
+    });
+
+    playerList.removeEventListener('dragover', dragOver);
+    playerList.removeEventListener('drop', dropToSidebar);
+    playerList.addEventListener('dragover', dragOver);
+    playerList.addEventListener('drop', dropToSidebar);
+
+    // Set up drag and drop for unavailable slots
+    const unavailableSlotElements = document.querySelectorAll('.unavailable-slot');
+    unavailableSlotElements.forEach(slot => {
+        slot.removeEventListener('dragover', dragOver);
+        slot.removeEventListener('drop', dropToUnavailableSlot);
+        slot.addEventListener('dragover', dragOver);
+        slot.addEventListener('drop', dropToUnavailableSlot);
+    });
+
+    // Set up touch events for placed players
+    setupPlacedPlayerTouch();
+}
+
+function dragStart(e) {
+    e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
+    const isPlaced = e.target.classList.contains('player-number-placed');
+    const parentSlot = e.target.closest('.player-slot, .unavailable-slot');
+    const isFromUnavailable = parentSlot && parentSlot.classList.contains('unavailable-slot');
+    
+    let source = 'sidebar';
+    if (isPlaced && isFromUnavailable) {
+        source = 'unavailable';
+    } else if (isPlaced) {
+        source = 'field';
+    }
+    
+    e.dataTransfer.setData('source', source);
+    e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
+
+    // Create a custom drag image
+    const dragImage = document.createElement('div');
+    dragImage.textContent = e.target.textContent; // Set jersey number
+    dragImage.style.position = 'absolute';
+    dragImage.style.width = '72px'; // Match mobile clone size
+    dragImage.style.height = '72px';
+    dragImage.style.lineHeight = '72px';
+    dragImage.style.fontSize = '36px';
+    dragImage.style.borderRadius = '50%';
+    dragImage.style.background = '#000';
+    dragImage.style.color = '#fff';
+    dragImage.style.textAlign = 'center';
+    dragImage.style.opacity = '0.7';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '1000';
+    document.body.appendChild(dragImage);
+
+    // Set the drag image
+    e.dataTransfer.setDragImage(dragImage, 36, 36); // Center at cursor (72px / 2)
+
+    // Clean up drag image after a short delay
+    setTimeout(() => {
+        document.body.removeChild(dragImage);
+    }, 0);
+}
+
+function dragOver(e) {
+    e.preventDefault();
+}
+
+// Allow dropping back to sidebar to remove player
+function dropToSidebar(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
+    
+    // Handle players from field or unavailable area
+    if (source === 'field') {
+        // Remove from formation
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+
+        // Clear field slot
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    } else if (source === 'unavailable') {
+        // Remove from unavailable players
+        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        
+        // Clear unavailable slot
+        const slot = document.getElementById(slotId);
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    } else {
+        return; // Only handle field and unavailable sources
+    }
+
+    // Re-enable player number in sidebar
+    const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+    if (number) {
+        number.classList.remove('disabled');
+        number.draggable = true;
+    }
+    
+    // Save data
+    saveAppData();
+
+    //     playerId: f.playerId,
+    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+    //     position: f.position
+    // })));
+}
+
+// Update dropToSlot to call setupPlacedPlayerTouch
+function dropToSlot(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const slot = e.target.closest('.player-slot');
+    if (!slot) return;
+    const position = slot.getAttribute('data-position');
+    const matchType = appState.currentGame.matchType;
+    const maxPlayers = parseInt(matchType.split('v')[0]);
+
+    let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
+
+    const existingPlayerId = slot.getAttribute('data-player-id');
+    
+    // Only check player limit if adding to empty slot (not replacing)
+    if (source === 'sidebar' && !existingPlayerId && currentPlayers >= maxPlayers) {
+        showMessage(`Too many players for ${matchType}. Remove a player first.`, 'error');
+        return;
+    }
+    if (existingPlayerId && existingPlayerId !== playerId) {
+        // Remove existing player from formation and return to sidebar  
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
+        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+        if (oldPlayer) {
+            oldPlayer.classList.remove('disabled');
+            oldPlayer.draggable = true;
+        }
+    }
+
+    appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+    const x = parseFloat(slot.style.left);
+    const y = parseFloat(slot.style.top);
+
+    appState.formationTemp.push({
+        playerId,
+        position: position, // Always use the field slot position, not player's original position
+        x,
+        y
+    });
+
+    slot.innerHTML = '';
+    slot.setAttribute('data-player-id', playerId);
+    slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    slot.classList.add('occupied');
+
+    if (source === 'sidebar') {
+        disablePlayerNumber(playerId);
+    } else if (source === 'field' && slotId !== slot.id) {
+        const prevSlot = document.getElementById(slotId);
+        if (prevSlot) {
+            prevSlot.innerHTML = '';
+            prevSlot.removeAttribute('data-player-id');
+            prevSlot.classList.remove('occupied');
+        }
+    }
+
+    setupPlacedPlayerDrag();
+}
+
+// Handle drop to unavailable slot
+function dropToUnavailableSlot(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const sourceSlotId = e.dataTransfer.getData('slotId');
+    const targetSlot = e.target.closest('.unavailable-slot');
+    
+    if (!targetSlot || !playerId) return;
+    
+    // Handle occupied slot - displace the existing player (same as field behavior)
+    const existingPlayerId = targetSlot.getAttribute('data-player-id');
+    if (existingPlayerId && existingPlayerId !== playerId) {
+        // Remove displaced player from unavailable list
+        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
+        
+        // Re-enable the displaced player in sidebar
+        const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+        if (displacedNumber) {
+            displacedNumber.classList.remove('disabled');
+            displacedNumber.draggable = true;
+        }
+    }
+    
+    const player = appState.players.find(p => p.id === playerId);
+    if (!player) return;
+    
+    // Remove from source
+    if (source === 'field') {
+        const sourceSlot = document.getElementById(sourceSlotId);
+        if (sourceSlot) {
+            sourceSlot.innerHTML = '';
+            sourceSlot.removeAttribute('data-player-id');
+            sourceSlot.classList.remove('occupied');
+        }
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        // Re-enable player number if moving from field
+        const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (number) {
+            number.classList.remove('disabled');
+            number.draggable = true;
+        }
+    } else if (source === 'unavailable') {
+        // Moving between unavailable slots
+        const sourceSlot = document.getElementById(sourceSlotId);
+        if (sourceSlot) {
+            sourceSlot.innerHTML = '';
+            sourceSlot.removeAttribute('data-player-id');
+            sourceSlot.classList.remove('occupied');
+        }
+    }
+    
+    // Add to unavailable players if not already there
+    if (!appState.unavailablePlayers.includes(playerId)) {
+        appState.unavailablePlayers.push(playerId);
+    }
+    
+    // Add to target slot
+    targetSlot.innerHTML = `
+        <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>
+    `;
+    targetSlot.setAttribute('data-player-id', playerId);
+    targetSlot.classList.add('occupied');
+    
+    // Re-setup drag events - no need to re-render, just update sidebar
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
+    if (source === 'sidebar') {
+        // Just disable the player number in sidebar instead of full re-render
+        disablePlayerNumber(playerId);
+    }
+    
+    // Save data
+    saveAppData();
+}
+
+// Add function to setup drag for placed players
+function setupPlacedPlayerDrag() {
+    const placedNumbers = document.querySelectorAll('.player-number-placed');
+    placedNumbers.forEach(number => {
+        // Only add listeners if not already present
+        if (!number.hasAttribute('data-drag-setup')) {
+            number.addEventListener('dragstart', dragStart);
+            number.setAttribute('data-drag-setup', 'true');
+        }
+    });
+}
+
+function setupPlacedPlayerTouch() {
+    const placedNumbers = document.querySelectorAll('.player-number-placed');
+    placedNumbers.forEach(number => {
+        // Only add listeners if not already present
+        if (!number.hasAttribute('data-touch-setup')) {
+            number.addEventListener('touchstart', touchStart, { passive: false });
+            number.addEventListener('touchmove', touchMove, { passive: false });
+            number.addEventListener('touchend', touchEnd);
+            number.setAttribute('data-touch-setup', 'true');
+        }
+    });
+}
+
+function disablePlayerNumber(playerId) {
+    const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+    if (number) {
+        number.classList.add('disabled');
+        number.draggable = false;
+    }
+}
+
+function confirmBackToGameSetup() {
+    const dialog = document.getElementById('back-confirm-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+}
+
+function closeBackConfirmDialog() {
+    const dialog = document.getElementById('back-confirm-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function backToGameSetup() {
+    closeBackConfirmDialog();
+    appState.currentGame = null;
+    appState.formationTemp = null;
+    showScreen('game-setup');
+}
+
+function clearFormation() {
+    // Clear all players from formation and return them to sidebar
+    const placedPlayers = document.querySelectorAll('.player-number-placed');
+    
+    placedPlayers.forEach(placedPlayer => {
+        const playerId = placedPlayer.getAttribute('data-player-id');
+        
+        // Remove from formation
+        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        
+        // Re-enable in sidebar
+        const sidebarPlayer = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (sidebarPlayer) {
+            sidebarPlayer.classList.remove('disabled');
+            sidebarPlayer.draggable = true;
+        }
+        
+        // Clear the slot
+        const slot = placedPlayer.closest('.player-slot');
+        if (slot) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    });
+    
+    // Clear unavailable players too
+    appState.unavailablePlayers = [];
+    const unavailableSlots = document.querySelectorAll('.unavailable-slot');
+    unavailableSlots.forEach(slot => {
+        const playerId = slot.getAttribute('data-player-id');
+        if (playerId) {
+            const sidebarPlayer = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+            if (sidebarPlayer) {
+                sidebarPlayer.classList.remove('disabled');
+                sidebarPlayer.draggable = true;
+            }
+        }
+        slot.innerHTML = '';
+        slot.removeAttribute('data-player-id');
+        slot.classList.remove('occupied');
+    });
+    
+    // Re-setup drag handlers
+    setupPlacedPlayerDrag();
+    setupPlacedPlayerTouch();
+    
+    showMessage('Formation cleared', 'success');
+}
+
+function startGameFromFormation() {
+    const matchType = appState.currentGame.matchType;
+    const maxPlayers = parseInt(matchType.split('v')[0]);
+    const formation = appState.formationTemp || [];
+    
+    // Check if user wants to save this formation as default
+    const saveDefaultCheckbox = document.getElementById('save-default-formation');
+    if (saveDefaultCheckbox && saveDefaultCheckbox.checked) {
+        // Save current formation as default
+        appState.defaultFormation = [...formation];
+        showMessage('Formation saved as default', 'success');
+    }
+
+    // Debug formation state
+    //     playerId: f.playerId,
+    //     jersey: appState.players.find(p => p.id === f.playerId)?.jerseyNumber,
+    //     position: f.position
+    // })));
+
+    // Validate formation
+    if (formation.length > maxPlayers) {
+        showMessage(`Too many players assigned for ${matchType}. Please assign exactly ${maxPlayers} players.`, 'error');
+        return;
+    }
+    if (formation.length < maxPlayers) {
+        showMessage(`Not enough players assigned for ${matchType}. Please assign exactly ${maxPlayers} players.`, 'error');
+        return;
+    }
+
+    appState.currentGame.formation = formation;
+    
+    // Store unavailable players in the game for reports
+    appState.currentGame.unavailablePlayers = [...(appState.unavailablePlayers || [])];
+
+    // Check for goalkeeper (y = 95)
+    const hasGoalkeeper = appState.currentGame.formation.some(f => f.y === 95 && f.playerId);
+    if (!hasGoalkeeper) {
+        showMessage('A goalkeeper must be assigned before starting the game.', 'error');
+        return;
+    }
+
+    // Set formation and substitutes
+    
+    appState.currentGame.substitutes = appState.players
+        .filter(p => {
+            const isInFormation = formation.some(f => f.playerId === p.id);
+            const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+            return !isInFormation && !isUnavailable;
+        })
+        .map(p => p.id);
+
+    // Reset player stats
+    appState.players.forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0,
+            faults: 0,
+            blockedShots: 0
+        };
+    });
+
+    // Setup timers and UI
+    appState.timer.duration = appState.currentGame.substitutionDuration;
+    appState.timer.timeLeft = appState.timer.duration;
+    updateTimerDisplay();
+    appState.gameTimer.elapsed = 0;
+    appState.gameTimer.isRunning = false;
+    appState.gameTimer.startTime = null;
+    updateGameTimeDisplay();
+    updatePeriodCounter();
+    document.getElementById('opponent-team-name').textContent = appState.currentGame.opponentName.toUpperCase();
+    document.getElementById('home-score').textContent = '0';
+    document.getElementById('away-score').textContent = '0';
+    renderPlayerGrid();
+    showScreen('game-tracking');
+    appState.formationTemp = null;
+}
+
+// Game Management
+function startGame() {
+    const opponentNameInput = document.getElementById('opponent-name');
+    const gameDateInput = document.getElementById('game-date');
+    const numPeriodsInput = document.getElementById('num-periods');
+    const periodDurationInput = document.getElementById('period-duration');
+    const substitutionTimeInput = document.getElementById('substitution-time');
+    const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
+
+    const opponentName = opponentNameInput.value.trim();
+    const gameDate = gameDateInput.value;
+    const numPeriods = parseInt(numPeriodsInput.value, 10);
+    const periodDuration = parseInt(periodDurationInput.value, 10);
+    const substitutionTime = parseInt(substitutionTimeInput.value, 10);
+
+    // Validate inputs
+    if (!opponentName) {
+        showMessage('Please enter an opponent team name.', 'error');
+        return;
+    }
+
+    if (!gameDate) {
+        showMessage('Please select a game date.', 'error');
+        return;
+    }
+
+    if (isNaN(numPeriods) || numPeriods < 1) {
+        showMessage('Number of periods must be at least 1.', 'error');
+        return;
+    }
+
+    if (isNaN(periodDuration) || periodDuration < 1 || periodDuration > 45) {
+        showMessage('Time per period must be between 1 and 45 minutes.', 'error');
+        return;
+    }
+
+    if (isNaN(substitutionTime) || substitutionTime < 1) {
+        showMessage('Substitution time must be at least 1 minute.', 'error');
+        return;
+    }
+
+    // Calculate total game time (in minutes)
+    const totalGameTime = numPeriods * periodDuration;
+
+    // Validate substitution time against total game time and max of 20 minutes
+    const maxSubstitutionTime = Math.min(totalGameTime, 20);
+    if (substitutionTime > maxSubstitutionTime) {
+        showMessage(`Substitution time cannot exceed the total game time (${totalGameTime} minutes) or 20 minutes.`, 'error');
+        return;
+    }
+
+    // Save the default substitution time and checkbox state
+    if (saveSubstitutionDefaultCheckbox.checked && !useSubstitutionTimerCheckbox.checked) {
+        appState.settings.defaultSubstitutionTime = substitutionTime;
+    }
+    appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+
     // Reset player stats for this new game
     appState.players.forEach(player => {
         player.stats = {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         };
     });
+
+    // Clear unavailable players for new game
+    appState.unavailablePlayers = [];
     
     // Create the new game
     appState.currentGame = {
@@ -388,113 +1652,204 @@ function startGame() {
         actions: [],
         activePlayers: [...appState.players.map(p => p.id)],
         isCompleted: false,
-        totalGameTime: 0 // Track total game time in seconds
+        totalGameTime: 0,
+        numPeriods: numPeriods,
+        periodDuration: periodDuration * 60, // Convert to seconds
+        substitutionDuration: substitutionTime * 60 // Convert to seconds
     };
-    
+
+    // Validate game data
+    if (!appState.currentGame.numPeriods || !appState.currentGame.periodDuration) {
+        showMessage('Error setting game duration parameters', 'error');
+        return;
+    }
+
     // Setup substitution timer
-    appState.timer.duration = parseInt(substitutionTime) * 60;
+    appState.timer.duration = appState.currentGame.substitutionDuration;
     appState.timer.timeLeft = appState.timer.duration;
     updateTimerDisplay();
-    
+
     // Reset and setup game timer
     appState.gameTimer.elapsed = 0;
     appState.gameTimer.isRunning = false;
     appState.gameTimer.startTime = null;
     updateGameTimeDisplay();
-    
+    updatePeriodCounter(); // Initialize period counter
+
     // Update opponent name in UI
     document.getElementById('opponent-team-name').textContent = opponentName.toUpperCase();
-    
+
     // Reset scores
     document.getElementById('home-score').textContent = '0';
     document.getElementById('away-score').textContent = '0';
-    
+
     // Populate player grid
     renderPlayerGrid();
-    
+
     // Switch to game screen
     showScreen('game-tracking');
 }
 
-function renderPlayerGrid() {
-    const playerGrid = document.getElementById('player-grid');
-    if (!playerGrid) return;
-    playerGrid.innerHTML = '';
+function updateCardCounters() {
+    if (!appState.currentGame) return;
+    
+    const yellowCardCount = appState.players.reduce((sum, player) => sum + (player.stats.yellowCards || 0), 0);
+    const redCardCount = appState.players.reduce((sum, player) => {
+        const yellows = player.stats.yellowCards || 0;
+        const reds = player.stats.redCards || 0;
+        return sum + reds + (yellows >= 2 ? 1 : 0);
+    }, 0);
+    
+    const yellowCardElement = document.getElementById('yellow-card-count');
+    const redCardElement = document.getElementById('red-card-count');
+    
+    if (yellowCardElement) yellowCardElement.textContent = yellowCardCount;
+    if (redCardElement) redCardElement.textContent = redCardCount;
+}
 
-    // auto-populate demo roster if nothing exists
-    if (!appState.players || appState.players.length === 0) {
-        showMessage('No players available, adding demo roster for you', 'info');
-        addDemoPlayers();
+function getPlayerPositionInGame(playerId) {
+    if (!appState.currentGame || !appState.currentGame.formation || !appState.currentGame.substitutes) {
+        return 'SUB'; // Default to SUB if no game or formation
     }
 
-    // Using all players, not filtering by active status anymore
-    (appState.players || []).sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
-        // Ensure player has stats object
+    // Check if player is a substitute
+    if (appState.currentGame.substitutes.includes(playerId)) {
+        return 'SUB';
+    }
+
+    // Find player's formation entry
+    const formationEntry = appState.currentGame.formation.find(f => f.playerId === playerId);
+    if (!formationEntry) {
+        return 'SUB'; // Not in formation, treat as substitute
+    }
+
+    const y = formationEntry.y;
+    if (y === 95) return 'GK'; // Goalkeeper
+    if (y === 86.5 || y === 78.5) return 'DEF'; // Sweeper or Defensive row
+    if (y === 61.38) return 'MDEF'; // Defensive Midfield
+    if (y === 44.25) return 'MID'; // Midfield
+    if (y === 27.13) return 'OMID'; // Offensive Midfield
+    if (y === 10) return 'ATT'; // Forward
+
+    return 'SUB'; // Fallback
+}
+
+function renderPlayerGrid() {
+    const playerGrid = document.getElementById('player-grid');
+    if (!playerGrid) {
+        return;
+    }
+    
+    playerGrid.innerHTML = '';
+    
+    if (appState.players.length === 0) {
+        playerGrid.innerHTML = '<div class="empty-state">No players available</div>';
+        return;
+    }
+    
+    appState.players
+        .filter(player => !appState.unavailablePlayers || !appState.unavailablePlayers.includes(player.id))
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+        .forEach(player => {
+        if (!player.id || !player.jerseyNumber || !player.name || !player.position) {
+
+            return;
+        }
+        
         if (!player.stats) {
             player.stats = {
                 goals: 0,
                 assists: 0,
                 saves: 0,
-                goalsAllowed: 0
+                goalsAllowed: 0,
+                yellowCards: 0,
+                redCards: 0
             };
         }
-
+        
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
-
-        // Create a completely redesigned player card (now square shaped)
+        // NEW: Apply starter or substitute class based on formation status
+        const position = getPlayerPositionInGame(player.id);
+        if (position === 'SUB') {
+            playerGridItem.classList.add('substitute');
+        } else {
+            playerGridItem.classList.add('starter');
+        }
+        
+        // Apply yellow or red card classes
+        if (player.stats.redCards > 0 || player.stats.yellowCards >= 2) {
+            playerGridItem.classList.add('red-card');
+        } else if (player.stats.yellowCards > 0) {
+            playerGridItem.classList.add('yellow-card');
+        }
+        
+        // Get position from formation
+        // const position = getPlayerPositionInGame(player.id);
+        
         playerGridItem.innerHTML = `
-            <div class="player-header">
+            <div class="player-name">${player.name}</div>
+            <div class="player-columns">
                 <div class="player-number">${player.jerseyNumber}</div>
-                <div class="player-name">${player.name}</div>
-            </div>
-            <div class="player-stats-container">
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="material-icons">sports_soccer</span>
-                    </div>
-                    <div class="stat-value">${player.stats.goals}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">👟</span>
-                    </div>
-                    <div class="stat-value">${player.stats.assists}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="material-icons">back_hand</span>
-                    </div>
-                    <div class="stat-value">${player.stats.saves}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed">
-                    </div>
-                    <div class="stat-value">${player.stats.goalsAllowed}</div>
-                </div>
+                <div class="player-position">${position}</div>
             </div>
         `;
-
-        playerGridItem.addEventListener('click', () => {
-            openPlayerActionDialog(player);
-        });
-
+        
+        // Add click handler based on player status
+        if (player.stats.redCards === 0 && player.stats.yellowCards < 2) {
+            playerGridItem.addEventListener('click', () => {
+                openPlayerActionDialog(player);
+            });
+        } else {
+            playerGridItem.addEventListener('click', () => {
+                showMessage('Player sent off, no actions allowed', 'error');
+            });
+        }
+        
         playerGrid.appendChild(playerGridItem);
     });
-
-    updateCounters();
+    
+    updatePlayerGridOrientation();
+    updateCardCounters();
 }
 
+function updatePeriodCounter() {
+    if (!appState.currentGame) return;
+
+    const periodDuration = appState.currentGame.periodDuration; // in seconds
+    const totalElapsed = appState.gameTimer.elapsed;
+    const currentPeriod = Math.min(
+        Math.ceil(totalElapsed / periodDuration),
+        appState.currentGame.numPeriods
+    );
+    const totalPeriods = appState.currentGame.numPeriods;
+
+    const periodCounter = document.getElementById('period-counter');
+    if (periodCounter) {
+        periodCounter.textContent = `Period ${currentPeriod} of ${totalPeriods}`;
+    }
+}
 
 // Timer Functions
 function updateTimerDisplay() {
-    const timerDisplay = getElement('substitution-timer');
+    const timerDisplay = document.getElementById('substitution-timer');
     const timerValue = timerDisplay.querySelector('.timer-value');
     
+    // If timer not needed, always show 0:00
+    if (appState.currentGame && appState.currentGame.timerNotNeeded) {
+        if (timerValue) {
+            timerValue.textContent = '0:00';
+        }
+        timerDisplay.classList.remove('timer-alert');
+        return;
+    }
+    
+    const minutes = Math.floor(appState.timer.timeLeft / 60);
+    const seconds = appState.timer.timeLeft % 60;
+    
     if (timerValue) {
-        timerValue.textContent = formatTime(appState.timer.timeLeft);
+        timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
     
     // Add alert styling if timer is at zero
@@ -506,13 +1861,21 @@ function updateTimerDisplay() {
 }
 
 function updateGameTimeDisplay() {
-    const gameTimeElement = getElement('game-time');
+    const minutes = Math.floor(appState.gameTimer.elapsed / 60);
+    const seconds = appState.gameTimer.elapsed % 60;
+    const gameTimeElement = document.getElementById('game-time');
     if (gameTimeElement) {
-        gameTimeElement.textContent = `Time: ${formatTime(appState.gameTimer.elapsed)}`;
+        gameTimeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
+    updatePeriodCounter(); // Update period counter on every tick
 }
 
 function startTimer() {
+    // Don't start timer if not needed
+    if (appState.currentGame && appState.currentGame.timerNotNeeded) {
+        return;
+    }
+    
     if (!appState.timer.isRunning && appState.timer.timeLeft > 0) {
         appState.timer.isRunning = true;
         appState.timer.interval = setInterval(() => {
@@ -548,16 +1911,19 @@ function startGameTimer() {
     if (!appState.gameTimer.isRunning) {
         appState.gameTimer.isRunning = true;
         appState.gameTimer.startTime = new Date();
-        
+
         appState.gameTimer.interval = setInterval(() => {
             appState.gameTimer.elapsed++;
             updateGameTimeDisplay();
-            
+
             // Update the current game's total time
             if (appState.currentGame) {
                 appState.currentGame.totalGameTime = appState.gameTimer.elapsed;
             }
         }, 1000);
+
+        // Show success message
+        showMessage('Period started successfully', 'success');
     }
 }
 
@@ -569,39 +1935,318 @@ function pauseGameTimer() {
 }
 
 function stopGameTimer() {
-    // Stop the timer first
-    if (appState.gameTimer.isRunning) {
-        clearInterval(appState.gameTimer.interval);
-        appState.gameTimer.isRunning = false;
+    // Check if the game timer is running
+    if (!appState.gameTimer.isRunning) {
+        showMessage('Cannot stop: Game clock has not been started', 'error');
+        return;
+    }
+
+    // Stop both timers
+    pauseGameTimer();
+    pauseTimer();
+
+    // Calculate current period based on game clock
+    const periodDuration = appState.currentGame.periodDuration; // in seconds
+    const totalElapsed = appState.gameTimer.elapsed;
+    const currentPeriod = Math.min(
+        Math.ceil(totalElapsed / periodDuration),
+        appState.currentGame.numPeriods
+    );
+
+    // If it's the last period, show "End Game" dialog
+    if (currentPeriod >= appState.currentGame.numPeriods) {
+        let endGameDialog = document.getElementById('end-game-period-dialog');
+        if (!endGameDialog) {
+            endGameDialog = document.createElement('div');
+            endGameDialog.id = 'end-game-period-dialog';
+            endGameDialog.className = 'dialog';
+            document.getElementById('app').appendChild(endGameDialog);
+        }
+
+        endGameDialog.innerHTML = `
+            <div class="dialog-content">
+                <h2>Game Complete</h2>
+                <p>Game Complete. End now?</p>
+                <div class="form-group">
+                    <label for="game-summary">Game Summary (optional):</label>
+                    <textarea id="game-summary" rows="3" placeholder="Overall game notes..." maxlength="300"></textarea>
+                </div>
+                <div class="dialog-buttons">
+                    <button class="secondary-btn" onclick="closeEndGamePeriodDialog()">Cancel</button>
+                    <button class="primary-btn" onclick="endGameWithSummary()">End Game</button>
+                </div>
+            </div>
+        `;
+
+        endGameDialog.style.display = 'flex';
+        endGameDialog.classList.add('active');
+        return;
+    }
+
+    // Otherwise, show "Is this period finished?" dialog
+    let periodDialog = document.getElementById('period-finished-dialog');
+    if (!periodDialog) {
+        periodDialog = document.createElement('div');
+        periodDialog.id = 'period-finished-dialog';
+        periodDialog.className = 'dialog';
+        document.getElementById('app').appendChild(periodDialog);
+    }
+
+    periodDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Period Status</h2>
+            <p>Is this period finished?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closePeriodFinishedDialog()">No</button>
+                <button class="primary-btn" onclick="confirmPeriodFinished()">Yes</button>
+            </div>
+        </div>
+    `;
+
+    periodDialog.style.display = 'flex';
+    periodDialog.classList.add('active');
+}
+
+function closePeriodFinishedDialog() {
+    const dialog = document.getElementById('period-finished-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function confirmPeriodFinished() {
+    const dialog = document.getElementById('period-finished-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+
+    // Reset substitution timer
+    appState.timer.timeLeft = appState.timer.duration;
+    updateTimerDisplay();
+
+    // Reset game clock to the expected end of the current period
+    const periodDuration = appState.currentGame.periodDuration;
+    const totalElapsed = appState.gameTimer.elapsed;
+    const currentPeriod = Math.min(
+        Math.ceil(totalElapsed / periodDuration),
+        appState.currentGame.numPeriods
+    );
+    appState.gameTimer.elapsed = currentPeriod * periodDuration;
+    updateGameTimeDisplay(); // This will also update the period counter
+}
+
+function closeEndGamePeriodDialog() {
+    const dialog = document.getElementById('end-game-period-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function endGameWithSummary() {
+    const summary = document.getElementById('game-summary')?.value.trim() || '';
+    
+    // Store summary in game if provided
+    if (summary && appState.currentGame) {
+        appState.currentGame.gameSummary = summary;
     }
     
-    // Do not reset the game timer to 0, just stop it
-    // Keeping the current elapsed time
-    appState.gameTimer.interval = null;
+    // Close the dialog and proceed with ending the game
+    closeEndGamePeriodDialog();
+    endGame();
+}
+
+// Game Note functions
+function openGameNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    const playerNameSpan = document.getElementById('note-player-name');
+    const noteText = document.getElementById('note-text');
+    const charCount = document.getElementById('note-char-count');
     
-    // Stop substitution timer AND reset it to default value
-    pauseTimer();
-    resetTimer();
+    playerNameSpan.textContent = 'General Game';
+    noteText.value = '';
+    charCount.textContent = '0';
     
-    // Save the state
+    // Add character counter listener
+    noteText.oninput = () => {
+        charCount.textContent = noteText.value.length;
+    };
+    
+    // Set flag for general note
+    appState.isGeneralNote = true;
+    
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+    noteText.focus();
+}
+
+function closeGameNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+    }
+}
+
+function saveGameNote() {
+    const noteText = document.getElementById('note-text')?.value.trim();
+    if (!noteText) {
+        showMessage('Please enter a note', 'error');
+        return;
+    }
+    
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
+        return;
+    }
+    
+    const gameMinute = calculateGameMinute();
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: null,
+        actionType: 'note',
+        gameMinute: gameMinute,
+        noteText: noteText
+    };
+    
+    appState.currentGame.actions.push(action);
     saveAppData();
+    closeGameNoteDialog();
+    showMessage('Game note added', 'success');
+}
+
+function recordGeneralNoteAction() {
+    const noteText = document.getElementById('note-text').value.trim();
+    if (!noteText) {
+        showMessage('Please enter a note', 'error');
+        return;
+    }
+    
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
+        return;
+    }
+    
+    const gameMinute = calculateGameMinute();
+    // Allow notes even if game exceeds time limit - notes are observations
+    
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: null, // General note has no specific player
+        actionType: 'note',
+        gameMinute: gameMinute,
+        noteText: noteText
+    };
+    
+    appState.currentGame.actions.push(action);
+    saveAppData();
+    closeNoteDialog();
+    
+    showMessage('Game note added', 'success');
+    appState.isGeneralNote = false;
 }
 
 // Player Actions
-// Helper function to handle dialog operations
-function toggleDialog(dialogId, isOpen) {
-    document.getElementById(dialogId).style.display = isOpen ? 'flex' : 'none';
-}
-
 function openPlayerActionDialog(player) {
     appState.currentPlayer = player;
-    document.getElementById('action-player-name').textContent = player.name;
-    toggleDialog('player-action-dialog', true);
+    const dialog = document.getElementById('player-action-dialog');
+    const playerNameSpan = document.getElementById('action-player-name');
+    playerNameSpan.textContent = player.name;
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closePlayerActionDialog() {
-    toggleDialog('player-action-dialog', false);
+    const dialog = document.getElementById('player-action-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     appState.currentPlayer = null;
+}
+
+// Note handling functions
+function openNoteDialog() {
+    
+    if (!appState.currentPlayer) {
+        return;
+    }
+    
+    // Store the player in a backup variable to prevent loss
+    window.noteDialogPlayer = appState.currentPlayer;
+    
+    const dialog = document.getElementById('note-dialog');
+    const playerNameSpan = document.getElementById('note-player-name');
+    const noteText = document.getElementById('note-text');
+    const charCount = document.getElementById('note-char-count');
+    
+    playerNameSpan.textContent = appState.currentPlayer.name;
+    noteText.value = '';
+    charCount.textContent = '0';
+    
+    // Add character counter listener
+    noteText.oninput = () => {
+        charCount.textContent = noteText.value.length;
+    };
+    
+    closePlayerActionDialog();
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+    noteText.focus();
+}
+
+function closeNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+    appState.isGeneralNote = false; // Reset flag
+}
+
+function recordNoteAction() {
+    
+    // Check if this is a general note or player-specific note
+    if (appState.isGeneralNote) {
+        recordGeneralNoteAction();
+        return;
+    }
+    
+    
+    // Use backup player if currentPlayer was reset
+    const playerToUse = appState.currentPlayer || window.noteDialogPlayer;
+    
+    if (!playerToUse) {
+        return;
+    }
+    
+    
+    const noteText = document.getElementById('note-text').value.trim();
+    
+    if (!noteText) {
+        showMessage('Please enter a note', 'error');
+        return;
+    }
+    
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
+        return;
+    }
+    
+    
+    const gameMinute = calculateGameMinute();
+    
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: playerToUse.id,
+        actionType: 'note',
+        gameMinute: gameMinute,
+        noteText: noteText
+    };
+    
+    
+    appState.currentGame.actions.push(action);
+    
+    saveAppData();
+    
+    closeNoteDialog();
+    
+    showMessage(`Note added for ${playerToUse.name}`, 'success');
+    appState.currentPlayer = null;
+    window.noteDialogPlayer = null; // Clear backup
+    
 }
 
 // Goal with possible assist handling
@@ -610,6 +2255,9 @@ function handleGoalAction() {
     
     // Record the current player as the scorer
     appState.goalScorer = appState.currentPlayer;
+
+    // Save state to ensure latest stats
+    saveAppData();
     
     // Close the player action dialog
     closePlayerActionDialog();
@@ -619,15 +2267,15 @@ function handleGoalAction() {
 }
 
 function openAssistSelectionDialog() {
+    const dialog = document.getElementById('assist-selection-dialog');
     const playersGrid = document.getElementById('assist-players-grid');
-    
-    // Clear previous content
     playersGrid.innerHTML = '';
-    
-    // Get all players excluding the goal scorer
-    const activePlayers = appState.players.filter(p => p.id !== appState.goalScorer.id);
-    
-    // Add players to the grid
+    const activePlayers = appState.players.filter(p => {
+        const redCards = p.stats?.redCards || 0;
+        const yellowCards = p.stats?.yellowCards || 0;
+        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        return p.id !== appState.goalScorer.id && redCards === 0 && yellowCards < 2 && !isUnavailable;
+    });
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -640,12 +2288,14 @@ function openAssistSelectionDialog() {
         });
         playersGrid.appendChild(playerItem);
     });
-    
-    toggleDialog('assist-selection-dialog', true);
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeAssistSelectionDialog() {
-    toggleDialog('assist-selection-dialog', false);
+    const dialog = document.getElementById('assist-selection-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     appState.goalScorer = null;
 }
 
@@ -687,15 +2337,13 @@ function handleAssistAction() {
 }
 
 function openScorerSelectionDialog() {
+    const dialog = document.getElementById('scorer-selection-dialog');
     const playersGrid = document.getElementById('scorer-players-grid');
-    
-    // Clear previous content
     playersGrid.innerHTML = '';
-    
-    // Get all players excluding the assister
-    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id);
-    
-    // Add players to the grid
+    const activePlayers = appState.players.filter(p => {
+        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        return p.id !== appState.assister.id && p.stats.redCards === 0 && p.stats.yellowCards < 2 && !isUnavailable;
+    });
     activePlayers.forEach(player => {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-select-item';
@@ -708,12 +2356,14 @@ function openScorerSelectionDialog() {
         });
         playersGrid.appendChild(playerItem);
     });
-    
-    toggleDialog('scorer-selection-dialog', true);
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeScorerSelectionDialog() {
-    toggleDialog('scorer-selection-dialog', false);
+    const dialog = document.getElementById('scorer-selection-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
     appState.assister = null;
 }
 
@@ -733,61 +2383,109 @@ function completeAssistWithScorer(scorerId) {
 function recordAction(actionType, specificPlayerId = null) {
     if (!appState.currentGame) return;
     
-    // Use the specified player ID or the current player's ID
-    const playerId = specificPlayerId || (appState.currentPlayer ? appState.currentPlayer.id : null);
-    if (!playerId) return;
+    const gameMinute = calculateGameMinute();
     
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
-    if (playerIndex === -1) return; // Player not found
-    
-    // Ensure player stats object is initialized
-    if (!appState.players[playerIndex].stats) {
-        appState.players[playerIndex].stats = {
-            goals: 0,
-            assists: 0,
-            saves: 0,
-            goalsAllowed: 0
-        };
+    // Validate game minute for all actions
+    if (!validateGameMinute(gameMinute)) {
+        return; // Don't record action if time is invalid
     }
     
+    const playerId = specificPlayerId || (appState.currentPlayer ? appState.currentPlayer.id : null);
     const action = {
         timestamp: new Date().toISOString(),
-        playerId,
+        playerId: actionType === 'own_goal' ? null : playerId,
         actionType,
-        gameMinute: calculateGameMinute()
+        gameMinute: gameMinute
     };
     
     appState.currentGame.actions.push(action);
     
-    // Update player stats
+    const playerIndex = playerId ? appState.players.findIndex(p => p.id === playerId) : -1;
+    const playerGridItem = playerId ? document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`) : null;
+    
+    if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
+        appState.players[playerIndex].stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0,
+            faults: 0,
+            blockedShots: 0
+        };
+    }
+    
     switch (actionType) {
         case 'goal':
             appState.players[playerIndex].stats.goals++;
             appState.currentGame.homeScore++;
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            showMessage('Goal recorded', 'success');
             break;
         case 'assist':
             appState.players[playerIndex].stats.assists++;
+            showMessage('Assist recorded', 'success');
             break;
         case 'save':
             appState.players[playerIndex].stats.saves++;
+            showMessage('Save recorded', 'success');
             break;
         case 'goal_allowed':
             appState.players[playerIndex].stats.goalsAllowed++;
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
+            showMessage('Goal allowed recorded', 'success');
+            break;
+        case 'yellow_card':
+            appState.players[playerIndex].stats.yellowCards++;
+            if (appState.players[playerIndex].stats.yellowCards >= 2) {
+                if (playerGridItem) {
+                    playerGridItem.classList.remove('yellow-card');
+                    playerGridItem.classList.add('red-card');
+                }
+            } else if (playerGridItem) {
+                playerGridItem.classList.add('yellow-card');
+            }
+            updateCardCounters();
+            showMessage('Yellow card recorded', 'success');
+            break;
+        case 'red_card':
+            appState.players[playerIndex].stats.redCards++;
+            if (playerGridItem) {
+                playerGridItem.classList.remove('yellow-card');
+                playerGridItem.classList.add('red-card');
+            }
+            updateCardCounters();
+            showMessage('Red card recorded', 'success');
+            break;
+        case 'own_goal':
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            showMessage('Own goal recorded', 'success');
+            break;
+        case 'late_to_game':
+            showMessage('Player recorded as late to game', 'success');
+            break;
+        case 'fault':
+            appState.players[playerIndex].stats.faults++;
+            showMessage('Fault recorded', 'success'); // Changed from 'yellow' to 'success' for consistency
+            break;
+        case 'blocked_shot':
+            appState.players[playerIndex].stats.blockedShots++;
+            showMessage('Blocked shot recorded', 'success');
             break;
     }
     
-    // Update player grid item
-    updatePlayerGridItem(playerId);
+    if (playerId) {
+        updatePlayerGridItem(playerId);
+    }
     
     saveAppData();
     
-    // Only close the dialog if it was opened directly (not via another action flow)
-    if (!specificPlayerId) {
-        closePlayerActionDialog();
-    }
+    // No need to update buttons here anymore
+    
+    closePlayerActionDialog();
 }
 
 function updatePlayerGridItem(playerId) {
@@ -796,11 +2494,13 @@ function updatePlayerGridItem(playerId) {
     
     // Directly update the stat values in the player card
     const statValues = document.querySelectorAll(`.player-grid-item[data-player-id="${playerId}"] .stat-value`);
-    if (statValues && statValues.length >= 4) {
+    if (statValues && statValues.length >= 6) {
         statValues[0].textContent = player.stats.goals;
         statValues[1].textContent = player.stats.assists;
         statValues[2].textContent = player.stats.saves;
         statValues[3].textContent = player.stats.goalsAllowed;
+        statValues[4].textContent = player.stats.yellowCards;
+        statValues[5].textContent = player.stats.redCards;
     } else {
         // Fallback to re-rendering the entire player grid if we can't find stat elements
         renderPlayerGrid();
@@ -810,51 +2510,70 @@ function updatePlayerGridItem(playerId) {
 function calculateGameMinute() {
     if (!appState.currentGame) return 0;
     
-    const startTime = new Date(appState.currentGame.startTime);
-    const now = new Date();
-    const diffMs = now - startTime;
-    const diffMins = Math.floor(diffMs / 60000);
+    // Use accumulated game timer instead of wall-clock time
+    // This ensures correct cumulative time across periods
+    const diffMins = Math.floor(appState.gameTimer.elapsed / 60);
     
     return diffMins;
 }
 
 // End Game
 function confirmEndGame() {
-    toggleDialog('end-game-dialog', true);
+    const dialog = document.getElementById('end-game-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
 }
 
 function closeEndGameDialog() {
-    toggleDialog('end-game-dialog', false);
+    const dialog = document.getElementById('end-game-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
 }
 
 function endGame() {
     if (!appState.currentGame) return;
-    
-    appState.currentGame.endTime = new Date().toISOString();
+
+    // Close any open end game dialogs
+    const endGameDialog = document.getElementById('end-game-dialog');
+    if (endGameDialog) {
+        endGameDialog.style.display = 'none';
+        endGameDialog.classList.remove('active');
+    }
+    const endGamePeriodDialog = document.getElementById('end-game-period-dialog');
+    if (endGamePeriodDialog) {
+        endGamePeriodDialog.style.display = 'none';
+        endGamePeriodDialog.classList.remove('active');
+    }
+
+    // Set endTime if not already set
+    appState.currentGame.endTime = appState.currentGame.endTime || new Date().toISOString();
     appState.currentGame.isCompleted = true;
-    
+
+    // Validate game data
+    if (!appState.currentGame.numPeriods || !appState.currentGame.periodDuration) {
+        appState.currentGame.numPeriods = appState.currentGame.numPeriods || 2;
+        appState.currentGame.periodDuration = appState.currentGame.periodDuration || 15 * 60; // 15 minutes in seconds
+    }
+
     // Store the game in our games array
     const finishedGameId = appState.currentGame.id;
     appState.games.push({...appState.currentGame});
-    
+
     // Stop both timers
     pauseTimer();
     pauseGameTimer();
-    
+
     // Save data before showing report
     saveAppData();
-    
-    // Close the dialog
-    closeEndGameDialog();
-    
-    // Show the reports screen
+
+    // Update game report counter
+    updateGameReportCounter();
+
+    // Show the reports screen and open the report dialog
     showScreen('reports');
-    
-    // Generate and show the detailed report for this game
-    setTimeout(() => {
-        viewReport(finishedGameId);
-    }, 300);
-    
+    renderReportsList();
+    viewReport(finishedGameId);
+
     // Clear current game
     appState.currentGame = null;
 }
@@ -871,32 +2590,151 @@ function renderReportsList() {
         return;
     }
     
-    completedGames.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(game => {
+    const anyChecked = document.querySelectorAll('.report-checkbox:checked').length > 0;
+    
+    completedGames.sort((a, b) => {
+        if (!a.startTime || !b.startTime) return a.startTime ? -1 : b.startTime ? 1 : 0;
+        return new Date(b.startTime) - new Date(a.startTime);
+    }).forEach(game => {
         const reportItem = document.createElement('div');
         reportItem.className = 'report-item';
         
-        const gameDate = new Date(game.date).toLocaleDateString();
+        const gameDateTime = game.startTime ? new Date(game.startTime).toLocaleString() : 'No date provided';
         reportItem.innerHTML = `
             <div class="report-header">
-                <div class="report-date">${gameDate}</div>
-                <div class="report-score">My Team ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
+                <div class="report-date">${gameDateTime}</div>
+                <div class="report-score">${appState.teamName} ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
             </div>
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
                 <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
+                <input type="checkbox" class="report-checkbox" data-report-id="${game.id}" onchange="updateDeleteReportsRibbon()" ${anyChecked ? 'disabled' : ''}>
             </div>
         `;
         reportsList.appendChild(reportItem);
     });
-    // Ensure counters reflect completed reports
-    updateCounters();
 }
 
+function updateDeleteReportsRibbon() {
+    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+    const ribbon = document.getElementById('message-ribbon');
+    
+    if (checkboxes.length > 0) {
+        clearTimeout(messageTimeout); // Cancel any existing timeout
+        ribbon.innerHTML = `
+            <span id="message-text">Selected reports will be deleted.</span>
+            <div class="ribbon-buttons">
+                <button class="warning-delete-btn" onclick="openDeleteReportsDialog()">Delete</button>
+                <span class="close-btn" onclick="closeWarningReportsRibbon()">×</span>
+            </div>
+        `;
+        ribbon.className = 'message-ribbon warning';
+        ribbon.classList.remove('hidden');
+        ribbon.style.display = 'flex'; // Ensure ribbon is visible
+    } else {
+        ribbon.classList.add('hidden');
+        ribbon.style.display = 'none'; // Explicitly hide
+        ribbon.innerHTML = `
+            <span id="message-text"></span>
+            <button class="close-btn" onclick="hideMessage()">×</button>
+        `; // Restore default structure
+    }
+}
+
+function closeWarningReportsRibbon() {
+    const checkboxes = document.querySelectorAll('.report-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false; // Uncheck all report checkboxes
+    });
+    updateDeleteReportsRibbon(); // Update ribbon to hide it
+}
+
+function openDeleteReportsDialog() {
+    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+    if (checkboxes.length === 0) {
+        updateDeleteReportsRibbon();
+        return;
+    }
+    
+    let confirmDialog = document.getElementById('confirm-delete-reports-dialog');
+    if (!confirmDialog) {
+        confirmDialog = document.createElement('div');
+        confirmDialog.id = 'confirm-delete-reports-dialog';
+        confirmDialog.className = 'dialog';
+        document.getElementById('app').appendChild(confirmDialog);
+    }
+    
+    const reportCount = checkboxes.length;
+    confirmDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Delete</h2>
+            <p>Are you sure you want to remove ${reportCount} report${reportCount > 1 ? 's' : ''}?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeConfirmDeleteReportsDialog()">Cancel</button>
+                <button class="primary-btn delete-btn" onclick="confirmDeleteReports()">Confirm</button>
+            </div>
+        </div>
+    `;
+    
+    confirmDialog.style.display = 'flex';
+    confirmDialog.classList.add('active');
+}
+
+function closeConfirmDeleteReportsDialog() {
+    const confirmDialog = document.getElementById('confirm-delete-reports-dialog');
+    if (confirmDialog) {
+        confirmDialog.style.display = 'none';
+        confirmDialog.classList.remove('active');
+    }
+    // Reset all checkboxes
+    document.querySelectorAll('.report-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateDeleteReportsRibbon();
+}
+
+function confirmDeleteReports() {
+    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+    const reportIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-report-id'));
+    
+    if (reportIds.length === 0) {
+        updateDeleteReportsRibbon();
+        return;
+    }
+    
+    
+    const deletedCount = reportIds.length;
+    const transaction = db.transaction(['games'], 'readwrite');
+    const gamesStore = transaction.objectStore('games');
+
+    reportIds.forEach(reportId => {
+        const reportIndex = appState.games.findIndex(g => g.id === reportId);
+        if (reportIndex !== -1) {
+            appState.games.splice(reportIndex, 1);
+            gamesStore.delete(reportId);
+        } else {
+        }
+    });
+
+    transaction.oncomplete = () => {
+        closeConfirmDeleteReportsDialog(); // Close dialog
+        saveAppData(); // Ensure store is synced
+        renderReportsList();
+        updateGameReportCounter();
+        showMessage(`${deletedCount} report${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
+    };
+
+    transaction.onerror = (event) => {
+        showMessage('Failed to delete reports', 'error');
+    };
+
+}
+
+// Update viewReport to include formation
 function viewReport(gameId) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) return;
-    
-    // Create a report dialog if it doesn't exist
+
     let reportDialog = document.getElementById('detailed-report-dialog');
     if (!reportDialog) {
         reportDialog = document.createElement('div');
@@ -904,87 +2742,246 @@ function viewReport(gameId) {
         reportDialog.className = 'dialog';
         document.getElementById('app').appendChild(reportDialog);
     }
-    
-    // Format date
-    const gameDate = new Date(game.date).toLocaleDateString();
-    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    
-    // Calculate game duration
-    let gameDuration = '';
-    if (game.startTime && game.endTime) {
-        const start = new Date(game.startTime);
-        const end = new Date(game.endTime);
-        const durationMs = end - start;
-        const durationMins = Math.floor(durationMs / 60000);
-        gameDuration = `${durationMins} minutes`;
-    }
 
-    // Get player actions from the game
+    const gameDate = new Date(game.date).toDateString();
+    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], { timeStyle: 'short' }) : '';
+    const gameDuration = game.totalGameTime 
+        ? `${Math.floor(game.totalGameTime / 60)} minutes`
+        : game.numPeriods && game.periodDuration
+        ? `${Math.floor(game.numPeriods * game.periodDuration / 60)} minutes`
+        : 'N/A';
+
     const playerActions = {};
-    
-    // Initialize player actions
-    game.activePlayers.forEach(playerId => {
+    (game.activePlayers || []).forEach(playerId => {
         const player = appState.players.find(p => p.id === playerId);
         if (player) {
             playerActions[playerId] = {
                 name: player.name,
                 jerseyNumber: player.jerseyNumber,
-                goals: 0,
+                goals: [],
                 assists: 0,
                 saves: 0,
-                goalsAllowed: 0
+                goalsAllowed: 0,
+                yellowCards: [],
+                redCards: [],
+                lateToGame: false,
+                faults: 0,
+                blockedShots: 0
             };
         }
     });
-    
-    // Count actions
-    game.actions.forEach(action => {
-        if (playerActions[action.playerId]) {
+
+    const ownGoals = [];
+    (game.actions || []).forEach(action => {
+        if (action.actionType === 'own_goal') {
+            ownGoals.push(action.gameMinute);
+        } else if (playerActions[action.playerId]) {
             switch (action.actionType) {
-                case 'goal':
-                    playerActions[action.playerId].goals++;
-                    break;
-                case 'assist':
-                    playerActions[action.playerId].assists++;
-                    break;
-                case 'save':
-                    playerActions[action.playerId].saves++;
-                    break;
-                case 'goal_allowed':
-                    playerActions[action.playerId].goalsAllowed++;
+                case 'goal': playerActions[action.playerId].goals.push(action.gameMinute); break;
+                case 'assist': playerActions[action.playerId].assists++; break;
+                case 'save': playerActions[action.playerId].saves++; break;
+                case 'goal_allowed': playerActions[action.playerId].goalsAllowed++; break;
+                case 'yellow_card': playerActions[action.playerId].yellowCards.push(action.gameMinute); break;
+                case 'red_card': playerActions[action.playerId].redCards.push(action.gameMinute); break;
+                case 'late_to_game': playerActions[action.playerId].lateToGame = true; break;
+                case 'fault': playerActions[action.playerId].faults++; break;
+                case 'blocked_shot': playerActions[action.playerId].blockedShots++; break;
+                case 'note': 
+                    // Notes are displayed separately, no stats to update
                     break;
             }
         }
     });
-    
-    // Build player stats table
+
     let playerStatsHTML = '';
     Object.values(playerActions)
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
         .forEach(playerStat => {
+            const effectiveRedCards = playerStat.redCards.length + (playerStat.yellowCards.length >= 2 ? 1 : 0);
             playerStatsHTML += `
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
-                    <td>${playerStat.name}</td>
-                    <td>${playerStat.goals}</td>
+                    <td>${playerStat.name.toUpperCase()}</td>
+                    <td>${playerStat.goals.length}</td>
                     <td>${playerStat.assists}</td>
                     <td>${playerStat.saves}</td>
                     <td>${playerStat.goalsAllowed}</td>
+                    <td>${playerStat.blockedShots}</td>
+                    <td>${playerStat.faults}</td>
+                    <td>${playerStat.yellowCards.length}</td>
+                    <td>${effectiveRedCards}</td>
                 </tr>
             `;
         });
-    
-    // Generate report HTML
+
+    const goalLine = Object.values(playerActions)
+        .filter(p => p.goals.length > 0)
+        .map(p => ({ name: p.name, times: p.goals.sort((a, b) => a - b) }))
+        .concat(ownGoals.sort((a, b) => a - b).map(time => ({ name: 'Opponent', times: [time], isOwnGoal: true })))
+        .map(entry => entry.isOwnGoal ? `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')}, og)` : `${entry.name} (${entry.times.map(t => `${t}'`).join(', ')})`)
+        .join(', ') || 'N/A';
+
+    const yellowCardLine = Object.values(playerActions)
+        .filter(p => p.yellowCards.length > 0)
+        .map(p => `${p.name} (${p.yellowCards.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`)
+        .join(', ') || 'N/A';
+
+    const redCardLine = Object.values(playerActions)
+        .filter(p => p.redCards.length > 0 || p.yellowCards.length >= 2)
+        .map(p => {
+            const redTimes = [...p.redCards];
+            if (p.yellowCards.length >= 2) redTimes.push(p.yellowCards[1]);
+            return `${p.name} (${redTimes.sort((a, b) => a - b).map(t => `${t}'`).join(', ')})`;
+        })
+        .join(', ') || 'N/A';
+
+    const lateLine = Object.values(playerActions)
+        .filter(p => p.lateToGame)
+        .map(p => p.name)
+        .join(', ') || 'N/A';
+
+    // Generate notes HTML
+    const noteActions = (game.actions || []).filter(action => action.actionType === 'note');
+    let notesHTML = '';
+    if (noteActions.length > 0) {
+        notesHTML = `
+            <div style="margin-top: 15px;"><strong>Game Notes:</strong></div>
+            <div class="game-notes" style="margin-left: 15px; font-size: 12px;">
+                ${noteActions.map(note => {
+                    const playerName = note.playerId ? 
+                        (appState.players.find(p => p.id === note.playerId)?.name || 'Unknown Player') : 
+                        'General';
+                    return `<div class="note-item" style="margin: 5px 0;">${note.gameMinute}' - ${playerName}: ${note.noteText}</div>`;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    // Generate missed players line
+    const missedLine = (game.unavailablePlayers || [])
+        .map(playerId => {
+            const player = appState.players.find(p => p.id === playerId);
+            return player ? player.name : null;
+        })
+        .filter(name => name)
+        .join(', ') || 'N/A';
+
+    // Formation Section with correct stats and player names
+    let formationHTML = '';
+    if (game.formation && game.formation.length > 0) {
+        formationHTML = `
+            <div class="report-formation">
+                <h3>Starting Formation (${game.matchType})</h3>
+                <div class="formation-container-report" ${window.innerWidth <= 1024 ? 'style="flex-direction: column !important; align-items: center !important; min-width: auto !important;"' : ''}>
+                    <div class="formation-field-report">
+                        ${game.formation.map(f => {
+                            const player = appState.players.find(p => p.id === f.playerId);
+                            if (!player) return '';
+                            const stats = playerActions[f.playerId] || {};
+                            
+                            // Show only non-zero stats regardless of starting position
+                            let statTable = '<table class="player-stats-table">';
+                            
+                            if (stats.goals?.length > 0) {
+                                statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
+                            }
+                            if (stats.assists > 0) {
+                                statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
+                            }
+                            if (stats.saves > 0) {
+                                statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
+                            }
+                            if (stats.goalsAllowed > 0) {
+                                statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
+                            }
+                            if (stats.blockedShots > 0) {
+                                statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
+                            }
+                            if (stats.faults > 0) {
+                                statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
+                            }
+                            if (stats.yellowCards?.length > 0) {
+                                statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
+                            }
+                            const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
+                            if (redCards > 0) {
+                                statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
+                            }
+                            
+                            statTable += '</table>';
+                            return `
+                                <div class="player-slot-report" style="left: ${f.x}%; top: ${f.y}%">
+                                    <span class="player-number-report">${player.jerseyNumber}</span>
+                                    <span class="player-name-report">${player.name}</span>
+                                    ${statTable}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="substitutes-list">
+                        <h4>Substitutes</h4>
+                        ${game.substitutes?.map(subId => {
+                            const player = appState.players.find(p => p.id === subId);
+                            if (!player) return '';
+                            const stats = playerActions[subId] || {};
+                            
+                            // Show only non-zero stats for substitutes too
+                            let statTable = '<table class="player-stats-table">';
+                            
+                            if (stats.goals?.length > 0) {
+                                statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
+                            }
+                            if (stats.assists > 0) {
+                                statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
+                            }
+                            if (stats.saves > 0) {
+                                statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
+                            }
+                            if (stats.goalsAllowed > 0) {
+                                statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
+                            }
+                            if (stats.blockedShots > 0) {
+                                statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
+                            }
+                            if (stats.faults > 0) {
+                                statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
+                            }
+                            if (stats.yellowCards?.length > 0) {
+                                statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
+                            }
+                            const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
+                            if (redCards > 0) {
+                                statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
+                            }
+                            
+                            statTable += '</table>';
+                            
+                            return `
+                                <div class="substitute-item">
+                                    <span>#${player.jerseyNumber} ${player.name}</span>
+                                    ${statTable}
+                                </div>
+                            `;
+                        }).join('') || '<p>No substitutes</p>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     reportDialog.innerHTML = `
         <div class="dialog-content report-dialog">
             <h2>Game Report</h2>
             <div class="report-header-info">
                 <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Teams:</strong> ${appState.teamName} vs ${game.opponentName}</div>
                 <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
+                <div><strong>Goal for ${appState.teamName}:</strong> ${goalLine}</div>
+                <div><strong>Yellow card:</strong> ${yellowCardLine}</div>
+                <div><strong>Red card:</strong> ${redCardLine}</div>
                 <div><strong>Duration:</strong> ${gameDuration}</div>
             </div>
-            
+            ${formationHTML}
             <h3>Player Statistics</h3>
             <div class="report-table-container">
                 <table class="report-table">
@@ -992,10 +2989,14 @@ function viewReport(gameId) {
                         <tr>
                             <th>#</th>
                             <th>Name</th>
-                            <th>Goals</th>
-                            <th>Assists</th>
-                            <th>Saves</th>
-                            <th>Goals Allowed</th>
+                            <th><span class="stat-emoji">⚽</span></th>
+                            <th><span class="stat-emoji">👟</span></th>
+                            <th><span class="stat-emoji">🧤</span></th>
+                            <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
+                            <th><span class="stat-emoji">❌</span></th>
+                            <th><span class="stat-emoji">⚠️</span></th>
+                            <th><span class="stat-emoji">🟨</span></th>
+                            <th><span class="stat-emoji">🟥</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1003,38 +3004,59 @@ function viewReport(gameId) {
                     </tbody>
                 </table>
             </div>
-            
+            <div class="report-footer">
+                <div><strong>Game Summary:</strong> ${game.gameSummary || 'None'}</div>
+                <div><strong>Missed the game:</strong> ${missedLine}</div>
+                <div><strong>Late to the game:</strong> ${lateLine}</div>
+                ${notesHTML}
+            </div>
             <div class="report-actions">
                 <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
                 <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
             </div>
         </div>
     `;
-    
-    // Show the dialog
+
     reportDialog.style.display = 'flex';
+    reportDialog.classList.add('active');
 }
 
 function closeDetailedReport() {
     const reportDialog = document.getElementById('detailed-report-dialog');
     if (reportDialog) {
         reportDialog.style.display = 'none';
+        reportDialog.classList.remove('active');
+    }
+
+    // Ensure end game dialogs are closed as a fallback
+    const endGameDialog = document.getElementById('end-game-dialog');
+    if (endGameDialog) {
+        endGameDialog.style.display = 'none';
+        endGameDialog.classList.remove('active');
+    }
+    const endGamePeriodDialog = document.getElementById('end-game-period-dialog');
+    if (endGamePeriodDialog) {
+        endGamePeriodDialog.style.display = 'none';
+        endGamePeriodDialog.classList.remove('active');
     }
 }
 
+// Update exportReport to ensure formation is styled for PDF
 function exportReport(gameId, format) {
     const game = appState.games.find(g => g.id === gameId);
     if (!game) {
         showMessage('Game not found', 'error');
         return;
     }
-    
-    // Get the report content from the dialog
+
     const reportContent = document.querySelector('.report-dialog').innerHTML;
-    
-    // For PDF, we'll use a printable version that users can save as PDF
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    let iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
         <html>
         <head>
             <title>Game Report - ${game.date}</title>
@@ -1043,7 +3065,61 @@ function exportReport(gameId, format) {
                 table { border-collapse: collapse; width: 100%; margin: 20px 0; }
                 th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                 th { background-color: #f2f2f2; }
-                h2, h3 { color: #333; }
+                h2, h3, h4 { color: #333; }
+                .formation-container-report {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 20px;
+                    align-items: flex-start;
+                    min-width: 520px;
+                }
+                @media screen and (max-width: 1024px) {
+                    .formation-container-report {
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        min-width: auto !important;
+                    }
+                }
+                @media screen and (max-width: 500px) {
+                    .formation-container-report {
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        min-width: auto !important;
+                        width: 100% !important;
+                    }
+                }
+                .formation-field-report {
+                    width: 300px; height: 400px;
+                    background: url('img/field-400.png') no-repeat center center;
+                    background-size: cover;
+                    position: relative;
+                    border: 2px solid #fff;
+                    flex-shrink: 0;
+                }
+                .player-slot-report {
+                    position: absolute; text-align: center; transform: translate(-50%, -50%);
+                    display: flex; flex-direction: column; align-items: center;
+                }
+                .player-number-report {
+                    display: inline-block; width: 24px; height: 24px; line-height: 24px;
+                    background: #000; color: #fff; border-radius: 50%; font-size: 12px;
+                }
+                .player-name-report {
+                    font-size: 10px; color: #fff; margin-top: 2px;
+                    text-shadow: 1px 1px 1px #000;
+                }
+                .player-stats-table {
+                    width: auto; font-size: 10px; margin-top: 5px;
+                    border-collapse: collapse; background: #fff;
+                }
+                .player-stats-table th, .player-stats-table td {
+                    border: 1px solid #ddd; padding: 2px; width: 20px;
+                }
+                .substitutes-list {
+                    width: 200px; background: #f5f5f5; padding: 10px;
+                    border-radius: 8px; max-height: 400px; overflow-y: auto;
+                }
+                .substitute-item { margin-bottom: 10px; }
             </style>
         </head>
         <body>
@@ -1051,62 +3127,282 @@ function exportReport(gameId, format) {
             <p style="margin-top: 30px; text-align: center; color: #666;">
                 Generated by Soccer Coach Tracker - ${new Date().toLocaleString()}
             </p>
-            <script>
-                // Auto-print
-                window.onload = function() {
-                    window.print();
-                }
-            </script>
         </body>
         </html>
     `);
-    printWindow.document.close();
-    showMessage('Report opened in new tab for printing/saving as PDF', 'success');
+    doc.close();
+
+    iframe.onload = function() {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        document.body.removeChild(iframe);
+    };
+
+    showMessage('Opening print dialog for PDF export', 'success');
 }
 
 // Settings
+function handleLanguageChange() {
+
+    const checkedRadio = document.querySelector('input[name="language"]:checked');
+    if (!checkedRadio) {
+        showMessage('Please select a language', 'error');
+        return;
+    }
+
+    const selectedLanguage = checkedRadio.value;
+
+    // Check if French is selected
+    if (selectedLanguage === 'fr') {
+        // Show error message
+        showMessage('French language is not implemented yet.', 'error');
+        // Revert to English
+        const englishRadio = document.querySelector('input[name="language"][value="en"]');
+        if (englishRadio) {
+            englishRadio.checked = true;
+            // Force UI update by dispatching a change event
+            const changeEvent = new Event('change');
+            englishRadio.dispatchEvent(changeEvent);
+        } else {
+        }
+        appState.settings.language = 'en';
+
+    } else {
+        appState.settings.language = selectedLanguage;
+
+    }
+    
+    saveAppData(); // Save the state immediately
+}
+
 function saveSettings() {
-    const language = document.querySelector('input[name="language"]:checked').value;
-    const defaultTimer = document.getElementById('default-timer').value;
-    
-    appState.settings.language = language;
-    appState.settings.defaultTimer = parseInt(defaultTimer);
-    
+
+    // Language is already handled by handleLanguageChange, so just save the current state
     saveAppData();
     showMessage('Settings saved successfully', 'success');
 }
 
 // Data persistence (using localStorage in the prototype)
+// Update saveAppData to ensure reliable persistence
 function saveAppData() {
-    localStorage.setItem('soccerCoachApp', JSON.stringify({
-        teamName: appState.teamName,
-        players: appState.players,
-        games: appState.games,
-        settings: appState.settings
-    }));
+    if (!db) {
+        showMessage('Database not initialized', 'error');
+        return;
+    }
+
+    const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readwrite');
+    const teamStore = transaction.objectStore('team');
+    const playersStore = transaction.objectStore('players');
+    const gamesStore = transaction.objectStore('games');
+    const settingsStore = transaction.objectStore('settings');
+
+    // Validate data
+    if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
+        showMessage('Invalid data format for saving', 'error');
+        return;
+    }
+
+    // Save team
+    teamStore.put({ id: 'team', teamName: appState.teamName });
+
+    // Clear and save players
+    const clearPlayersRequest = playersStore.clear();
+    clearPlayersRequest.onsuccess = () => {
+        appState.players.forEach(player => {
+            if (player.id && player.name && player.jerseyNumber !== undefined) {
+                playersStore.put(player);
+            } else {
+    
+            }
+        });
+    };
+
+    // Clear and save games
+    const clearGamesRequest = gamesStore.clear();
+    clearGamesRequest.onsuccess = () => {
+        appState.games.forEach(game => {
+            if (game.id) {
+                gamesStore.put(game);
+            } else {
+            }
+        });
+        // Verify games store
+        const allGamesRequest = gamesStore.getAll();
+        allGamesRequest.onsuccess = () => {
+        };
+    };
+    clearGamesRequest.onerror = (event) => {
+    };
+
+    // Save settings
+    settingsStore.put({ id: 'settings', ...appState.settings });
+
+    transaction.oncomplete = () => {
+    };
+
+    transaction.onerror = (event) => {
+        showMessage('Failed to save data', 'error');
+    };
 }
 
 function loadAppData() {
-    const savedData = localStorage.getItem('soccerCoachApp');
-    if (savedData) {
-        const data = JSON.parse(savedData);
-        appState.teamName = data.teamName || "My Team";
-        appState.players = data.players || [];
-        appState.games = data.games || [];
-        appState.settings = data.settings || appState.settings;
-        
-        // Initialize UI styling
-        initializeStyling();
-        
-        updateTeamNameUI();
-    }
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+            appState.teamName = "My Team";
+            appState.players = [];
+            appState.games = [];
+            appState.settings = {
+                language: 'en',
+                defaultSubstitutionTime: null,
+                isSubstitutionDefaultChecked: false,
+                reusablePlayerIds: []
+            };
+            updateTeamNameUI();
+            renderPlayersList();
+            updatePlayerCounter();
+            updateGameReportCounter();
+            showMessage('IndexedDB not supported, using defaults', 'error');
+            resolve();
+            return;
+        }
+
+        initIndexedDB().then(() => {
+            const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readonly');
+            const teamStore = transaction.objectStore('team');
+            const playersStore = transaction.objectStore('players');
+            const gamesStore = transaction.objectStore('games');
+            const settingsStore = transaction.objectStore('settings');
+
+            // Load team
+            teamStore.get('team').onsuccess = (event) => {
+                const team = event.target.result;
+                appState.teamName = team ? team.teamName : "My Team";
+                updateTeamNameUI();
+            };
+
+            // Load players
+            playersStore.getAll().onsuccess = (event) => {
+                appState.players = event.target.result || [];
+                updatePlayerCounter();
+            };
+
+            // Load games
+            gamesStore.getAll().onsuccess = (event) => {
+                appState.games = event.target.result || [];
+                updateGameReportCounter();
+            };
+
+            // Load settings
+            settingsStore.get('settings').onsuccess = (event) => {
+                const settings = event.target.result || {
+                    language: 'en',
+                    defaultSubstitutionTime: null,
+                    isSubstitutionDefaultChecked: false,
+                    reusablePlayerIds: []
+                };
+                appState.settings = settings;
+                initializeStyling();
+            };
+
+            transaction.oncomplete = () => {
+                renderPlayersList();
+                resolve();
+            };
+
+            transaction.onerror = () => {
+                appState.teamName = "My Team";
+                appState.players = [];
+                appState.games = [];
+                appState.settings = {
+                    language: 'en',
+                    defaultSubstitutionTime: null,
+                    isSubstitutionDefaultChecked: false,
+                    reusablePlayerIds: []
+                };
+                updateTeamNameUI();
+                renderPlayersList();
+                updatePlayerCounter();
+                updateGameReportCounter();
+                showMessage('Failed to load data, using defaults', 'error');
+                resolve();
+            };
+        }).catch((error) => {
+            appState.teamName = "My Team";
+            appState.players = [];
+            appState.games = [];
+            appState.settings = {
+                language: 'en',
+                defaultSubstitutionTime: null,
+                isSubstitutionDefaultChecked: false,
+                reusablePlayerIds: []
+            };
+            updateTeamNameUI();
+            renderPlayersList();
+            updatePlayerCounter();
+            updateGameReportCounter();
+            showMessage('Database initialization failed, using defaults', 'error');
+            resolve();
+        });
+    });
 }
 
 // Function to clear all app data and start fresh
-function clearAppData() {
-    if (confirm('Are you sure you want to clear all data? This will remove all players, games, and settings.')) {
-        localStorage.removeItem('soccerCoachApp');
-        
+// Function to open clear data confirmation dialog
+function openClearDataDialog() {
+    let clearDialog = document.getElementById('clear-data-dialog');
+    if (!clearDialog) {
+        clearDialog = document.createElement('div');
+        clearDialog.id = 'clear-data-dialog';
+        clearDialog.className = 'dialog';
+        document.getElementById('app').appendChild(clearDialog);
+    }
+    
+    clearDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Confirm Clear Data</h2>
+            <p>Are you sure you want to clear all data? This will remove all players, games, and settings.</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeClearDataDialog()">Cancel</button>
+                <button class="primary-btn" onclick="confirmClearData()">Clear Data</button>
+            </div>
+        </div>
+    `;
+    
+    clearDialog.style.display = 'flex';
+    clearDialog.classList.add('active');
+}
+
+// Function to close clear data dialog
+function closeClearDataDialog() {
+    const clearDialog = document.getElementById('clear-data-dialog');
+    if (clearDialog) {
+        clearDialog.style.display = 'none';
+        clearDialog.classList.remove('active');
+    }
+}
+
+// Function to clear all app data
+function confirmClearData() {
+    closeClearDataDialog();
+    
+    if (!db) {
+        showMessage('Database not initialized', 'error');
+        return;
+    }
+
+    const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readwrite');
+    const teamStore = transaction.objectStore('team');
+    const playersStore = transaction.objectStore('players');
+    const gamesStore = transaction.objectStore('games');
+    const settingsStore = transaction.objectStore('settings');
+
+    // Clear all stores
+    teamStore.clear();
+    playersStore.clear();
+    gamesStore.clear();
+    settingsStore.clear();
+
+    transaction.oncomplete = () => {
         // Reset app state to defaults
         appState = {
             teamName: "My Team",
@@ -1127,18 +3423,114 @@ function clearAppData() {
             },
             settings: {
                 language: 'en',
-                defaultTimer: 6
+                defaultSubstitutionTime: null,
+                isSubstitutionDefaultChecked: false,
+                reusablePlayerIds: []
             },
-            currentPlayer: null
+            currentPlayer: null,
+            goalScorer: null,
+            assister: null
         };
-        
+
         // Update UI
         updateTeamNameUI();
-        showMessage('All data has been cleared. The app has been reset.', 'success');
+        renderPlayersList();
+        updatePlayerCounter();
+        updateGameReportCounter();
+        renderReportsList(); // Update reports list to show empty state
         
-        // Return to main screen
-        showScreen('main-screen');
+        // Clear statistics display
+        const statsContainer = document.getElementById('stats-container');
+        if (statsContainer) {
+            statsContainer.innerHTML = '<div class="empty-state">No statistics available - play some games first!</div>';
+        }
+
+        showMessage('All data has been cleared. The app has been reset.', 'success');
+    };
+
+    transaction.onerror = () => {
+        showMessage('Failed to clear data', 'error');
+    };
+}
+
+// Modified clearAppData to trigger dialog instead of confirm
+function clearAppData() {
+    openClearDataDialog();
+}
+
+// Function to reset only player statistics (keep players, clear game data)
+function resetPlayerStatistics() {
+    let resetDialog = document.getElementById('reset-stats-dialog');
+    if (!resetDialog) {
+        resetDialog = document.createElement('div');
+        resetDialog.id = 'reset-stats-dialog';
+        resetDialog.className = 'dialog';
+        document.getElementById('app').appendChild(resetDialog);
     }
+    
+    resetDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Reset Player Statistics</h2>
+            <p>This will clear all game data and statistics but keep your players and team. Are you sure?</p>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeResetStatsDialog()">Cancel</button>
+                <button class="warning-btn" onclick="confirmResetStatistics()">Reset Statistics</button>
+            </div>
+        </div>
+    `;
+    
+    resetDialog.style.display = 'flex';
+    resetDialog.classList.add('active');
+}
+
+function closeResetStatsDialog() {
+    const resetDialog = document.getElementById('reset-stats-dialog');
+    if (resetDialog) {
+        resetDialog.style.display = 'none';
+        resetDialog.classList.remove('active');
+    }
+}
+
+function confirmResetStatistics() {
+    closeResetStatsDialog();
+    
+    if (!db) {
+        showMessage('Database not initialized', 'error');
+        return;
+    }
+
+    const transaction = db.transaction(['games'], 'readwrite');
+    const gamesStore = transaction.objectStore('games');
+
+    // Clear only games store (keep players, team, settings)
+    gamesStore.clear();
+
+    transaction.oncomplete = () => {
+        // Reset only games in app state
+        appState.games = [];
+        appState.currentGame = null;
+
+        // Update UI
+        updateGameReportCounter();
+        renderReportsList();
+        
+        // Clear statistics display
+        const statsContainer = document.getElementById('stats-container');
+        if (statsContainer) {
+            statsContainer.innerHTML = '<div class="empty-state">No statistics available - play some games first!</div>';
+        }
+        
+        // Force refresh to players tab to avoid ghost data display
+        if (document.getElementById('team-setup').classList.contains('active')) {
+            switchTeamTab('players');
+        }
+
+        showMessage('Player statistics have been reset successfully', 'success');
+    };
+
+    transaction.onerror = () => {
+        showMessage('Failed to reset statistics', 'error');
+    };
 }
 
 // Export/Import functions for moving data between devices
@@ -1150,7 +3542,7 @@ function exportTeamData() {
         teamName: appState.teamName,
         players: appState.players,
         games: appState.games,
-        settings: appState.settings
+        settings: appState.settings // Includes reusablePlayerIds
     };
     
     // Convert to JSON string
@@ -1177,6 +3569,50 @@ function importTeamData() {
     document.getElementById('import-file').click();
 }
 
+// Add these functions to handle the import confirmation dialog
+function openImportConfirmDialog() {
+    const dialog = document.getElementById('import-confirm-dialog');
+    dialog.style.display = 'flex';
+    dialog.classList.add('active');
+}
+
+function closeImportConfirmDialog() {
+    const dialog = document.getElementById('import-confirm-dialog');
+    dialog.style.display = 'none';
+    dialog.classList.remove('active');
+}
+
+function confirmImportTeamData() {
+    closeImportConfirmDialog();
+    // Store the import data in a temporary variable to access after confirmation
+    if (appState.pendingImportData) {
+        // Update app state with imported data
+        appState.teamName = appState.pendingImportData.teamName;
+        appState.players = appState.pendingImportData.players;
+        appState.games = appState.pendingImportData.games || [];
+        appState.settings = appState.pendingImportData.settings || {
+            language: 'en',
+            defaultSubstitutionTime: null,
+            isSubstitutionDefaultChecked: false,
+            reusablePlayerIds: []
+        };
+        
+        // Save to IndexedDB
+        saveAppData();
+        
+        // Update UI
+        updateTeamNameUI();
+        renderPlayersList();
+        updatePlayerCounter();
+        updateGameReportCounter();
+        
+        showMessage('Team data imported successfully!', 'success');
+        
+        // Clear pending import data
+        appState.pendingImportData = null;
+    }
+}
+
 function handleFileImport(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1191,28 +3627,13 @@ function handleFileImport(event) {
                 throw new Error('Invalid data format');
             }
             
-            // Confirm data import
-            if (confirm('This will replace your current team data. Continue?')) {
-                // Update app state with imported data
-                appState.teamName = importedData.teamName;
-                appState.players = importedData.players;
-                appState.games = importedData.games || [];
-                if (importedData.settings) {
-                    appState.settings = importedData.settings;
-                }
-                
-                // Save to local storage
-                saveAppData();
-                
-                // Update UI
-                updateTeamNameUI();
-                renderPlayersList();
-                
-                showMessage('Team data imported successfully!', 'success');
-            }
+            // Store the imported data temporarily
+            appState.pendingImportData = importedData;
+            
+            // Show confirmation dialog instead of native confirm
+            openImportConfirmDialog();
         } catch (error) {
             showMessage('Error importing data. Please check the file format.', 'error');
-            console.error('Import error:', error);
         }
         
         // Reset file input
@@ -1222,219 +3643,871 @@ function handleFileImport(event) {
     reader.readAsText(file);
 }
 
-// Add demo players for testing
-function addDemoPlayers() {
-    const demoPlayers = [
-        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
-    ];
-    
-    appState.players = demoPlayers;
-    saveAppData();
-    renderPlayersList();
-}
-
-// ===============================================
-// MISSING BUTTON HANDLERS - TEAM TAB MANAGEMENT
-// ===============================================
-
-function switchTeamTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-selected', 'false');
-    });
-    const tabContent = document.getElementById(`${tabName}-tab-content`);
-    const tabBtn = document.getElementById(`${tabName}-tab`);
-    if (tabContent) tabContent.classList.add('active');
-    if (tabBtn) {
-        tabBtn.classList.add('active');
-        tabBtn.setAttribute('aria-selected', 'true');
+// Action Review Dialog Functions
+function openActionReviewDialog() {
+    if (!appState.currentGame) {
+        showMessage('No active game to review actions', 'error');
+        return;
     }
-    if (tabName === 'statistics') renderPlayerStatistics();
+    
+    let reviewDialog = document.getElementById('action-review-dialog');
+    if (!reviewDialog) {
+        reviewDialog = document.createElement('div');
+        reviewDialog.id = 'action-review-dialog';
+        reviewDialog.className = 'dialog';
+        document.getElementById('app').appendChild(reviewDialog);
+    }
+    
+    const actions = appState.currentGame.actions || [];
+    
+    let actionsHTML = '';
+    if (actions.length === 0) {
+        actionsHTML = '<div class="no-actions-dialog">No actions recorded yet</div>';
+    } else {
+        actionsHTML = actions.map((action, index) => {
+            const playerName = getPlayerName(action.playerId);
+            const actionDisplay = formatActionType(action.actionType);
+            
+            return `
+                <div class="action-item">
+                    <div class="action-info">
+                        <div class="action-player">${playerName}</div>
+                        <div class="action-details">${actionDisplay} • ${action.gameMinute}'</div>
+                    </div>
+                    <div class="action-controls">
+                        <button class="action-icon-btn" onclick="editAction(${index})" title="Edit Action">
+                            <span class="material-icons edit-action-icon">edit</span>
+                        </button>
+                        <button class="action-icon-btn" onclick="deleteAction(${index})" title="Delete Action">
+                            <span class="material-icons delete-action-icon">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    reviewDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Action Review</h2>
+            <div class="action-review-list">
+                ${actionsHTML}
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeActionReviewDialog()">Close</button>
+            </div>
+        </div>
+    `;
+    
+    reviewDialog.style.display = 'flex';
+    reviewDialog.classList.add('active');
 }
 
-// ===============================================
-// MISSING BUTTON HANDLERS - STATISTICS
-// ===============================================
+function closeActionReviewDialog() {
+    const dialog = document.getElementById('action-review-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+    }
+}
 
+function deleteAction(actionIndex) {
+    if (!appState.currentGame || !appState.currentGame.actions || actionIndex < 0 || actionIndex >= appState.currentGame.actions.length) {
+        showMessage('Invalid action to delete', 'error');
+        return;
+    }
+    
+    const action = appState.currentGame.actions[actionIndex];
+    
+    // Reverse the action effects
+    reverseAction(action);
+    
+    // Remove from array
+    appState.currentGame.actions.splice(actionIndex, 1);
+    
+    // Save and update
+    saveAppData();
+    renderPlayerGrid();
+    
+    // Refresh action review dialog if open
+    const reviewDialog = document.getElementById('action-review-dialog');
+    if (reviewDialog && reviewDialog.style.display === 'flex') {
+        openActionReviewDialog();
+    }
+    
+    const playerName = getPlayerName(action.playerId);
+    showMessage(`Deleted: ${action.actionType} for ${playerName}`, 'success');
+}
+
+function editAction(actionIndex) {
+    if (!appState.currentGame || !appState.currentGame.actions || actionIndex < 0 || actionIndex >= appState.currentGame.actions.length) {
+        showMessage('Invalid action to edit', 'error');
+        return;
+    }
+    
+    const action = appState.currentGame.actions[actionIndex];
+    
+    // Create edit dialog
+    let editDialog = document.getElementById('edit-action-dialog');
+    if (!editDialog) {
+        editDialog = document.createElement('div');
+        editDialog.id = 'edit-action-dialog';
+        editDialog.className = 'dialog';
+        document.getElementById('app').appendChild(editDialog);
+    }
+    
+    // Get all available players (excluding unavailable ones) for editing actions
+    const availablePlayers = (appState.players || []).filter(p => {
+        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        return !isUnavailable;
+    });
+    const currentPlayer = appState.players.find(p => p.id === action.playerId);
+    
+    editDialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Edit Action</h2>
+            <div class="edit-action-form">
+                <div class="form-group">
+                    <label>Player:</label>
+                    <select id="edit-action-player">
+                        ${availablePlayers.map(p => 
+                            `<option value="${p.id}" ${p.id === action.playerId ? 'selected' : ''}>
+                                #${p.jerseyNumber} ${p.name}
+                            </option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Action Type:</label>
+                    <select id="edit-action-type">
+                        <option value="goal" ${action.actionType === 'goal' ? 'selected' : ''}>Goal</option>
+                        <option value="assist" ${action.actionType === 'assist' ? 'selected' : ''}>Assist</option>
+                        <option value="save" ${action.actionType === 'save' ? 'selected' : ''}>Save</option>
+                        <option value="goals_allowed" ${action.actionType === 'goals_allowed' ? 'selected' : ''}>Goal Allowed</option>
+                        <option value="yellow_card" ${action.actionType === 'yellow_card' ? 'selected' : ''}>Yellow Card</option>
+                        <option value="red_card" ${action.actionType === 'red_card' ? 'selected' : ''}>Red Card</option>
+                        <option value="fault" ${action.actionType === 'fault' ? 'selected' : ''}>Fault</option>
+                        <option value="blocked_shot" ${action.actionType === 'blocked_shot' ? 'selected' : ''}>Blocked Shot</option>
+                        <option value="late_to_game" ${action.actionType === 'late_to_game' ? 'selected' : ''}>Late to Game</option>
+                        <option value="own_goal" ${action.actionType === 'own_goal' ? 'selected' : ''}>Own Goal</option>
+                        <option value="note" ${action.actionType === 'note' ? 'selected' : ''}>Note</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Game Minute:</label>
+                    <input type="number" id="edit-action-minute" value="${action.gameMinute}" min="0" max="120">
+                </div>
+            </div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeEditActionDialog()">Cancel</button>
+                <button class="primary-btn" onclick="saveEditedAction(${actionIndex})">Save Changes</button>
+            </div>
+        </div>
+    `;
+    
+    editDialog.style.display = 'flex';
+    editDialog.classList.add('active');
+}
+
+function closeEditActionDialog() {
+    const dialog = document.getElementById('edit-action-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+    }
+}
+
+function saveEditedAction(actionIndex) {
+    const playerId = document.getElementById('edit-action-player').value;
+    const actionType = document.getElementById('edit-action-type').value;
+    const gameMinute = parseInt(document.getElementById('edit-action-minute').value);
+    
+    if (!playerId || !actionType || isNaN(gameMinute) || gameMinute < 1) {
+        showMessage('Please fill all fields correctly', 'error');
+        return;
+    }
+    
+    // Validate game minute against game settings
+    if (!validateGameMinute(gameMinute)) {
+        return; // Error message is shown in validateGameMinute function
+    }
+    
+    const oldAction = appState.currentGame.actions[actionIndex];
+    
+    // Reverse old action effects
+    reverseAction(oldAction);
+    
+    // Update the action
+    appState.currentGame.actions[actionIndex] = {
+        ...oldAction,
+        playerId: playerId,
+        actionType: actionType,
+        gameMinute: gameMinute
+    };
+    
+    // Sync goal/assist times if needed
+    syncGoalAssistTimes(actionIndex, actionType, gameMinute, oldAction);
+    
+    // Apply new action effects
+    applyAction(appState.currentGame.actions[actionIndex]);
+    
+    // Save and update
+    saveAppData();
+    renderPlayerGrid();
+    closeEditActionDialog();
+    
+    // Refresh action review dialog if open
+    const reviewDialog = document.getElementById('action-review-dialog');
+    if (reviewDialog && reviewDialog.style.display === 'flex') {
+        openActionReviewDialog();
+    }
+    
+    const playerName = getPlayerName(playerId);
+    showMessage(`Updated: ${actionType} for ${playerName}`, 'success');
+}
+
+function reverseAction(action) {
+    if (!action.playerId && action.actionType !== 'own_goal') return;
+    
+    const playerIndex = action.playerId ? appState.players.findIndex(p => p.id === action.playerId) : -1;
+    
+    switch (action.actionType) {
+        case 'goal':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goals = Math.max(0, appState.players[playerIndex].stats.goals - 1);
+            }
+            appState.currentGame.homeScore = Math.max(0, appState.currentGame.homeScore - 1);
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+        case 'assist':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.assists = Math.max(0, appState.players[playerIndex].stats.assists - 1);
+            }
+            break;
+        case 'save':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.saves = Math.max(0, appState.players[playerIndex].stats.saves - 1);
+            }
+            break;
+        case 'goals_allowed':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goalsAllowed = Math.max(0, appState.players[playerIndex].stats.goalsAllowed - 1);
+            }
+            break;
+        case 'yellow_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.yellowCards = Math.max(0, appState.players[playerIndex].stats.yellowCards - 1);
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem && appState.players[playerIndex].stats.yellowCards === 0) {
+                    playerGridItem.classList.remove('yellow-card');
+                }
+            }
+            break;
+        case 'red_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.redCards = Math.max(0, appState.players[playerIndex].stats.redCards - 1);
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem && appState.players[playerIndex].stats.redCards === 0) {
+                    playerGridItem.classList.remove('red-card');
+                    if (appState.players[playerIndex].stats.yellowCards > 0) {
+                        playerGridItem.classList.add('yellow-card');
+                    }
+                }
+            }
+            break;
+        case 'fault':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.faults = Math.max(0, appState.players[playerIndex].stats.faults - 1);
+            }
+            break;
+        case 'blocked_shot':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.blockedShots = Math.max(0, appState.players[playerIndex].stats.blockedShots - 1);
+            }
+            break;
+        case 'own_goal':
+            appState.currentGame.homeScore = Math.max(0, appState.currentGame.homeScore - 1);
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+    }
+}
+
+function applyAction(action) {
+    if (!action.playerId && action.actionType !== 'own_goal') return;
+    
+    const playerIndex = action.playerId ? appState.players.findIndex(p => p.id === action.playerId) : -1;
+    
+    if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
+        appState.players[playerIndex].stats = {
+            goals: 0, assists: 0, saves: 0, goalsAllowed: 0,
+            yellowCards: 0, redCards: 0, faults: 0, blockedShots: 0, notes: 0
+        };
+    }
+    
+    switch (action.actionType) {
+        case 'goal':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goals++;
+            }
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+        case 'assist':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.assists++;
+            }
+            break;
+        case 'save':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.saves++;
+            }
+            break;
+        case 'goals_allowed':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.goalsAllowed++;
+            }
+            break;
+        case 'yellow_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.yellowCards++;
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem) {
+                    playerGridItem.classList.add('yellow-card');
+                }
+            }
+            break;
+        case 'red_card':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.redCards++;
+                const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
+                if (playerGridItem) {
+                    playerGridItem.classList.remove('yellow-card');
+                    playerGridItem.classList.add('red-card');
+                }
+            }
+            break;
+        case 'fault':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.faults++;
+            }
+            break;
+        case 'blocked_shot':
+            if (playerIndex !== -1) {
+                appState.players[playerIndex].stats.blockedShots++;
+            }
+            break;
+        case 'own_goal':
+            appState.currentGame.homeScore++;
+            document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+            break;
+    }
+}
+
+// Game minute validation function
+function validateGameMinute(gameMinute) {
+    if (!appState.currentGame) {
+        showMessage('No active game found', 'error');
+        return false;
+    }
+    
+    // Convert stored seconds back to minutes for validation
+    const periodDurationMinutes = Math.floor((appState.currentGame.periodDuration || 900) / 60);
+    const numPeriods = appState.currentGame.numPeriods || 2;
+    const maxGameMinutes = periodDurationMinutes * numPeriods;
+    
+    if (gameMinute > maxGameMinutes) {
+        showMessage(`Game minute cannot exceed ${maxGameMinutes} minutes (${numPeriods} periods × ${periodDurationMinutes} min)`, 'error');
+        return false;
+    }
+    
+    // Check if the minute belongs to a valid period
+    const currentPeriod = Math.ceil(gameMinute / periodDurationMinutes);
+    if (currentPeriod > numPeriods) {
+        showMessage(`Minute ${gameMinute} would be in period ${currentPeriod}, but game only has ${numPeriods} periods`, 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// Sync goal and assist times when one is edited
+function syncGoalAssistTimes(editedIndex, editedActionType, newGameMinute, oldAction) {
+    if (editedActionType !== 'goal' && editedActionType !== 'assist') {
+        return; // Only sync for goals and assists
+    }
+    
+    const actions = appState.currentGame.actions;
+    const editedTimestamp = oldAction.timestamp;
+    
+    // Find related actions within 10 seconds of the original timestamp
+    const relatedActions = actions
+        .map((action, index) => ({ action, index }))
+        .filter(({ action, index }) => {
+            if (index === editedIndex) return false; // Skip the action being edited
+            
+            const timeDiff = Math.abs(new Date(action.timestamp) - new Date(editedTimestamp));
+            const isWithinTimeWindow = timeDiff <= 10000; // 10 seconds
+            
+            // Check if it's a goal/assist pair
+            const isGoalAssistPair = (
+                (editedActionType === 'goal' && action.actionType === 'assist') ||
+                (editedActionType === 'assist' && action.actionType === 'goal')
+            );
+            
+            return isWithinTimeWindow && isGoalAssistPair;
+        });
+    
+    // Update related actions to the same game minute
+    relatedActions.forEach(({ action, index }) => {
+        actions[index] = {
+            ...action,
+            gameMinute: newGameMinute
+        };
+    });
+    
+    if (relatedActions.length > 0) {
+        showMessage(`Updated ${relatedActions.length} related ${editedActionType === 'goal' ? 'assist' : 'goal'} action(s) to the same minute`, 'info');
+    }
+}
+
+// Team Setup Tab Management
+function switchTeamTab(tabName) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    document.getElementById(`${tabName}-tab-content`).classList.add('active');
+    
+    // If switching to statistics tab, render the statistics
+    if (tabName === 'statistics') {
+        renderPlayerStatistics();
+    }
+}
+
+// Calculate accumulated player statistics across all completed games
+function calculatePlayerStatistics(startDate = null, endDate = null) {
+    const playerStats = {};
+    
+    // Initialize stats for all players
+    appState.players.forEach(player => {
+        playerStats[player.id] = {
+            name: player.name,
+            jerseyNumber: player.jerseyNumber,
+            gamesPlayed: 0,
+            missedGames: 0,
+            lateToGame: 0,
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            passes: 0,
+            shots: 0,
+            blocks: 0,
+            fouls: 0,
+            yellowCards: 0,
+            redCards: 0,
+            ownGoals: 0
+        };
+    });
+    
+    // Sum up stats from all completed games
+    let completedGames = appState.games.filter(game => game.isCompleted);
+    
+    // Apply date filtering if provided
+    if (startDate || endDate) {
+        completedGames = completedGames.filter(game => {
+            if (!game.date) return false;
+            const gameDate = new Date(game.date);
+            
+            if (startDate && gameDate < new Date(startDate)) return false;
+            if (endDate && gameDate > new Date(endDate)) return false;
+            
+            return true;
+        });
+    }
+    
+    if (completedGames && completedGames.length > 0) {
+        completedGames.forEach((game, index) => {
+            if (game.actions && game.actions.length > 0) {
+                // Track which players played in this game
+                const playersInGame = new Set();
+                
+                game.actions.forEach(action => {
+                    if (action.playerId && playerStats[action.playerId]) {
+                        playersInGame.add(action.playerId);
+                        
+                        switch (action.actionType) {
+                            case 'goal':
+                                playerStats[action.playerId].goals++;
+                                break;
+                            case 'assist':
+                                playerStats[action.playerId].assists++;
+                                break;
+                            case 'save':
+                                playerStats[action.playerId].saves++;
+                                break;
+                            case 'pass':
+                                playerStats[action.playerId].passes++;
+                                break;
+                            case 'shot':
+                                playerStats[action.playerId].shots++;
+                                break;
+                            case 'blocked_shot':
+                                playerStats[action.playerId].blocks++;
+                                break;
+                            case 'foul':
+                                playerStats[action.playerId].fouls++;
+                                break;
+                            case 'yellow_card':
+                                playerStats[action.playerId].yellowCards++;
+                                break;
+                            case 'red_card':
+                                playerStats[action.playerId].redCards++;
+                                break;
+                            case 'own_goal':
+                                if (action.playerId) {
+                                    playerStats[action.playerId].ownGoals++;
+                                }
+                                break;
+                        }
+                    }
+                });
+                
+                // Update games played count based on formation data
+                // Players are considered to have played if they were in starting formation or subs
+                if (game.formation && game.formation.length > 0) {
+                    game.formation.forEach(player => {
+                        if (player.playerId && playerStats[player.playerId]) {
+                            playersInGame.add(player.playerId);
+                        }
+                    });
+                }
+                
+                // Also include substitute players
+                if (game.substitutePlayers && game.substitutePlayers.length > 0) {
+                    game.substitutePlayers.forEach(playerId => {
+                        if (playerStats[playerId]) {
+                            playersInGame.add(playerId);
+                        }
+                    });
+                }
+                
+                // Count missed games for unavailable players
+                if (game.unavailablePlayers && game.unavailablePlayers.length > 0) {
+                    game.unavailablePlayers.forEach(playerId => {
+                        if (playerStats[playerId]) {
+                            playerStats[playerId].missedGames++;
+                        }
+                    });
+                }
+                
+                // Count late to game actions (only when explicitly marked)
+                if (game.actions && game.actions.length > 0) {
+                    const lateActions = game.actions.filter(action => action.actionType === 'late_to_game');
+                    lateActions.forEach(action => {
+                        if (action.playerId && playerStats[action.playerId]) {
+                            playerStats[action.playerId].lateToGame++;
+                        }
+                    });
+                }
+                
+                // Update games played count
+                playersInGame.forEach(playerId => {
+                    if (playerStats[playerId]) {
+                        playerStats[playerId].gamesPlayed++;
+                    }
+                });
+            }
+        });
+    }
+    
+    return playerStats;
+}
+
+// Clear date filter function
 function clearDateFilter() {
-    const s = document.getElementById('stats-start-date');
-    const e = document.getElementById('stats-end-date');
-    if (s) s.value = '';
-    if (e) e.value = '';
+    document.getElementById('stats-start-date').value = '';
+    document.getElementById('stats-end-date').value = '';
     renderPlayerStatistics();
 }
 
+// Update statistics period info and reports counter
+function updateStatsPeriodInfo(startDate, endDate, filteredGames) {
+    const periodInfoElement = document.getElementById('stats-period-info');
+    const reportsCounterElement = document.getElementById('stats-reports-counter');
+    const controlsRow2 = document.querySelector('.stats-controls-row-2');
+    
+    if (!periodInfoElement || !reportsCounterElement) return;
+    
+    // Update period description
+    let periodText;
+    if (startDate || endDate) {
+        periodText = 'Games from ';
+        if (startDate && endDate) {
+            periodText += `${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}`;
+        } else if (startDate) {
+            periodText += `${new Date(startDate).toLocaleDateString()} onwards`;
+        } else if (endDate) {
+            periodText += `start to ${new Date(endDate).toLocaleDateString()}`;
+        }
+    } else {
+        periodText = 'All completed games';
+    }
+    
+    periodInfoElement.textContent = periodText;
+    
+    // Set data attribute for mobile pseudo-element
+    if (controlsRow2) {
+        controlsRow2.setAttribute('data-period-info', periodText);
+    }
+    
+    // Count games and available reports
+    const totalGames = filteredGames.length;
+    const gamesWithReports = filteredGames.filter(game => 
+        game.actions && game.actions.length > 0
+    ).length;
+    
+    // Update reports counter
+    if (totalGames === 0) {
+        reportsCounterElement.innerHTML = '';
+    } else if (gamesWithReports === totalGames) {
+        reportsCounterElement.innerHTML = `
+            <span>Reports:</span>
+            <span class="reports-counter-badge">${gamesWithReports}/${totalGames}</span>
+        `;
+    } else {
+        reportsCounterElement.innerHTML = `
+            <span>Reports:</span>
+            <span class="reports-counter-warning">${gamesWithReports}/${totalGames}</span>
+            <span style="color: #ff9800; font-size: 12px;">${totalGames - gamesWithReports} missing</span>
+        `;
+    }
+}
+
+// Render player statistics table
 function renderPlayerStatistics() {
     const container = document.getElementById('player-statistics-container');
     if (!container) return;
+    
+    // Get date filter values
     const startDate = document.getElementById('stats-start-date')?.value || null;
     const endDate = document.getElementById('stats-end-date')?.value || null;
-    let filteredGames = (appState.games || []).filter(g => g.isCompleted);
-    if (startDate) filteredGames = filteredGames.filter(g => new Date(g.date) >= new Date(startDate));
-    if (endDate) filteredGames = filteredGames.filter(g => new Date(g.date) <= new Date(endDate));
-    if (filteredGames.length === 0 || (appState.players || []).length === 0) {
-        container.innerHTML = `<div class="no-stats-message">${(appState.players||[]).length===0? 'No players added to the team yet.' : 'No completed games yet. Statistics will appear after completing games.'}</div>`;
+    
+    const playerStats = calculatePlayerStatistics(startDate, endDate);
+    
+    // Check if we have completed games (considering date filter)
+    let completedGames = appState.games.filter(game => game.isCompleted);
+    if (startDate || endDate) {
+        completedGames = completedGames.filter(game => {
+            if (!game.date) return false;
+            const gameDate = new Date(game.date);
+            if (startDate && gameDate < new Date(startDate)) return false;
+            if (endDate && gameDate > new Date(endDate)) return false;
+            return true;
+        });
+    }
+    const hasCompletedGames = completedGames && completedGames.length > 0;
+    
+    // Update period info and reports counter
+    updateStatsPeriodInfo(startDate, endDate, completedGames);
+    
+    if (!hasCompletedGames || appState.players.length === 0) {
+        container.innerHTML = `
+            <div class="no-stats-message">
+                ${appState.players.length === 0 
+                    ? 'No players added to the team yet.' 
+                    : 'No completed games yet. Statistics will appear after completing games.'}
+            </div>
+        `;
         return;
     }
-    const playerStats = {};
-    (appState.players||[]).forEach(p => {
-        playerStats[p.id] = { name: p.name, jerseyNumber: p.jerseyNumber || 0, goals:0, assists:0, saves:0, goalsAllowed:0, gamesPlayed:0 };
-    });
-    filteredGames.forEach(game => {
-        (game.activePlayers||[]).forEach(pid => { if (playerStats[pid]) playerStats[pid].gamesPlayed++; });
-        (game.actions||[]).forEach(action => {
-            const s = playerStats[action.playerId];
-            if (!s) return;
-            if (action.actionType === 'goal') s.goals++;
-            if (action.actionType === 'assist') s.assists++;
-            if (action.actionType === 'save') s.saves++;
-            if (action.actionType === 'goal_allowed') s.goalsAllowed++;
-        });
-    });
-    let tableHTML = `
+    
+    // Sort players by jersey number
+    const sortedPlayers = Object.values(playerStats)
+        .filter(player => appState.players.find(p => p.id === Object.keys(playerStats).find(id => playerStats[id] === player)))
+        .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
+    
+    const tableHTML = `
         <table class="stats-table">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Name</th>
-                    <th>Games</th>
+                    <th>Player</th>
+                    <th>GP</th>
+                    <th>Missed</th>
+                    <th>Late</th>
                     <th>Goals</th>
                     <th>Assists</th>
                     <th>Saves</th>
-                    <th>Goals Allowed</th>
+                    <th>Passes</th>
+                    <th>Shots</th>
+                    <th>Blocks</th>
+                    <th>Fouls</th>
+                    <th>YC</th>
+                    <th>RC</th>
+                    <th>OG</th>
                 </tr>
             </thead>
             <tbody>
+                ${sortedPlayers.map(player => `
+                    <tr>
+                        <td>${player.jerseyNumber}</td>
+                        <td>${player.name}</td>
+                        <td>${player.gamesPlayed}</td>
+                        <td>${player.missedGames}</td>
+                        <td>${player.lateToGame}</td>
+                        <td>${player.goals}</td>
+                        <td>${player.assists}</td>
+                        <td>${player.saves}</td>
+                        <td>${player.passes}</td>
+                        <td>${player.shots}</td>
+                        <td>${player.blocks}</td>
+                        <td>${player.fouls}</td>
+                        <td>${player.yellowCards}</td>
+                        <td>${player.redCards}</td>
+                        <td>${player.ownGoals}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
     `;
-    Object.values(playerStats).sort((a,b)=>a.jerseyNumber-b.jerseyNumber).forEach(p => {
-        tableHTML += `<tr><td>${p.jerseyNumber}</td><td>${p.name}</td><td>${p.gamesPlayed}</td><td>${p.goals}</td><td>${p.assists}</td><td>${p.saves}</td><td>${p.goalsAllowed}</td></tr>`;
-    });
-    tableHTML += `</tbody></table>`;
+    
     container.innerHTML = tableHTML;
 }
 
-// ===============================================
-// MISSING BUTTON HANDLERS - FORMATION SETUP
-// ===============================================
+// No longer needed - removed updateActionHistory and updateUndoButton functions
 
-function setupFormation() {
-    const opponentName = document.getElementById('opponent-name')?.value.trim();
-    const gameDate = document.getElementById('game-date')?.value;
-    const matchType = document.getElementById('match-type')?.value;
-    if (!opponentName) { showMessage('Please enter the opponent team name', 'error'); return; }
-    if (!matchType) { showMessage('Please select a match type', 'error'); return; }
-    appState.gameSetup = { opponentName, gameDate, matchType, numPeriods: parseInt(document.getElementById('num-periods')?.value)||4, periodDuration: parseInt(document.getElementById('period-duration')?.value)||12, substitutionTime: parseInt(document.getElementById('substitution-time')?.value)||6, useSubstitutionTimer: !document.getElementById('use-substitution-timer')?.checked, saveDefaultFormation: document.getElementById('save-substitution-default')?.checked };
-    showScreen('formation-setup');
-    renderFormationSetup();
+function getPlayerName(playerId) {
+    if (!playerId) return 'Unknown Player';
+    const player = appState.players.find(p => p.id === playerId);
+    return player ? `#${player.jerseyNumber} ${player.name}` : 'Unknown Player';
 }
 
-function renderFormationSetup() {
-    const playerList = document.getElementById('player-list');
-    const formationField = document.getElementById('formation-field');
-    if (!playerList || !formationField) return;
+function formatActionType(actionType) {
+    const typeMap = {
+        'goal': '⚽ Goal',
+        'assist': '👟 Assist',
+        'save': '🧤 Save',
+        'goals_allowed': '🔴 Goal Allowed',
+        'yellow_card': '🟨 Yellow Card',
+        'red_card': '🟥 Red Card',
+        'fault': '⚠️ Fault',
+        'blocked_shot': '❌ Blocked Shot',
+        'late_to_game': '⏰ Late to Game',
+        'own_goal': '⚽ Own Goal'
+    };
+    return typeMap[actionType] || actionType;
+}
 
-    // ensure a roster exists
-    if (!appState.players || appState.players.length === 0) {
-        showMessage('No players available, adding demo roster for you', 'info');
-        addDemoPlayers();
+// ===============================================
+// UTILITY FUNCTIONS
+// ===============================================
+
+// Helper function to build player stat table HTML - consolidates duplicate code
+function buildPlayerStatTable(stats) {
+    let statTable = '<table class="player-stats-table">';
+    
+    if (stats.goals?.length > 0) {
+        statTable += `<tr><th>⚽</th><td>${stats.goals.length}</td></tr>`;
     }
-
-    playerList.innerHTML = '';
-    formationField.innerHTML = '';
-
-    // add each player with number+name (draggable style)
-    (appState.players || []).forEach(player => {
-        const el = document.createElement('div');
-        el.className = 'player-item-draggable';
-        el.setAttribute('data-player-id', player.id);
-        el.innerHTML = `<div class="player-number">${player.jerseyNumber}</div><div class="player-name">${player.name}</div>`;
-        playerList.appendChild(el);
-    });
-
-    // determine how many slots to render (use match type or default 11)
-    let maxPlayers = 11;
-    if (appState.gameSetup && appState.gameSetup.matchType) {
-        maxPlayers = parseInt((appState.gameSetup.matchType || '').split('v')[0]) || maxPlayers;
+    if (stats.assists > 0) {
+        statTable += `<tr><th>👟</th><td>${stats.assists}</td></tr>`;
     }
-    for (let i = 0; i < maxPlayers; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'player-slot';
-        slot.setAttribute('data-position', i);
-        formationField.appendChild(slot);
+    if (stats.saves > 0) {
+        statTable += `<tr><th>🧤</th><td>${stats.saves}</td></tr>`;
     }
-
-    updateCounters();
-}
-
-function clearFormation() { const formationField = document.getElementById('formation-field'); if (formationField) formationField.querySelectorAll('.player-slot').forEach(s=> s.innerHTML=''); appState.formationTemp = []; }
-
-function startGameFromFormation() {
-    const formationField = document.getElementById('formation-field'); if (!formationField) return; const slots = formationField.querySelectorAll('.player-slot'); let playersPlaced=0; slots.forEach(s=> { if (s.innerHTML.trim()) playersPlaced++; }); if (playersPlaced===0) { showMessage('Please place at least one player on the field','error'); return; }
-    if (appState.gameSetup) {
-        appState.currentGame = { id: Date.now().toString(), date: appState.gameSetup.gameDate, opponentName: appState.gameSetup.opponentName, matchType: appState.gameSetup.matchType, homeScore:0, awayScore:0, startTime: new Date().toISOString(), endTime: null, actions: [], activePlayers: (appState.players||[]).map(p=>p.id), isCompleted:false };
-        (appState.players||[]).forEach(p=> { p.stats = p.stats || {}; });
-        appState.timer = appState.timer || {}; appState.timer.duration = (appState.gameSetup.substitutionTime||6)*60; appState.timer.timeLeft = appState.timer.duration; appState.gameTimer = appState.gameTimer || {}; appState.gameTimer.elapsed = 0;
-        saveAppData(); showScreen('game-tracking'); renderPlayerGrid();
+    if (stats.goalsAllowed > 0) {
+        statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
     }
+    if (stats.blockedShots > 0) {
+        statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
+    }
+    if (stats.faults > 0) {
+        statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
+    }
+    if (stats.yellowCards?.length > 0) {
+        statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
+    }
+    const redCards = (stats.redCards?.length || 0) + (stats.yellowCards?.length >= 2 ? 1 : 0);
+    if (redCards > 0) {
+        statTable += `<tr><th>🟥</th><td>${redCards}</td></tr>`;
+    }
+    
+    statTable += '</table>';
+    return statTable;
 }
 
-function confirmBackToGameSetup(){ toggleDialog('back-confirm-dialog', true); }
-function closeBackConfirmDialog(){ toggleDialog('back-confirm-dialog', false); }
-function backToGameSetup(){ closeBackConfirmDialog(); appState.formationTemp = null; showScreen('game-setup'); }
-
 // ===============================================
-// MISSING BUTTON HANDLERS - GAME TRACKING
+// DIALOG MANAGEMENT SYSTEM
 // ===============================================
 
-function openActionReviewDialog(){
-    if (!appState.currentGame || !appState.currentGame.actions) { showMessage('No actions recorded yet','info'); return; }
-    const actionsHtml = (appState.currentGame.actions||[]).slice().reverse().map(a=>{ const p = (appState.players||[]).find(x=>x.id===a.playerId); return `<div class="action-item">${p?.name||'Unknown'} - ${a.actionType} at ${a.gameMinute || '?'}'</div>`; }).join('');
-    let dialog = document.getElementById('action-review-dialog'); if (!dialog){ dialog = document.createElement('div'); dialog.id='action-review-dialog'; dialog.className='dialog'; document.getElementById('app').appendChild(dialog); }
-    dialog.innerHTML = `<div class="dialog-content"><h2>Action Review</h2><div class="actions-list" style="max-height:300px;overflow:auto">${actionsHtml||'<p>No actions recorded</p>'}</div><div class="dialog-buttons"><button class="secondary-btn" onclick="closeActionReviewDialog()">Close</button></div></div>`;
-    dialog.style.display='flex';
+const DialogManager = {
+    show(dialogId, setupCallback = null) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+        
+        if (setupCallback) setupCallback(dialog);
+        
+        dialog.style.display = 'flex';
+        dialog.classList.add('active');
+    },
+    
+    hide(dialogId, cleanupCallback = null) {
+        const dialog = document.getElementById(dialogId);
+        if (!dialog) return;
+        
+        dialog.style.display = 'none';
+        dialog.classList.remove('active');
+        
+        if (cleanupCallback) cleanupCallback(dialog);
+    },
+    
+    clearInputs(dialog, inputSelectors = ['input[type="text"]', 'input[type="number"]', 'textarea', 'select']) {
+        inputSelectors.forEach(selector => {
+            dialog.querySelectorAll(selector).forEach(input => {
+                input.value = '';
+            });
+        });
+    }
+};
+
+// ===============================================
+// UI UPDATE MANAGEMENT SYSTEM
+// ===============================================
+
+const UIManager = {
+    updateAll() {
+        this.updatePlayerCounter();
+        this.updateGameReportCounter();
+        this.updateTeamNameUI();
+    },
+    
+    updatePlayerCounter() {
+        const playerCount = appState.players.length;
+        const mainCounter = document.getElementById('player-counter');
+        const teamCounter = document.getElementById('team-player-counter');
+        
+        if (mainCounter) mainCounter.textContent = playerCount;
+        if (teamCounter) teamCounter.textContent = playerCount;
+    },
+    
+    updateGameReportCounter() {
+        const reportCount = appState.games.filter(game => game.completed).length;
+        const reportCounter = document.getElementById('game-report-counter');
+        
+        if (reportCounter) reportCounter.textContent = reportCount;
+    },
+    
+    updateTeamNameUI() {
+        const teamNameInput = document.getElementById('team-name-input');
+        if (teamNameInput && appState.teamName) {
+            teamNameInput.value = appState.teamName;
+        }
+    }
+};
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
-
-function closeActionReviewDialog(){ const d = document.getElementById('action-review-dialog'); if (d) d.style.display='none'; }
-
-function openGameNoteDialog(){
-    let dialog = document.getElementById('game-note-dialog'); if (!dialog){ dialog = document.createElement('div'); dialog.id='game-note-dialog'; dialog.className='dialog'; document.getElementById('app').appendChild(dialog); }
-    dialog.innerHTML = `<div class="dialog-content"><h2>Add Game Note</h2><div class="form-group"><label for="game-note-text">Note:</label><textarea id="game-note-text" rows="4" maxlength="500"></textarea><div class="char-count"><span id="game-note-char-count">0</span>/500</div></div><div class="dialog-buttons"><button class="secondary-btn" onclick="closeGameNoteDialog()">Cancel</button><button class="primary-btn" onclick="saveGameNote()">Save Note</button></div></div>`;
-    const ta = dialog.querySelector('#game-note-text'); if (ta) ta.addEventListener('input', ()=> { const el = document.getElementById('game-note-char-count'); if (el) el.textContent = ta.value.length; });
-    dialog.style.display='flex';
-}
-
-function closeGameNoteDialog(){ const d = document.getElementById('game-note-dialog'); if (d) d.style.display='none'; }
-
-function saveGameNote(){ const text = document.getElementById('game-note-text')?.value.trim(); if (text && appState.currentGame){ appState.currentGame.notes = appState.currentGame.notes || []; appState.currentGame.notes.push({ timestamp: new Date().toISOString(), text }); saveAppData(); closeGameNoteDialog(); showMessage('Game note saved', 'success'); } }
-
-// ===============================================
-// MISSING BUTTON HANDLERS - PLAYER ACTION NOTES
-// ===============================================
-
-function openNoteDialog(){ if (!appState.currentPlayer) return; const dialog = document.getElementById('note-dialog'); if (dialog){ document.getElementById('note-player-name').textContent = appState.currentPlayer.name; dialog.style.display='flex'; const ta = dialog.querySelector('#note-text'); if (ta) ta.addEventListener('input', ()=> { const el = document.getElementById('note-char-count'); if (el) el.textContent = ta.value.length; }); } }
-
-function closeNoteDialog(){ const d = document.getElementById('note-dialog'); if (d){ d.style.display='none'; const ta = d.querySelector('#note-text'); if (ta) ta.value=''; } }
-
-function recordNoteAction(){ const text = document.getElementById('note-text')?.value.trim(); if (text && appState.currentPlayer){ recordAction('note', { text }); closeNoteDialog(); } }
-
-// ===============================================
-// MISSING BUTTON HANDLERS - SETTINGS
-// ===============================================
-
-function handleLanguageChange(){ const sel = document.querySelector('input[name="language"]:checked'); if (!sel) return; appState.settings = appState.settings || {}; appState.settings.language = sel.value; saveAppData(); }
-
-function resetPlayerStatistics(){ if (!confirm('Are you sure you want to reset all player statistics? This cannot be undone.')) return; (appState.players||[]).forEach(p=>{ p.stats = { goals:0, assists:0, saves:0, goalsAllowed:0, shotOnGoal:0, blockedShots:0, faults:0, yellowCards:0, redCards:0, ownGoals:0 }; }); saveAppData(); showMessage('Player statistics have been reset', 'success'); }
-
-// ===============================================
-// MISSING BUTTON HANDLERS - IMPORT/EXPORT
-// ===============================================
-
-function closeImportConfirmDialog(){ const d = document.getElementById('import-confirm-dialog'); if (d) d.style.display='none'; }
-
-function confirmImportTeamData(){ const f = document.getElementById('import-file')?.files?.[0]; if (f){ handleFileImport({ target: { files: [f] } }); } closeImportConfirmDialog(); }
