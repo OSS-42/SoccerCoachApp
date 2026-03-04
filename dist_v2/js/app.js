@@ -284,15 +284,16 @@ function touchEnd(e) {
 let db = null;
 function initIndexedDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('SoccerCoachDB', 1);
+        const request = indexedDB.open('SoccerCoachDB', 2);
 
         request.onupgradeneeded = (event) => {
             db = event.target.result;
             // Create object stores
-            db.createObjectStore('team', { keyPath: 'id' });
-            db.createObjectStore('players', { keyPath: 'id' });
-            db.createObjectStore('games', { keyPath: 'id' });
-            db.createObjectStore('settings', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('team')) db.createObjectStore('team', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('players')) db.createObjectStore('players', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('games')) db.createObjectStore('games', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'id' });
+            if (!db.objectStoreNames.contains('tempState')) db.createObjectStore('tempState', { keyPath: 'id' });
         };
 
         request.onsuccess = (event) => {
@@ -2781,12 +2782,13 @@ function viewReport(gameId) {
                 case 'assist': playerActions[action.playerId].assists++; break;
                 case 'save': playerActions[action.playerId].saves++; break;
                 case 'goal_allowed': playerActions[action.playerId].goalsAllowed++; break;
+                case 'shot_on_goal': playerActions[action.playerId].shotOnGoal = (playerActions[action.playerId].shotOnGoal || 0) + 1; break;
                 case 'yellow_card': playerActions[action.playerId].yellowCards.push(action.gameMinute); break;
                 case 'red_card': playerActions[action.playerId].redCards.push(action.gameMinute); break;
                 case 'late_to_game': playerActions[action.playerId].lateToGame = true; break;
                 case 'fault': playerActions[action.playerId].faults++; break;
                 case 'blocked_shot': playerActions[action.playerId].blockedShots++; break;
-                case 'note': 
+                case 'note':
                     // Notes are displayed separately, no stats to update
                     break;
             }
@@ -2806,6 +2808,7 @@ function viewReport(gameId) {
                     <td>${playerStat.assists}</td>
                     <td>${playerStat.saves}</td>
                     <td>${playerStat.goalsAllowed}</td>
+                    <td>${playerStat.shotOnGoal || 0}</td>
                     <td>${playerStat.blockedShots}</td>
                     <td>${playerStat.faults}</td>
                     <td>${playerStat.yellowCards.length}</td>
@@ -2993,6 +2996,7 @@ function viewReport(gameId) {
                             <th><span class="stat-emoji">👟</span></th>
                             <th><span class="stat-emoji">🧤</span></th>
                             <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
+                            <th><span class="stat-emoji">📍</span></th>
                             <th><span class="stat-emoji">❌</span></th>
                             <th><span class="stat-emoji">⚠️</span></th>
                             <th><span class="stat-emoji">🟨</span></th>
@@ -3190,11 +3194,12 @@ function saveAppData() {
         return;
     }
 
-    const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readwrite');
+    const transaction = db.transaction(['team', 'players', 'games', 'settings', 'tempState'], 'readwrite');
     const teamStore = transaction.objectStore('team');
     const playersStore = transaction.objectStore('players');
     const gamesStore = transaction.objectStore('games');
     const settingsStore = transaction.objectStore('settings');
+    const tempStateStore = transaction.objectStore('tempState');
 
     // Validate data
     if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
@@ -3211,8 +3216,6 @@ function saveAppData() {
         appState.players.forEach(player => {
             if (player.id && player.name && player.jerseyNumber !== undefined) {
                 playersStore.put(player);
-            } else {
-    
             }
         });
     };
@@ -3223,23 +3226,24 @@ function saveAppData() {
         appState.games.forEach(game => {
             if (game.id) {
                 gamesStore.put(game);
-            } else {
             }
         });
-        // Verify games store
-        const allGamesRequest = gamesStore.getAll();
-        allGamesRequest.onsuccess = () => {
-        };
     };
-    clearGamesRequest.onerror = (event) => {
-    };
+    clearGamesRequest.onerror = (event) => {};
 
     // Save settings
     settingsStore.put({ id: 'settings', ...appState.settings });
 
-    transaction.oncomplete = () => {
-    };
+    // Save temporary state (formation setup and current game)
+    if (appState.formationTemp || appState.currentGame) {
+        tempStateStore.put({
+            id: 'tempState',
+            formationTemp: appState.formationTemp || [],
+            currentGame: appState.currentGame || null
+        });
+    }
 
+    transaction.oncomplete = () => {};
     transaction.onerror = (event) => {
         showMessage('Failed to save data', 'error');
     };
@@ -3251,6 +3255,8 @@ function loadAppData() {
             appState.teamName = "My Team";
             appState.players = [];
             appState.games = [];
+            appState.formationTemp = [];
+            appState.currentGame = null;
             appState.settings = {
                 language: 'en',
                 defaultSubstitutionTime: null,
@@ -3267,11 +3273,12 @@ function loadAppData() {
         }
 
         initIndexedDB().then(() => {
-            const transaction = db.transaction(['team', 'players', 'games', 'settings'], 'readonly');
+            const transaction = db.transaction(['team', 'players', 'games', 'settings', 'tempState'], 'readonly');
             const teamStore = transaction.objectStore('team');
             const playersStore = transaction.objectStore('players');
             const gamesStore = transaction.objectStore('games');
             const settingsStore = transaction.objectStore('settings');
+            const tempStateStore = transaction.objectStore('tempState');
 
             // Load team
             teamStore.get('team').onsuccess = (event) => {
@@ -3304,6 +3311,15 @@ function loadAppData() {
                 initializeStyling();
             };
 
+            // Load temporary state (formation setup and current game)
+            tempStateStore.get('tempState').onsuccess = (event) => {
+                const tempState = event.target.result;
+                if (tempState) {
+                    appState.formationTemp = tempState.formationTemp || [];
+                    appState.currentGame = tempState.currentGame || null;
+                }
+            };
+
             transaction.oncomplete = () => {
                 renderPlayersList();
                 resolve();
@@ -3319,6 +3335,8 @@ function loadAppData() {
                     isSubstitutionDefaultChecked: false,
                     reusablePlayerIds: []
                 };
+                appState.formationTemp = [];
+                appState.currentGame = null;
                 updateTeamNameUI();
                 renderPlayersList();
                 updatePlayerCounter();
@@ -3336,6 +3354,8 @@ function loadAppData() {
                 isSubstitutionDefaultChecked: false,
                 reusablePlayerIds: []
             };
+            appState.formationTemp = [];
+            appState.currentGame = null;
             updateTeamNameUI();
             renderPlayersList();
             updatePlayerCounter();
