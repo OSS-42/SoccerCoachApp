@@ -193,6 +193,7 @@ function renderPlayersList() {
     
     if (appState.players.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
+        updateCounters();
         return;
     }
     
@@ -215,6 +216,20 @@ function renderPlayersList() {
         `;
         playersList.appendChild(playerItem);
     });
+    // Update counters in the UI (main menu and team header)
+    updateCounters();
+}
+
+// Update global counters shown in the UI
+function updateCounters() {
+    const mainCounter = document.getElementById('player-counter');
+    const teamCounter = document.getElementById('team-player-counter');
+    const reportCounter = document.getElementById('game-report-counter');
+    const playerCount = (appState.players || []).length;
+    const reportCount = ((appState.games || []).filter(g => g.isCompleted)).length;
+    if (mainCounter) mainCounter.textContent = playerCount;
+    if (teamCounter) teamCounter.textContent = playerCount;
+    if (reportCounter) reportCounter.textContent = reportCount;
 }
 
 function editPlayer(playerId) {
@@ -403,10 +418,17 @@ function startGame() {
 
 function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
+    if (!playerGrid) return;
     playerGrid.innerHTML = '';
-    
+
+    // auto-populate demo roster if nothing exists
+    if (!appState.players || appState.players.length === 0) {
+        showMessage('No players available, adding demo roster for you', 'info');
+        addDemoPlayers();
+    }
+
     // Using all players, not filtering by active status anymore
-    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    (appState.players || []).sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         // Ensure player has stats object
         if (!player.stats) {
             player.stats = {
@@ -416,11 +438,11 @@ function renderPlayerGrid() {
                 goalsAllowed: 0
             };
         }
-        
+
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
-        
+
         // Create a completely redesigned player card (now square shaped)
         playerGridItem.innerHTML = `
             <div class="player-header">
@@ -454,14 +476,17 @@ function renderPlayerGrid() {
                 </div>
             </div>
         `;
-        
+
         playerGridItem.addEventListener('click', () => {
             openPlayerActionDialog(player);
         });
-        
+
         playerGrid.appendChild(playerGridItem);
     });
+
+    updateCounters();
 }
+
 
 // Timer Functions
 function updateTimerDisplay() {
@@ -863,6 +888,8 @@ function renderReportsList() {
         `;
         reportsList.appendChild(reportItem);
     });
+    // Ensure counters reflect completed reports
+    updateCounters();
 }
 
 function viewReport(gameId) {
