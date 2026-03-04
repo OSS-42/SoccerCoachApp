@@ -1210,3 +1210,181 @@ function addDemoPlayers() {
     saveAppData();
     renderPlayersList();
 }
+
+// ===============================================
+// MISSING BUTTON HANDLERS - TEAM TAB MANAGEMENT
+// ===============================================
+
+function switchTeamTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-selected', 'false');
+    });
+    const tabContent = document.getElementById(`${tabName}-tab-content`);
+    const tabBtn = document.getElementById(`${tabName}-tab`);
+    if (tabContent) tabContent.classList.add('active');
+    if (tabBtn) {
+        tabBtn.classList.add('active');
+        tabBtn.setAttribute('aria-selected', 'true');
+    }
+    if (tabName === 'statistics') renderPlayerStatistics();
+}
+
+// ===============================================
+// MISSING BUTTON HANDLERS - STATISTICS
+// ===============================================
+
+function clearDateFilter() {
+    const s = document.getElementById('stats-start-date');
+    const e = document.getElementById('stats-end-date');
+    if (s) s.value = '';
+    if (e) e.value = '';
+    renderPlayerStatistics();
+}
+
+function renderPlayerStatistics() {
+    const container = document.getElementById('player-statistics-container');
+    if (!container) return;
+    const startDate = document.getElementById('stats-start-date')?.value || null;
+    const endDate = document.getElementById('stats-end-date')?.value || null;
+    let filteredGames = (appState.games || []).filter(g => g.isCompleted);
+    if (startDate) filteredGames = filteredGames.filter(g => new Date(g.date) >= new Date(startDate));
+    if (endDate) filteredGames = filteredGames.filter(g => new Date(g.date) <= new Date(endDate));
+    if (filteredGames.length === 0 || (appState.players || []).length === 0) {
+        container.innerHTML = `<div class="no-stats-message">${(appState.players||[]).length===0? 'No players added to the team yet.' : 'No completed games yet. Statistics will appear after completing games.'}</div>`;
+        return;
+    }
+    const playerStats = {};
+    (appState.players||[]).forEach(p => {
+        playerStats[p.id] = { name: p.name, jerseyNumber: p.jerseyNumber || 0, goals:0, assists:0, saves:0, goalsAllowed:0, gamesPlayed:0 };
+    });
+    filteredGames.forEach(game => {
+        (game.activePlayers||[]).forEach(pid => { if (playerStats[pid]) playerStats[pid].gamesPlayed++; });
+        (game.actions||[]).forEach(action => {
+            const s = playerStats[action.playerId];
+            if (!s) return;
+            if (action.actionType === 'goal') s.goals++;
+            if (action.actionType === 'assist') s.assists++;
+            if (action.actionType === 'save') s.saves++;
+            if (action.actionType === 'goal_allowed') s.goalsAllowed++;
+        });
+    });
+    let tableHTML = `
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Games</th>
+                    <th>Goals</th>
+                    <th>Assists</th>
+                    <th>Saves</th>
+                    <th>Goals Allowed</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    Object.values(playerStats).sort((a,b)=>a.jerseyNumber-b.jerseyNumber).forEach(p => {
+        tableHTML += `<tr><td>${p.jerseyNumber}</td><td>${p.name}</td><td>${p.gamesPlayed}</td><td>${p.goals}</td><td>${p.assists}</td><td>${p.saves}</td><td>${p.goalsAllowed}</td></tr>`;
+    });
+    tableHTML += `</tbody></table>`;
+    container.innerHTML = tableHTML;
+}
+
+// ===============================================
+// MISSING BUTTON HANDLERS - FORMATION SETUP
+// ===============================================
+
+function setupFormation() {
+    const opponentName = document.getElementById('opponent-name')?.value.trim();
+    const gameDate = document.getElementById('game-date')?.value;
+    const matchType = document.getElementById('match-type')?.value;
+    if (!opponentName) { showMessage('Please enter the opponent team name', 'error'); return; }
+    if (!matchType) { showMessage('Please select a match type', 'error'); return; }
+    appState.gameSetup = { opponentName, gameDate, matchType, numPeriods: parseInt(document.getElementById('num-periods')?.value)||4, periodDuration: parseInt(document.getElementById('period-duration')?.value)||12, substitutionTime: parseInt(document.getElementById('substitution-time')?.value)||6, useSubstitutionTimer: !document.getElementById('use-substitution-timer')?.checked, saveDefaultFormation: document.getElementById('save-substitution-default')?.checked };
+    showScreen('formation-setup');
+    renderFormationSetup();
+}
+
+function renderFormationSetup() {
+    const playerList = document.getElementById('player-list');
+    const formationField = document.getElementById('formation-field');
+    if (!playerList || !formationField) return;
+    playerList.innerHTML = '';
+    formationField.innerHTML = '';
+    (appState.players||[]).forEach(player => {
+        const el = document.createElement('div'); el.className = 'player-number'; el.textContent = player.jerseyNumber; el.setAttribute('data-player-id', player.id); playerList.appendChild(el);
+    });
+    if (appState.gameSetup && appState.gameSetup.matchType) {
+        const maxPlayers = parseInt((appState.gameSetup.matchType||'').split('v')[0]) || 11;
+        for (let i=0;i<maxPlayers;i++){ const slot = document.createElement('div'); slot.className='player-slot'; slot.setAttribute('data-position', i); formationField.appendChild(slot); }
+    }
+}
+
+function clearFormation() { const formationField = document.getElementById('formation-field'); if (formationField) formationField.querySelectorAll('.player-slot').forEach(s=> s.innerHTML=''); appState.formationTemp = []; }
+
+function startGameFromFormation() {
+    const formationField = document.getElementById('formation-field'); if (!formationField) return; const slots = formationField.querySelectorAll('.player-slot'); let playersPlaced=0; slots.forEach(s=> { if (s.innerHTML.trim()) playersPlaced++; }); if (playersPlaced===0) { showMessage('Please place at least one player on the field','error'); return; }
+    if (appState.gameSetup) {
+        appState.currentGame = { id: Date.now().toString(), date: appState.gameSetup.gameDate, opponentName: appState.gameSetup.opponentName, matchType: appState.gameSetup.matchType, homeScore:0, awayScore:0, startTime: new Date().toISOString(), endTime: null, actions: [], activePlayers: (appState.players||[]).map(p=>p.id), isCompleted:false };
+        (appState.players||[]).forEach(p=> { p.stats = p.stats || {}; });
+        appState.timer = appState.timer || {}; appState.timer.duration = (appState.gameSetup.substitutionTime||6)*60; appState.timer.timeLeft = appState.timer.duration; appState.gameTimer = appState.gameTimer || {}; appState.gameTimer.elapsed = 0;
+        saveAppData(); showScreen('game-tracking'); renderPlayerGrid();
+    }
+}
+
+function confirmBackToGameSetup(){ toggleDialog('back-confirm-dialog', true); }
+function closeBackConfirmDialog(){ toggleDialog('back-confirm-dialog', false); }
+function backToGameSetup(){ closeBackConfirmDialog(); appState.formationTemp = null; showScreen('game-setup'); }
+
+// ===============================================
+// MISSING BUTTON HANDLERS - GAME TRACKING
+// ===============================================
+
+function openActionReviewDialog(){
+    if (!appState.currentGame || !appState.currentGame.actions) { showMessage('No actions recorded yet','info'); return; }
+    const actionsHtml = (appState.currentGame.actions||[]).slice().reverse().map(a=>{ const p = (appState.players||[]).find(x=>x.id===a.playerId); return `<div class="action-item">${p?.name||'Unknown'} - ${a.actionType} at ${a.gameMinute || '?'}'</div>`; }).join('');
+    let dialog = document.getElementById('action-review-dialog'); if (!dialog){ dialog = document.createElement('div'); dialog.id='action-review-dialog'; dialog.className='dialog'; document.getElementById('app').appendChild(dialog); }
+    dialog.innerHTML = `<div class="dialog-content"><h2>Action Review</h2><div class="actions-list" style="max-height:300px;overflow:auto">${actionsHtml||'<p>No actions recorded</p>'}</div><div class="dialog-buttons"><button class="secondary-btn" onclick="closeActionReviewDialog()">Close</button></div></div>`;
+    dialog.style.display='flex';
+}
+
+function closeActionReviewDialog(){ const d = document.getElementById('action-review-dialog'); if (d) d.style.display='none'; }
+
+function openGameNoteDialog(){
+    let dialog = document.getElementById('game-note-dialog'); if (!dialog){ dialog = document.createElement('div'); dialog.id='game-note-dialog'; dialog.className='dialog'; document.getElementById('app').appendChild(dialog); }
+    dialog.innerHTML = `<div class="dialog-content"><h2>Add Game Note</h2><div class="form-group"><label for="game-note-text">Note:</label><textarea id="game-note-text" rows="4" maxlength="500"></textarea><div class="char-count"><span id="game-note-char-count">0</span>/500</div></div><div class="dialog-buttons"><button class="secondary-btn" onclick="closeGameNoteDialog()">Cancel</button><button class="primary-btn" onclick="saveGameNote()">Save Note</button></div></div>`;
+    const ta = dialog.querySelector('#game-note-text'); if (ta) ta.addEventListener('input', ()=> { const el = document.getElementById('game-note-char-count'); if (el) el.textContent = ta.value.length; });
+    dialog.style.display='flex';
+}
+
+function closeGameNoteDialog(){ const d = document.getElementById('game-note-dialog'); if (d) d.style.display='none'; }
+
+function saveGameNote(){ const text = document.getElementById('game-note-text')?.value.trim(); if (text && appState.currentGame){ appState.currentGame.notes = appState.currentGame.notes || []; appState.currentGame.notes.push({ timestamp: new Date().toISOString(), text }); saveAppData(); closeGameNoteDialog(); showMessage('Game note saved', 'success'); } }
+
+// ===============================================
+// MISSING BUTTON HANDLERS - PLAYER ACTION NOTES
+// ===============================================
+
+function openNoteDialog(){ if (!appState.currentPlayer) return; const dialog = document.getElementById('note-dialog'); if (dialog){ document.getElementById('note-player-name').textContent = appState.currentPlayer.name; dialog.style.display='flex'; const ta = dialog.querySelector('#note-text'); if (ta) ta.addEventListener('input', ()=> { const el = document.getElementById('note-char-count'); if (el) el.textContent = ta.value.length; }); } }
+
+function closeNoteDialog(){ const d = document.getElementById('note-dialog'); if (d){ d.style.display='none'; const ta = d.querySelector('#note-text'); if (ta) ta.value=''; } }
+
+function recordNoteAction(){ const text = document.getElementById('note-text')?.value.trim(); if (text && appState.currentPlayer){ recordAction('note', { text }); closeNoteDialog(); } }
+
+// ===============================================
+// MISSING BUTTON HANDLERS - SETTINGS
+// ===============================================
+
+function handleLanguageChange(){ const sel = document.querySelector('input[name="language"]:checked'); if (!sel) return; appState.settings = appState.settings || {}; appState.settings.language = sel.value; saveAppData(); }
+
+function resetPlayerStatistics(){ if (!confirm('Are you sure you want to reset all player statistics? This cannot be undone.')) return; (appState.players||[]).forEach(p=>{ p.stats = { goals:0, assists:0, saves:0, goalsAllowed:0, shotOnGoal:0, blockedShots:0, faults:0, yellowCards:0, redCards:0, ownGoals:0 }; }); saveAppData(); showMessage('Player statistics have been reset', 'success'); }
+
+// ===============================================
+// MISSING BUTTON HANDLERS - IMPORT/EXPORT
+// ===============================================
+
+function closeImportConfirmDialog(){ const d = document.getElementById('import-confirm-dialog'); if (d) d.style.display='none'; }
+
+function confirmImportTeamData(){ const f = document.getElementById('import-file')?.files?.[0]; if (f){ handleFileImport({ target: { files: [f] } }); } closeImportConfirmDialog(); }
