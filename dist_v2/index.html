@@ -22,6 +22,11 @@
         <main id="main-screen" class="screen active" role="main" aria-label="Main menu">
             <div class="app-header">
                 <h1>Soccer Coach Tracker v1.9.81</h1>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange()"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+
+                    </button>
+                </div>
             </div>
             <nav class="main-menu" role="navigation" aria-label="Main navigation">
                 <div class="menu-row">
@@ -129,6 +134,11 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>New Game</h1>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange()"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+
+                    </button>
+                </div>
             </div>
             <div class="content">
                 <div class="form-group">
@@ -308,6 +318,11 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Settings</h1>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange()"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+
+                    </button>
+                </div>
             </div>
             <div class="content">
                 <div class="settings-group">

@@ -1,6 +1,83 @@
 // Application State - defined in core/StateInit.js (loaded before services)
 // appState is available globally via window.appState
 
+// helper wrappers to insulate logic from the multi-team refactor
+function getCurrentTeam() {
+    const app = window.appState;
+    if (!app) return null;
+    if (app.teams && app.teams.length > 0) {
+        let team = app.teams.find(t => t.id === app.currentTeamId);
+        if (!team) {
+            team = app.teams[0];
+            app.currentTeamId = team.id;
+        }
+        return team;
+    }
+    // legacy fallback (should be migrated already)
+    return null;
+}
+
+function getTeamPlayers() {
+    const team = getCurrentTeam();
+    return team ? team.players : [];
+}
+
+function setTeamPlayers(players) {
+    const team = getCurrentTeam();
+    if (team) team.players = players;
+}
+
+function getTeamName() {
+    const team = getCurrentTeam();
+    return team ? team.name : '';
+}
+
+function setTeamName(name) {
+    const team = getCurrentTeam();
+    if (team) team.name = name;
+}
+
+function getTeamGames() {
+    const team = getCurrentTeam();
+    return team ? team.games : [];
+}
+
+function setTeamGames(games) {
+    const team = getCurrentTeam();
+    if (team) team.games = games;
+}
+
+function getUnavailablePlayers() {
+    const team = getCurrentTeam();
+    return team ? team.unavailablePlayers || [] : [];
+}
+
+function setUnavailablePlayers(list) {
+    const team = getCurrentTeam();
+    if (team) team.unavailablePlayers = list;
+}
+
+function getFormationTemp() {
+    const team = getCurrentTeam();
+    return team ? team.formationTemp : null;
+}
+
+function setFormationTemp(ft) {
+    const team = getCurrentTeam();
+    if (team) team.formationTemp = ft;
+}
+
+function getTeamSettings() {
+    const team = getCurrentTeam();
+    return team ? team.settings : {};
+}
+
+function setTeamSettings(settings) {
+    const team = getCurrentTeam();
+    if (team) team.settings = settings;
+}
+
+
 // ===============================================
 // DRAG AND DROP STATE MANAGEMENT
 // ===============================================
@@ -203,7 +280,7 @@ function touchEnd(e) {
         const position = slot.getAttribute('data-position');
         const matchType = appState.currentGame.matchType;
         const maxPlayers = parseInt(matchType.split('v')[0]);
-        let currentPlayers = appState.formationTemp.filter(f => f.playerId !== playerId).length;
+        let currentPlayers = (getFormationTemp() || []).filter(f => f.playerId !== playerId).length;
 
         const existingPlayerId = slot.getAttribute('data-player-id');
         
@@ -215,7 +292,7 @@ function touchEnd(e) {
         }
         if (existingPlayerId && existingPlayerId !== playerId) {
             // Remove existing player from formation and return to sidebar
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
+            setFormationTemp(getFormationTemp().filter(f => f.playerId !== existingPlayerId));
             const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
             if (oldPlayer) {
                 oldPlayer.classList.remove('disabled');
@@ -223,16 +300,18 @@ function touchEnd(e) {
             }
         }
 
-        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        setFormationTemp((getFormationTemp() || []).filter(f => f.playerId !== playerId));
         const x = parseFloat(slot.style.left);
         const y = parseFloat(slot.style.top);
 
-        appState.formationTemp.push({
+        const ft = getFormationTemp() || [];
+        ft.push({
             playerId,
             position: position, // Always use the field slot position, not player's original position
             x,
             y
         });
+        setFormationTemp(ft);
 
         slot.innerHTML = '';
         slot.setAttribute('data-player-id', playerId);
@@ -257,17 +336,17 @@ function touchEnd(e) {
         const existingPlayerId = unavailableSlot.getAttribute('data-player-id');
         if (existingPlayerId && existingPlayerId !== playerId) {
             // Remove displaced player from unavailable list
-            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
+            setUnavailablePlayers(getUnavailablePlayers().filter(id => id !== existingPlayerId));
             
             // Re-enable the displaced player in sidebar
-            const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+            const displacedNumber = document.querySelector(`#player-list .player-number[data-player-id="${existingPlayerId}"]`);
             if (displacedNumber) {
                 displacedNumber.classList.remove('disabled');
                 displacedNumber.draggable = true;
             }
         }
         
-        const player = appState.players.find(p => p.id === playerId);
+        const player = getTeamPlayers().find(p => p.id === playerId);
         if (player) {
             // Remove from source
             if (source === 'field') {
@@ -277,7 +356,7 @@ function touchEnd(e) {
                     sourceSlot.removeAttribute('data-player-id');
                     sourceSlot.classList.remove('occupied');
                 }
-                appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+                setFormationTemp((getFormationTemp() || []).filter(f => f.playerId !== playerId));
                 // Re-enable player number if moving from field
                 const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
                 if (number) {
@@ -295,8 +374,10 @@ function touchEnd(e) {
             }
             
             // Add to unavailable players if not already there
-            if (!appState.unavailablePlayers.includes(playerId)) {
-                appState.unavailablePlayers.push(playerId);
+            const ups = getUnavailablePlayers();
+            if (!ups.includes(playerId)) {
+                ups.push(playerId);
+                setUnavailablePlayers(ups);
             }
             
             // Add to target slot
@@ -322,10 +403,10 @@ function touchEnd(e) {
     if (sidebar && (source === 'field' || source === 'unavailable') && dropTarget.closest('#player-list')) {
         // Handle dropping back to sidebar from field or unavailable area
         if (source === 'field') {
-            appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
-        } else if (source === 'unavailable') {
-            appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
-        }
+              // remove from temporary formation
+              setFormationTemp((getFormationTemp() || []).filter(f => f.playerId !== playerId));
+          } else if (source === 'unavailable') {
+              setUnavailablePlayers(getUnavailablePlayers().filter(id => id !== playerId));
         
         const slot = document.getElementById(slotId);
         if (slot) {
@@ -389,9 +470,10 @@ function renderGameSetup() {
     const saveSubstitutionDefaultCheckbox = document.getElementById('save-substitution-default');
     const useSubstitutionTimerCheckbox = document.getElementById('use-substitution-timer');
     
-    // Pre-fill substitution time and checkbox state from settings
-    if (appState.settings.isSubstitutionDefaultChecked && appState.settings.defaultSubstitutionTime !== null) {
-        substitutionTimeInput.value = appState.settings.defaultSubstitutionTime;
+    // Pre-fill substitution time and checkbox state from current team's settings
+    const settings = getTeamSettings();
+    if (settings.isSubstitutionDefaultChecked && settings.defaultSubstitutionTime !== null) {
+        substitutionTimeInput.value = settings.defaultSubstitutionTime;
         saveSubstitutionDefaultCheckbox.checked = true;
     } else {
         substitutionTimeInput.value = ''; // Default to empty if no persisted default
@@ -403,9 +485,7 @@ function renderGameSetup() {
 }
 
 function updateUI() {
-    updatePlayerCounter();
-    updateGameReportCounter();
-    updateTeamNameUI();
+    UIManager.updateAll();
     renderPlayersList();
 }
 
@@ -468,7 +548,7 @@ function updateTeamNameUI() {
     const teamNameElements = document.querySelectorAll('.team-name');
     teamNameElements.forEach(element => {
         if (element.id !== 'opponent-team-name') {
-            element.textContent = appState.teamName.toUpperCase();
+            element.textContent = getTeamName().toUpperCase();
         }
     });
 }
@@ -478,7 +558,7 @@ function saveTeamName() {
     const newTeamName = teamNameInput.value.trim();
     
     if (newTeamName) {
-        appState.teamName = newTeamName;
+        setTeamName(newTeamName);
         saveAppData();
         updateTeamNameUI();
         showMessage('Team name saved successfully', 'success');
@@ -527,6 +607,36 @@ function showScreen(screenId) {
     }
 }
 
+// Team Management
+
+function handleTeamChange() {
+    const selector = document.getElementById('team-selector');
+    if (selector) {
+        appState.currentTeamId = selector.value;
+        saveAppData();
+        updateUI();
+    }
+}
+
+function addNewTeam() {
+    const name = prompt('Enter new team name:');
+    if (!name) return;
+    const id = 't' + Date.now();
+    const team = {
+        id,
+        name,
+        players: [],
+        games: [],
+        settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false, reusablePlayerIds:[] },
+        unavailablePlayers: [],
+        formationTemp: null
+    };
+    appState.teams.push(team);
+    appState.currentTeamId = id;
+    saveAppData();
+    updateUI();
+}
+
 // Player Management
 function openAddPlayerDialog() {
     DialogManager.show('add-player-dialog');
@@ -548,20 +658,24 @@ function addPlayer() {
         return;
     }
     
+    const team = getCurrentTeam();
+    const players = team.players;
+    const settings = team.settings;
+
     // Check for duplicate jersey numbers
-    if (appState.players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
+    if (players.some(p => p.jerseyNumber === Number(jerseyNumber))) {
         showMessage('A player with this jersey number already exists', 'error');
         return;
     }
     
     // Get player ID (reuse or generate new)
     let playerId;
-    if (appState.settings.reusablePlayerIds && appState.settings.reusablePlayerIds.length > 0) {
-        playerId = appState.settings.reusablePlayerIds.shift();
+    if (settings.reusablePlayerIds && settings.reusablePlayerIds.length > 0) {
+        playerId = settings.reusablePlayerIds.shift();
     } else {
         do {
             playerId = Math.floor(Math.random() * 1000000).toString();
-        } while (appState.players.some(p => p.id === playerId));
+        } while (players.some(p => p.id === playerId));
     }
     
     const player = {
@@ -579,7 +693,7 @@ function addPlayer() {
         }
     };
     
-    appState.players.push(player);
+    players.push(player);
     saveAppData();
     renderPlayersList();
     updatePlayerCounter();
@@ -707,9 +821,9 @@ function deletePlayer(playerId) {
         document.getElementById('app').appendChild(confirmDialog);
     }
     
-    const player = appState.players.find(p => p.id === playerId);
+    const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
-    
+
     confirmDialog.innerHTML = `
         <div class="dialog-content">
             <h2>Confirm Delete</h2>
@@ -738,19 +852,20 @@ function confirmDeletePlayer(playerId) {
     document.getElementById('confirm-delete-dialog').style.display = 'none';
     
     // Remove the player and add their ID to reusablePlayerIds
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
+    const team = getCurrentTeam();
+    const playerIndex = team.players.findIndex(p => p.id === playerId);
     if (playerIndex !== -1) {
         // Get player information for the message
-        const player = appState.players[playerIndex];
+        const player = team.players[playerIndex];
         
         // Add player ID to reusable IDs
-        if (!appState.settings.reusablePlayerIds) {
-            appState.settings.reusablePlayerIds = [];
+        if (!team.settings.reusablePlayerIds) {
+            team.settings.reusablePlayerIds = [];
         }
-        appState.settings.reusablePlayerIds.push(player.id);
+        team.settings.reusablePlayerIds.push(player.id);
         
         // Remove the player
-        appState.players.splice(playerIndex, 1);
+        team.players.splice(playerIndex, 1);
         
         // Update data and UI
         saveAppData();
@@ -817,16 +932,18 @@ function setupFormation() {
 
     // Validate player count
     const minPlayers = parseInt(matchType.split('v')[0]);
-    if (appState.players.length < minPlayers) {
+    if (getTeamPlayers().length < minPlayers) {
         showMessage(`At least ${minPlayers} players are required for ${matchType}.`, 'error');
         return;
     }
 
     // Save substitution settings
+    const settings = getTeamSettings();
     if (saveSubstitutionDefaultCheckbox.checked && !useSubstitutionTimerCheckbox.checked) {
-        appState.settings.defaultSubstitutionTime = substitutionTime;
+        settings.defaultSubstitutionTime = substitutionTime;
     }
-    appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+    settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+    setTeamSettings(settings);
 
     // Initialize currentGame
     appState.currentGame = {
@@ -839,7 +956,7 @@ function setupFormation() {
         startTime: new Date().toISOString(),
         endTime: null,
         actions: [],
-        activePlayers: [...appState.players.map(p => p.id)],
+        activePlayers: [...getTeamPlayers().map(p => p.id)],
         isCompleted: false,
         totalGameTime: 0,
         numPeriods,
@@ -872,8 +989,7 @@ function _OLD_renderFormationSetup() {
     unavailableSlots.innerHTML = '';
     
     // Initialize unavailable players array - always reset when loading formation setup
-    appState.unavailablePlayers = [];
-    
+      setUnavailablePlayers([]);
     // Initialize formation temp - load default if exists (only field positions, not unavailable status)
     if (appState.defaultFormation && appState.defaultFormation.length > 0) {
         appState.formationTemp = [...appState.defaultFormation];
@@ -920,9 +1036,12 @@ function _OLD_renderFormationSetup() {
     });
 
     // Render player list (show all players, gray out unavailable and placed ones)
-    appState.players.forEach(player => {
-        const isOnField = appState.formationTemp.some(f => f.playerId === player.id);
-        const isUnavailable = appState.unavailablePlayers.includes(player.id);
+    const teamPlayers = getTeamPlayers();
+    const formationTempList = getFormationTemp() || [];
+    const unavailableList = getUnavailablePlayers();
+    teamPlayers.forEach(player => {
+        const isOnField = formationTempList.some(f => f.playerId === player.id);
+        const isUnavailable = unavailableList.includes(player.id);
         const shouldDisable = isOnField || isUnavailable;
         
         const playerItem = document.createElement('div');
@@ -948,10 +1067,10 @@ function _OLD_renderFormationSetup() {
 
     // Restore formation positions on field (for default formation loading)
     let playersPlaced = 0;
-    appState.formationTemp.forEach(formationPlayer => {
+    (getFormationTemp() || []).forEach(formationPlayer => {
         const position = formationPlayer.position;
         const playerId = formationPlayer.playerId;
-        const player = appState.players.find(p => p.id === playerId);
+        const player = getTeamPlayers().find(p => p.id === playerId);
         
         
         if (player) {
@@ -1077,7 +1196,9 @@ function dropToSidebar(e) {
     // Handle players from field or unavailable area
     if (source === 'field') {
         // Remove from formation
-        appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
+        setFormationTemp(getFormationTemp().filter(f => f.playerId !== playerId));
+        // Remove from unavailable
+        setUnavailablePlayers(getUnavailablePlayers().filter(id => id !== playerId));
 
         // Clear field slot
         const slot = document.getElementById(slotId);
@@ -1088,7 +1209,7 @@ function dropToSidebar(e) {
         }
     } else if (source === 'unavailable') {
         // Remove from unavailable players
-        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        setUnavailablePlayers(getUnavailablePlayers().filter(id => id !== playerId));
         
         // Clear unavailable slot
         const slot = document.getElementById(slotId);
@@ -1102,7 +1223,7 @@ function dropToSidebar(e) {
     }
 
     // Re-enable player number in sidebar
-    const number = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+    const number = document.querySelector(`#player-list .player-number[data-player-id="${playerId}"]`);
     if (number) {
         number.classList.remove('disabled');
         number.draggable = true;
@@ -1123,15 +1244,10 @@ function dropToSlot(e) {
     const playerId = e.dataTransfer.getData('playerId');
     const source = e.dataTransfer.getData('source');
     const slotId = e.dataTransfer.getData('slotId');
-    const player = appState.players.find(p => p.id === playerId);
-    if (!player) return;
-
-    const slot = e.target.closest('.player-slot');
-    if (!slot) return;
-
+      const player = getTeamPlayers().find(p => p.id === playerId);
     // if dragging/tapping from unavailable list, clear that state first
     if (source === 'unavailable') {
-        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        setUnavailablePlayers(getUnavailablePlayers().filter(id => id !== playerId));
         const prevSlot = document.getElementById(slotId);
         if (prevSlot) {
             prevSlot.innerHTML = '';
@@ -1156,7 +1272,7 @@ function dropToSlot(e) {
     if (existingPlayerId && existingPlayerId !== playerId) {
         // Remove existing player from formation and return to sidebar  
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== existingPlayerId);
-        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+        const oldPlayer = document.querySelector(`#player-list .player-number[data-player-id="${existingPlayerId}"]`);
         if (oldPlayer) {
             oldPlayer.classList.remove('disabled');
             oldPlayer.draggable = true;
@@ -1207,19 +1323,17 @@ function dropToUnavailableSlot(e) {
     const existingPlayerId = targetSlot.getAttribute('data-player-id');
     if (existingPlayerId && existingPlayerId !== playerId) {
         // Remove displaced player from unavailable list
-        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== existingPlayerId);
+        setUnavailablePlayers(getUnavailablePlayers().filter(id => id !== existingPlayerId));
         
         // Re-enable the displaced player in sidebar
-        const displacedNumber = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+        const displacedNumber = document.querySelector(`#player-list .player-number[data-player-id="${existingPlayerId}"]`);
         if (displacedNumber) {
             displacedNumber.classList.remove('disabled');
             displacedNumber.draggable = true;
         }
     }
     
-    const player = appState.players.find(p => p.id === playerId);
-    if (!player) return;
-    
+      const player = getTeamPlayers().find(p => p.id === playerId);
     // Remove from source
     if (source === 'field') {
         const sourceSlot = document.getElementById(sourceSlotId);
@@ -1246,8 +1360,8 @@ function dropToUnavailableSlot(e) {
     }
     
     // Add to unavailable players if not already there
-    if (!appState.unavailablePlayers.includes(playerId)) {
-        appState.unavailablePlayers.push(playerId);
+    if (!getUnavailablePlayers().includes(playerId)) {
+        setUnavailablePlayers([...getUnavailablePlayers(), playerId]);
     }
     
     // Add to target slot
@@ -1318,7 +1432,7 @@ function closeBackConfirmDialog() {
 function backToGameSetup() {
     closeBackConfirmDialog();
     appState.currentGame = null;
-    appState.formationTemp = null;
+    setFormationTemp(null);
     showScreen('game-setup');
 }
 
@@ -1333,7 +1447,7 @@ function clearFormation() {
         appState.formationTemp = appState.formationTemp.filter(f => f.playerId !== playerId);
         
         // Re-enable in sidebar
-        const sidebarPlayer = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+const sidebarPlayer = document.querySelector(`#player-list .player-number[data-player-id="${playerId}"]`);
         if (sidebarPlayer) {
             sidebarPlayer.classList.remove('disabled');
             sidebarPlayer.draggable = true;
@@ -1349,12 +1463,12 @@ function clearFormation() {
     });
     
     // Clear unavailable players too
-    appState.unavailablePlayers = [];
+    setUnavailablePlayers([]);
     const unavailableSlots = document.querySelectorAll('.unavailable-slot');
     unavailableSlots.forEach(slot => {
         const playerId = slot.getAttribute('data-player-id');
         if (playerId) {
-            const sidebarPlayer = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+            const sidebarPlayer = document.querySelector(`#player-list .player-number[data-player-id="${playerId}"]`);
             if (sidebarPlayer) {
                 sidebarPlayer.classList.remove('disabled');
                 sidebarPlayer.draggable = true;
@@ -1404,7 +1518,7 @@ function startGameFromFormation() {
     appState.currentGame.formation = formation;
     
     // Store unavailable players in the game for reports
-    appState.currentGame.unavailablePlayers = [...(appState.unavailablePlayers || [])];
+    appState.currentGame.unavailablePlayers = [...(getUnavailablePlayers() || [])];
 
     // Check for goalkeeper (y = 95)
     const hasGoalkeeper = appState.currentGame.formation.some(f => f.y === 95 && f.playerId);
@@ -1415,16 +1529,16 @@ function startGameFromFormation() {
 
     // Set formation and substitutes
     
-    appState.currentGame.substitutes = appState.players
+    appState.currentGame.substitutes = getTeamPlayers()
         .filter(p => {
             const isInFormation = formation.some(f => f.playerId === p.id);
-            const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+            const isUnavailable = getUnavailablePlayers() && getUnavailablePlayers().includes(p.id);
             return !isInFormation && !isUnavailable;
         })
         .map(p => p.id);
 
-    // Reset player stats
-    appState.players.forEach(player => {
+// Reset player stats for current team
+      getTeamPlayers().forEach(player => {
         player.stats = {
             goals: 0,
             assists: 0,
@@ -1505,14 +1619,16 @@ function startGame() {
         return;
     }
 
-    // Save the default substitution time and checkbox state
+    // Save the default substitution time and checkbox state to team settings
+    const settings = getTeamSettings();
     if (saveSubstitutionDefaultCheckbox.checked && !useSubstitutionTimerCheckbox.checked) {
-        appState.settings.defaultSubstitutionTime = substitutionTime;
+        settings.defaultSubstitutionTime = substitutionTime;
     }
-    appState.settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+    settings.isSubstitutionDefaultChecked = saveSubstitutionDefaultCheckbox.checked;
+    setTeamSettings(settings);
 
     // Reset player stats for this new game
-    appState.players.forEach(player => {
+    getTeamPlayers().forEach(player => {
         player.stats = {
             goals: 0,
             assists: 0,
@@ -1524,7 +1640,7 @@ function startGame() {
     });
 
     // Clear unavailable players for new game
-    appState.unavailablePlayers = [];
+    setUnavailablePlayers([]);
     
     // Create the new game
     appState.currentGame = {
@@ -1536,7 +1652,7 @@ function startGame() {
         startTime: new Date().toISOString(),
         endTime: null,
         actions: [],
-        activePlayers: [...appState.players.map(p => p.id)],
+        activePlayers: [...getTeamPlayers().map(p => p.id)],
         isCompleted: false,
         totalGameTime: 0,
         numPeriods: numPeriods,
@@ -1579,8 +1695,8 @@ function startGame() {
 function updateCardCounters() {
     if (!appState.currentGame) return;
     
-    const yellowCardCount = appState.players.reduce((sum, player) => sum + (player.stats.yellowCards || 0), 0);
-    const redCardCount = appState.players.reduce((sum, player) => {
+    const yellowCardCount = getTeamPlayers().reduce((sum, player) => sum + (player.stats.yellowCards || 0), 0);
+    const redCardCount = getTeamPlayers().reduce((sum, player) => {
         const yellows = player.stats.yellowCards || 0;
         const reds = player.stats.redCards || 0;
         return sum + reds + (yellows >= 2 ? 1 : 0);
@@ -1628,13 +1744,14 @@ function renderPlayerGrid() {
     
     playerGrid.innerHTML = '';
     
-    if (appState.players.length === 0) {
+    const players = getTeamPlayers();
+    if (players.length === 0) {
         playerGrid.innerHTML = '<div class="empty-state">No players available</div>';
         return;
     }
     
-    appState.players
-        .filter(player => !appState.unavailablePlayers || !appState.unavailablePlayers.includes(player.id))
+    players
+        .filter(player => !getUnavailablePlayers().includes(player.id))
         .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
         .forEach(player => {
         if (!player.id || !player.jerseyNumber || !player.name || !player.position) {
@@ -2156,10 +2273,10 @@ function openAssistSelectionDialog() {
     const dialog = document.getElementById('assist-selection-dialog');
     const playersGrid = document.getElementById('assist-players-grid');
     playersGrid.innerHTML = '';
-    const activePlayers = appState.players.filter(p => {
+    const activePlayers = getTeamPlayers().filter(p => {
         const redCards = p.stats?.redCards || 0;
         const yellowCards = p.stats?.yellowCards || 0;
-        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+        const isUnavailable = getUnavailablePlayers().includes(p.id);
         return p.id !== appState.goalScorer.id && redCards === 0 && yellowCards < 2 && !isUnavailable;
     });
     activePlayers.forEach(player => {
@@ -2226,8 +2343,8 @@ function openScorerSelectionDialog() {
     const dialog = document.getElementById('scorer-selection-dialog');
     const playersGrid = document.getElementById('scorer-players-grid');
     playersGrid.innerHTML = '';
-    const activePlayers = appState.players.filter(p => {
-        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+    const activePlayers = getTeamPlayers().filter(p => {
+        const isUnavailable = getUnavailablePlayers().includes(p.id);
         return p.id !== appState.assister.id && p.stats.redCards === 0 && p.stats.yellowCards < 2 && !isUnavailable;
     });
     activePlayers.forEach(player => {
@@ -2286,11 +2403,11 @@ function recordAction(actionType, specificPlayerId = null) {
     
     appState.currentGame.actions.push(action);
     
-    const playerIndex = playerId ? appState.players.findIndex(p => p.id === playerId) : -1;
+    const playerIndex = playerId ? getTeamPlayers().findIndex(p => p.id === playerId) : -1;
     const playerGridItem = playerId ? document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`) : null;
     
-    if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
-        appState.players[playerIndex].stats = {
+    if (playerIndex !== -1 && !getTeamPlayers()[playerIndex].stats) {
+        getTeamPlayers()[playerIndex].stats = {
             goals: 0,
             assists: 0,
             saves: 0,
@@ -2304,28 +2421,28 @@ function recordAction(actionType, specificPlayerId = null) {
     
     switch (actionType) {
         case 'goal':
-            appState.players[playerIndex].stats.goals++;
+            getTeamPlayers()[playerIndex].stats.goals++;
             appState.currentGame.homeScore++;
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
             showMessage('Goal recorded', 'success');
             break;
         case 'assist':
-            appState.players[playerIndex].stats.assists++;
+            getTeamPlayers()[playerIndex].stats.assists++;
             showMessage('Assist recorded', 'success');
             break;
         case 'save':
-            appState.players[playerIndex].stats.saves++;
+            getTeamPlayers()[playerIndex].stats.saves++;
             showMessage('Save recorded', 'success');
             break;
         case 'goal_allowed':
-            appState.players[playerIndex].stats.goalsAllowed++;
+            getTeamPlayers()[playerIndex].stats.goalsAllowed++;
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
             showMessage('Goal allowed recorded', 'success');
             break;
         case 'yellow_card':
-            appState.players[playerIndex].stats.yellowCards++;
-            if (appState.players[playerIndex].stats.yellowCards >= 2) {
+            getTeamPlayers()[playerIndex].stats.yellowCards++;
+            if (getTeamPlayers()[playerIndex].stats.yellowCards >= 2) {
                 if (playerGridItem) {
                     playerGridItem.classList.remove('yellow-card');
                     playerGridItem.classList.add('red-card');
@@ -2337,7 +2454,7 @@ function recordAction(actionType, specificPlayerId = null) {
             showMessage('Yellow card recorded', 'success');
             break;
         case 'red_card':
-            appState.players[playerIndex].stats.redCards++;
+            getTeamPlayers()[playerIndex].stats.redCards++;
             if (playerGridItem) {
                 playerGridItem.classList.remove('yellow-card');
                 playerGridItem.classList.add('red-card');
@@ -2354,11 +2471,11 @@ function recordAction(actionType, specificPlayerId = null) {
             showMessage('Player recorded as late to game', 'success');
             break;
         case 'fault':
-            appState.players[playerIndex].stats.faults++;
+            getTeamPlayers()[playerIndex].stats.faults++;
             showMessage('Fault recorded', 'success'); // Changed from 'yellow' to 'success' for consistency
             break;
         case 'blocked_shot':
-            appState.players[playerIndex].stats.blockedShots++;
+            getTeamPlayers()[playerIndex].stats.blockedShots++;
             showMessage('Blocked shot recorded', 'success');
             break;
     }
@@ -2375,7 +2492,7 @@ function recordAction(actionType, specificPlayerId = null) {
 }
 
 function updatePlayerGridItem(playerId) {
-    const player = appState.players.find(p => p.id === playerId);
+    const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
     
     // Directly update the stat values in the player card
@@ -2441,9 +2558,13 @@ function endGame() {
         appState.currentGame.periodDuration = appState.currentGame.periodDuration || 15 * 60; // 15 minutes in seconds
     }
 
-    // Store the game in our games array
+    // Store the game in the current team's games array
     const finishedGameId = appState.currentGame.id;
-    appState.games.push({...appState.currentGame});
+    const team = getCurrentTeam();
+    if (team) {
+        team.games = team.games || [];
+        team.games.push({...appState.currentGame});
+    }
 
     // Stop both timers
     pauseTimer();
@@ -2871,7 +2992,7 @@ function exportTeamData(format = 'json') {
                 </thead>
                 <tbody>
         `;
-        appState.players.forEach(p => {
+        getTeamPlayers().forEach(p => {
             html += `<tr>
                         <td style="border:1px solid #ddd;padding:4px;">${p.jerseyNumber}</td>
                         <td style="border:1px solid #ddd;padding:4px;">${p.name}</td>
@@ -2918,13 +3039,14 @@ function exportTeamData(format = 'json') {
     }
 
     // default JSON export
-    const exportData = {
-        exportDate: new Date().toISOString(),
-        appVersion: "1.0.0",
-        teamName: appState.teamName,
-        players: appState.players,
-        games: appState.games,
-        settings: appState.settings // Includes reusablePlayerIds
+const team = getCurrentTeam();
+      const exportData = {
+          exportDate: new Date().toISOString(),
+          appVersion: "1.1.0",
+          teamName: team ? team.name : '',
+          players: team ? team.players : [],
+          games: team ? team.games : [],
+          settings: team ? team.settings : {}
     };
     
     // Convert to JSON string
@@ -2969,15 +3091,18 @@ function confirmImportTeamData() {
     // Store the import data in a temporary variable to access after confirmation
     if (appState.pendingImportData) {
         // Update app state with imported data
-        appState.teamName = appState.pendingImportData.teamName;
-        appState.players = appState.pendingImportData.players;
-        appState.games = appState.pendingImportData.games || [];
-        appState.settings = appState.pendingImportData.settings || {
-            language: 'en',
-            defaultSubstitutionTime: null,
-            isSubstitutionDefaultChecked: false,
-            reusablePlayerIds: []
-        };
+const team = getCurrentTeam();
+          if (team) {
+              team.name = appState.pendingImportData.teamName;
+              team.players = appState.pendingImportData.players;
+              team.games = appState.pendingImportData.games || [];
+              team.settings = appState.pendingImportData.settings || {
+                  language: 'en',
+                  defaultSubstitutionTime: null,
+                  isSubstitutionDefaultChecked: false,
+                  reusablePlayerIds: []
+              };
+          }
         
         // Save to IndexedDB
         saveAppData();
@@ -3139,11 +3264,11 @@ function editAction(actionIndex) {
     }
     
     // Get all available players (excluding unavailable ones) for editing actions
-    const availablePlayers = (appState.players || []).filter(p => {
-        const isUnavailable = appState.unavailablePlayers && appState.unavailablePlayers.includes(p.id);
+    const availablePlayers = (getTeamPlayers() || []).filter(p => {
+        const isUnavailable = getUnavailablePlayers() && getUnavailablePlayers().includes(p.id);
         return !isUnavailable;
     });
-    const currentPlayer = appState.players.find(p => p.id === action.playerId);
+    const currentPlayer = getTeamPlayers().find(p => p.id === action.playerId);
     
     editDialog.innerHTML = `
         <div class="dialog-content">
@@ -3251,47 +3376,47 @@ function saveEditedAction(actionIndex) {
 function reverseAction(action) {
     if (!action.playerId && action.actionType !== 'own_goal') return;
     
-    const playerIndex = action.playerId ? appState.players.findIndex(p => p.id === action.playerId) : -1;
+    const playerIndex = action.playerId ? getTeamPlayers().findIndex(p => p.id === action.playerId) : -1;
     
     switch (action.actionType) {
         case 'goal':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.goals = Math.max(0, appState.players[playerIndex].stats.goals - 1);
+                getTeamPlayers()[playerIndex].stats.goals = Math.max(0, getTeamPlayers()[playerIndex].stats.goals - 1);
             }
             appState.currentGame.homeScore = Math.max(0, appState.currentGame.homeScore - 1);
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
             break;
         case 'assist':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.assists = Math.max(0, appState.players[playerIndex].stats.assists - 1);
+                getTeamPlayers()[playerIndex].stats.assists = Math.max(0, getTeamPlayers()[playerIndex].stats.assists - 1);
             }
             break;
         case 'save':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.saves = Math.max(0, appState.players[playerIndex].stats.saves - 1);
+                getTeamPlayers()[playerIndex].stats.saves = Math.max(0, getTeamPlayers()[playerIndex].stats.saves - 1);
             }
             break;
         case 'goals_allowed':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.goalsAllowed = Math.max(0, appState.players[playerIndex].stats.goalsAllowed - 1);
+                getTeamPlayers()[playerIndex].stats.goalsAllowed = Math.max(0, getTeamPlayers()[playerIndex].stats.goalsAllowed - 1);
             }
             break;
         case 'yellow_card':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.yellowCards = Math.max(0, appState.players[playerIndex].stats.yellowCards - 1);
+                getTeamPlayers()[playerIndex].stats.yellowCards = Math.max(0, getTeamPlayers()[playerIndex].stats.yellowCards - 1);
                 const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
-                if (playerGridItem && appState.players[playerIndex].stats.yellowCards === 0) {
+                if (playerGridItem && getTeamPlayers()[playerIndex].stats.yellowCards === 0) {
                     playerGridItem.classList.remove('yellow-card');
                 }
             }
             break;
         case 'red_card':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.redCards = Math.max(0, appState.players[playerIndex].stats.redCards - 1);
+                getTeamPlayers()[playerIndex].stats.redCards = Math.max(0, getTeamPlayers()[playerIndex].stats.redCards - 1);
                 const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
-                if (playerGridItem && appState.players[playerIndex].stats.redCards === 0) {
+                if (playerGridItem && getTeamPlayers()[playerIndex].stats.redCards === 0) {
                     playerGridItem.classList.remove('red-card');
-                    if (appState.players[playerIndex].stats.yellowCards > 0) {
+                    if (getTeamPlayers()[playerIndex].stats.yellowCards > 0) {
                         playerGridItem.classList.add('yellow-card');
                     }
                 }
@@ -3299,12 +3424,12 @@ function reverseAction(action) {
             break;
         case 'fault':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.faults = Math.max(0, appState.players[playerIndex].stats.faults - 1);
+                getTeamPlayers()[playerIndex].stats.faults = Math.max(0, getTeamPlayers()[playerIndex].stats.faults - 1);
             }
             break;
         case 'blocked_shot':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.blockedShots = Math.max(0, appState.players[playerIndex].stats.blockedShots - 1);
+                getTeamPlayers()[playerIndex].stats.blockedShots = Math.max(0, getTeamPlayers()[playerIndex].stats.blockedShots - 1);
             }
             break;
         case 'own_goal':
@@ -3317,10 +3442,10 @@ function reverseAction(action) {
 function applyAction(action) {
     if (!action.playerId && action.actionType !== 'own_goal') return;
     
-    const playerIndex = action.playerId ? appState.players.findIndex(p => p.id === action.playerId) : -1;
+    const playerIndex = action.playerId ? getTeamPlayers().findIndex(p => p.id === action.playerId) : -1;
     
-    if (playerIndex !== -1 && !appState.players[playerIndex].stats) {
-        appState.players[playerIndex].stats = {
+    if (playerIndex !== -1 && !getTeamPlayers()[playerIndex].stats) {
+        getTeamPlayers()[playerIndex].stats = {
             goals: 0, assists: 0, saves: 0, goalsAllowed: 0,
             yellowCards: 0, redCards: 0, faults: 0, blockedShots: 0, notes: 0
         };
@@ -3329,29 +3454,29 @@ function applyAction(action) {
     switch (action.actionType) {
         case 'goal':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.goals++;
+                getTeamPlayers()[playerIndex].stats.goals++;
             }
             appState.currentGame.homeScore++;
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
             break;
         case 'assist':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.assists++;
+                getTeamPlayers()[playerIndex].stats.assists++;
             }
             break;
         case 'save':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.saves++;
+                getTeamPlayers()[playerIndex].stats.saves++;
             }
             break;
         case 'goals_allowed':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.goalsAllowed++;
+                getTeamPlayers()[playerIndex].stats.goalsAllowed++;
             }
             break;
         case 'yellow_card':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.yellowCards++;
+                getTeamPlayers()[playerIndex].stats.yellowCards++;
                 const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
                 if (playerGridItem) {
                     playerGridItem.classList.add('yellow-card');
@@ -3360,7 +3485,7 @@ function applyAction(action) {
             break;
         case 'red_card':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.redCards++;
+                getTeamPlayers()[playerIndex].stats.redCards++;
                 const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${action.playerId}"]`);
                 if (playerGridItem) {
                     playerGridItem.classList.remove('yellow-card');
@@ -3370,12 +3495,12 @@ function applyAction(action) {
             break;
         case 'fault':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.faults++;
+                getTeamPlayers()[playerIndex].stats.faults++;
             }
             break;
         case 'blocked_shot':
             if (playerIndex !== -1) {
-                appState.players[playerIndex].stats.blockedShots++;
+                getTeamPlayers()[playerIndex].stats.blockedShots++;
             }
             break;
         case 'own_goal':
@@ -3535,10 +3660,11 @@ const UIManager = {
         this.updatePlayerCounter();
         this.updateGameReportCounter();
         this.updateTeamNameUI();
+        this.updateTeamSelector();
     },
     
     updatePlayerCounter() {
-        const playerCount = appState.players.length;
+        const playerCount = getTeamPlayers().length;
         const mainCounter = document.getElementById('player-counter');
         const teamCounter = document.getElementById('team-player-counter');
         
@@ -3547,7 +3673,7 @@ const UIManager = {
     },
     
     updateGameReportCounter() {
-        const reportCount = appState.games.filter(game => game.completed).length;
+        const reportCount = getTeamGames().filter(game => game.completed).length;
         const reportCounter = document.getElementById('game-report-counter');
         
         if (reportCounter) reportCounter.textContent = reportCount;
@@ -3555,9 +3681,25 @@ const UIManager = {
     
     updateTeamNameUI() {
         const teamNameInput = document.getElementById('team-name-input');
-        if (teamNameInput && appState.teamName) {
-            teamNameInput.value = appState.teamName;
-        }
+        const name = getTeamName();
+        const teamNameElem = document.getElementById('team-name');
+        if (teamNameInput) teamNameInput.value = name;
+        if (teamNameElem) teamNameElem.textContent = name.toUpperCase();
+    },
+
+    updateTeamSelector() {
+        const selector = document.getElementById('team-selector');
+        if (!selector) return;
+        const teams = window.appState.teams || [];
+        const currentId = window.appState.currentTeamId;
+        selector.innerHTML = '';
+        teams.forEach(team => {
+            const opt = document.createElement('option');
+            opt.value = team.id;
+            opt.textContent = team.name || 'Unnamed Team';
+            if (team.id === currentId) opt.selected = true;
+            selector.appendChild(opt);
+        });
     }
 };
 

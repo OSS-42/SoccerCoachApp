@@ -19,14 +19,14 @@ const FormationScreen = {
         formationField.innerHTML = '';
         unavailableSlots.innerHTML = '';
         
-        // Initialize unavailable players array
-        appState.unavailablePlayers = [];
+        // Initialize unavailable players array (clear for new setup)
+        setUnavailablePlayers([]);
         
-        // Initialize formation temp
+        // Initialize formation temp based on global default if present
         if (appState.defaultFormation && appState.defaultFormation.length > 0) {
-            appState.formationTemp = [...appState.defaultFormation];
+            setFormationTemp([...appState.defaultFormation]);
         } else {
-            appState.formationTemp = [];
+            setFormationTemp([]);
         }
 
         // Define spots for 260x400px field
@@ -44,10 +44,13 @@ const FormationScreen = {
             formationField.appendChild(slot);
         });
 
-        // Render player list
-        appState.players.forEach(player => {
-            const isOnField = appState.formationTemp.some(f => f.playerId === player.id);
-            const isUnavailable = appState.unavailablePlayers.includes(player.id);
+        // Render player list using current team's roster
+        const teamPlayers = getTeamPlayers();
+        const formationTempList = getFormationTemp() || [];
+        const unavailableList = getUnavailablePlayers();
+        teamPlayers.forEach(player => {
+            const isOnField = formationTempList.some(f => f.playerId === player.id);
+            const isUnavailable = unavailableList.includes(player.id);
             const shouldDisable = isOnField || isUnavailable;
             
             const playerItem = document.createElement('div');
@@ -70,10 +73,10 @@ const FormationScreen = {
 
         // Restore formation positions
         let playersPlaced = 0;
-        appState.formationTemp.forEach(formationPlayer => {
+        (getFormationTemp() || []).forEach(formationPlayer => {
             const position = formationPlayer.position;
             const playerId = formationPlayer.playerId;
-            const player = appState.players.find(p => p.id === playerId);
+            const player = getTeamPlayers().find(p => p.id === playerId);
             
             if (player) {
                 let slotId;

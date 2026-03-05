@@ -108,6 +108,22 @@ body {
     overscroll-behavior: none; /* Prevent pull-to-refresh and horizontal overscroll navigation */
 }
 
+/* Team selector in headers */
+.team-selector {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+}
+.team-selector select {
+    padding: 4px 8px;
+    font-size: 14px;
+}
+.team-selector .small {
+    padding: 4px 8px;
+    font-size: 14px;
+    margin-left: 4px;
+}
+
 /* Screen Orientation Handling */
 @media screen and (orientation: landscape) {
     #app {

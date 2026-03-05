@@ -14,19 +14,23 @@ const TeamSetupScreen = {
         
         playersList.innerHTML = '';
         const teamPlayerCounter = document.getElementById('team-player-counter');
+        const players = getTeamPlayers();
 
-        if (appState.players.length === 0) {
+        if (players.length === 0) {
             playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
+            if (teamPlayerCounter) {
+                teamPlayerCounter.textContent = '0';
+            }
             return;
         }
         
         if (teamPlayerCounter) {
-            teamPlayerCounter.textContent = appState.players.length;
+            teamPlayerCounter.textContent = players.length;
         }
         
         const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
         
-        appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
             const playerItem = document.createElement('div');
             playerItem.className = 'player-item';
             playerItem.innerHTML = `
@@ -233,7 +237,8 @@ const TeamSetupScreen = {
      * @param {string} playerId - The ID of the player being edited
      */
     saveEditedPlayer(playerId) {
-        const player = appState.players.find(p => p.id === playerId);
+        const team = getCurrentTeam();
+        const player = team.players.find(p => p.id === playerId);
         if (!player) return;
         
         const name = document.getElementById('edit-player-name').value.trim();
