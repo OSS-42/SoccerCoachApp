@@ -1,7 +1,7 @@
 /**
  * FormationScreen.js
  * Encapsulates all formation setup screen rendering and drag-and-drop logic
- * Version: 1.9.80
+ * Version: 1.9.81
  */
 
 const FormationScreen = {
@@ -140,16 +140,18 @@ const FormationScreen = {
                 number.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
                 number.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
                 number.addEventListener('touchend', (e) => touchEnd(e));
+                number.addEventListener('click', (e) => handleTapPlayer(e));
                 number.setAttribute('data-events-setup', 'true');
             }
         });
 
-        const slots = document.querySelectorAll('.player-slot');
+        const slots = document.querySelectorAll('.player-slot, .unavailable-slot');
         slots.forEach(slot => {
             slot.removeEventListener('dragover', (e) => dragOver(e));
             slot.removeEventListener('drop', (e) => dropToSlot(e));
             slot.addEventListener('dragover', (e) => dragOver(e));
             slot.addEventListener('drop', (e) => dropToSlot(e));
+            slot.addEventListener('click', (e) => handleTapSlot(e));
         });
 
         const playerList = document.getElementById('player-list');
@@ -158,6 +160,27 @@ const FormationScreen = {
             playerList.removeEventListener('drop', (e) => dropToSidebar(e));
             playerList.addEventListener('dragover', (e) => dragOver(e));
             playerList.addEventListener('drop', (e) => dropToSidebar(e));
+
+            // allow tap-to-remove: if a player is selected and user taps sidebar
+            playerList.addEventListener('click', (e) => {
+                if (!TapState.playerId) return;
+                if (TapState.source === 'field' || TapState.source === 'unavailable') {
+                    const fakeEvt = {
+                        preventDefault() {},
+                        dataTransfer: {
+                            getData(key) {
+                                if (key === 'playerId') return TapState.playerId;
+                                if (key === 'source') return TapState.source;
+                                if (key === 'slotId') return TapState.slotId || '';
+                                return '';
+                            }
+                        },
+                        target: playerList
+                    };
+                    dropToSidebar(fakeEvt);
+                    TapState.clear();
+                }
+            });
         }
     }
 };

@@ -21,6 +21,75 @@ const DragState = {
     }
 };
 
+// --------------------------------------------------
+// TAP-TO-SELECT STATE (alternative placement method)
+// --------------------------------------------------
+const TapState = {
+    playerId: null,
+    source: null,       // 'sidebar' | 'field' | 'unavailable'
+    slotId: null,
+    clear() {
+        if (this.playerId) {
+            const prev = document.querySelector(`.player-number[data-player-id="${this.playerId}"]`);
+            if (prev) prev.classList.remove('tap-selected');
+        }
+        this.playerId = null;
+        this.source = null;
+        this.slotId = null;
+    }
+};
+
+function handleTapPlayer(e) {
+    e.stopPropagation();
+    const elem = e.currentTarget;
+    if (elem.classList.contains('disabled')) return;
+    const pid = elem.getAttribute('data-player-id');
+    if (TapState.playerId === pid) {
+        TapState.clear();
+        return;
+    }
+    TapState.clear();
+    TapState.playerId = pid;
+    // determine source based on location
+    const parent = elem.closest('.player-slot, .unavailable-slot');
+    if (parent) {
+        TapState.slotId = parent.id || '';
+        TapState.source = parent.classList.contains('unavailable-slot') ? 'unavailable' : 'field';
+    } else {
+        TapState.source = 'sidebar';
+        TapState.slotId = '';
+    }
+    elem.classList.add('tap-selected');
+}
+
+function handleTapSlot(e) {
+    e.stopPropagation();
+    if (!TapState.playerId) return;
+    const slot = e.currentTarget;
+    const isUnavailable = slot.classList.contains('unavailable-slot');
+
+    const fakeEvent = {
+        preventDefault() {},
+        dataTransfer: {
+            getData(key) {
+                if (key === 'playerId') return TapState.playerId;
+                if (key === 'source') return TapState.source;
+                if (key === 'slotId') return TapState.slotId || '';
+                return '';
+            }
+        },
+        target: slot
+    };
+
+    if (isUnavailable) {
+        dropToUnavailableSlot(fakeEvent);
+    } else {
+        dropToSlot(fakeEvent);
+    }
+    TapState.clear();
+}
+
+
 function touchStart(e) {
     if (e.target.classList.contains('disabled')) return;
     e.preventDefault();
@@ -346,6 +415,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('game-date').value = today;
         showScreen('main-screen');
 
+        // Register service worker for offline caching (basic)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('Service worker registered'))
+                .catch(err => console.warn('SW registration failed', err));
+        }
+
         // Add protection against accidental navigation during active games
         window.addEventListener('beforeunload', function(e) {
             if (appState.currentGame && !appState.currentGame.isCompleted) {
@@ -386,6 +462,10 @@ function saveTeamName() {
 
 // Screen Navigation
 function showScreen(screenId) {
+    // Clear any tap-selection when changing screens
+    if (typeof TapState !== 'undefined') {
+        TapState.clear();
+    }
     // Hide all screens
     const screens = document.querySelectorAll('.screen');
     screens.forEach(screen => {

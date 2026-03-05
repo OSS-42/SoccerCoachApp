@@ -1,7 +1,7 @@
 /**
  * TeamSetupScreen.js
  * Encapsulates all team setup screen rendering and player management logic
- * Version: 1.9.80
+ * Version: 1.9.81
  */
 
 const TeamSetupScreen = {

@@ -2296,3 +2296,9 @@ button.no-assist-btn {
     pointer-events: none;
     z-index: 1000;
 }
+
+/* Tap-to-select highlight */
+.player-number.tap-selected {
+    outline: 3px solid #4caf50;
+    z-index: 1001;
+}

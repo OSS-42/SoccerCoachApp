@@ -1,7 +1,7 @@
 /**
  * SettingsScreen.js
  * Encapsulates settings screen rendering and configuration management
- * Version: 1.9.80
+ * Version: 1.9.81
  */
 
 const SettingsScreen = {
