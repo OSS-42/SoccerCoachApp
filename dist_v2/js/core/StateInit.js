@@ -46,24 +46,59 @@ function getCurrentTeam() {
 // perform migration from legacy single-team structure if needed
 function initState() {
     if (!appState.teams || appState.teams.length === 0) {
-        // existing data will have teamName/players/games
-        const legacy = {
-            id: 't1',
-            name: appState.teamName || 'My Team',
-            players: appState.players || [],
-            games: appState.games || [],
-            settings: appState.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-            unavailablePlayers: appState.unavailablePlayers || [],
-            formationTemp: appState.formationTemp || null
-        };
-        appState.teams = [legacy];
-        appState.currentTeamId = legacy.id;
-        // clean up legacy fields to avoid confusion
-        delete appState.teamName;
-        delete appState.players;
-        delete appState.games;
-        delete appState.unavailablePlayers;
-        // note: formationTemp already handled per-team later
+        const hasLegacy = appState.teamName || (appState.players && appState.players.length > 0) || (appState.games && appState.games.length > 0);
+        
+        if (hasLegacy) {
+            // Migrate legacy data to Team A
+            const teamA = {
+                id: 't1',
+                name: appState.teamName || 'Team A',
+                players: appState.players || [],
+                games: appState.games || [],
+                settings: appState.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                unavailablePlayers: appState.unavailablePlayers || [],
+                formationTemp: appState.formationTemp || null
+            };
+            // Create Team B as new
+            const teamB = {
+                id: 't2',
+                name: 'Team B',
+                players: [],
+                games: [],
+                settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                unavailablePlayers: [],
+                formationTemp: null
+            };
+            appState.teams = [teamA, teamB];
+            appState.currentTeamId = teamA.id;
+            // clean up legacy fields
+            delete appState.teamName;
+            delete appState.players;
+            delete appState.games;
+            delete appState.unavailablePlayers;
+        } else {
+            // New install: create default Team A and Team B
+            const teamA = {
+                id: 't1',
+                name: 'Team A',
+                players: [],
+                games: [],
+                settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                unavailablePlayers: [],
+                formationTemp: null
+            };
+            const teamB = {
+                id: 't2',
+                name: 'Team B',
+                players: [],
+                games: [],
+                settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                unavailablePlayers: [],
+                formationTemp: null
+            };
+            appState.teams = [teamA, teamB];
+            appState.currentTeamId = teamA.id;
+        }
     }
 }
 
