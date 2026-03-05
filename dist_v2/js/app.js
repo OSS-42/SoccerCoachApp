@@ -345,6 +345,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('game-date').value = today;
         showScreen('main-screen');
+
+        // Add protection against accidental navigation during active games
+        window.addEventListener('beforeunload', function(e) {
+            if (appState.currentGame && !appState.currentGame.isCompleted) {
+                e.preventDefault();
+                e.returnValue = 'You have an active game in progress. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
     });
 });
 
