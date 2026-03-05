@@ -1128,6 +1128,18 @@ function dropToSlot(e) {
 
     const slot = e.target.closest('.player-slot');
     if (!slot) return;
+
+    // if dragging/tapping from unavailable list, clear that state first
+    if (source === 'unavailable') {
+        appState.unavailablePlayers = appState.unavailablePlayers.filter(id => id !== playerId);
+        const prevSlot = document.getElementById(slotId);
+        if (prevSlot) {
+            prevSlot.innerHTML = '';
+            prevSlot.removeAttribute('data-player-id');
+            prevSlot.classList.remove('occupied');
+        }
+    }
+
     const position = slot.getAttribute('data-position');
     const matchType = appState.currentGame.matchType;
     const maxPlayers = parseInt(matchType.split('v')[0]);
@@ -1167,7 +1179,7 @@ function dropToSlot(e) {
     slot.innerHTML = `<span class="player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
     slot.classList.add('occupied');
 
-    if (source === 'sidebar') {
+    if (source === 'sidebar' || source === 'unavailable') {
         disablePlayerNumber(playerId);
     } else if (source === 'field' && slotId !== slot.id) {
         const prevSlot = document.getElementById(slotId);
@@ -2873,6 +2885,23 @@ function exportTeamData(format = 'json') {
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
         const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+        // ensure we catch the load event before writing content; some browsers
+        // may fire onload immediately if the document is very small.
+        const triggerPrintAndCleanup = () => {
+            try {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            } catch (err) {
+                // ignore if print fails
+            }
+            if (iframe.parentNode) {
+                document.body.removeChild(iframe);
+            }
+        };
+
+        iframe.onload = triggerPrintAndCleanup;
+
         doc.open();
         doc.write(`
             <html><head><title>${title}</title></head><body>${html}
@@ -2880,11 +2909,9 @@ function exportTeamData(format = 'json') {
             </body></html>
         `);
         doc.close();
-        iframe.onload = function() {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-            document.body.removeChild(iframe);
-        };
+
+        // fallback: if onload doesn't fire within a short period, call print anyway
+        setTimeout(triggerPrintAndCleanup, 500);
 
         showMessage('Opening print dialog for team PDF export', 'success');
         return;
