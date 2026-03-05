@@ -1,5 +1,10 @@
-// StorageService - IndexedDB persistence layer
-// Note: showMessage may not be defined at this stage, so we use a safe wrapper
+/**
+ * StorageService - IndexedDB persistence layer with async/await
+ * Version: 1.9.80
+ * Modernized from callback-based to async/await patterns
+ */
+
+// Safe wrapper for error logging - showMessage may not be defined at service init time
 window._StorageErrorLog = function(msg) {
     if (typeof showMessage === 'function') {
         showMessage(msg, 'error');
@@ -11,217 +16,214 @@ window._StorageErrorLog = function(msg) {
 window.StorageService = {
     db: null,
     
-    initDB() {
+    /**
+     * Helper: Convert IndexedDB request to Promise
+     * @param {IDBRequest} request - The IndexedDB request to wrap
+     * @returns {Promise} Resolves with request.result or rejects on error
+     */
+    _requestToPromise(request) {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open('SoccerCoachDB', 2);
-
-            request.onupgradeneeded = (event) => {
-                this.db = event.target.result;
-                // Create object stores
-                if (!this.db.objectStoreNames.contains('team')) 
-                    this.db.createObjectStore('team', { keyPath: 'id' });
-                if (!this.db.objectStoreNames.contains('players')) 
-                    this.db.createObjectStore('players', { keyPath: 'id' });
-                if (!this.db.objectStoreNames.contains('games')) 
-                    this.db.createObjectStore('games', { keyPath: 'id' });
-                if (!this.db.objectStoreNames.contains('settings')) 
-                    this.db.createObjectStore('settings', { keyPath: 'id' });
-                if (!this.db.objectStoreNames.contains('tempState')) 
-                    this.db.createObjectStore('tempState', { keyPath: 'id' });
-            };
-
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                resolve(this.db);
-            };
-
-            request.onerror = (event) => {
-                _StorageErrorLog('Failed to initialize database');
-                reject(event.target.error);
-            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
         });
     },
-    
-    save() {
-        if (!this.db) {
-            _StorageErrorLog('Database not initialized');
-            return;
+
+    /**
+     * Helper: Wait for transaction to complete
+     * @param {IDBTransaction} transaction - The transaction to monitor
+     * @returns {Promise} Resolves when transaction completes
+     */
+    _transactionToPromise(transaction) {
+        return new Promise((resolve, reject) => {
+            transaction.oncomplete = () => resolve();
+            transaction.onerror = () => reject(transaction.error);
+        });
+    },
+
+    /**
+     * Initialize IndexedDB database asynchronously
+     * @returns {Promise<IDBDatabase>} Resolves with database instance
+     */
+    async initDB() {
+        try {
+            const request = indexedDB.open('SoccerCoachDB', 2);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                // Create object stores if they don't exist
+                if (!db.objectStoreNames.contains('team')) 
+                    db.createObjectStore('team', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('players')) 
+                    db.createObjectStore('players', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('games')) 
+                    db.createObjectStore('games', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('settings')) 
+                    db.createObjectStore('settings', { keyPath: 'id' });
+                if (!db.objectStoreNames.contains('tempState')) 
+                    db.createObjectStore('tempState', { keyPath: 'id' });
+            };
+
+            this.db = await this._requestToPromise(request);
+            return this.db;
+        } catch (error) {
+            _StorageErrorLog('Failed to initialize database');
+            throw error;
         }
+    },
 
-        const transaction = this.db.transaction(['team', 'players', 'games', 'settings', 'tempState'], 'readwrite');
-        const teamStore = transaction.objectStore('team');
-        const playersStore = transaction.objectStore('players');
-        const gamesStore = transaction.objectStore('games');
-        const settingsStore = transaction.objectStore('settings');
-        const tempStateStore = transaction.objectStore('tempState');
+    /**
+     * Save application state to IndexedDB asynchronously
+     * @returns {Promise} Resolves when save completes
+     */
+    async save() {
+        try {
+            if (!this.db) {
+                _StorageErrorLog('Database not initialized');
+                return;
+            }
 
-        // Validate data
-        if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
-            _StorageErrorLog('Invalid data format for saving');
-            return;
-        }
+            const transaction = this.db.transaction(['team', 'players', 'games', 'settings', 'tempState'], 'readwrite');
+            const teamStore = transaction.objectStore('team');
+            const playersStore = transaction.objectStore('players');
+            const gamesStore = transaction.objectStore('games');
+            const settingsStore = transaction.objectStore('settings');
+            const tempStateStore = transaction.objectStore('tempState');
 
-        // Save team
-        teamStore.put({ id: 'team', teamName: appState.teamName });
+            // Validate data
+            if (!appState.teamName || !Array.isArray(appState.players) || !Array.isArray(appState.games) || !appState.settings) {
+                _StorageErrorLog('Invalid data format for saving');
+                return;
+            }
 
-        // Clear and save players
-        const clearPlayersRequest = playersStore.clear();
-        clearPlayersRequest.onsuccess = () => {
+            // Save team
+            teamStore.put({ id: 'team', teamName: appState.teamName });
+
+            // Clear and save players
+            await this._requestToPromise(playersStore.clear());
             appState.players.forEach(player => {
                 if (player.id && player.name && player.jerseyNumber !== undefined) {
                     playersStore.put(player);
                 }
             });
-        };
 
-        // Clear and save games
-        const clearGamesRequest = gamesStore.clear();
-        clearGamesRequest.onsuccess = () => {
+            // Clear and save games
+            await this._requestToPromise(gamesStore.clear());
             appState.games.forEach(game => {
                 if (game.id) {
                     gamesStore.put(game);
                 }
             });
-        };
-        clearGamesRequest.onerror = (event) => {};
 
-        // Save settings
-        settingsStore.put({ id: 'settings', ...appState.settings });
+            // Save settings
+            settingsStore.put({ id: 'settings', ...appState.settings });
 
-        // Save temporary state (formation setup and current game)
-        if (appState.formationTemp || appState.currentGame) {
-            tempStateStore.put({
-                id: 'tempState',
-                formationTemp: appState.formationTemp || [],
-                currentGame: appState.currentGame || null
-            });
+            // Save temporary state (formation setup and current game)
+            if (appState.formationTemp || appState.currentGame) {
+                tempStateStore.put({
+                    id: 'tempState',
+                    formationTemp: appState.formationTemp || [],
+                    currentGame: appState.currentGame || null
+                });
+            }
+
+            // Wait for transaction to complete
+            await this._transactionToPromise(transaction);
+        } catch (error) {
+            _StorageErrorLog('Failed to save data: ' + (error?.message || 'Unknown error'));
+            throw error;
         }
-
-        transaction.oncomplete = () => {};
-        transaction.onerror = (event) => {
-            _StorageErrorLog('Failed to save data');
-        };
     },
-    
-    load() {
-        return new Promise((resolve, reject) => {
+
+    /**
+     * Load application state from IndexedDB asynchronously
+     * @returns {Promise} Resolves when load completes
+     */
+    async load() {
+        try {
             if (!window.indexedDB) {
-                appState.teamName = "My Team";
-                appState.players = [];
-                appState.games = [];
-                appState.formationTemp = [];
-                appState.currentGame = null;
-                appState.settings = {
-                    language: 'en',
-                    defaultSubstitutionTime: null,
-                    isSubstitutionDefaultChecked: false,
-                    reusablePlayerIds: []
-                };
+                this._setDefaults();
                 updateTeamNameUI();
                 renderPlayersList();
                 updatePlayerCounter();
                 updateGameReportCounter();
-                showMessage('IndexedDB not supported, using defaults', 'error');
-                resolve();
+                _StorageErrorLog('IndexedDB not supported, using defaults');
                 return;
             }
 
-            this.initDB().then(() => {
-                const transaction = this.db.transaction(['team', 'players', 'games', 'settings', 'tempState'], 'readonly');
-                const teamStore = transaction.objectStore('team');
-                const playersStore = transaction.objectStore('players');
-                const gamesStore = transaction.objectStore('games');
-                const settingsStore = transaction.objectStore('settings');
-                const tempStateStore = transaction.objectStore('tempState');
+            await this.initDB();
 
-                // Load team
-                teamStore.get('team').onsuccess = (event) => {
-                    const team = event.target.result;
-                    appState.teamName = team ? team.teamName : "My Team";
-                    updateTeamNameUI();
-                };
+            const transaction = this.db.transaction(['team', 'players', 'games', 'settings', 'tempState'], 'readonly');
+            const teamStore = transaction.objectStore('team');
+            const playersStore = transaction.objectStore('players');
+            const gamesStore = transaction.objectStore('games');
+            const settingsStore = transaction.objectStore('settings');
+            const tempStateStore = transaction.objectStore('tempState');
 
-                // Load players
-                playersStore.getAll().onsuccess = (event) => {
-                    appState.players = event.target.result || [];
-                    updatePlayerCounter();
-                };
+            // Load all data in parallel using Promise.all
+            const [teamData, playersData, gamesData, settingsData, tempStateData] = await Promise.all([
+                this._requestToPromise(teamStore.get('team')),
+                this._requestToPromise(playersStore.getAll()),
+                this._requestToPromise(gamesStore.getAll()),
+                this._requestToPromise(settingsStore.get('settings')),
+                this._requestToPromise(tempStateStore.get('tempState'))
+            ]);
 
-                // Load games
-                gamesStore.getAll().onsuccess = (event) => {
-                    appState.games = event.target.result || [];
-                    updateGameReportCounter();
-                };
+            // Apply loaded data to appState
+            appState.teamName = teamData?.teamName || "My Team";
+            appState.players = playersData || [];
+            appState.games = gamesData || [];
+            appState.settings = settingsData || this._getDefaultSettings();
+            appState.formationTemp = tempStateData?.formationTemp || [];
+            appState.currentGame = tempStateData?.currentGame || null;
 
-                // Load settings
-                settingsStore.get('settings').onsuccess = (event) => {
-                    const settings = event.target.result || {
-                        language: 'en',
-                        defaultSubstitutionTime: null,
-                        isSubstitutionDefaultChecked: false,
-                        reusablePlayerIds: []
-                    };
-                    appState.settings = settings;
-                    initializeStyling();
-                };
+            // Update UI
+            updateTeamNameUI();
+            renderPlayersList();
+            updatePlayerCounter();
+            updateGameReportCounter();
+            initializeStyling();
 
-                // Load temporary state (formation setup and current game)
-                tempStateStore.get('tempState').onsuccess = (event) => {
-                    const tempState = event.target.result;
-                    if (tempState) {
-                        appState.formationTemp = tempState.formationTemp || [];
-                        appState.currentGame = tempState.currentGame || null;
-                    }
-                };
+            // Sync global db for backward compatibility
+            window.db = this.db;
 
-                transaction.oncomplete = () => {
-                    renderPlayersList();
-                    // Ensure global db is synced for backward compatibility
-                    window.db = this.db;
-                    resolve();
-                };
+        } catch (error) {
+            _StorageErrorLog('Failed to load data: ' + (error?.message || 'Unknown error'));
+            this._setDefaults();
+            updateTeamNameUI();
+            renderPlayersList();
+            updatePlayerCounter();
+            updateGameReportCounter();
+            
+            // Sync global db even on error
+            if (this.db) window.db = this.db;
+        }
+    },
 
-                transaction.onerror = () => {
-                    appState.teamName = "My Team";
-                    appState.players = [];
-                    appState.games = [];
-                    appState.settings = {
-                        language: 'en',
-                        defaultSubstitutionTime: null,
-                        isSubstitutionDefaultChecked: false,
-                        reusablePlayerIds: []
-                    };
-                    appState.formationTemp = [];
-                    appState.currentGame = null;
-                    updateTeamNameUI();
-                    renderPlayersList();
-                    updatePlayerCounter();
-                    updateGameReportCounter();
-                    showMessage('Failed to load data, using defaults', 'error');
-                    resolve();
-                };
-            }).catch((error) => {
-                appState.teamName = "My Team";
-                appState.players = [];
-                appState.games = [];
-                appState.settings = {
-                    language: 'en',
-                    defaultSubstitutionTime: null,
-                    isSubstitutionDefaultChecked: false,
-                    reusablePlayerIds: []
-                };
-                appState.formationTemp = [];
-                appState.currentGame = null;
-                updateTeamNameUI();
-                renderPlayersList();
-                updatePlayerCounter();
-                updateGameReportCounter();
-                showMessage('Database initialization failed, using defaults', 'error');
-                // Sync global db even on error
-                if (this.db) window.db = this.db;
-                resolve();
-            });
-        });
+    /**
+     * Reset application state to defaults
+     * @private
+     */
+    _setDefaults() {
+        appState.teamName = "My Team";
+        appState.players = [];
+        appState.games = [];
+        appState.formationTemp = [];
+        appState.currentGame = null;
+        appState.settings = this._getDefaultSettings();
+    },
+
+    /**
+     * Get default settings object
+     * @private
+     * @returns {Object} Default settings
+     */
+    _getDefaultSettings() {
+        return {
+            language: 'en',
+            defaultSubstitutionTime: null,
+            isSubstitutionDefaultChecked: false,
+            reusablePlayerIds: []
+        };
     }
 };
 
