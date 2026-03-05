@@ -329,7 +329,11 @@
                     <div class="setting-option data-management-buttons">
                         <button class="secondary-btn" onclick="exportTeamData()">
                             <span class="material-icons">file_download</span>
-                            Export Team Data
+                            Export Team Data (JSON)
+                        </button>
+                        <button class="secondary-btn" onclick="exportTeamData('pdf')">
+                            <span class="material-icons">picture_as_pdf</span>
+                            Export Team Data (PDF)
                         </button>
                         <button class="secondary-btn" onclick="importTeamData()">
                             <span class="material-icons">file_upload</span>
@@ -527,19 +531,19 @@
         </div>
     </div>
 
-    <script src="js/core/StateInit.js?v=1.9.81"></script>
-    <script src="js/core/constants.js?v=1.9.81"></script>
-    <script src="js/shared/utils.js?v=1.9.81"></script>
-    <script src="js/services/StorageService.js?v=1.9.81"></script>
-    <script src="js/services/PlayerService.js?v=1.9.81"></script>
-    <script src="js/services/GameService.js?v=1.9.81"></script>
-    <script src="js/services/ActionService.js?v=1.9.81"></script>
-    <script src="js/services/StatisticsService.js?v=1.9.81"></script>
-    <script src="js/services/ReportService.js?v=1.9.81"></script>
-    <script src="js/screens/TeamSetupScreen.js?v=1.9.81"></script>
-    <script src="js/screens/FormationScreen.js?v=1.9.81"></script>
-    <script src="js/screens/GamePlayScreen.js?v=1.9.81"></script>
-    <script src="js/screens/ReportsScreen.js?v=1.9.81"></script>
-    <script src="js/screens/SettingsScreen.js?v=1.9.81"></script>
+    <script src="js/core/StateInit.js"></script>
+    <script src="js/core/constants.js"></script>
+    <script src="js/shared/utils.js"></script>
+    <script src="js/services/StorageService.js"></script>
+    <script src="js/services/PlayerService.js"></script>
+    <script src="js/services/GameService.js"></script>
+    <script src="js/services/ActionService.js"></script>
+    <script src="js/services/StatisticsService.js"></script>
+    <script src="js/services/ReportService.js"></script>
+    <script src="js/screens/TeamSetupScreen.js"></script>
+    <script src="js/screens/FormationScreen.js"></script>
+    <script src="js/screens/GamePlayScreen.js"></script>
+    <script src="js/screens/ReportsScreen.js"></script>
+    <script src="js/screens/SettingsScreen.js"></script>
     <script src="js/app.js?v=1.9.81"></script>
 </html>
