@@ -96,10 +96,10 @@
                         <div class="stats-controls">
                             <div class="date-filter">
                                 <label for="stats-start-date">From:</label>
-                                <input type="date" id="stats-start-date" onchange="renderPlayerStatistics()">
+                                <input type="date" id="stats-start-date" onchange="StatisticsService.renderPlayerStatistics()">
                                 <label for="stats-end-date">To:</label>
-                                <input type="date" id="stats-end-date" onchange="renderPlayerStatistics()">
-                                <button class="secondary-btn" onclick="clearDateFilter()">Clear</button>
+                                <input type="date" id="stats-end-date" onchange="StatisticsService.renderPlayerStatistics()">
+                                <button class="secondary-btn" onclick="StatisticsService.clearDateFilter()">Clear</button>
                                 <div id="stats-period-info" class="stats-period-info-inline">
                                     All completed games
                                 </div>
@@ -534,5 +534,7 @@
     <script src="js/services/PlayerService.js?v=1.9.80"></script>
     <script src="js/services/GameService.js?v=1.9.80"></script>
     <script src="js/services/ActionService.js?v=1.9.80"></script>
+    <script src="js/services/StatisticsService.js?v=1.9.80"></script>
+    <script src="js/services/ReportService.js?v=1.9.80"></script>
     <script src="js/app.js?v=1.9.80"></script>
 </html>
