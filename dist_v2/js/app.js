@@ -445,6 +445,7 @@ function setupFormation() {
     // Validate required game setup fields
     const opponentName = document.getElementById('opponent-name').value.trim();
     const gameDate = document.getElementById('game-date').value;
+    const matchType = document.getElementById('match-type').value;
     const useSubstitutionTimer = !document.getElementById('use-substitution-timer').checked;
     const substitutionTime = document.getElementById('substitution-time').value;
     
@@ -457,10 +458,24 @@ function setupFormation() {
         showMessage('Please enter the game date', 'error');
         return;
     }
+
+    if (!matchType) {
+        showMessage('Please select a match type', 'error');
+        return;
+    }
     
     // Only require substitution time if timer is actually needed
     if (useSubstitutionTimer && !substitutionTime) {
         showMessage('Please enter substitution timer duration', 'error');
+        return;
+    }
+
+    // Validate formation has correct number of players
+    const formationPlayers = getFormationTemp();
+    const requiredPlayerCount = parseInt(matchType.split('v')[0]);
+    
+    if (formationPlayers.length !== requiredPlayerCount) {
+        showMessage(`Formation must have exactly ${requiredPlayerCount} players for ${matchType}. Currently selected: ${formationPlayers.length}`, 'error');
         return;
     }
     
@@ -479,6 +494,7 @@ function setupFormation() {
         id: Date.now().toString(),
         date: gameDate,
         opponentName,
+        matchType,
         homeScore: 0,
         awayScore: 0,
         startTime: new Date().toISOString(),
@@ -787,6 +803,11 @@ function renderPlayerGrid() {
     const playerGrid = document.getElementById('player-grid');
     playerGrid.innerHTML = '';
     
+    // Get formation players if we're in a game
+    const formationPlayerIds = appState.currentGame && appState.currentGame.formationPlayers 
+        ? appState.currentGame.formationPlayers.map(p => p.id) 
+        : [];
+    
     // Using all players, not filtering by active status anymore
     getTeamPlayers().sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         // Ensure player has stats object
@@ -804,6 +825,14 @@ function renderPlayerGrid() {
         const playerGridItem = document.createElement('div');
         playerGridItem.className = 'player-grid-item';
         playerGridItem.setAttribute('data-player-id', player.id);
+        
+        // Determine player status: starter (on field) or substitute (benched)
+        const isStarter = formationPlayerIds.includes(player.id);
+        if (isStarter) {
+            playerGridItem.classList.add('starter');
+        } else {
+            playerGridItem.classList.add('substitute');
+        }
         
         // Create a completely redesigned player card (now square shaped)
         playerGridItem.innerHTML = `
@@ -962,6 +991,12 @@ function toggleDialog(dialogId, isOpen) {
 }
 
 function openPlayerActionDialog(player) {
+    // Don't allow actions on red-carded players
+    if (player.stats && player.stats.redCards > 0) {
+        showMessage('Cannot perform actions on red-carded players', 'error');
+        return;
+    }
+    
     appState.currentPlayer = player;
     document.getElementById('action-player-name').textContent = player.name;
     toggleDialog('player-action-dialog', true);
@@ -992,8 +1027,11 @@ function openAssistSelectionDialog() {
     // Clear previous content
     playersGrid.innerHTML = '';
     
-    // Get all players excluding the goal scorer
-    const activePlayers = getTeamPlayers().filter(p => p.id !== appState.goalScorer.id);
+    // Get all players excluding the goal scorer and red-carded players
+    const activePlayers = getTeamPlayers().filter(p => 
+        p.id !== appState.goalScorer.id && 
+        (!p.stats || p.stats.redCards === 0)
+    );
     
     // Add players to the grid
     activePlayers.forEach(player => {
@@ -1019,6 +1057,13 @@ function closeAssistSelectionDialog() {
 
 function completeGoalWithAssist(assistPlayerId) {
     if (!appState.goalScorer || !assistPlayerId) return;
+    
+    // Verify the assister isn't red-carded
+    const assister = getTeamPlayers().find(p => p.id === assistPlayerId);
+    if (assister && assister.stats && assister.stats.redCards > 0) {
+        showMessage('Cannot assign assist to red-carded player', 'error');
+        return;
+    }
     
     // Record the goal for the scorer
     recordAction('goal', appState.goalScorer.id);
@@ -1150,10 +1195,30 @@ function recordAction(actionType, specificPlayerId = null) {
             break;
         case 'yellow_card':
             teamPlayers[playerIndex].stats.yellowCards = (teamPlayers[playerIndex].stats.yellowCards || 0) + 1;
-            // Update yellow card counter
-            const yellowCounter = document.getElementById('yellow-card-count');
-            if (yellowCounter) {
-                yellowCounter.textContent = (parseInt(yellowCounter.textContent) || 0) + 1;
+            
+            // If 2 yellow cards, convert to red card
+            if (teamPlayers[playerIndex].stats.yellowCards >= 2) {
+                teamPlayers[playerIndex].stats.redCards = (teamPlayers[playerIndex].stats.redCards || 0) + 1;
+                teamPlayers[playerIndex].stats.yellowCards = 0;
+                
+                // Show message about red card conversion
+                showMessage(`2 yellow cards issued to ${teamPlayers[playerIndex].name}. Converted to Red Card!`, 'warning');
+                
+                // Update red card counter
+                const redCounter = document.getElementById('red-card-count');
+                if (redCounter) {
+                    redCounter.textContent = (parseInt(redCounter.textContent) || 0) + 1;
+                }
+                const yellowCounter = document.getElementById('yellow-card-count');
+                if (yellowCounter) {
+                    yellowCounter.textContent = '0';
+                }
+            } else {
+                // Update yellow card counter
+                const yellowCounter = document.getElementById('yellow-card-count');
+                if (yellowCounter) {
+                    yellowCounter.textContent = (parseInt(yellowCounter.textContent) || 0) + 1;
+                }
             }
             break;
         case 'red_card':
@@ -1204,6 +1269,9 @@ function updatePlayerGridItem(playerId) {
     } else if (yellowCards > 0) {
         playerGridItem.classList.add('yellow-card');
     }
+    
+    // Preserve starter/substitute status
+    // (these classes should remain from renderPlayerGrid())
 }
 
 function calculateGameMinute() {
@@ -1760,6 +1828,10 @@ function startGameFromFormation() {
     if (saveDefault && saveDefault.checked) {
         appState.defaultFormation = getFormationTemp();
     }
+
+    // Store formation players in the current game so we know who's on field
+    appState.currentGame.formationPlayers = getFormationTemp();
+    saveAppData();
     
     // Start the game
     showScreen('game-tracking');

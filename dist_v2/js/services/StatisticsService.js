@@ -266,7 +266,6 @@ const StatisticsService = {
         
         // Sort players by jersey number
         const sortedPlayers = Object.values(playerStats)
-            .filter(player => appState.players.find(p => p.id === Object.keys(playerStats).find(id => playerStats[id] === player)))
             .sort((a, b) => a.jerseyNumber - b.jerseyNumber);
         
         // Build table HTML
