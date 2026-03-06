@@ -14,8 +14,9 @@ const StatisticsService = {
     calculatePlayerStatistics(startDate = null, endDate = null) {
         const playerStats = {};
         
-        // Initialize stats for all players
-        appState.players.forEach(player => {
+        // Initialize stats for all players in current team
+        const teamPlayers = window.getTeamPlayers ? window.getTeamPlayers() : [];
+        teamPlayers.forEach(player => {
             playerStats[player.id] = {
                 name: player.name,
                 jerseyNumber: player.jerseyNumber,
@@ -36,8 +37,9 @@ const StatisticsService = {
             };
         });
         
-        // Sum up stats from all completed games
-        let completedGames = appState.games.filter(game => game.isCompleted);
+        // Sum up stats from all completed games in current team
+        const teamGames = window.getTeamGames ? window.getTeamGames() : [];
+        let completedGames = teamGames.filter(game => game.isCompleted);
         
         // Apply date filtering if provided
         if (startDate || endDate) {
@@ -234,7 +236,8 @@ const StatisticsService = {
         const playerStats = this.calculatePlayerStatistics(startDate, endDate);
         
         // Check if we have completed games (considering date filter)
-        let completedGames = appState.games.filter(game => game.isCompleted);
+        const teamGames = window.getTeamGames ? window.getTeamGames() : [];
+        let completedGames = teamGames.filter(game => game.isCompleted);
         if (startDate || endDate) {
             completedGames = completedGames.filter(game => {
                 if (!game.date) return false;
@@ -245,14 +248,15 @@ const StatisticsService = {
             });
         }
         const hasCompletedGames = completedGames && completedGames.length > 0;
+        const teamPlayers = window.getTeamPlayers ? window.getTeamPlayers() : [];
         
         // Update period info and reports counter
         this.updateStatsPeriodInfo(startDate, endDate, completedGames);
         
-        if (!hasCompletedGames || appState.players.length === 0) {
+        if (!hasCompletedGames || teamPlayers.length === 0) {
             container.innerHTML = `
                 <div class="no-stats-message">
-                    ${appState.players.length === 0 
+                    ${teamPlayers.length === 0 
                         ? 'No players added to the team yet.' 
                         : 'No completed games yet. Statistics will appear after completing games.'}
                 </div>

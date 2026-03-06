@@ -76,6 +76,32 @@ function setFormationTemp(ft) {
     if (team) team.formationTemp = ft;
 }
 
+// Export helper functions globally for services
+window.getCurrentTeam = getCurrentTeam;
+window.getTeamPlayers = getTeamPlayers;
+window.setTeamPlayers = setTeamPlayers;
+window.getTeamName = getTeamName;
+window.setTeamName = setTeamName;
+window.getTeamGames = getTeamGames;
+window.setTeamGames = setTeamGames;
+window.getTeamSettings = getTeamSettings;
+window.setTeamSettings = setTeamSettings;
+window.getUnavailablePlayers = getUnavailablePlayers;
+window.setUnavailablePlayers = setUnavailablePlayers;
+window.getFormationTemp = getFormationTemp;
+window.setFormationTemp = setFormationTemp;
+
+// Update UI functions
+function updateMainScreen() {
+    updateTeamSelector();
+    updateTeamNameUI();
+    renderPlayersList();
+}
+
+function updateUI() {
+    updateMainScreen();
+}
+
 // Initialize the app
 // Utility functions for common operations
 function getElement(id) {
@@ -187,6 +213,7 @@ function addNewTeam() {
     appState.currentTeamId = id;
     saveAppData();
     updateUI();
+    updateMainScreen();
     showMessage(`Team "${name}" created successfully`, 'success');
 }
 
