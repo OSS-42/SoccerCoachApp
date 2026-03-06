@@ -199,11 +199,9 @@ const StatisticsService = {
             controlsRow2.setAttribute('data-period-info', periodText);
         }
         
-        // Count games and available reports
+        // Count all completed games (they all have reports)
         const totalGames = filteredGames.length;
-        const gamesWithReports = filteredGames.filter(game => 
-            game.actions && game.actions.length > 0
-        ).length;
+        const gamesWithReports = totalGames; // All completed games have reports
         
         // Update reports counter
         if (totalGames === 0) {
@@ -275,20 +273,20 @@ const StatisticsService = {
                     <tr>
                         <th>#</th>
                         <th>Name</th>
-                        <th>Games Played</th>
-                        <th>Goals</th>
-                        <th>Assists</th>
-                        <th>Saves</th>
-                        <th>Goals Allowed</th>
+                        <th>Games</th>
+                        <th><span class="material-icons stat-icon-small">sports_soccer</span></th>
+                        <th><span class="stat-emoji">👟</span></th>
+                        <th><span class="material-icons stat-icon-small">back_hand</span></th>
+                        <th><img src="img/red-soccer.png" width="16" height="16" alt="Goals" class="stat-icon-img"></th>
                         <th>Passes</th>
                         <th>Shots</th>
                         <th>Blocks</th>
                         <th>Fouls</th>
-                        <th>Yellow Cards</th>
-                        <th>Red Cards</th>
-                        <th>Own Goals</th>
-                        <th>Missed Games</th>
-                        <th>Late to Game</th>
+                        <th><span class="yellow-card-icon">🟨</span></th>
+                        <th><span class="red-card-icon">🟥</span></th>
+                        <th>OG</th>
+                        <th>Missed</th>
+                        <th>Late</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -300,16 +298,16 @@ const StatisticsService = {
                     <td>${player.jerseyNumber}</td>
                     <td>${player.name.charAt(0).toUpperCase() + player.name.slice(1).toLowerCase()}</td>
                     <td>${player.gamesPlayed}</td>
-                    <td>${player.goals}</td>
-                    <td>${player.assists}</td>
-                    <td>${player.saves}</td>
-                    <td>${player.goalsAllowed}</td>
+                    <td><span class="material-icons stat-icon-small">sports_soccer</span> ${player.goals}</td>
+                    <td><span class="stat-emoji">👟</span> ${player.assists}</td>
+                    <td><span class="material-icons stat-icon-small">back_hand</span> ${player.saves}</td>
+                    <td><img src="img/red-soccer.png" width="16" height="16" alt="Goals Allowed" class="stat-icon-img"> ${player.goalsAllowed}</td>
                     <td>${player.passes}</td>
                     <td>${player.shots}</td>
                     <td>${player.blocks}</td>
                     <td>${player.fouls}</td>
-                    <td>${player.yellowCards}</td>
-                    <td>${player.redCards}</td>
+                    <td><span class="yellow-card-icon">🟨</span> ${player.yellowCards}</td>
+                    <td><span class="red-card-icon">🟥</span> ${player.redCards}</td>
                     <td>${player.ownGoals}</td>
                     <td>${player.missedGames}</td>
                     <td>${player.lateToGame}</td>

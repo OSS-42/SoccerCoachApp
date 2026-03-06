@@ -446,6 +446,7 @@ function setupFormation() {
     const opponentName = document.getElementById('opponent-name').value.trim();
     const gameDate = document.getElementById('game-date').value;
     const matchType = document.getElementById('match-type').value;
+    const numPeriods = document.getElementById('num-periods').value;
     const useSubstitutionTimer = !document.getElementById('use-substitution-timer').checked;
     const substitutionTime = document.getElementById('substitution-time').value;
     
@@ -463,19 +464,15 @@ function setupFormation() {
         showMessage('Please select a match type', 'error');
         return;
     }
+
+    if (!numPeriods || parseInt(numPeriods) < 1) {
+        showMessage('Please specify at least 1 period', 'error');
+        return;
+    }
     
     // Only require substitution time if timer is actually needed
     if (useSubstitutionTimer && !substitutionTime) {
         showMessage('Please enter substitution timer duration', 'error');
-        return;
-    }
-
-    // Validate formation has correct number of players
-    const formationPlayers = getFormationTemp();
-    const requiredPlayerCount = parseInt(matchType.split('v')[0]);
-    
-    if (formationPlayers.length !== requiredPlayerCount) {
-        showMessage(`Formation must have exactly ${requiredPlayerCount} players for ${matchType}. Currently selected: ${formationPlayers.length}`, 'error');
         return;
     }
     
@@ -516,9 +513,33 @@ function setupFormation() {
     
     // Show formation setup screen
     showScreen('formation-setup');
+    // Store match type for formation validation
+    appState.gameSetupMatchType = matchType;
     if (typeof FormationScreen !== 'undefined' && FormationScreen.renderFormationSetup) {
         FormationScreen.renderFormationSetup();
     }
+}
+
+// Formation validation - called when user clicks Start Formation or tries to move to game tracking
+function validateFormationSetup() {
+    const formationPlayers = getFormationTemp();
+    const requiredPlayerCount = parseInt(appState.gameSetupMatchType.split('v')[0]);
+    const unavailablePlayers = getUnavailablePlayers();
+    
+    // Check that on-field players match required count
+    if (formationPlayers.length !== requiredPlayerCount) {
+        showMessage(`On-field players must be exactly ${requiredPlayerCount} for ${appState.gameSetupMatchType}. Currently selected: ${formationPlayers.length}`, 'error');
+        return false;
+    }
+    
+    // Check that goalkeeper position has a player
+    const goalkeeperPosition = formationPlayers.find(p => p.position && p.position.toLowerCase() === 'goalkeeper');
+    if (!goalkeeperPosition) {
+        showMessage('Goalkeeper position must be filled', 'error');
+        return false;
+    }
+    
+    return true;
 }
 
 // Player Management
@@ -1446,12 +1467,12 @@ function viewReport(gameId) {
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
                     <td>${playerStat.name.charAt(0).toUpperCase() + playerStat.name.slice(1).toLowerCase()}</td>
-                    <td>${playerStat.goals}</td>
-                    <td>${playerStat.assists}</td>
-                    <td>${playerStat.saves}</td>
-                    <td>${playerStat.goalsAllowed}</td>
-                    <td>${playerStat.yellowCards}</td>
-                    <td>${playerStat.redCards}</td>
+                    <td><span class="material-icons stat-icon-small">sports_soccer</span> ${playerStat.goals}</td>
+                    <td><span class="stat-emoji">👟</span> ${playerStat.assists}</td>
+                    <td><span class="material-icons stat-icon-small">back_hand</span> ${playerStat.saves}</td>
+                    <td><img src="img/red-soccer.png" width="16" height="16" alt="Goals" class="stat-icon-img"> ${playerStat.goalsAllowed}</td>
+                    <td><span class="yellow-card-icon">🟨</span> ${playerStat.yellowCards}</td>
+                    <td><span class="red-card-icon">🟥</span> ${playerStat.redCards}</td>
                 </tr>
             `;
         });
@@ -1475,12 +1496,12 @@ function viewReport(gameId) {
                         <tr>
                             <th>#</th>
                             <th>Name</th>
-                            <th>Goals</th>
-                            <th>Assists</th>
-                            <th>Saves</th>
-                            <th>Goals Allowed</th>
-                            <th>Yellow</th>
-                            <th>Red</th>
+                            <th><span class="material-icons stat-icon-small">sports_soccer</span></th>
+                            <th><span class="stat-emoji">👟</span></th>
+                            <th><span class="material-icons stat-icon-small">back_hand</span></th>
+                            <th><img src="img/red-soccer.png" width="16" height="16" alt="Goals" class="stat-icon-img"></th>
+                            <th><span class="yellow-card-icon">🟨</span></th>
+                            <th><span class="red-card-icon">🟥</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1828,6 +1849,11 @@ function clearFormation() {
 function startGameFromFormation() {
     if (!appState.currentGame) {
         showMessage('No game selected');
+        return;
+    }
+
+    // Validate formation before starting game
+    if (!validateFormationSetup()) {
         return;
     }
     
