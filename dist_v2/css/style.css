@@ -218,6 +218,19 @@ body {
     font-size: 20px;
 }
 
+/* Version Footer - Bottom Right Corner */
+.version-footer {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    font-size: 11px;
+    color: #999;
+    opacity: 0.6;
+    font-family: 'Courier New', monospace;
+    pointer-events: none;
+    z-index: 100;
+}
+
 .back-btn, .action-btn {
     background: none;
     border: none;

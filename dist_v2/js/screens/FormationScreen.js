@@ -188,5 +188,342 @@ const FormationScreen = {
     }
 };
 
+// ============================================================================
+// DRAG AND DROP EVENT HANDLERS
+// ============================================================================
+
+// Global state for tap-to-select functionality
+const TapState = {
+    playerId: null,
+    source: null, // 'field', 'sidebar', or 'unavailable'
+    slotId: null,
+    
+    clear() {
+        this.playerId = null;
+        this.source = null;
+        this.slotId = null;
+    }
+};
+
+// Drag event: Player starts being dragged
+function dragStart(e) {
+    e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
+    e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
+    e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
+
+    // Create a custom drag image
+    const dragImage = document.createElement('div');
+    dragImage.textContent = e.target.textContent;
+    dragImage.style.position = 'absolute';
+    dragImage.style.width = '72px';
+    dragImage.style.height = '72px';
+    dragImage.style.lineHeight = '72px';
+    dragImage.style.fontSize = '36px';
+    dragImage.style.borderRadius = '50%';
+    dragImage.style.background = '#000';
+    dragImage.style.color = '#fff';
+    dragImage.style.textAlign = 'center';
+    dragImage.style.opacity = '0.7';
+    dragImage.style.pointerEvents = 'none';
+    dragImage.style.zIndex = '1000';
+    document.body.appendChild(dragImage);
+    e.dataTransfer.setDragImage(dragImage, 36, 36);
+    setTimeout(() => {
+        document.body.removeChild(dragImage);
+    }, 0);
+}
+
+// Drag over: Allow dropping on slots
+function dragOver(e) {
+    e.preventDefault();
+}
+
+// Drop to slot: Player placed on formation field
+function dropToSlot(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
+    const player = getTeamPlayers().find(p => p.id === playerId);
+    if (!player) return;
+
+    const slot = e.target.closest('.player-slot, .unavailable-slot');
+    if (!slot) return;
+
+    // Check if this is unavailable slot
+    if (slot.classList.contains('unavailable-slot')) {
+        // Add to unavailable list
+        const unavailableList = [...getUnavailablePlayers()];
+        if (!unavailableList.includes(playerId)) {
+            unavailableList.push(playerId);
+            setUnavailablePlayers(unavailableList);
+        }
+        slot.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+        const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (playerNum && !slot.contains(playerNum)) {
+            playerNum.classList.add('disabled');
+            playerNum.draggable = false;
+        }
+        return;
+    }
+
+    // Regular field slot
+    const position = slot.getAttribute('data-position');
+    const formation = getFormationTemp() || [];
+    let currentPlayers = formation.filter(f => f.playerId !== playerId).length;
+
+    // Check player limits if needed
+    const existingPlayerId = slot.getAttribute('data-player-id');
+    if (existingPlayerId && existingPlayerId !== playerId) {
+        const newFormation = formation.filter(f => f.playerId !== existingPlayerId);
+        setFormationTemp(newFormation);
+        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
+        if (oldPlayer) {
+            oldPlayer.classList.remove('disabled');
+            oldPlayer.draggable = true;
+        }
+    }
+
+    // Add/update player to formation
+    const updatedFormation = formation.filter(f => f.playerId !== playerId);
+    updatedFormation.push({
+        playerId,
+        position,
+        x: parseFloat(slot.style.left),
+        y: parseFloat(slot.style.top)
+    });
+    setFormationTemp(updatedFormation);
+
+    // Update slot UI
+    slot.innerHTML = `<span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    slot.setAttribute('data-player-id', playerId);
+    slot.classList.add('occupied');
+
+    // Disable player in sidebar if coming from sidebar
+    if (source === 'sidebar') {
+        const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+        if (playerNum) {
+            playerNum.classList.add('disabled');
+            playerNum.draggable = false;
+        }
+    } else if (slotId && slotId !== slot.id) {
+        // Clear old slot if coming from field
+        const prevSlot = document.getElementById(slotId);
+        if (prevSlot) {
+            prevSlot.innerHTML = '';
+            prevSlot.removeAttribute('data-player-id');
+            prevSlot.classList.remove('occupied');
+        }
+    }
+
+    // Reattach drag listeners to placed players
+    const placedNumbers = document.querySelectorAll('.player-number-placed');
+    placedNumbers.forEach(num => {
+        num.removeEventListener('dragstart', dragStart);
+        num.addEventListener('dragstart', dragStart);
+    });
+}
+
+// Drop to sidebar: Remove player from formation
+function dropToSidebar(e) {
+    e.preventDefault();
+    const playerId = e.dataTransfer.getData('playerId');
+    const source = e.dataTransfer.getData('source');
+    const slotId = e.dataTransfer.getData('slotId');
+    
+    // Only allow removing from field
+    if (source === 'sidebar') return;
+
+    const formation = getFormationTemp() || [];
+    const newFormation = formation.filter(f => f.playerId !== playerId);
+    setFormationTemp(newFormation);
+
+    // Clear slot
+    const slot = document.getElementById(slotId);
+    if (slot) {
+        slot.innerHTML = '';
+        slot.removeAttribute('data-player-id');
+        slot.classList.remove('occupied');
+    }
+
+    // Re-enable player in sidebar
+    const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
+    if (playerNum) {
+        playerNum.classList.remove('disabled');
+        playerNum.draggable = true;
+    }
+    
+    // Remove from unavailable if present
+    const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
+    setUnavailablePlayers(unavailableList);
+    
+    // Clear unavailable slots
+    document.querySelectorAll('.unavailable-slot').forEach(slot => {
+        const num = slot.querySelector(`[data-player-id="${playerId}"]`);
+        if (num) {
+            slot.innerHTML = '';
+        }
+    });
+}
+
+// ============================================================================
+// TOUCH EVENT HANDLERS
+// ============================================================================
+
+let draggedElement = null;
+let clone = null;
+let lastVibratedSlot = null;
+
+function touchStart(e) {
+    if (e.target.classList.contains('disabled')) return;
+    e.preventDefault();
+    draggedElement = e.target;
+    const touch = e.targetTouches[0];
+
+    // Haptic feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+
+    // Create clone for visual feedback
+    clone = draggedElement.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.opacity = '0.7';
+    clone.style.pointerEvents = 'none';
+    clone.style.zIndex = '1000';
+    clone.style.width = '72px';
+    clone.style.height = '72px';
+    clone.style.lineHeight = '72px';
+    clone.style.fontSize = '36px';
+    clone.style.borderRadius = '50%';
+    clone.style.background = '#000';
+    clone.style.color = '#fff';
+    document.body.appendChild(clone);
+    updateClonePosition(touch.clientX, touch.clientY);
+}
+
+function touchMove(e) {
+    if (!draggedElement) return;
+    e.preventDefault();
+    const touch = e.targetTouches[0];
+    updateClonePosition(touch.clientX, touch.clientY);
+
+    // Haptic feedback when over slot
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = dropTarget?.closest('.player-slot');
+    if (slot && slot !== lastVibratedSlot) {
+        if (navigator.vibrate) {
+            navigator.vibrate(30);
+        }
+        lastVibratedSlot = slot;
+    } else if (!slot) {
+        lastVibratedSlot = null;
+    }
+}
+
+function updateClonePosition(clientX, clientY) {
+    if (clone) {
+        clone.style.left = `${clientX - 36}px`;
+        clone.style.top = `${clientY - 36}px`;
+    }
+}
+
+function touchEnd(e) {
+    if (!draggedElement) return;
+    e.preventDefault();
+
+    if (clone) {
+        document.body.removeChild(clone);
+        clone = null;
+    }
+
+    const touch = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const playerId = draggedElement.getAttribute('data-player-id');
+    const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
+    const slotId = draggedElement.parentElement.id || '';
+
+    const slot = dropTarget?.closest('.player-slot, .unavailable-slot');
+    if (slot) {
+        const fakeEvent = {
+            preventDefault() {},
+            dataTransfer: {
+                getData(key) {
+                    if (key === 'playerId') return playerId;
+                    if (key === 'source') return source;
+                    if (key === 'slotId') return slotId;
+                    return '';
+                }
+            },
+            target: slot
+        };
+        if (slot.classList.contains('unavailable-slot')) {
+            dropToSlot(fakeEvent);
+        } else {
+            dropToSlot(fakeEvent);
+        }
+    }
+
+    draggedElement = null;
+}
+
+// ============================================================================
+// TAP-TO-SELECT HANDLERS
+// ============================================================================
+
+function handleTapPlayer(e) {
+    e.stopPropagation();
+    const playerId = e.target.getAttribute('data-player-id');
+    
+    // If tapping same player, deselect
+    if (TapState.playerId === playerId) {
+        TapState.clear();
+        document.querySelectorAll('.player-number').forEach(num => {
+            num.style.outline = 'none';
+        });
+        return;
+    }
+
+    // Select this player
+    TapState.playerId = playerId;
+    TapState.source = e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar';
+    TapState.slotId = e.target.parentElement.id || '';
+
+    // Visual feedback
+    document.querySelectorAll('.player-number').forEach(num => {
+        num.style.outline = num === e.target ? '3px solid #4CAF50' : 'none';
+    });
+}
+
+function handleTapSlot(e) {
+    e.stopPropagation();
+    const slot = e.currentTarget;
+    
+    // If no player selected, do nothing
+    if (!TapState.playerId) return;
+
+    // Create fake event to reuse drop logic
+    const fakeEvent = {
+        preventDefault() {},
+        dataTransfer: {
+            getData(key) {
+                if (key === 'playerId') return TapState.playerId;
+                if (key === 'source') return TapState.source;
+                if (key === 'slotId') return TapState.slotId;
+                return '';
+            }
+        },
+        target: slot
+    };
+
+    dropToSlot(fakeEvent);
+    TapState.clear();
+    
+    // Clear visual feedback
+    document.querySelectorAll('.player-number').forEach(num => {
+        num.style.outline = 'none';
+    });
+}
+
 // Expose globally
 window.FormationScreen = FormationScreen;

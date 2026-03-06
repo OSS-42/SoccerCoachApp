@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Soccer Coach Tracker v1.9.81</title>
+    <title>Football Live Action Tracker</title>
     <link rel="stylesheet" href="css/style.css?v=1.9.78">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
@@ -21,12 +21,12 @@
         <!-- Main Menu Screen -->
         <main id="main-screen" class="screen active" role="main" aria-label="Main menu">
             <div class="app-header">
-                <h1>Soccer Coach Tracker v1.10.0</h1>
+                <h1>Football Live Action Tracker</h1>
             </div>
             <div class="team-selector">
                 <select id="team-selector" onchange="handleTeamChange()"></select>
-                <button class="secondary-btn small" onclick="addNewTeam()">+
-                </button>
+                <button class="secondary-btn small" onclick="addNewTeam()">+</button>
+                <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
             </div>
             <nav class="main-menu" role="navigation" aria-label="Main navigation">
                 <div class="menu-row">
@@ -136,8 +136,8 @@
                 <h1>New Game</h1>
                 <div class="team-selector">
                     <select id="team-selector" onchange="handleTeamChange()"></select>
-                    <button class="secondary-btn small" onclick="addNewTeam()">+
-                    </button>
+                    <button class=\"secondary-btn small\" onclick=\"addNewTeam()\">+</button>
+                    <button class=\"secondary-btn small delete\" onclick=\"deleteTeam()\" title=\"Delete current team\">−</button>
                 </div>
             </div>
             <div class="content">
@@ -320,8 +320,8 @@
                 <h1>Settings</h1>
                 <div class="team-selector">
                     <select id="team-selector" onchange="handleTeamChange()"></select>
-                    <button class="secondary-btn small" onclick="addNewTeam()">+
-                    </button>
+                    <button class=\"secondary-btn small\" onclick=\"addNewTeam()\">+</button>
+                    <button class=\"secondary-btn small delete\" onclick=\"deleteTeam()\" title=\"Delete current team\">−</button>
                 </div>
             </div>
             <div class="content">
@@ -544,6 +544,9 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Version footer - bottom right corner -->
+        <div id="version-footer" class="version-footer">v1.10.2</div>
     </div>
 
     <script src="js/core/StateInit.js"></script>
@@ -560,5 +563,16 @@
     <script src="js/screens/GamePlayScreen.js"></script>
     <script src="js/screens/ReportsScreen.js"></script>
     <script src="js/screens/SettingsScreen.js"></script>
-    <script src="js/app.js?v=1.10.0"></script>
+    <script src="js/app.js?v=1.10.1"></script>
+    
+    <!-- Load and display version from version.json -->
+    <script>
+        fetch('version.json')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('version-footer').textContent = 'v' + data.version;
+                window.APP_VERSION = data.version;
+            })
+            .catch(() => console.log('Version file not found, using fallback'));
+    </script>
 </html>

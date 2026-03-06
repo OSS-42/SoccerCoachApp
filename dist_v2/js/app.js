@@ -191,10 +191,34 @@ function handleTeamChange() {
         appState.currentTeamId = selector.value;
         saveAppData();
         updateUI();
+        
+        // If on a specific screen, refresh its content for the new team
+        const activeScreen = document.querySelector('.screen.active');
+        if (activeScreen) {
+            const screenId = activeScreen.id;
+            if (screenId === 'team-setup' && typeof TeamSetupScreen !== 'undefined') {
+                TeamSetupScreen.renderPlayersList();
+            } else if (screenId === 'formation-setup' && typeof FormationScreen !== 'undefined') {
+                FormationScreen.renderFormationSetup();
+            } else if (screenId === 'statistics') {
+                renderPlayerStatistics();
+            }
+        }
     }
 }
 
 function addNewTeam() {
+    const maxTeams = 2;
+    const currentTeamCount = appState.teams.length;
+    
+    if (currentTeamCount >= maxTeams) {
+        showMessage(
+            `You can create a maximum of ${maxTeams} teams. To manage more teams, this will be available as a premium feature.`,
+            'error'
+        );
+        return;
+    }
+    
     const name = prompt('Enter new team name:');
     if (!name) return;
     
@@ -215,6 +239,41 @@ function addNewTeam() {
     updateUI();
     updateMainScreen();
     showMessage(`Team "${name}" created successfully`, 'success');
+}
+
+function deleteTeam() {
+    const currentTeamId = appState.currentTeamId;
+    const currentTeam = getCurrentTeam();
+    
+    if (!currentTeam) {
+        showMessage('No team to delete', 'error');
+        return;
+    }
+    
+    // Prevent deletion if only one team exists
+    if (appState.teams.length <= 1) {
+        showMessage('You must have at least one team', 'error');
+        return;
+    }
+    
+    const confirmDelete = confirm(
+        `Are you sure you want to delete the team "${currentTeam.name}"?\n\nAll players and game data for this team will be permanently erased.`
+    );
+    
+    if (!confirmDelete) return;
+    
+    // Remove the team
+    appState.teams = appState.teams.filter(t => t.id !== currentTeamId);
+    
+    // Switch to another team (first available)
+    if (appState.teams.length > 0) {
+        appState.currentTeamId = appState.teams[0].id;
+    }
+    
+    saveAppData();
+    updateUI();
+    updateMainScreen();
+    showMessage(`Team "${currentTeam.name}" has been deleted`, 'success');
 }
 
 function saveTeamName() {
@@ -243,8 +302,8 @@ function showScreen(screenId) {
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
     
-    // Update team selector when showing main screen
-    if (screenId === 'main-screen') {
+    // Update team selector on all screens except game-tracking (live game)
+    if (screenId !== 'game-tracking') {
         updateTeamSelector();
     }
     
@@ -378,6 +437,13 @@ function renderPlayersList() {
     playersList.innerHTML = '';
     
     const teamPlayers = getTeamPlayers();
+    const counterElement = document.getElementById('player-counter');
+    
+    // Update player counter on both main and team setup screens
+    if (counterElement) {
+        counterElement.textContent = teamPlayers.length;
+    }
+    
     if (teamPlayers.length === 0) {
         playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
         return;
@@ -1192,6 +1258,7 @@ function exportReport(gameId, format) {
     // Get the report content from the dialog
     const reportContent = document.querySelector('.report-dialog').innerHTML;
     
+    // Build version: 1.10.1 (patch update for bug fixes)
     // For PDF, we'll use a printable version that users can save as PDF
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -1315,7 +1382,7 @@ function exportTeamData() {
     // Prepare data for export
     const exportData = {
         exportDate: new Date().toISOString(),
-        appVersion: "1.0.0",
+        appVersion: window.APP_VERSION || "1.10.1",
         teamName: appState.teamName,
         players: appState.players,
         games: appState.games,
