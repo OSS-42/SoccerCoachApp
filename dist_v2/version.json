@@ -1,7 +1,9 @@
 {
-  "version": "1.10.9",
+  "version": "1.10.11",
   "lastUpdated": "2026-03-05",
   "changelog": {
+    "1.10.11": "Simplified: reverted renderPlayerGrid() to remove unnecessary status class logic (starter/substitute/unavailable) that was overcomplicating the ui, kept focused card class application (yellow-card/red-card) based on player stats, restored simpler cleaner tile rendering",
+    "1.10.10": "Fixed: game setup screen no longer requires substitution time when 'timer not needed' is checked, live game player tiles now display color-coded status (starter/substitute/unavailable) and card states (yellow/red), yellow and red card buttons now properly update tile styling and card counters, end of game report now includes yellow and red card statistics in the table",
     "1.10.9": "Fixed: team setup dropdown now properly switches teams by passing event element to handleTeamChange(), player tiles now appear on game tracking screen with renderPlayerGrid() called on screen entry and in startGameFromFormation(), error messages now auto-hide after 5 seconds like success messages",
     "1.10.8": "Fixed: removed +/- buttons from main screen team selector (team management only on team-setup), added black background styling to team-setup screen's team-name section, fixed formation screen unavailable slot tap selection (now detects unavailable source correctly), improved bench spot handling - empty spots stay visible when players placed on field, fixed setupFormation() to create game before showing formation screen (prevents 'no game selected' error), enhanced dropToSidebar() to completely rebuild sidebar with proper event listeners",
     "1.10.7": "Fixed: formation screen sidebar rebuild when players dropped back from field - now properly shows all available players instead of trying to re-enable deleted DOM elements, verified all JavaScript syntax is valid",

@@ -445,6 +445,7 @@ function setupFormation() {
     // Validate required game setup fields
     const opponentName = document.getElementById('opponent-name').value.trim();
     const gameDate = document.getElementById('game-date').value;
+    const useSubstitutionTimer = !document.getElementById('use-substitution-timer').checked;
     const substitutionTime = document.getElementById('substitution-time').value;
     
     if (!opponentName) {
@@ -457,7 +458,8 @@ function setupFormation() {
         return;
     }
     
-    if (!substitutionTime) {
+    // Only require substitution time if timer is actually needed
+    if (useSubstitutionTimer && !substitutionTime) {
         showMessage('Please enter substitution timer duration', 'error');
         return;
     }
@@ -793,7 +795,9 @@ function renderPlayerGrid() {
                 goals: 0,
                 assists: 0,
                 saves: 0,
-                goalsAllowed: 0
+                goalsAllowed: 0,
+                yellowCards: 0,
+                redCards: 0
             };
         }
         
@@ -834,6 +838,15 @@ function renderPlayerGrid() {
                 </div>
             </div>
         `;
+        
+        // Apply card classes if player has cards
+        const redCards = player.stats.redCards || 0;
+        const yellowCards = player.stats.yellowCards || 0;
+        if (redCards > 0) {
+            playerGridItem.classList.add('red-card');
+        } else if (yellowCards > 0) {
+            playerGridItem.classList.add('yellow-card');
+        }
         
         playerGridItem.addEventListener('click', () => {
             openPlayerActionDialog(player);
@@ -1096,13 +1109,15 @@ function recordAction(actionType, specificPlayerId = null) {
     const playerIndex = teamPlayers.findIndex(p => p.id === playerId);
     if (playerIndex === -1) return; // Player not found
     
-    // Ensure player stats object is initialized
+    // Ensure player stats object is initialized with all fields including cards
     if (!teamPlayers[playerIndex].stats) {
         teamPlayers[playerIndex].stats = {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         };
     }
     
@@ -1133,6 +1148,22 @@ function recordAction(actionType, specificPlayerId = null) {
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
             break;
+        case 'yellow_card':
+            teamPlayers[playerIndex].stats.yellowCards = (teamPlayers[playerIndex].stats.yellowCards || 0) + 1;
+            // Update yellow card counter
+            const yellowCounter = document.getElementById('yellow-card-count');
+            if (yellowCounter) {
+                yellowCounter.textContent = (parseInt(yellowCounter.textContent) || 0) + 1;
+            }
+            break;
+        case 'red_card':
+            teamPlayers[playerIndex].stats.redCards = (teamPlayers[playerIndex].stats.redCards || 0) + 1;
+            // Update red card counter
+            const redCounter = document.getElementById('red-card-count');
+            if (redCounter) {
+                redCounter.textContent = (parseInt(redCounter.textContent) || 0) + 1;
+            }
+            break;
     }
     
     // Update player grid item
@@ -1150,16 +1181,28 @@ function updatePlayerGridItem(playerId) {
     const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
     
-    // Directly update the stat values in the player card
-    const statValues = document.querySelectorAll(`.player-grid-item[data-player-id="${playerId}"] .stat-value`);
+    // Get the player grid item
+    const playerGridItem = document.querySelector(`.player-grid-item[data-player-id="${playerId}"]`);
+    if (!playerGridItem) return;
+    
+    // Update stat values
+    const statValues = playerGridItem.querySelectorAll('.stat-value');
     if (statValues && statValues.length >= 4) {
-        statValues[0].textContent = player.stats.goals;
-        statValues[1].textContent = player.stats.assists;
-        statValues[2].textContent = player.stats.saves;
-        statValues[3].textContent = player.stats.goalsAllowed;
-    } else {
-        // Fallback to re-rendering the entire player grid if we can't find stat elements
-        renderPlayerGrid();
+        statValues[0].textContent = player.stats.goals || 0;
+        statValues[1].textContent = player.stats.assists || 0;
+        statValues[2].textContent = player.stats.saves || 0;
+        statValues[3].textContent = player.stats.goalsAllowed || 0;
+    }
+    
+    // Update card classes
+    const yellowCards = player.stats.yellowCards || 0;
+    const redCards = player.stats.redCards || 0;
+    
+    playerGridItem.classList.remove('yellow-card', 'red-card');
+    if (redCards > 0) {
+        playerGridItem.classList.add('red-card');
+    } else if (yellowCards > 0) {
+        playerGridItem.classList.add('yellow-card');
     }
 }
 
@@ -1276,7 +1319,7 @@ function viewReport(gameId) {
     // Get player actions from the game
     const playerActions = {};
     
-    // Initialize player actions
+    // Initialize player actions with all fields
     game.activePlayers.forEach(playerId => {
         const player = getTeamPlayers().find(p => p.id === playerId);
         if (player) {
@@ -1286,7 +1329,9 @@ function viewReport(gameId) {
                 goals: 0,
                 assists: 0,
                 saves: 0,
-                goalsAllowed: 0
+                goalsAllowed: 0,
+                yellowCards: 0,
+                redCards: 0
             };
         }
     });
@@ -1307,6 +1352,12 @@ function viewReport(gameId) {
                 case 'goal_allowed':
                     playerActions[action.playerId].goalsAllowed++;
                     break;
+                case 'yellow_card':
+                    playerActions[action.playerId].yellowCards = (playerActions[action.playerId].yellowCards || 0) + 1;
+                    break;
+                case 'red_card':
+                    playerActions[action.playerId].redCards = (playerActions[action.playerId].redCards || 0) + 1;
+                    break;
             }
         }
     });
@@ -1324,6 +1375,8 @@ function viewReport(gameId) {
                     <td>${playerStat.assists}</td>
                     <td>${playerStat.saves}</td>
                     <td>${playerStat.goalsAllowed}</td>
+                    <td>${playerStat.yellowCards}</td>
+                    <td>${playerStat.redCards}</td>
                 </tr>
             `;
         });
@@ -1350,6 +1403,8 @@ function viewReport(gameId) {
                             <th>Assists</th>
                             <th>Saves</th>
                             <th>Goals Allowed</th>
+                            <th>Yellow</th>
+                            <th>Red</th>
                         </tr>
                     </thead>
                     <tbody>
