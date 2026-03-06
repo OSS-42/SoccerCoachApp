@@ -1,34 +1,7 @@
-// Application State - managed through global window.appState via StateInit.js
-// This will be initialized with multi-team support by StateInit.js
-let appState = {
-    // multi-team structure (will be initialized by StateInit.js)
-    teams: [],
-    currentTeamId: null,
-    
-    // legacy fields (for backward compatibility during migration)
-    teamName: "My Team",
-    players: [],
-    games: [],
-    currentGame: null,
-    
-    timer: {
-        duration: 6 * 60,
-        timeLeft: 6 * 60,
-        interval: null,
-        isRunning: false
-    },
-    gameTimer: {
-        elapsed: 0,
-        interval: null,
-        isRunning: false,
-        startTime: null
-    },
-    settings: {
-        language: 'en',
-        defaultTimer: 6
-    },
-    currentPlayer: null
-};
+// Application State - use the one from StateInit.js (window.appState)
+// StateInit.js loads BEFORE this file and creates window.appState with multi-team support
+// We reference it here to avoid shadowing the global appState
+const appState = window.appState;
 
 // Team helper functions - provide team isolation
 function getCurrentTeam() {
@@ -274,6 +247,53 @@ function updateTeamSelector() {
         if (team.id === currentId) opt.selected = true;
         selector.appendChild(opt);
     });
+}
+
+// Tab switching function for Team Setup screen
+function switchTeamTab(tabName) {
+    // Hide all tab contents
+    const tabContents = document.querySelectorAll('[id$="-tab-content"]');
+    tabContents.forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    // Remove active class from all tab buttons
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    tabButtons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab content
+    const activeContent = document.getElementById(tabName + '-tab-content');
+    if (activeContent) {
+        activeContent.classList.add('active');
+    }
+    
+    // Mark selected tab button as active
+    const activeButton = document.getElementById(tabName + '-tab');
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+    
+    // Render content for the tab
+    if (tabName === 'statistics') {
+        renderPlayerStatistics();
+    }
+}
+
+// Render player statistics - delegate to StatisticsService
+function renderPlayerStatistics() {
+    if (typeof StatisticsService !== 'undefined' && StatisticsService.renderPlayerStatistics) {
+        StatisticsService.renderPlayerStatistics();
+    }
+}
+
+// Formation setup function
+function setupFormation() {
+    showScreen('formation-setup');
+    if (typeof FormationScreen !== 'undefined' && FormationScreen.renderFormationSetup) {
+        FormationScreen.renderFormationSetup();
+    }
 }
 
 // Player Management
@@ -950,7 +970,7 @@ function endGame() {
     
     // Store the game in our games array
     const finishedGameId = appState.currentGame.id;
-    appState.games.push({...appState.currentGame});
+    getTeamGames().push({...appState.currentGame});
     
     // Stop both timers
     pauseTimer();
@@ -979,7 +999,7 @@ function renderReportsList() {
     const reportsList = document.getElementById('reports-list');
     reportsList.innerHTML = '';
     
-    const completedGames = appState.games.filter(game => game.isCompleted);
+    const completedGames = getTeamGames().filter(game => game.isCompleted);
     
     if (completedGames.length === 0) {
         reportsList.innerHTML = '<div class="empty-state">No completed games yet</div>';
@@ -1006,7 +1026,7 @@ function renderReportsList() {
 }
 
 function viewReport(gameId) {
-    const game = appState.games.find(g => g.id === gameId);
+    const game = getTeamGames().find(g => g.id === gameId);
     if (!game) return;
     
     // Create a report dialog if it doesn't exist
@@ -1136,7 +1156,7 @@ function closeDetailedReport() {
 }
 
 function exportReport(gameId, format) {
-    const game = appState.games.find(g => g.id === gameId);
+    const game = getTeamGames().find(g => g.id === gameId);
     if (!game) {
         showMessage('Game not found', 'error');
         return;
@@ -1191,31 +1211,15 @@ function saveSettings() {
 
 // Data persistence (using localStorage in the prototype)
 function saveAppData() {
-    // Save all teams via StorageService if available, otherwise localStorage
-    if (StorageService) {
-        StorageService.saveAppState(appState);
-    } else {
-        localStorage.setItem('soccerCoachApp2', JSON.stringify(appState));
-    }
+    // Save all teams to localStorage
+    localStorage.setItem('soccerCoachApp2', JSON.stringify(appState));
 }
 
 function loadAppData() {
     return new Promise((resolve) => {
-        if (StorageService) {
-            StorageService.loadAppState().then(data => {
-                if (data) {
-                    Object.assign(appState, data);
-                }
-                // Initialize state with multi-team support
-                if (typeof initState === 'function') {
-                    initState();
-                }
-                initializeStyling();
-                resolve();
-            });
-        } else {
-            const savedData = localStorage.getItem('soccerCoachApp2') || localStorage.getItem('soccerCoachApp');
-            if (savedData) {
+        const savedData = localStorage.getItem('soccerCoachApp2') || localStorage.getItem('soccerCoachApp');
+        if (savedData) {
+            try {
                 const data = JSON.parse(savedData);
                 if (data.teams) {
                     appState.teams = data.teams;
@@ -1227,14 +1231,16 @@ function loadAppData() {
                     appState.games = data.games || [];
                     appState.settings = data.settings || appState.settings;
                 }
+            } catch (e) {
+                console.error('Failed to parse saved data:', e);
             }
-            // Initialize state with multi-team support
-            if (typeof initState === 'function') {
-                initState();
-            }
-            initializeStyling();
-            resolve();
         }
+        // Initialize state with multi-team support
+        if (typeof initState === 'function') {
+            initState();
+        }
+        initializeStyling();
+        resolve();
     });
 }
 
