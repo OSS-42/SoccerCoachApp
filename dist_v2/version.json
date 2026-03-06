@@ -1,7 +1,8 @@
 {
-  "version": "1.10.8",
+  "version": "1.10.9",
   "lastUpdated": "2026-03-05",
   "changelog": {
+    "1.10.9": "Fixed: team setup dropdown now properly switches teams by passing event element to handleTeamChange(), player tiles now appear on game tracking screen with renderPlayerGrid() called on screen entry and in startGameFromFormation(), error messages now auto-hide after 5 seconds like success messages",
     "1.10.8": "Fixed: removed +/- buttons from main screen team selector (team management only on team-setup), added black background styling to team-setup screen's team-name section, fixed formation screen unavailable slot tap selection (now detects unavailable source correctly), improved bench spot handling - empty spots stay visible when players placed on field, fixed setupFormation() to create game before showing formation screen (prevents 'no game selected' error), enhanced dropToSidebar() to completely rebuild sidebar with proper event listeners",
     "1.10.7": "Fixed: formation screen sidebar rebuild when players dropped back from field - now properly shows all available players instead of trying to re-enable deleted DOM elements, verified all JavaScript syntax is valid",
     "1.10.6": "Fixed: main screen player counter now updates on team change, team selector moved into black banner line (main and team-setup screens), formation screen unavailable slots are now draggable with event listener reattachment, formation screen bench spots cleared when players placed on field",

@@ -120,9 +120,16 @@ function initializeStyling() {
 }
 
 // Message functions
+let messageTimeout = null;
+
 function showMessage(message, type = 'error') {
     const ribbon = document.getElementById('message-ribbon');
     const messageText = document.getElementById('message-text');
+    
+    // Clear any existing timeout to prevent overlapping messages
+    if (messageTimeout) {
+        clearTimeout(messageTimeout);
+    }
     
     messageText.textContent = message;
     ribbon.className = `message-ribbon ${type}`;
@@ -132,10 +139,8 @@ function showMessage(message, type = 'error') {
         ribbon.classList.remove('hidden');
     }, 10);
     
-    // Auto-hide after 5 seconds
-    if (type === 'success') {
-        setTimeout(hideMessage, 5000);
-    }
+    // Auto-hide after 5 seconds (both success and error messages)
+    messageTimeout = setTimeout(hideMessage, 5000);
 }
 
 function hideMessage() {
@@ -192,20 +197,24 @@ function updateTeamNameUI() {
     });
 }
 
-function handleTeamChange() {
-    // Get the new team ID (from either selector that was changed)
+function handleTeamChange(selectElement) {
+    // Get the new team ID from the element that triggered the change
     let newTeamId = null;
-    const teamSelector = document.getElementById('team-selector');
-    const mainSelector = document.getElementById('main-team-selector');
     
-    // Determine which selector was changed by checking which one was recently changed
-    // Priority: Check if each selector has a value and use the one that's more likely to have changed
-    if (mainSelector && mainSelector.value) {
-        newTeamId = mainSelector.value;
-    } else if (teamSelector && teamSelector.value) {
-        newTeamId = teamSelector.value;
+    if (selectElement && selectElement.value) {
+        // Use the element that triggered the change
+        newTeamId = selectElement.value;
     } else {
-        return;
+        // Fallback: check both selectors (shouldn't normally happen)
+        const teamSelector = document.getElementById('team-selector');
+        const mainSelector = document.getElementById('main-team-selector');
+        if (mainSelector && mainSelector.value) {
+            newTeamId = mainSelector.value;
+        } else if (teamSelector && teamSelector.value) {
+            newTeamId = teamSelector.value;
+        } else {
+            return;
+        }
     }
     
     appState.currentTeamId = newTeamId;
@@ -356,6 +365,9 @@ function showScreen(screenId) {
         updateTeamNameBanner('game-setup-team-name');
     } else if (screenId === 'formation-setup') {
         updateTeamNameBanner('formation-setup-team-name');
+    } else if (screenId === 'game-tracking') {
+        // Render player grid when entering game tracking screen
+        renderPlayerGrid();
     }
 }
 
@@ -1696,6 +1708,7 @@ function startGameFromFormation() {
     
     // Start the game
     showScreen('game-tracking');
+    renderPlayerGrid();
     startGameTimer();
     startTimer();
 }
