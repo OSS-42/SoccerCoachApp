@@ -441,6 +441,7 @@ function addPlayer() {
         id: playerId,
         name,
         jerseyNumber: Number(jerseyNumber),
+        position: undefined,
         stats: {
             goals: 0,
             assists: 0,
@@ -494,7 +495,7 @@ function renderPlayersList() {
 }
 
 function editPlayer(playerId) {
-    const player = appState.players.find(p => p.id === playerId);
+    const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
     
     // Create edit player dialog if it doesn't exist
@@ -535,7 +536,7 @@ function closeEditPlayerDialog() {
 }
 
 function savePlayerEdit(playerId) {
-    const player = appState.players.find(p => p.id === playerId);
+    const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
     
     const newName = document.getElementById('edit-player-name').value.trim();
@@ -552,7 +553,7 @@ function savePlayerEdit(playerId) {
     }
     
     // Check for duplicate jersey numbers (excluding this player)
-    if (appState.players.some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
+    if (getTeamPlayers().some(p => p.id !== playerId && p.jerseyNumber === newJerseyNumber)) {
         showMessage('Another player already has this jersey number', 'error');
         return;
     }
@@ -577,7 +578,7 @@ function deletePlayer(playerId) {
         document.getElementById('app').appendChild(confirmDialog);
     }
     
-    const player = appState.players.find(p => p.id === playerId);
+    const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
     
     confirmDialog.innerHTML = `
@@ -599,13 +600,15 @@ function confirmDeletePlayer(playerId) {
     document.getElementById('confirm-delete-dialog').style.display = 'none';
     
     // Actually remove the player completely instead of just marking inactive
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
+    const teamPlayers = getTeamPlayers();
+    const playerIndex = teamPlayers.findIndex(p => p.id === playerId);
     if (playerIndex !== -1) {
         // Get player information for the message
-        const player = appState.players[playerIndex];
+        const player = teamPlayers[playerIndex];
         
         // Remove the player completely (not just set inactive)
-        appState.players.splice(playerIndex, 1);
+        teamPlayers.splice(playerIndex, 1);
+        setTeamPlayers(teamPlayers);
         
         // Update data and UI
         saveAppData();
@@ -628,7 +631,7 @@ function startGame() {
     }
     
     // Reset player stats for this new game
-    appState.players.forEach(player => {
+    getTeamPlayers().forEach(player => {
         player.stats = {
             goals: 0,
             assists: 0,
@@ -647,7 +650,7 @@ function startGame() {
         startTime: new Date().toISOString(),
         endTime: null,
         actions: [],
-        activePlayers: [...appState.players.map(p => p.id)],
+        activePlayers: [...getTeamPlayers().map(p => p.id)],
         isCompleted: false,
         totalGameTime: 0 // Track total game time in seconds
     };
@@ -682,7 +685,7 @@ function renderPlayerGrid() {
     playerGrid.innerHTML = '';
     
     // Using all players, not filtering by active status anymore
-    appState.players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+    getTeamPlayers().sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
         // Ensure player has stats object
         if (!player.stats) {
             player.stats = {
@@ -876,7 +879,7 @@ function openAssistSelectionDialog() {
     playersGrid.innerHTML = '';
     
     // Get all players excluding the goal scorer
-    const activePlayers = appState.players.filter(p => p.id !== appState.goalScorer.id);
+    const activePlayers = getTeamPlayers().filter(p => p.id !== appState.goalScorer.id);
     
     // Add players to the grid
     activePlayers.forEach(player => {
@@ -944,7 +947,7 @@ function openScorerSelectionDialog() {
     playersGrid.innerHTML = '';
     
     // Get all players excluding the assister
-    const activePlayers = appState.players.filter(p => p.id !== appState.assister.id);
+    const activePlayers = getTeamPlayers().filter(p => p.id !== appState.assister.id);
     
     // Add players to the grid
     activePlayers.forEach(player => {
@@ -988,12 +991,13 @@ function recordAction(actionType, specificPlayerId = null) {
     const playerId = specificPlayerId || (appState.currentPlayer ? appState.currentPlayer.id : null);
     if (!playerId) return;
     
-    const playerIndex = appState.players.findIndex(p => p.id === playerId);
+    const teamPlayers = getTeamPlayers();
+    const playerIndex = teamPlayers.findIndex(p => p.id === playerId);
     if (playerIndex === -1) return; // Player not found
     
     // Ensure player stats object is initialized
-    if (!appState.players[playerIndex].stats) {
-        appState.players[playerIndex].stats = {
+    if (!teamPlayers[playerIndex].stats) {
+        teamPlayers[playerIndex].stats = {
             goals: 0,
             assists: 0,
             saves: 0,
@@ -1013,18 +1017,18 @@ function recordAction(actionType, specificPlayerId = null) {
     // Update player stats
     switch (actionType) {
         case 'goal':
-            appState.players[playerIndex].stats.goals++;
+            teamPlayers[playerIndex].stats.goals++;
             appState.currentGame.homeScore++;
             document.getElementById('home-score').textContent = appState.currentGame.homeScore;
             break;
         case 'assist':
-            appState.players[playerIndex].stats.assists++;
+            teamPlayers[playerIndex].stats.assists++;
             break;
         case 'save':
-            appState.players[playerIndex].stats.saves++;
+            teamPlayers[playerIndex].stats.saves++;
             break;
         case 'goal_allowed':
-            appState.players[playerIndex].stats.goalsAllowed++;
+            teamPlayers[playerIndex].stats.goalsAllowed++;
             appState.currentGame.awayScore++;
             document.getElementById('away-score').textContent = appState.currentGame.awayScore;
             break;
@@ -1042,7 +1046,7 @@ function recordAction(actionType, specificPlayerId = null) {
 }
 
 function updatePlayerGridItem(playerId) {
-    const player = appState.players.find(p => p.id === playerId);
+    const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
     
     // Directly update the stat values in the player card
@@ -1173,7 +1177,7 @@ function viewReport(gameId) {
     
     // Initialize player actions
     game.activePlayers.forEach(playerId => {
-        const player = appState.players.find(p => p.id === playerId);
+        const player = getTeamPlayers().find(p => p.id === playerId);
         if (player) {
             playerActions[playerId] = {
                 name: player.name,
@@ -1356,11 +1360,35 @@ function loadAppData() {
                     appState.teams = data.teams;
                     appState.currentTeamId = data.currentTeamId;
                 } else {
-                    // Migrate legacy data
-                    appState.teamName = data.teamName || "Team A";
-                    appState.players = data.players || [];
-                    appState.games = data.games || [];
-                    appState.settings = data.settings || appState.settings;
+                    // Migrate legacy data to current team
+                    const initState = function() {
+                        if (!appState.teams || appState.teams.length === 0) {
+                            const hasLegacy = data.teamName || (data.players && data.players.length > 0) || (data.games && data.games.length > 0);
+                            if (hasLegacy) {
+                                const teamA = {
+                                    id: 't1',
+                                    name: data.teamName || 'Team A',
+                                    players: data.players || [],
+                                    games: data.games || [],
+                                    settings: data.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                                    unavailablePlayers: [],
+                                    formationTemp: null
+                                };
+                                const teamB = {
+                                    id: 't2',
+                                    name: 'Team B',
+                                    players: [],
+                                    games: [],
+                                    settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                                    unavailablePlayers: [],
+                                    formationTemp: null
+                                };
+                                appState.teams = [teamA, teamB];
+                                appState.currentTeamId = teamA.id;
+                            }
+                        }
+                    };
+                    initState();
                 }
             } catch (e) {
                 console.error('Failed to parse saved data:', e);
@@ -1378,35 +1406,58 @@ function loadAppData() {
 // Function to clear all app data and start fresh
 function clearAppData() {
     if (confirm('Are you sure you want to clear all data? This will remove all players, games, and settings.')) {
+        // Remove both old and new storage keys
         localStorage.removeItem('soccerCoachApp');
+        localStorage.removeItem('soccerCoachApp2');
         
-        // Reset app state to defaults
-        appState = {
-            teamName: "My Team",
+        // Reset app state to new multi-team defaults
+        const teamA = {
+            id: 't1',
+            name: 'Team A',
             players: [],
             games: [],
-            currentGame: null,
-            timer: {
-                duration: 6 * 60,
-                timeLeft: 6 * 60,
-                interval: null,
-                isRunning: false
-            },
-            gameTimer: {
-                elapsed: 0,
-                interval: null,
-                isRunning: false,
-                startTime: null
-            },
-            settings: {
-                language: 'en',
-                defaultTimer: 6
-            },
-            currentPlayer: null
+            settings: { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false },
+            unavailablePlayers: [],
+            formationTemp: null
+        };
+        const teamB = {
+            id: 't2',
+            name: 'Team B',
+            players: [],
+            games: [],
+            settings: { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false },
+            unavailablePlayers: [],
+            formationTemp: null
         };
         
-        // Update UI
+        appState.teams = [teamA, teamB];
+        appState.currentTeamId = teamA.id;
+        appState.currentGame = null;
+        appState.timer = {
+            duration: 6 * 60,
+            timeLeft: 6 * 60,
+            interval: null,
+            isRunning: false
+        };
+        appState.gameTimer = {
+            elapsed: 0,
+            interval: null,
+            isRunning: false,
+            startTime: null
+        };
+        appState.settings = {
+            language: 'en',
+            defaultSubstitutionTime: null,
+            isSubstitutionDefaultChecked: false
+        };
+        appState.currentPlayer = null;
+        appState.formationTemp = null;
+        
+        // Save cleared state and update UI
+        saveAppData();
         updateTeamNameUI();
+        updateTeamSelector();
+        renderPlayersList();
         showMessage('All data has been cleared. The app has been reset.', 'success');
         
         // Return to main screen
@@ -1417,13 +1468,14 @@ function clearAppData() {
 // Export/Import functions for moving data between devices
 function exportTeamData() {
     // Prepare data for export
+    const currentTeam = getCurrentTeam();
     const exportData = {
         exportDate: new Date().toISOString(),
-        appVersion: window.APP_VERSION || "1.10.1",
-        teamName: appState.teamName,
-        players: appState.players,
-        games: appState.games,
-        settings: appState.settings
+        appVersion: window.APP_VERSION || "1.10.3",
+        teamName: currentTeam ? currentTeam.name : 'Team A',
+        players: currentTeam ? currentTeam.players : [],
+        games: currentTeam ? currentTeam.games : [],
+        settings: currentTeam ? currentTeam.settings : appState.settings
     };
     
     // Convert to JSON string
@@ -1466,12 +1518,15 @@ function handleFileImport(event) {
             
             // Confirm data import
             if (confirm('This will replace your current team data. Continue?')) {
-                // Update app state with imported data
-                appState.teamName = importedData.teamName;
-                appState.players = importedData.players;
-                appState.games = importedData.games || [];
-                if (importedData.settings) {
-                    appState.settings = importedData.settings;
+                // Update current team with imported data
+                const currentTeam = getCurrentTeam();
+                if (currentTeam) {
+                    currentTeam.name = importedData.teamName || importedData.name || currentTeam.name;
+                    currentTeam.players = importedData.players || [];
+                    currentTeam.games = importedData.games || [];
+                    if (importedData.settings) {
+                        currentTeam.settings = importedData.settings;
+                    }
                 }
                 
                 // Save to local storage
@@ -1506,7 +1561,7 @@ function addDemoPlayers() {
         { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
     ];
     
-    appState.players = demoPlayers;
+    setTeamPlayers(demoPlayers);
     saveAppData();
     renderPlayersList();
 }
@@ -1640,7 +1695,7 @@ function openActionReviewDialog() {
     const actions = appState.currentGame.actions;
     const recent = actions.slice(-5).reverse();
     const summary = recent.map(a => {
-        const player = appState.players.find(p => p.id === a.playerId);
+        const player = getTeamPlayers().find(p => p.id === a.playerId);
         const playerName = player ? player.name : 'Game Event';
         return `${a.gameMinute}': ${playerName} - ${a.actionType}`;
     }).join('\n');

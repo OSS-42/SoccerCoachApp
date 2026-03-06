@@ -1,7 +1,8 @@
 {
-  "version": "1.10.3",
+  "version": "1.10.4",
   "lastUpdated": "2026-03-05",
   "changelog": {
+    "1.10.4": "Critical fixes: clearAppData now resets multi-team structure, fixed all appState.players references (editPlayer, savePlayerEdit, deletePlayer, recordAction, game tracking), fixed formation screen unavailable slot clearing, added position field to player objects",
     "1.10.3": "Critical fixes: unified player counter on all screens, formation screen player duplication, team management UI reorganization (team selector only on team-setup screen)",
     "1.10.2": "Bug fixes: FormationScreen drag/drop/tap handlers, player counter updates, team switching on all screens, delete team button, 2-team limit",
     "1.10.1": "Bug fixes: handleTeamChange, addNewTeam updateUI, StatisticsService team isolation",

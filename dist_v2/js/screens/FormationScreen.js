@@ -350,13 +350,22 @@ function dropToSidebar(e) {
     const newFormation = formation.filter(f => f.playerId !== playerId);
     setFormationTemp(newFormation);
 
-    // Clear slot
-    const slot = document.getElementById(slotId);
-    if (slot) {
-        slot.innerHTML = '';
-        slot.removeAttribute('data-player-id');
-        slot.classList.remove('occupied');
-    }
+    // Clear ALL field slots containing this player
+    document.querySelectorAll('.player-slot').forEach(slot => {
+        if (slot.getAttribute('data-player-id') === playerId) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+            slot.classList.remove('occupied');
+        }
+    });
+
+    // Clear ALL unavailable slots containing this player
+    document.querySelectorAll('.unavailable-slot').forEach(slot => {
+        if (slot.getAttribute('data-player-id') === playerId) {
+            slot.innerHTML = '';
+            slot.removeAttribute('data-player-id');
+        }
+    });
 
     // Re-enable player in sidebar
     const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
@@ -377,17 +386,9 @@ function dropToSidebar(e) {
         playerNum.addEventListener('touchend', (e) => touchEnd(e));
     }
     
-    // Remove from unavailable if present
+    // Remove from unavailable list if present
     const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
     setUnavailablePlayers(unavailableList);
-    
-    // Clear unavailable slots
-    document.querySelectorAll('.unavailable-slot').forEach(slot => {
-        const num = slot.querySelector(`[data-player-id="${playerId}"]`);
-        if (num) {
-            slot.innerHTML = '';
-        }
-    });
 }
 
 // ============================================================================
