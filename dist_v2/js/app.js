@@ -162,6 +162,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('game-date').value = today;
         
+        // Setup note dialog character counter
+        const noteTextarea = document.getElementById('note-text');
+        if (noteTextarea) {
+            noteTextarea.addEventListener('input', function() {
+                document.getElementById('note-char-count').textContent = this.value.length;
+            });
+        }
+        
         // Show the main screen to start
         showScreen('main-screen');
     });
@@ -1303,6 +1311,20 @@ function saveSettings() {
     showMessage('Settings saved successfully', 'success');
 }
 
+function handleLanguageChange() {
+    // This function handles language change events
+    // Can be used to provide immediate feedback or update UI
+    const selectedLanguage = document.querySelector('input[name="language"]:checked');
+    if (selectedLanguage) {
+        appState.settings = appState.settings || {};
+        appState.settings.language = selectedLanguage.value;
+        // Delegate to SettingsScreen if available
+        if (typeof SettingsScreen !== 'undefined' && SettingsScreen.handleLanguageChange) {
+            SettingsScreen.handleLanguageChange();
+        }
+    }
+}
+
 // Data persistence (using localStorage in the prototype)
 function saveAppData() {
     // Save all teams to localStorage
@@ -1472,4 +1494,186 @@ function addDemoPlayers() {
     appState.players = demoPlayers;
     saveAppData();
     renderPlayersList();
+}
+
+// Formation Setup Functions
+function confirmBackToGameSetup() {
+    const dialog = document.getElementById('back-confirm-dialog');
+    if (dialog) {
+        dialog.style.display = 'flex';
+    }
+}
+
+function closeBackConfirmDialog() {
+    const dialog = document.getElementById('back-confirm-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+    }
+}
+
+function backToGameSetup() {
+    closeBackConfirmDialog();
+    setFormationTemp([]);
+    showScreen('game-setup');
+}
+
+function clearFormation() {
+    setFormationTemp([]);
+    setUnavailablePlayers([]);
+    FormationScreen.renderFormationSetup();
+}
+
+function startGameFromFormation() {
+    if (!appState.currentGame) {
+        showMessage('No game selected');
+        return;
+    }
+    
+    // Save formation as default if checkbox is checked
+    const saveDefault = document.getElementById('save-default-formation');
+    if (saveDefault && saveDefault.checked) {
+        appState.defaultFormation = getFormationTemp();
+    }
+    
+    // Start the game
+    showScreen('game-tracking');
+    startGameTimer();
+    startTimer();
+}
+
+// Note Dialog Functions
+function openNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    const playerName = (appState.currentPlayer ? appState.currentPlayer.name : 'Player');
+    document.getElementById('note-player-name').textContent = playerName;
+    document.getElementById('note-text').value = '';
+    document.getElementById('note-char-count').textContent = '0';
+    if (dialog) {
+        dialog.style.display = 'flex';
+    }
+}
+
+function closeNoteDialog() {
+    const dialog = document.getElementById('note-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+    }
+}
+
+function recordNoteAction() {
+    if (!appState.currentGame || !appState.currentPlayer) {
+        showMessage('No game or player selected');
+        return;
+    }
+    
+    const noteText = document.getElementById('note-text').value.trim();
+    if (!noteText) {
+        showMessage('Please enter a note');
+        return;
+    }
+    
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: appState.currentPlayer.id,
+        actionType: 'note',
+        gameMinute: calculateGameMinute(),
+        noteText: noteText
+    };
+    
+    appState.currentGame.actions.push(action);
+    saveAppData();
+    closeNoteDialog();
+    showMessage('Note recorded successfully', 'success');
+}
+
+// Game Note Dialog Functions (for general game notes, not player-specific)
+function openGameNoteDialog() {
+    // Create a temporary note dialog for game notes
+    const noteText = prompt('Enter game note:');
+    if (noteText && noteText.trim()) {
+        recordGameNote(noteText);
+    }
+}
+
+function recordGameNote(noteText) {
+    if (!appState.currentGame) {
+        showMessage('No game in progress');
+        return;
+    }
+    
+    const action = {
+        timestamp: new Date().toISOString(),
+        playerId: null, // No specific player for game notes
+        actionType: 'game_note',
+        gameMinute: calculateGameMinute(),
+        noteText: noteText
+    };
+    
+    appState.currentGame.actions.push(action);
+    saveAppData();
+    showMessage('Game note recorded', 'success');
+}
+
+// Action Review Dialog Function
+function openActionReviewDialog() {
+    if (!appState.currentGame || !appState.currentGame.actions) {
+        showMessage('No actions recorded yet');
+        return;
+    }
+    
+    // Display recent actions as an alert for now; could be enhanced with a proper modal
+    const actions = appState.currentGame.actions;
+    const recent = actions.slice(-5).reverse();
+    const summary = recent.map(a => {
+        const player = appState.players.find(p => p.id === a.playerId);
+        const playerName = player ? player.name : 'Game Event';
+        return `${a.gameMinute}': ${playerName} - ${a.actionType}`;
+    }).join('\n');
+    
+    if (summary) {
+        alert('Recent Actions:\n\n' + summary);
+    } else {
+        showMessage('No actions recorded yet');
+    }
+}
+
+// Player Statistics Functions
+function resetPlayerStatistics() {
+    if (!confirm('Reset all player statistics? This cannot be undone.')) {
+        return;
+    }
+    
+    const players = getTeamPlayers();
+    players.forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        };
+    });
+    
+    setTeamPlayers(players);
+    saveAppData();
+    showMessage('Player statistics reset', 'success');
+    renderPlayerGrid();
+}
+
+// Import/Export Functions
+function closeImportConfirmDialog() {
+    const dialog = document.getElementById('import-confirm-dialog');
+    if (dialog) {
+        dialog.style.display = 'none';
+    }
+}
+
+function confirmImportTeamData() {
+    const fileInput = document.getElementById('import-file');
+    if (!fileInput || !fileInput.files.length) {
+        showMessage('No file selected');
+        return;
+    }
+    
+    closeImportConfirmDialog();
+    handleFileImport({ target: fileInput });
 }
