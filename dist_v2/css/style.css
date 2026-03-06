@@ -473,6 +473,37 @@ body {
     font-size: 16px;
 }
 
+/* Team Management Section - Team selector aligned with team name */
+.team-management-section {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+}
+
+.team-management-section .team-name-section {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    flex: 1;
+    min-width: 200px;
+}
+
+.team-management-section .team-selector {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.team-management-section .team-selector select {
+    min-width: 150px;
+}
+
 .players-list {
     display: flex;
     flex-direction: column;

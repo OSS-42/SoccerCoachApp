@@ -314,8 +314,8 @@ function showScreen(screenId) {
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
     
-    // Update team selector on all screens except game-tracking (live game)
-    if (screenId !== 'game-tracking') {
+    // Update team selector (only exists on team-setup screen)
+    if (screenId === 'team-setup') {
         updateTeamSelector();
     }
     
@@ -460,9 +460,9 @@ function renderPlayersList() {
     playersList.innerHTML = '';
     
     const teamPlayers = getTeamPlayers();
-    const counterElement = document.getElementById('team-player-counter');
+    const counterElement = document.getElementById('player-counter');
     
-    // Update player counter on both main and team setup screens
+    // Update player counter - same ID used on both main and team setup screens
     if (counterElement) {
         counterElement.textContent = teamPlayers.length;
     }

@@ -1,7 +1,8 @@
 {
-  "version": "1.10.2",
+  "version": "1.10.3",
   "lastUpdated": "2026-03-05",
   "changelog": {
+    "1.10.3": "Critical fixes: unified player counter on all screens, formation screen player duplication, team management UI reorganization (team selector only on team-setup screen)",
     "1.10.2": "Bug fixes: FormationScreen drag/drop/tap handlers, player counter updates, team switching on all screens, delete team button, 2-team limit",
     "1.10.1": "Bug fixes: handleTeamChange, addNewTeam updateUI, StatisticsService team isolation",
     "1.10.0": "Multi-team functionality - manage distinct teams (U10 men, U9 women, etc)",

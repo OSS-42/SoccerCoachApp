@@ -250,42 +250,63 @@ function dropToSlot(e) {
     const slot = e.target.closest('.player-slot, .unavailable-slot');
     if (!slot) return;
 
+    // First, remove player from all locations (field slots, unavailable slots, sidebar)
+    // Remove from all field slots
+    document.querySelectorAll('.player-slot').forEach(s => {
+        if (s.getAttribute('data-player-id') === playerId) {
+            s.innerHTML = '';
+            s.removeAttribute('data-player-id');
+            s.classList.remove('occupied');
+        }
+    });
+
+    // Remove from all unavailable slots
+    document.querySelectorAll('.unavailable-slot').forEach(s => {
+        if (s.getAttribute('data-player-id') === playerId) {
+            s.innerHTML = '';
+            s.removeAttribute('data-player-id');
+        }
+    });
+
+    // Remove player from sidebar (only one should exist)
+    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (sidebarPlayerNum) {
+        sidebarPlayerNum.classList.remove('disabled');
+        sidebarPlayerNum.draggable = true;
+    }
+
+    // Remove from unavailable list temporarily
+    let unavailableList = [...getUnavailablePlayers()];
+    unavailableList = unavailableList.filter(id => id !== playerId);
+
     // Check if this is unavailable slot
     if (slot.classList.contains('unavailable-slot')) {
         // Add to unavailable list
-        const unavailableList = [...getUnavailablePlayers()];
-        if (!unavailableList.includes(playerId)) {
-            unavailableList.push(playerId);
-            setUnavailablePlayers(unavailableList);
-        }
+        unavailableList.push(playerId);
+        setUnavailablePlayers(unavailableList);
+        
+        // Place in unavailable slot
         slot.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-        const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-        if (playerNum && !slot.contains(playerNum)) {
-            playerNum.classList.add('disabled');
-            playerNum.draggable = false;
+        slot.setAttribute('data-player-id', playerId);
+        
+        // Disable in sidebar
+        if (sidebarPlayerNum) {
+            sidebarPlayerNum.classList.add('disabled');
+            sidebarPlayerNum.draggable = false;
         }
         return;
     }
 
     // Regular field slot
+    setUnavailablePlayers(unavailableList);
+    
     const position = slot.getAttribute('data-position');
     const formation = getFormationTemp() || [];
-    let currentPlayers = formation.filter(f => f.playerId !== playerId).length;
-
-    // Check player limits if needed
-    const existingPlayerId = slot.getAttribute('data-player-id');
-    if (existingPlayerId && existingPlayerId !== playerId) {
-        const newFormation = formation.filter(f => f.playerId !== existingPlayerId);
-        setFormationTemp(newFormation);
-        const oldPlayer = document.querySelector(`.player-number[data-player-id="${existingPlayerId}"]`);
-        if (oldPlayer) {
-            oldPlayer.classList.remove('disabled');
-            oldPlayer.draggable = true;
-        }
-    }
-
-    // Add/update player to formation
+    
+    // Check if player already exists in formation and remove
     const updatedFormation = formation.filter(f => f.playerId !== playerId);
+    
+    // Add/update player to formation
     updatedFormation.push({
         playerId,
         position,
@@ -299,21 +320,10 @@ function dropToSlot(e) {
     slot.setAttribute('data-player-id', playerId);
     slot.classList.add('occupied');
 
-    // Disable player in sidebar if coming from sidebar
-    if (source === 'sidebar') {
-        const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-        if (playerNum) {
-            playerNum.classList.add('disabled');
-            playerNum.draggable = false;
-        }
-    } else if (slotId && slotId !== slot.id) {
-        // Clear old slot if coming from field
-        const prevSlot = document.getElementById(slotId);
-        if (prevSlot) {
-            prevSlot.innerHTML = '';
-            prevSlot.removeAttribute('data-player-id');
-            prevSlot.classList.remove('occupied');
-        }
+    // Disable player in sidebar
+    if (sidebarPlayerNum) {
+        sidebarPlayerNum.classList.add('disabled');
+        sidebarPlayerNum.draggable = false;
     }
 
     // Reattach drag listeners to placed players and setup click handlers

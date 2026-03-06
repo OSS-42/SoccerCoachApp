@@ -23,11 +23,6 @@
             <div class="app-header">
                 <h1>Football Live Action Tracker</h1>
             </div>
-            <div class="team-selector">
-                <select id="team-selector" onchange="handleTeamChange()"></select>
-                <button class="secondary-btn small" onclick="addNewTeam()">+</button>
-                <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
-            </div>
             <nav class="main-menu" role="navigation" aria-label="Main navigation">
                 <div class="menu-row">
                     <button class="menu-btn" onclick="showScreen('team-setup')">
@@ -57,16 +52,11 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Team Setup</h1>
-                <div class="team-selector">
-                    <select id="team-selector" onchange="handleTeamChange()"></select>
-                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
-                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
-                </div>
                 <button class="action-btn white-btn" onclick="openAddPlayerDialog()">
                     <span class="material-icons">person_add</span>
                 </button>
             </div>
-            <div class="content">
+            <div class="team-management-section">
                 <div class="team-name-section">
                     <h2>Team Name</h2>
                     <div class="team-name-edit">
@@ -74,6 +64,13 @@
                         <button class="secondary-btn" onclick="saveTeamName()">Save</button>
                     </div>
                 </div>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange()"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
+                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
+                </div>
+            </div>
+            <div class="content">
                 
                 <!-- Tab Navigation -->
                 <nav class="tab-navigation" role="tablist" aria-label="Team setup tabs">
@@ -91,7 +88,7 @@
                         <h2>Players</h2>
                         <span class="player-counter-team">
                             <span class="material-icons">person</span>
-                            <span id="team-player-counter">0</span>
+                            <span id="player-counter">0</span>
                         </span>
                     </div>
                     <div id="players-list" class="players-list">
@@ -139,11 +136,7 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>New Game</h1>
-                <div class="team-selector">
-                    <select id="team-selector" onchange="handleTeamChange()"></select>
-                    <button class=\"secondary-btn small\" onclick=\"addNewTeam()\">+</button>
-                    <button class=\"secondary-btn small delete\" onclick=\"deleteTeam()\" title=\"Delete current team\">−</button>
-                </div>
+
             </div>
             <div class="team-name-banner">
                 <h2 id="game-setup-team-name">Team Name</h2>
@@ -315,11 +308,6 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Game Reports</h1>
-                <div class="team-selector">
-                    <select id="team-selector" onchange="handleTeamChange()"></select>
-                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
-                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
-                </div>
             </div>
             <div class="content" id="reports-list">
                 <!-- Game reports will be listed here -->
@@ -334,11 +322,7 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Settings</h1>
-                <div class="team-selector">
-                    <select id="team-selector" onchange="handleTeamChange()"></select>
-                    <button class=\"secondary-btn small\" onclick=\"addNewTeam()\">+</button>
-                    <button class=\"secondary-btn small delete\" onclick=\"deleteTeam()\" title=\"Delete current team\">−</button>
-                </div>
+
             </div>
             <div class="content">
                 <div class="settings-group">
@@ -562,7 +546,7 @@
         </div>
         
         <!-- Version footer - bottom right corner -->
-        <div id="version-footer" class="version-footer">v1.10.2</div>
+        <div id="version-footer" class="version-footer">v1.10.3</div>
     </div>
 
     <script src="js/core/StateInit.js"></script>
