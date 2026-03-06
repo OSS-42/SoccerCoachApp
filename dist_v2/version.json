@@ -1,7 +1,8 @@
 {
-  "version": "1.10.12",
+  "version": "1.10.13",
   "lastUpdated": "2026-03-05",
   "changelog": {
+    "1.10.13": "Fixed: player names in team setup stats tab now capitalized, team name now stored in game reports (appState.currentGame.teamName) so stats tab can refer to proper reports by team, formation player count validation kept only on formation setup screen (roster can have more players than field positions for substitutes)",
     "1.10.12": "Critical fixes: fixed statistics tab error (removed incorrect appState.players filter from StatisticsService), added formation player count validation (ensures correct # of players for match type), restored player tile status colors (green=starter on field, blue=benched), implemented complete red card filtering (disabled in openPlayerActionDialog, filtered in openAssistSelectionDialog, validated in completeGoalWithAssist), implemented 2 yellows = red automatic conversion logic with 'converted to red card' message, preserved formation player info in currentGame.formationPlayers for status coloring",
     "1.10.11": "Simplified: reverted renderPlayerGrid() to remove unnecessary status class logic (starter/substitute/unavailable) that was overcomplicating the ui, kept focused card class application (yellow-card/red-card) based on player stats, restored simpler cleaner tile rendering",
     "1.10.10": "Fixed: game setup screen no longer requires substitution time when 'timer not needed' is checked, live game player tiles now display color-coded status (starter/substitute/unavailable) and card states (yellow/red), yellow and red card buttons now properly update tile styling and card counters, end of game report now includes yellow and red card statistics in the table",

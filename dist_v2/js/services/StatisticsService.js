@@ -298,7 +298,7 @@ const StatisticsService = {
             tableHTML += `
                 <tr>
                     <td>${player.jerseyNumber}</td>
-                    <td>${player.name}</td>
+                    <td>${player.name.charAt(0).toUpperCase() + player.name.slice(1).toLowerCase()}</td>
                     <td>${player.gamesPlayed}</td>
                     <td>${player.goals}</td>
                     <td>${player.assists}</td>

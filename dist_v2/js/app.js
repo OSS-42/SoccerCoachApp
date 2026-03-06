@@ -490,9 +490,15 @@ function setupFormation() {
     });
     
     // Create the game object (minimal version for formation setup)
+    // Get current team name
+    const currentTeamId = appState.currentTeamId;
+    const currentTeam = appState.teams.find(t => t.id === currentTeamId);
+    const teamName = currentTeam ? currentTeam.name : 'Team';
+    
     appState.currentGame = {
         id: Date.now().toString(),
         date: gameDate,
+        teamName: teamName,
         opponentName,
         matchType,
         homeScore: 0,
@@ -1343,10 +1349,11 @@ function renderReportsList() {
         reportItem.className = 'report-item';
         
         const gameDate = new Date(game.date).toLocaleDateString();
+        const teamName = game.teamName || 'My Team';
         reportItem.innerHTML = `
             <div class="report-header">
                 <div class="report-date">${gameDate}</div>
-                <div class="report-score">My Team ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
+                <div class="report-score">${teamName} ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
             </div>
             <div class="report-actions">
                 <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
@@ -1438,7 +1445,7 @@ function viewReport(gameId) {
             playerStatsHTML += `
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
-                    <td>${playerStat.name}</td>
+                    <td>${playerStat.name.charAt(0).toUpperCase() + playerStat.name.slice(1).toLowerCase()}</td>
                     <td>${playerStat.goals}</td>
                     <td>${playerStat.assists}</td>
                     <td>${playerStat.saves}</td>
@@ -1450,12 +1457,13 @@ function viewReport(gameId) {
         });
     
     // Generate report HTML
+    const teamName = game.teamName || 'My Team';
     reportDialog.innerHTML = `
         <div class="dialog-content report-dialog">
             <h2>Game Report</h2>
             <div class="report-header-info">
                 <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                <div><strong>Teams:</strong> My Team vs ${game.opponentName}</div>
+                <div><strong>Teams:</strong> ${teamName} vs ${game.opponentName}</div>
                 <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
                 <div><strong>Duration:</strong> ${gameDuration}</div>
             </div>
