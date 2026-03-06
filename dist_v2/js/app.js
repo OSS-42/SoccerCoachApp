@@ -194,27 +194,39 @@ function updateTeamNameUI() {
 
 // Team Management Functions
 function handleTeamChange() {
-    const selector = document.getElementById('team-selector');
-    if (selector) {
-        appState.currentTeamId = selector.value;
-        saveAppData();
-        updateUI();
-        
-        // Update team name banners on all screens
-        updateTeamNameBanner('game-setup-team-name');
-        updateTeamNameBanner('formation-setup-team-name');
-        
-        // If on a specific screen, refresh its content for the new team
-        const activeScreen = document.querySelector('.screen.active');
-        if (activeScreen) {
-            const screenId = activeScreen.id;
-            if (screenId === 'team-setup' && typeof TeamSetupScreen !== 'undefined') {
-                TeamSetupScreen.renderPlayersList();
-            } else if (screenId === 'formation-setup' && typeof FormationScreen !== 'undefined') {
-                FormationScreen.renderFormationSetup();
-            } else if (screenId === 'statistics') {
-                renderPlayerStatistics();
-            }
+    // Get the new team ID (from either selector that was changed)
+    let newTeamId = null;
+    const teamSelector = document.getElementById('team-selector');
+    const mainSelector = document.getElementById('main-team-selector');
+    
+    if (teamSelector && teamSelector.value) {
+        newTeamId = teamSelector.value;
+    } else if (mainSelector && mainSelector.value) {
+        newTeamId = mainSelector.value;
+    } else {
+        return;
+    }
+    
+    appState.currentTeamId = newTeamId;
+    saveAppData();
+    updateTeamSelector(); // Update both selectors
+    updateUI();
+    
+    // Update team name banners on all screens
+    updateTeamNameBanner('game-setup-team-name');
+    updateTeamNameBanner('formation-setup-team-name');
+    updateTeamNameBanner('main-screen-team-name');
+    
+    // If on a specific screen, refresh its content for the new team
+    const activeScreen = document.querySelector('.screen.active');
+    if (activeScreen) {
+        const screenId = activeScreen.id;
+        if (screenId === 'team-setup' && typeof TeamSetupScreen !== 'undefined') {
+            TeamSetupScreen.renderPlayersList();
+        } else if (screenId === 'formation-setup' && typeof FormationScreen !== 'undefined') {
+            FormationScreen.renderFormationSetup();
+        } else if (screenId === 'statistics') {
+            renderPlayerStatistics();
         }
     }
 }
@@ -314,8 +326,8 @@ function showScreen(screenId) {
     // Show the selected screen
     document.getElementById(screenId).classList.add('active');
     
-    // Update team selector (only exists on team-setup screen)
-    if (screenId === 'team-setup') {
+    // Update team selector and banners for main-screen and team-setup screen
+    if (screenId === 'team-setup' || screenId === 'main-screen') {
         updateTeamSelector();
     }
     
@@ -336,7 +348,14 @@ function showScreen(screenId) {
 }
 
 function updateTeamSelector() {
-    const selector = document.getElementById('team-selector');
+    // Update both selectors
+    updateTeamSelectorElement('team-selector');
+    updateTeamSelectorElement('main-team-selector');
+    updateTeamNameBanner('main-screen-team-name');
+}
+
+function updateTeamSelectorElement(selectorId) {
+    const selector = document.getElementById(selectorId);
     if (!selector) return;
     const teams = appState.teams || [];
     const currentId = appState.currentTeamId;
@@ -419,6 +438,7 @@ function closeAddPlayerDialog() {
 function addPlayer() {
     const name = document.getElementById('player-name').value.trim();
     const jerseyNumber = document.getElementById('jersey-number').value;
+    const position = document.getElementById('player-position').value;
     
     if (!name || !jerseyNumber) {
         showMessage('Please fill in all required fields', 'error');
@@ -441,7 +461,7 @@ function addPlayer() {
         id: playerId,
         name,
         jerseyNumber: Number(jerseyNumber),
-        position: undefined,
+        position: position,
         stats: {
             goals: 0,
             assists: 0,
@@ -452,20 +472,28 @@ function addPlayer() {
     
     getTeamPlayers().push(player);
     saveAppData();
-    renderPlayersList();
+    TeamSetupScreen.renderPlayersList();
     closeAddPlayerDialog();
 }
 
 function renderPlayersList() {
     const playersList = document.getElementById('players-list');
+    if (!playersList) return; // Main screen doesn't have players-list
+    
     playersList.innerHTML = '';
     
     const teamPlayers = getTeamPlayers();
-    const counterElement = document.getElementById('player-counter');
     
-    // Update player counter - same ID used on both main and team setup screens
-    if (counterElement) {
-        counterElement.textContent = teamPlayers.length;
+    // Update team setup player counter
+    const teamCounterElement = document.getElementById('team-player-counter');
+    if (teamCounterElement) {
+        teamCounterElement.textContent = teamPlayers.length;
+    }
+    
+    // Update main screen counter
+    const mainCounterElement = document.getElementById('player-counter');
+    if (mainCounterElement) {
+        mainCounterElement.textContent = teamPlayers.length;
     }
     
     if (teamPlayers.length === 0) {
