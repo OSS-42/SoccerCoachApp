@@ -298,16 +298,16 @@ const StatisticsService = {
                     <td>${player.jerseyNumber}</td>
                     <td>${player.name.charAt(0).toUpperCase() + player.name.slice(1).toLowerCase()}</td>
                     <td>${player.gamesPlayed}</td>
-                    <td><span class="material-icons stat-icon-small">sports_soccer</span> ${player.goals}</td>
-                    <td><span class="stat-emoji">👟</span> ${player.assists}</td>
-                    <td><span class="material-icons stat-icon-small">back_hand</span> ${player.saves}</td>
-                    <td><img src="img/red-soccer.png" width="16" height="16" alt="Goals Allowed" class="stat-icon-img"> ${player.goalsAllowed}</td>
+                    <td>${player.goals}</td>
+                    <td>${player.assists}</td>
+                    <td>${player.saves}</td>
+                    <td>${player.goalsAllowed}</td>
                     <td>${player.passes}</td>
                     <td>${player.shots}</td>
                     <td>${player.blocks}</td>
                     <td>${player.fouls}</td>
-                    <td><span class="yellow-card-icon">🟨</span> ${player.yellowCards}</td>
-                    <td><span class="red-card-icon">🟥</span> ${player.redCards}</td>
+                    <td>${player.yellowCards}</td>
+                    <td>${player.redCards}</td>
                     <td>${player.ownGoals}</td>
                     <td>${player.missedGames}</td>
                     <td>${player.lateToGame}</td>

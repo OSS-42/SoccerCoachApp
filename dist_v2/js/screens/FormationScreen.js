@@ -396,44 +396,35 @@ function dropToSidebar(e) {
     const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
     setUnavailablePlayers(unavailableList);
     
-    // Rebuild entire sidebar to show all available players
+    // Only update the removed player in sidebar - don't rebuild entire sidebar
     const playerList = document.getElementById('player-list');
     if (!playerList) return;
     
-    playerList.innerHTML = '';
     const teamPlayers = getTeamPlayers();
-    const formationTempList = getFormationTemp() || [];
-    const unavailableListUpdated = getUnavailablePlayers();
+    const removedPlayer = teamPlayers.find(p => p.id === playerId);
+    if (!removedPlayer) return;
     
-    teamPlayers.forEach(player => {
-        const isOnField = formationTempList.some(f => f.playerId === player.id);
-        const isUnavailable = unavailableListUpdated.includes(player.id);
-        const shouldDisable = isOnField || isUnavailable;
-        
-        const playerItem = document.createElement('div');
-        playerItem.className = 'player-item-draggable';
-        playerItem.innerHTML = `
-            <span class="player-number ${shouldDisable ? 'disabled' : ''}" draggable="${!shouldDisable}" data-player-id="${player.id}">${player.jerseyNumber}</span>
-            <span class="player-name">${player.name}</span>
-        `;
-        playerList.appendChild(playerItem);
-    });
-    
-    // Re-attach drag-and-drop event listeners to new player elements
-    const numbers = document.querySelectorAll('.player-number');
-    numbers.forEach(number => {
-        if (!number.classList.contains('disabled')) {
-            number.removeEventListener('dragstart', dragStart);
-            number.removeEventListener('click', handleTapPlayer);
-            number.removeEventListener('touchstart', touchStart);
-            number.removeEventListener('touchmove', touchMove);
-            number.removeEventListener('touchend', touchEnd);
+    // Find and update the player item for this specific player
+    const playerItems = document.querySelectorAll('.player-item-draggable');
+    playerItems.forEach(item => {
+        const numberSpan = item.querySelector('.player-number');
+        if (numberSpan && numberSpan.getAttribute('data-player-id') === playerId) {
+            // Re-enable the player item: remove disabled class and set draggable
+            numberSpan.classList.remove('disabled');
+            numberSpan.setAttribute('draggable', 'true');
             
-            number.addEventListener('dragstart', (e) => dragStart(e));
-            number.addEventListener('click', (e) => handleTapPlayer(e));
-            number.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-            number.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-            number.addEventListener('touchend', (e) => touchEnd(e));
+            // Re-attach event listeners to this specific player
+            numberSpan.removeEventListener('dragstart', dragStart);
+            numberSpan.removeEventListener('click', handleTapPlayer);
+            numberSpan.removeEventListener('touchstart', touchStart);
+            numberSpan.removeEventListener('touchmove', touchMove);
+            numberSpan.removeEventListener('touchend', touchEnd);
+            
+            numberSpan.addEventListener('dragstart', (e) => dragStart(e));
+            numberSpan.addEventListener('click', (e) => handleTapPlayer(e));
+            numberSpan.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
+            numberSpan.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
+            numberSpan.addEventListener('touchend', (e) => touchEnd(e));
         }
     });
 }

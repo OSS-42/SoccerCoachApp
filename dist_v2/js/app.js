@@ -532,10 +532,10 @@ function validateFormationSetup() {
         return false;
     }
     
-    // Check that goalkeeper position has a player
-    const goalkeeperPosition = formationPlayers.find(p => p.position && p.position.toLowerCase() === 'goalkeeper');
+    // Check that goalkeeper position (GK) has a player
+    const goalkeeperPosition = formationPlayers.find(p => p.position === 'GK');
     if (!goalkeeperPosition) {
-        showMessage('Goalkeeper position must be filled', 'error');
+        showMessage('Goalkeeper position (bottom of field) must be filled', 'error');
         return false;
     }
     
@@ -1467,12 +1467,12 @@ function viewReport(gameId) {
                 <tr>
                     <td>${playerStat.jerseyNumber}</td>
                     <td>${playerStat.name.charAt(0).toUpperCase() + playerStat.name.slice(1).toLowerCase()}</td>
-                    <td><span class="material-icons stat-icon-small">sports_soccer</span> ${playerStat.goals}</td>
-                    <td><span class="stat-emoji">👟</span> ${playerStat.assists}</td>
-                    <td><span class="material-icons stat-icon-small">back_hand</span> ${playerStat.saves}</td>
-                    <td><img src="img/red-soccer.png" width="16" height="16" alt="Goals" class="stat-icon-img"> ${playerStat.goalsAllowed}</td>
-                    <td><span class="yellow-card-icon">🟨</span> ${playerStat.yellowCards}</td>
-                    <td><span class="red-card-icon">🟥</span> ${playerStat.redCards}</td>
+                    <td>${playerStat.goals}</td>
+                    <td>${playerStat.assists}</td>
+                    <td>${playerStat.saves}</td>
+                    <td>${playerStat.goalsAllowed}</td>
+                    <td>${playerStat.yellowCards}</td>
+                    <td>${playerStat.redCards}</td>
                 </tr>
             `;
         });
