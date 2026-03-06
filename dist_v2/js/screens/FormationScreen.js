@@ -316,11 +316,13 @@ function dropToSlot(e) {
         }
     }
 
-    // Reattach drag listeners to placed players
+    // Reattach drag listeners to placed players and setup click handlers
     const placedNumbers = document.querySelectorAll('.player-number-placed');
     placedNumbers.forEach(num => {
         num.removeEventListener('dragstart', dragStart);
+        num.removeEventListener('click', handleTapPlayer);
         num.addEventListener('dragstart', dragStart);
+        num.addEventListener('click', handleTapPlayer);
     });
 }
 
@@ -351,6 +353,18 @@ function dropToSidebar(e) {
     if (playerNum) {
         playerNum.classList.remove('disabled');
         playerNum.draggable = true;
+        // Re-attach event listeners
+        playerNum.removeEventListener('dragstart', dragStart);
+        playerNum.removeEventListener('click', handleTapPlayer);
+        playerNum.removeEventListener('touchstart', touchStart);
+        playerNum.removeEventListener('touchmove', touchMove);
+        playerNum.removeEventListener('touchend', touchEnd);
+        
+        playerNum.addEventListener('dragstart', (e) => dragStart(e));
+        playerNum.addEventListener('click', (e) => handleTapPlayer(e));
+        playerNum.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
+        playerNum.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
+        playerNum.addEventListener('touchend', (e) => touchEnd(e));
     }
     
     // Remove from unavailable if present

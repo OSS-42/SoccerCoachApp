@@ -200,6 +200,10 @@ function handleTeamChange() {
         saveAppData();
         updateUI();
         
+        // Update team name banners on all screens
+        updateTeamNameBanner('game-setup-team-name');
+        updateTeamNameBanner('formation-setup-team-name');
+        
         // If on a specific screen, refresh its content for the new team
         const activeScreen = document.querySelector('.screen.active');
         if (activeScreen) {
@@ -325,6 +329,9 @@ function showScreen(screenId) {
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const day = String(today.getDate()).padStart(2, '0');
         document.getElementById('game-date').value = `${year}-${month}-${day}`;
+        updateTeamNameBanner('game-setup-team-name');
+    } else if (screenId === 'formation-setup') {
+        updateTeamNameBanner('formation-setup-team-name');
     }
 }
 
@@ -341,6 +348,14 @@ function updateTeamSelector() {
         if (team.id === currentId) opt.selected = true;
         selector.appendChild(opt);
     });
+}
+
+function updateTeamNameBanner(bannerId) {
+    const bannerElement = document.getElementById(bannerId);
+    if (bannerElement) {
+        const teamName = getTeamName();
+        bannerElement.textContent = teamName || 'Team Name';
+    }
 }
 
 // Tab switching function for Team Setup screen
@@ -445,7 +460,7 @@ function renderPlayersList() {
     playersList.innerHTML = '';
     
     const teamPlayers = getTeamPlayers();
-    const counterElement = document.getElementById('player-counter');
+    const counterElement = document.getElementById('team-player-counter');
     
     // Update player counter on both main and team setup screens
     if (counterElement) {

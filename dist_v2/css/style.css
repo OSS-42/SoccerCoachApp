@@ -218,6 +218,25 @@ body {
     font-size: 20px;
 }
 
+/* Team Name Banner - Shows team name with black background */
+.team-name-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 15px;
+    background-color: #000;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.team-name-banner h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
 /* Version Footer - Bottom Right Corner */
 .version-footer {
     position: fixed;

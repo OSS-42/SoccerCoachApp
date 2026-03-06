@@ -57,6 +57,11 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Team Setup</h1>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange()"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
+                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
+                </div>
                 <button class="action-btn white-btn" onclick="openAddPlayerDialog()">
                     <span class="material-icons">person_add</span>
                 </button>
@@ -140,6 +145,9 @@
                     <button class=\"secondary-btn small delete\" onclick=\"deleteTeam()\" title=\"Delete current team\">−</button>
                 </div>
             </div>
+            <div class="team-name-banner">
+                <h2 id="game-setup-team-name">Team Name</h2>
+            </div>
             <div class="content">
                 <div class="form-group">
                     <label for="opponent-name">Opponent Team Name:</label>
@@ -190,6 +198,9 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Formation Setup</h1>
+            </div>
+            <div class="team-name-banner">
+                <h2 id="formation-setup-team-name">Team Name</h2>
             </div>
             <div class="content formation-content">
                 <div class="formation-container">
@@ -304,6 +315,11 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Game Reports</h1>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange()"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
+                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
+                </div>
             </div>
             <div class="content" id="reports-list">
                 <!-- Game reports will be listed here -->
