@@ -27,8 +27,6 @@
                 <h2 id="main-screen-team-name">Team Name</h2>
                 <div class="team-selector" style="display: flex; gap: 8px; align-items: center;">
                     <select id="main-team-selector" onchange="handleTeamChange()" style="min-width: 150px;"></select>
-                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
-                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
                 </div>
             </div>
             <nav class="main-menu" role="navigation" aria-label="Main navigation">
@@ -64,12 +62,12 @@
                     <span class="material-icons">person_add</span>
                 </button>
             </div>
-            <div class="team-management-section">
+            <div class="team-management-section" style="background-color: #000; color: white; padding: 15px; border-radius: 4px;">
                 <div class="team-name-section">
-                    <h2>Team Name</h2>
+                    <h2 style="margin-top: 0; color: white;">Team Name</h2>
                     <div class="team-name-edit">
-                        <input type="text" id="team-name-input" placeholder="Enter team name">
-                        <button class="secondary-btn" onclick="saveTeamName()">Save</button>
+                        <input type="text" id="team-name-input" placeholder="Enter team name" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <button class="secondary-btn" onclick="saveTeamName()" style="background-color: #4CAF50; color: white; border: none;">Save</button>
                     </div>
                 </div>
                 <div class="team-selector">
@@ -554,7 +552,7 @@
         </div>
         
         <!-- Version footer - bottom right corner -->
-        <div id="version-footer" class="version-footer">v1.10.7</div>
+        <div id="version-footer" class="version-footer">v1.10.8</div>
     </div>
 
     <script src="js/core/StateInit.js"></script>

@@ -198,10 +198,12 @@ function handleTeamChange() {
     const teamSelector = document.getElementById('team-selector');
     const mainSelector = document.getElementById('main-team-selector');
     
-    if (teamSelector && teamSelector.value) {
-        newTeamId = teamSelector.value;
-    } else if (mainSelector && mainSelector.value) {
+    // Determine which selector was changed by checking which one was recently changed
+    // Priority: Check if each selector has a value and use the one that's more likely to have changed
+    if (mainSelector && mainSelector.value) {
         newTeamId = mainSelector.value;
+    } else if (teamSelector && teamSelector.value) {
+        newTeamId = teamSelector.value;
     } else {
         return;
     }
@@ -428,6 +430,55 @@ function renderPlayerStatistics() {
 
 // Formation setup function
 function setupFormation() {
+    // Validate required game setup fields
+    const opponentName = document.getElementById('opponent-name').value.trim();
+    const gameDate = document.getElementById('game-date').value;
+    const substitutionTime = document.getElementById('substitution-time').value;
+    
+    if (!opponentName) {
+        showMessage('Please enter the opponent team name', 'error');
+        return;
+    }
+    
+    if (!gameDate) {
+        showMessage('Please enter the game date', 'error');
+        return;
+    }
+    
+    if (!substitutionTime) {
+        showMessage('Please enter substitution timer duration', 'error');
+        return;
+    }
+    
+    // Reset player stats for this new game
+    getTeamPlayers().forEach(player => {
+        player.stats = {
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            goalsAllowed: 0
+        };
+    });
+    
+    // Create the game object (minimal version for formation setup)
+    appState.currentGame = {
+        id: Date.now().toString(),
+        date: gameDate,
+        opponentName,
+        homeScore: 0,
+        awayScore: 0,
+        startTime: new Date().toISOString(),
+        endTime: null,
+        actions: [],
+        activePlayers: [...getTeamPlayers().map(p => p.id)],
+        isCompleted: false,
+        totalGameTime: 0
+    };
+    
+    // Save the game data
+    saveAppData();
+    
+    // Show formation setup screen
     showScreen('formation-setup');
     if (typeof FormationScreen !== 'undefined' && FormationScreen.renderFormationSetup) {
         FormationScreen.renderFormationSetup();

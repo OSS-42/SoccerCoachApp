@@ -295,12 +295,21 @@ function dropToSlot(e) {
             sidebarPlayerNum.draggable = false;
         }
         
-        // Reattach drag listeners to unavailable slot player so they can be moved
+        // Reattach drag and tap listeners to unavailable slot player so they can be moved
         const unavailableNum = slot.querySelector(`[data-player-id="${playerId}"]`);
         if (unavailableNum) {
             unavailableNum.draggable = true;
             unavailableNum.removeEventListener('dragstart', dragStart);
+            unavailableNum.removeEventListener('click', handleTapPlayer);
+            unavailableNum.removeEventListener('touchstart', touchStart);
+            unavailableNum.removeEventListener('touchmove', touchMove);
+            unavailableNum.removeEventListener('touchend', touchEnd);
+            
             unavailableNum.addEventListener('dragstart', dragStart);
+            unavailableNum.addEventListener('click', (e) => handleTapPlayer(e));
+            unavailableNum.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
+            unavailableNum.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
+            unavailableNum.addEventListener('touchend', (e) => touchEnd(e));
         }
         return;
     }
@@ -328,12 +337,17 @@ function dropToSlot(e) {
     slot.setAttribute('data-player-id', playerId);
     slot.classList.add('occupied');
 
-    // Disable player in sidebar - CLEAR from sidebar completely
+    // Disable player in sidebar - Keep element but clear content
     const sidebarContainer = document.querySelector('.player-list');
     if (sidebarContainer) {
-        const sidebarPlayers = sidebarContainer.querySelectorAll(`[data-player-id="${playerId}"]`);
-        sidebarPlayers.forEach(player => {
-            player.parentElement.remove(); // Remove entire player item
+        const sidebarPlayerItems = sidebarContainer.querySelectorAll('.player-item-draggable');
+        sidebarPlayerItems.forEach(playerItem => {
+            const playerNum = playerItem.querySelector(`[data-player-id="${playerId}"]`);
+            if (playerNum) {
+                // Clear the content but keep the element (shows empty bench spot)
+                playerItem.innerHTML = '';
+                playerItem.classList.add('empty-spot');
+            }
         });
     }
 
@@ -542,9 +556,17 @@ function handleTapPlayer(e) {
         return;
     }
 
+    // Determine source: field, unavailable slot, or sidebar
+    let source = 'sidebar';
+    if (e.target.classList.contains('player-number-placed')) {
+        source = 'field';
+    } else if (e.target.parentElement.classList.contains('unavailable-slot')) {
+        source = 'unavailable';
+    }
+
     // Select this player
     TapState.playerId = playerId;
-    TapState.source = e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar';
+    TapState.source = source;
     TapState.slotId = e.target.parentElement.id || '';
 
     // Visual feedback
