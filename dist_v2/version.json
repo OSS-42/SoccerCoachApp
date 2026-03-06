@@ -1,7 +1,9 @@
 {
-  "version": "1.10.5",
+  "version": "1.10.7",
   "lastUpdated": "2026-03-05",
   "changelog": {
+    "1.10.7": "Fixed: formation screen sidebar rebuild when players dropped back from field - now properly shows all available players instead of trying to re-enable deleted DOM elements, verified all JavaScript syntax is valid",
+    "1.10.6": "Fixed: main screen player counter now updates on team change, team selector moved into black banner line (main and team-setup screens), formation screen unavailable slots are now draggable with event listener reattachment, formation screen bench spots cleared when players placed on field",
     "1.10.5": "Fixed player position capture on creation, separated team player counter ID from main screen counter, added team name banner and team selector to main screen",
     "1.10.4": "Critical fixes: clearAppData now resets multi-team structure, fixed all appState.players references (editPlayer, savePlayerEdit, deletePlayer, recordAction, game tracking), fixed formation screen unavailable slot clearing, added position field to player objects",
     "1.10.3": "Critical fixes: unified player counter on all screens, formation screen player duplication, team management UI reorganization (team selector only on team-setup screen)",

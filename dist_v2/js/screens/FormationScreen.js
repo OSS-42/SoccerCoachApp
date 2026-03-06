@@ -294,6 +294,14 @@ function dropToSlot(e) {
             sidebarPlayerNum.classList.add('disabled');
             sidebarPlayerNum.draggable = false;
         }
+        
+        // Reattach drag listeners to unavailable slot player so they can be moved
+        const unavailableNum = slot.querySelector(`[data-player-id="${playerId}"]`);
+        if (unavailableNum) {
+            unavailableNum.draggable = true;
+            unavailableNum.removeEventListener('dragstart', dragStart);
+            unavailableNum.addEventListener('dragstart', dragStart);
+        }
         return;
     }
 
@@ -320,10 +328,13 @@ function dropToSlot(e) {
     slot.setAttribute('data-player-id', playerId);
     slot.classList.add('occupied');
 
-    // Disable player in sidebar
-    if (sidebarPlayerNum) {
-        sidebarPlayerNum.classList.add('disabled');
-        sidebarPlayerNum.draggable = false;
+    // Disable player in sidebar - CLEAR from sidebar completely
+    const sidebarContainer = document.querySelector('.player-list');
+    if (sidebarContainer) {
+        const sidebarPlayers = sidebarContainer.querySelectorAll(`[data-player-id="${playerId}"]`);
+        sidebarPlayers.forEach(player => {
+            player.parentElement.remove(); // Remove entire player item
+        });
     }
 
     // Reattach drag listeners to placed players and setup click handlers
@@ -367,28 +378,50 @@ function dropToSidebar(e) {
         }
     });
 
-    // Re-enable player in sidebar
-    const playerNum = document.querySelector(`.player-number[data-player-id="${playerId}"]`);
-    if (playerNum) {
-        playerNum.classList.remove('disabled');
-        playerNum.draggable = true;
-        // Re-attach event listeners
-        playerNum.removeEventListener('dragstart', dragStart);
-        playerNum.removeEventListener('click', handleTapPlayer);
-        playerNum.removeEventListener('touchstart', touchStart);
-        playerNum.removeEventListener('touchmove', touchMove);
-        playerNum.removeEventListener('touchend', touchEnd);
-        
-        playerNum.addEventListener('dragstart', (e) => dragStart(e));
-        playerNum.addEventListener('click', (e) => handleTapPlayer(e));
-        playerNum.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-        playerNum.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-        playerNum.addEventListener('touchend', (e) => touchEnd(e));
-    }
-    
     // Remove from unavailable list if present
     const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
     setUnavailablePlayers(unavailableList);
+    
+    // Rebuild entire sidebar to show all available players
+    const playerList = document.getElementById('player-list');
+    if (!playerList) return;
+    
+    playerList.innerHTML = '';
+    const teamPlayers = getTeamPlayers();
+    const formationTempList = getFormationTemp() || [];
+    const unavailableListUpdated = getUnavailablePlayers();
+    
+    teamPlayers.forEach(player => {
+        const isOnField = formationTempList.some(f => f.playerId === player.id);
+        const isUnavailable = unavailableListUpdated.includes(player.id);
+        const shouldDisable = isOnField || isUnavailable;
+        
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item-draggable';
+        playerItem.innerHTML = `
+            <span class="player-number ${shouldDisable ? 'disabled' : ''}" draggable="${!shouldDisable}" data-player-id="${player.id}">${player.jerseyNumber}</span>
+            <span class="player-name">${player.name}</span>
+        `;
+        playerList.appendChild(playerItem);
+    });
+    
+    // Re-attach drag-and-drop event listeners to new player elements
+    const numbers = document.querySelectorAll('.player-number');
+    numbers.forEach(number => {
+        if (!number.classList.contains('disabled')) {
+            number.removeEventListener('dragstart', dragStart);
+            number.removeEventListener('click', handleTapPlayer);
+            number.removeEventListener('touchstart', touchStart);
+            number.removeEventListener('touchmove', touchMove);
+            number.removeEventListener('touchend', touchEnd);
+            
+            number.addEventListener('dragstart', (e) => dragStart(e));
+            number.addEventListener('click', (e) => handleTapPlayer(e));
+            number.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
+            number.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
+            number.addEventListener('touchend', (e) => touchEnd(e));
+        }
+    });
 }
 
 // ============================================================================

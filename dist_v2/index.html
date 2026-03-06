@@ -25,11 +25,11 @@
             </div>
             <div class="team-name-banner">
                 <h2 id="main-screen-team-name">Team Name</h2>
-            </div>
-            <div class="team-selector" style="padding: 10px 15px; display: flex; justify-content: center; gap: 8px;">
-                <select id="main-team-selector" onchange="handleTeamChange()" style="min-width: 150px;"></select>
-                <button class="secondary-btn small" onclick="addNewTeam()">+</button>
-                <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
+                <div class="team-selector" style="display: flex; gap: 8px; align-items: center;">
+                    <select id="main-team-selector" onchange="handleTeamChange()" style="min-width: 150px;"></select>
+                    <button class="secondary-btn small" onclick="addNewTeam()">+</button>
+                    <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
+                </div>
             </div>
             <nav class="main-menu" role="navigation" aria-label="Main navigation">
                 <div class="menu-row">
@@ -554,7 +554,7 @@
         </div>
         
         <!-- Version footer - bottom right corner -->
-        <div id="version-footer" class="version-footer">v1.10.5</div>
+        <div id="version-footer" class="version-footer">v1.10.7</div>
     </div>
 
     <script src="js/core/StateInit.js"></script>

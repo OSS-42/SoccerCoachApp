@@ -192,7 +192,6 @@ function updateTeamNameUI() {
     });
 }
 
-// Team Management Functions
 function handleTeamChange() {
     // Get the new team ID (from either selector that was changed)
     let newTeamId = null;
@@ -211,6 +210,17 @@ function handleTeamChange() {
     saveAppData();
     updateTeamSelector(); // Update both selectors
     updateUI();
+    
+    // Update counters on both screens
+    const teamPlayers = getTeamPlayers();
+    const mainCounterElement = document.getElementById('player-counter');
+    const teamCounterElement = document.getElementById('team-player-counter');
+    if (mainCounterElement) {
+        mainCounterElement.textContent = teamPlayers.length;
+    }
+    if (teamCounterElement) {
+        teamCounterElement.textContent = teamPlayers.length;
+    }
     
     // Update team name banners on all screens
     updateTeamNameBanner('game-setup-team-name');
