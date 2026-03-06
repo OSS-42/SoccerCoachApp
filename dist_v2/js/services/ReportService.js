@@ -276,13 +276,13 @@ const ReportService = {
                             <tr>
                                 <th>#</th>
                                 <th>Name</th>
-                                <th><span class="stat-emoji">⚽</span></th>
+                                <th><span class="material-icons stat-icon-small">sports_soccer</span></th>
                                 <th><span class="stat-emoji">👟</span></th>
-                                <th><span class="stat-emoji">🧤</span></th>
-                                <th><img src="img/red-soccer.png" class="red-soccer-icon" width="18" height="18" alt="Goals Allowed"></th>
+                                <th><span class="material-icons stat-icon-small">back_hand</span></th>
+                                <th><img src="img/red-soccer.png" width="16" height="16" alt="Goals Allowed" class="stat-icon-img"></th>
                                 <th><span class="stat-emoji">🎯</span></th>
-                                <th><span class="stat-emoji">❌</span></th>
-                                <th><span class="stat-emoji">⚠️</span></th>
+                                <th><span class="stat-emoji">🛡️</span></th>
+                                <th><span class="stat-emoji">🚩</span></th>
                                 <th><span class="stat-emoji">🟨</span></th>
                                 <th><span class="stat-emoji">🟥</span></th>
                             </tr>

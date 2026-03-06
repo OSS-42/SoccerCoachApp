@@ -2190,7 +2190,7 @@ button.no-assist-btn {
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-    min-height: 60px;
+    min-height: 200px;
 }
 
 .unavailable-slot {

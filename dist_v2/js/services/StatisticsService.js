@@ -277,16 +277,15 @@ const StatisticsService = {
                         <th><span class="material-icons stat-icon-small">sports_soccer</span></th>
                         <th><span class="stat-emoji">👟</span></th>
                         <th><span class="material-icons stat-icon-small">back_hand</span></th>
-                        <th><img src="img/red-soccer.png" width="16" height="16" alt="Goals" class="stat-icon-img"></th>
-                        <th>Passes</th>
-                        <th>Shots</th>
-                        <th>Blocks</th>
-                        <th>Fouls</th>
+                        <th><img src="img/red-soccer.png" width="16" height="16" alt="Goals Allowed" class="stat-icon-img"></th>
+                        <th><span class="stat-emoji">🎯</span></th>
+                        <th><span class="stat-emoji">🛡️</span></th>
+                        <th><span class="stat-emoji">🚩</span></th>
                         <th><span class="yellow-card-icon">🟨</span></th>
                         <th><span class="red-card-icon">🟥</span></th>
-                        <th>OG</th>
-                        <th>Missed</th>
-                        <th>Late</th>
+                        <th><img src="img/red-soccer.png" width="16" height="16" alt="Own Goals" class="stat-icon-img"></th>
+                        <th><span class="stat-emoji">🚫</span></th>
+                        <th><span class="stat-emoji">🕐</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -302,7 +301,6 @@ const StatisticsService = {
                     <td>${player.assists}</td>
                     <td>${player.saves}</td>
                     <td>${player.goalsAllowed}</td>
-                    <td>${player.passes}</td>
                     <td>${player.shots}</td>
                     <td>${player.blocks}</td>
                     <td>${player.fouls}</td>
