@@ -281,6 +281,11 @@ function dropToSlot(e) {
 
     // Check if this is unavailable slot
     if (slot.classList.contains('unavailable-slot')) {
+        // Remove from formation if currently on field
+        const formation = getFormationTemp() || [];
+        const updatedFormation = formation.filter(f => f.playerId !== playerId);
+        setFormationTemp(updatedFormation);
+        
         // Add to unavailable list
         unavailableList.push(playerId);
         setUnavailablePlayers(unavailableList);
