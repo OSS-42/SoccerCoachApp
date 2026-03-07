@@ -62,16 +62,16 @@
                     <span class="material-icons">person_add</span>
                 </button>
             </div>
-            <div class="team-management-section" style="background-color: #000; color: white; padding: 15px; border-radius: 4px;">
-                <div class="team-name-section">
-                    <h2 style="margin-top: 0; color: white;">Team Name</h2>
-                    <div class="team-name-edit">
+            <div class="team-name-banner">
+                <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+                    <h2 id="team-setup-team-name" style="margin: 0;">Team Name</h2>
+                    <div class="team-name-edit" style="display: flex; gap: 8px;">
                         <input type="text" id="team-name-input" placeholder="Enter team name" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                         <button class="secondary-btn" onclick="saveTeamName()" style="background-color: #4CAF50; color: white; border: none;">Save</button>
                     </div>
                 </div>
-                <div class="team-selector">
-                    <select id="team-selector" onchange="handleTeamChange(this)"></select>
+                <div class="team-selector" style="display: flex; align-items: center; gap: 8px;">
+                    <select id="team-selector" onchange="handleTeamChange(this)" style="min-width: 150px;"></select>
                     <button class="secondary-btn small" onclick="addNewTeam()">+</button>
                     <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
                 </div>
@@ -315,13 +315,11 @@
                 </button>
                 <h1>Game Reports</h1>
             </div>
-            <div class="controls-row" style="display: flex; align-items: center; gap: 20px; justify-content: space-between;">
-                <div class="team-name-banner">
-                    <h2 id="reports-team-name">Team Name</h2>
+            <div class="team-name-banner">
+                <h2 id="reports-team-name">Team Name</h2>
+                <div class="team-selector" style="display: flex; gap: 8px; align-items: center;">
+                    <select id="reports-team-selector" onchange="handleTeamChange(this)" style="min-width: 150px;"></select>
                 </div>
-                <select id="reports-team-selector" class="team-selector" onchange="handleTeamChange(this)" style="width: 200px;">
-                    <!-- Teams will be populated here -->
-                </select>
             </div>
             <div class="content" id="reports-list">
                 <!-- Game reports will be listed here -->

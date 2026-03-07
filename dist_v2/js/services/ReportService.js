@@ -89,7 +89,6 @@ const ReportService = {
                 }
             });
         }
-        });
 
         let playerStatsHTML = '';
         Object.values(playerActions)

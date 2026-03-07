@@ -237,6 +237,7 @@ function handleTeamChange(selectElement) {
     updateTeamNameBanner('game-setup-team-name');
     updateTeamNameBanner('formation-setup-team-name');
     updateTeamNameBanner('main-screen-team-name');
+    updateTeamNameBanner('team-setup-team-name');
     updateTeamNameBanner('reports-team-name');
     
     // Re-render reports if on reports screen
@@ -385,6 +386,7 @@ function updateTeamSelector() {
     updateTeamSelectorElement('team-selector');
     updateTeamSelectorElement('main-team-selector');
     updateTeamNameBanner('main-screen-team-name');
+    updateTeamNameBanner('team-setup-team-name');
 }
 
 function updateTeamSelectorElement(selectorId) {
