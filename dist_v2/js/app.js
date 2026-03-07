@@ -95,7 +95,7 @@ window.setFormationTemp = setFormationTemp;
 function updateMainScreen() {
     updateTeamSelector();
     updateTeamNameUI();
-    renderPlayersList();
+    TeamSetupScreen.renderPlayersList();
     updatePlayerCounter();
     updateGameReportCounter();
 }
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTeamSelector();
         
         // Populate UI with existing data
-        renderPlayersList();
+        TeamSetupScreen.renderPlayersList();
         updateTeamNameUI();
         
         // Add demo players if none exist for current team
@@ -1603,7 +1603,7 @@ function clearAppData() {
         saveAppData();
         updateTeamNameUI();
         updateTeamSelector();
-        renderPlayersList();
+        TeamSetupScreen.renderPlayersList();
         showMessage('All data has been cleared. The app has been reset.', 'success');
         
         // Return to main screen
@@ -1680,7 +1680,7 @@ function handleFileImport(event) {
                 
                 // Update UI
                 updateTeamNameUI();
-                renderPlayersList();
+                TeamSetupScreen.renderPlayersList();
                 
                 showMessage('Team data imported successfully!', 'success');
             }
@@ -1709,7 +1709,7 @@ function addDemoPlayers() {
     
     setTeamPlayers(demoPlayers);
     saveAppData();
-    renderPlayersList();
+    TeamSetupScreen.renderPlayersList();
 }
 
 // Formation Setup Functions
