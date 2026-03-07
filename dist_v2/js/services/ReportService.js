@@ -10,9 +10,23 @@ const ReportService = {
      * @param {string} gameId - ID of the game to report on
      */
     viewReport(gameId) {
-        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : [];
-        const game = teamGames.find(g => g.id === gameId);
-        if (!game) return;
+        // Try to get game from team games first
+        let game = null;
+        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : null;
+        if (Array.isArray(teamGames)) {
+            game = teamGames.find(g => g.id === gameId);
+        }
+        
+        // Fallback to legacy appState.games for old reports
+        if (!game && appState && Array.isArray(appState.games)) {
+            game = appState.games.find(g => g.id === gameId);
+        }
+        
+        if (!game) {
+            console.error('Game not found:', gameId);
+            showMessage('Game report not found', 'error');
+            return;
+        }
 
         let reportDialog = document.getElementById('detailed-report-dialog');
         if (!reportDialog) {
@@ -31,7 +45,7 @@ const ReportService = {
             : 'N/A';
 
         const playerActions = {};
-        const teamPlayers = typeof getTeamPlayers === 'function' ? getTeamPlayers() : [];
+        const teamPlayers = typeof getTeamPlayers === 'function' ? getTeamPlayers() : (appState && appState.players ? appState.players : []);
         (game.activePlayers || []).forEach(playerId => {
             const player = teamPlayers.find(p => p.id === playerId);
             if (player) {
@@ -363,9 +377,19 @@ const ReportService = {
      * @param {string} gameId - ID of the game to export
      * @param {string} format - Export format (currently supports 'pdf')
      */
-    exportRepoteamGames = typeof getTeamGames === 'function' ? getTeamGames() : [];
-        const game = teamG) {
-        const game = appState.games.find(g => g.id === gameId);
+    exportReport(gameId, format) {
+        // Try to get game from team games first
+        let game = null;
+        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : null;
+        if (Array.isArray(teamGames)) {
+            game = teamGames.find(g => g.id === gameId);
+        }
+        
+        // Fallback to legacy appState.games for old reports
+        if (!game && appState && Array.isArray(appState.games)) {
+            game = appState.games.find(g => g.id === gameId);
+        }
+        
         if (!game) {
             showMessage('Game not found', 'error');
             return;

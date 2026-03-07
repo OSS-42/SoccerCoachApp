@@ -1378,7 +1378,11 @@ function endGame() {
     
     // Generate and show the detailed report for this game
     setTimeout(() => {
-        viewReport(finishedGameId);
+        if (typeof ReportService !== 'undefined' && ReportService.viewReport) {
+            ReportService.viewReport(finishedGameId);
+        } else {
+            viewReport(finishedGameId);
+        }
     }, 300);
     
     // Clear current game
