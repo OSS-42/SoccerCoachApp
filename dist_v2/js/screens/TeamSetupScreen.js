@@ -12,6 +12,14 @@ const TeamSetupScreen = {
         const playersList = document.getElementById('players-list');
         if (!playersList) return;
         
+        // Clear any previous warning ribbon/delete state
+        const ribbon = document.getElementById('message-ribbon');
+        if (ribbon) {
+            ribbon.classList.add('hidden');
+            ribbon.style.display = 'none';
+            ribbon.innerHTML = '<span id="message-text"></span><button class="close-btn" onclick="hideMessage()">×</button>';
+        }
+        
         playersList.innerHTML = '';
         const teamPlayerCounter = document.getElementById('team-player-counter');
         const players = getTeamPlayers();
