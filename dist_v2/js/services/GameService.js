@@ -134,12 +134,5 @@ window.GameService = {
      */
     getGameById(gameId) {
         return appState.games.find(g => g.id === gameId);
-    },
-    
-    /**
-     * Get game count
-     */
-    getGameCount() {
-        return appState.games.filter(g => g.isCompleted).length;
     }
 };

@@ -88,13 +88,6 @@ window.PlayerService = {
     },
     
     /**
-     * Find player by jersey number
-     */
-    findPlayerByJerseyNumber(jerseyNumber) {
-        return appState.players.find(p => p.jerseyNumber === Number(jerseyNumber));
-    },
-    
-    /**
      * Update player details
      */
     updatePlayer(playerId, updates) {
@@ -112,17 +105,5 @@ window.PlayerService = {
         return player;
     },
     
-    /**
-     * Get all players
-     */
-    getAllPlayers() {
-        return appState.players;
-    },
-    
-    /**
-     * Get player count
-     */
-    getPlayerCount() {
-        return appState.players.length;
-    }
+
 };
