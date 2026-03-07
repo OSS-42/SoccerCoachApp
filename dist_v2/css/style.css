@@ -808,10 +808,12 @@ body {
 .controls-row {
     display: flex;
     align-items: center;
-    padding: 0px 0; /* Remove left/right padding, keep top/bottom */
+    padding: 15px 20px;
     width: 100%;
     box-sizing: border-box;
     flex: 0 0 auto; /* Take only the space needed */
+    background-color: white;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .game-controls {

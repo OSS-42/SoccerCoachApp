@@ -240,7 +240,8 @@ function handleTeamChange(selectElement) {
     updateTeamNameBanner('reports-team-name');
     
     // Re-render reports if on reports screen
-    if (document.getElementById('reports').style.display !== 'none') {
+    const reportsScreen = document.getElementById('reports');
+    if (reportsScreen && reportsScreen.classList.contains('active')) {
         ReportsScreen.renderReportsList();
     }
     

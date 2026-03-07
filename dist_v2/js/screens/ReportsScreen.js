@@ -14,6 +14,12 @@ const ReportsScreen = {
         
         reportsList.innerHTML = '';
         
+        // Guard clause: ensure appState and games exist
+        if (!appState || !appState.games || !Array.isArray(appState.games)) {
+            reportsList.innerHTML = '<div class="empty-state">No completed games yet. Finish a game to see reports here.</div>';
+            return;
+        }
+        
         // Filter games by current team and completion status
         const completedGames = appState.games.filter(game => 
             game.isCompleted && game.teamId === appState.currentTeamId
