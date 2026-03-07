@@ -10,7 +10,8 @@ const ReportService = {
      * @param {string} gameId - ID of the game to report on
      */
     viewReport(gameId) {
-        const game = appState.games.find(g => g.id === gameId);
+        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : [];
+        const game = teamGames.find(g => g.id === gameId);
         if (!game) return;
 
         let reportDialog = document.getElementById('detailed-report-dialog');
@@ -30,8 +31,9 @@ const ReportService = {
             : 'N/A';
 
         const playerActions = {};
+        const teamPlayers = typeof getTeamPlayers === 'function' ? getTeamPlayers() : [];
         (game.activePlayers || []).forEach(playerId => {
-            const player = appState.players.find(p => p.id === playerId);
+            const player = teamPlayers.find(p => p.id === playerId);
             if (player) {
                 playerActions[playerId] = {
                     name: player.name,
@@ -150,7 +152,7 @@ const ReportService = {
                 <div class="game-notes" style="margin-left: 15px; font-size: 12px;">
                     ${noteActions.map(note => {
                         const playerName = note.playerId ? 
-                            (appState.players.find(p => p.id === note.playerId)?.name || 'Unknown Player') : 
+                            (teamPlayers.find(p => p.id === note.playerId)?.name || 'Unknown Player') : 
                             'General';
                         return `<div class="note-item" style="margin: 5px 0;">${note.gameMinute}' - ${playerName}: ${note.noteText}</div>`;
                     }).join('')}
@@ -161,7 +163,7 @@ const ReportService = {
         // Generate missed players line
         const missedLine = (game.unavailablePlayers || [])
             .map(playerId => {
-                const player = appState.players.find(p => p.id === playerId);
+                const player = teamPlayers.find(p => p.id === playerId);
                 return player ? player.name : null;
             })
             .filter(name => name)
@@ -176,7 +178,7 @@ const ReportService = {
                     <div class="formation-container-report" ${window.innerWidth <= 1024 ? 'style="flex-direction: column !important; align-items: center !important; min-width: auto !important;"' : ''}>
                         <div class="formation-field-report">
                             ${game.formationPlayers.map(f => {
-                                const player = appState.players.find(p => p.id === f.playerId);
+                                const player = teamPlayers.find(p => p.id === f.playerId);
                                 if (!player) return '';
                                 const stats = playerActions[f.playerId] || {};
                                 
@@ -225,7 +227,7 @@ const ReportService = {
                         <div class="substitutes-list">
                             <h4>Substitutes</h4>
                             ${game.substitutes?.map(subId => {
-                                const player = appState.players.find(p => p.id === subId);
+                                const player = teamPlayers.find(p => p.id === subId);
                                 if (!player) return '';
                                 const stats = playerActions[subId] || {};
                                 
@@ -284,8 +286,9 @@ const ReportService = {
                     <div><strong>Teams:</strong> ${typeof getTeamName === 'function' ? getTeamName() : 'My Team'} vs ${game.opponentName}</div>
                     <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
                     <div><strong>Goal for ${typeof getTeamName === 'function' ? getTeamName() : 'My Team'}:</strong> ${goalLine}</div>
-                    <div><strong>Yellow card:</strong> ${yellowCardLine}</div>
-                    <div><strong>Red card:</strong> ${redCardLine}</div>
+                    <div><strong>Goals Against:</strong> ${game.awayScore || 'N/A'}</div>
+                    <div><strong>Yellow Card:</strong> ${yellowCardLine}</div>
+                    <div><strong>Red Card:</strong> ${redCardLine}</div>
                     <div><strong>Duration:</strong> ${gameDuration}</div>
                 </div>
                 ${formationHTML}
@@ -360,7 +363,8 @@ const ReportService = {
      * @param {string} gameId - ID of the game to export
      * @param {string} format - Export format (currently supports 'pdf')
      */
-    exportReport(gameId, format) {
+    exportRepoteamGames = typeof getTeamGames === 'function' ? getTeamGames() : [];
+        const game = teamG) {
         const game = appState.games.find(g => g.id === gameId);
         if (!game) {
             showMessage('Game not found', 'error');
