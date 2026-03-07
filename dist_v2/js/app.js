@@ -96,10 +96,30 @@ function updateMainScreen() {
     updateTeamSelector();
     updateTeamNameUI();
     renderPlayersList();
+    updatePlayerCounter();
+    updateGameReportCounter();
 }
 
 function updateUI() {
     updateMainScreen();
+}
+
+// Counter update functions
+function updatePlayerCounter() {
+    const mainCounterElement = document.getElementById('player-counter');
+    if (mainCounterElement) {
+        const teamPlayers = getTeamPlayers();
+        mainCounterElement.textContent = teamPlayers.length;
+    }
+}
+
+function updateGameReportCounter() {
+    const counterElement = document.getElementById('game-report-counter');
+    if (counterElement) {
+        const teamGames = getTeamGames();
+        const completedGames = teamGames.filter(game => game.isCompleted).length;
+        counterElement.textContent = completedGames;
+    }
 }
 
 // Initialize the app
@@ -232,6 +252,9 @@ function handleTeamChange(selectElement) {
     if (teamCounterElement) {
         teamCounterElement.textContent = teamPlayers.length;
     }
+    
+    // Update game report counter
+    updateGameReportCounter();
     
     // Update team name banners on all screens
     updateTeamNameBanner('game-setup-team-name');
@@ -367,6 +390,8 @@ function showScreen(screenId) {
     // Update team selector and banners for main-screen and team-setup screen
     if (screenId === 'team-setup' || screenId === 'main-screen') {
         updateTeamSelector();
+        updatePlayerCounter();
+        updateGameReportCounter();
     }
     
     // Special handling for specific screens
@@ -1369,6 +1394,9 @@ function endGame() {
     
     // Save data before showing report
     saveAppData();
+    
+    // Update game report counter
+    updateGameReportCounter();
     
     // Close the dialog
     closeEndGameDialog();
