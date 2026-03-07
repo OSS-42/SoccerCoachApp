@@ -315,11 +315,11 @@
                 </button>
                 <h1>Game Reports</h1>
             </div>
-            <div class="team-name-banner">
-                <h2 id="reports-team-name">Team Name</h2>
-            </div>
-            <div class="controls-row">
-                <select id="reports-team-selector" class="team-selector" onchange="handleTeamChange(this)">
+            <div class="controls-row" style="display: flex; align-items: center; gap: 20px; justify-content: space-between;">
+                <div class="team-name-banner">
+                    <h2 id="reports-team-name">Team Name</h2>
+                </div>
+                <select id="reports-team-selector" class="team-selector" onchange="handleTeamChange(this)" style="width: 200px;">
                     <!-- Teams will be populated here -->
                 </select>
             </div>

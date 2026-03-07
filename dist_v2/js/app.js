@@ -237,6 +237,12 @@ function handleTeamChange(selectElement) {
     updateTeamNameBanner('game-setup-team-name');
     updateTeamNameBanner('formation-setup-team-name');
     updateTeamNameBanner('main-screen-team-name');
+    updateTeamNameBanner('reports-team-name');
+    
+    // Re-render reports if on reports screen
+    if (document.getElementById('reports').style.display !== 'none') {
+        ReportsScreen.renderReportsList();
+    }
     
     // If on a specific screen, refresh its content for the new team
     const activeScreen = document.querySelector('.screen.active');
