@@ -45,7 +45,9 @@ const ReportService = {
                     redCards: [],
                     lateToGame: false,
                     faults: 0,
-                    blockedShots: 0
+                    blockedShots: 0,
+                    ownGoals: 0,
+                    missedGames: 0
                 };
             }
         });
@@ -66,11 +68,27 @@ const ReportService = {
                     case 'late_to_game': playerActions[action.playerId].lateToGame = true; break;
                     case 'fault': playerActions[action.playerId].faults++; break;
                     case 'blocked_shot': playerActions[action.playerId].blockedShots++; break;
+                    case 'own_goal': playerActions[action.playerId].ownGoals++; break;
                     case 'note':
                         // Notes are displayed separately, no stats to update
                         break;
                 }
+            } else if (action.actionType === 'own_goal' && action.playerId) {
+                // Own goal by player
+                if (playerActions[action.playerId]) {
+                    playerActions[action.playerId].ownGoals++;
+                }
             }
+        });
+        
+        // Calculate missed games for unavailable players
+        if (game.unavailablePlayers && game.unavailablePlayers.length > 0) {
+            game.unavailablePlayers.forEach(playerId => {
+                if (playerActions[playerId]) {
+                    playerActions[playerId].missedGames = 1;
+                }
+            });
+        }
         });
 
         let playerStatsHTML = '';
@@ -91,9 +109,9 @@ const ReportService = {
                         <td>${playerStat.faults}</td>
                         <td>${playerStat.yellowCards.length}</td>
                         <td>${effectiveRedCards}</td>
-                        <td>0</td>
-                        <td>0</td>
-                        <td>0</td>
+                        <td>${playerStat.ownGoals || 0}</td>
+                        <td>${playerStat.missedGames || 0}</td>
+                        <td>${playerStat.lateToGame ? 1 : 0}</td>
                     </tr>
                 `;
             });
@@ -152,13 +170,13 @@ const ReportService = {
 
         // Formation Section with correct stats and player names
         let formationHTML = '';
-        if (game.formation && game.formation.length > 0) {
+        if (game.formationPlayers && game.formationPlayers.length > 0) {
             formationHTML = `
                 <div class="report-formation">
                     <h3>Starting Formation (${game.matchType})</h3>
                     <div class="formation-container-report" ${window.innerWidth <= 1024 ? 'style="flex-direction: column !important; align-items: center !important; min-width: auto !important;"' : ''}>
                         <div class="formation-field-report">
-                            ${game.formation.map(f => {
+                            ${game.formationPlayers.map(f => {
                                 const player = appState.players.find(p => p.id === f.playerId);
                                 if (!player) return '';
                                 const stats = playerActions[f.playerId] || {};

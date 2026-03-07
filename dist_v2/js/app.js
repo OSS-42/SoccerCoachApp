@@ -354,6 +354,8 @@ function showScreen(screenId) {
     
     // Special handling for specific screens
     if (screenId === 'reports') {
+        updateTeamNameBanner('reports-team-name');
+        updateTeamSelectorElement('reports-team-selector');
         renderReportsList();
     } else if (screenId === 'game-setup') {
         // Auto-fill today's date when opening the game setup screen

@@ -315,6 +315,14 @@
                 </button>
                 <h1>Game Reports</h1>
             </div>
+            <div class="team-name-banner">
+                <h2 id="reports-team-name">Team Name</h2>
+            </div>
+            <div class="controls-row">
+                <select id="reports-team-selector" class="team-selector" onchange="handleTeamChange(this)">
+                    <!-- Teams will be populated here -->
+                </select>
+            </div>
             <div class="content" id="reports-list">
                 <!-- Game reports will be listed here -->
                 <div class="empty-state">No completed games yet</div>
