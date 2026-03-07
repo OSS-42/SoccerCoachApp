@@ -281,9 +281,9 @@ const ReportService = {
                 <h2>Game Report</h2>
                 <div class="report-header-info">
                     <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                    <div><strong>Teams:</strong> ${appState.teamName} vs ${game.opponentName}</div>
+                    <div><strong>Teams:</strong> ${typeof getTeamName === 'function' ? getTeamName() : 'My Team'} vs ${game.opponentName}</div>
                     <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
-                    <div><strong>Goal for ${appState.teamName}:</strong> ${goalLine}</div>
+                    <div><strong>Goal for ${typeof getTeamName === 'function' ? getTeamName() : 'My Team'}:</strong> ${goalLine}</div>
                     <div><strong>Yellow card:</strong> ${yellowCardLine}</div>
                     <div><strong>Red card:</strong> ${redCardLine}</div>
                     <div><strong>Duration:</strong> ${gameDuration}</div>

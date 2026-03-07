@@ -45,7 +45,7 @@ const ReportsScreen = {
             reportItem.innerHTML = `
                 <div class="report-header">
                     <span class="report-date">${gameDate}</span>
-                    <span class="report-teams">${appState.teamName} vs ${game.opponentName}</span>
+                    <span class="report-teams">${getTeamName()} vs ${game.opponentName}</span>
                     <span class="report-score">${score}</span>
                 </div>
                 <div class="report-actions">
@@ -67,7 +67,8 @@ const ReportsScreen = {
      * @returns {number} Number of games with recorded actions
      */
     getReportsWithDataCount() {
-        return appState.games.filter(game => 
+        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : [];
+        return teamGames.filter(game => 
             game.isCompleted && game.actions && game.actions.length > 0
         ).length;
     },
@@ -77,7 +78,8 @@ const ReportsScreen = {
      * @returns {number} Total completed games
      */
     getTotalCompletedGamesCount() {
-        return appState.games.filter(game => game.isCompleted).length;
+        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : [];
+        return teamGames.filter(game => game.isCompleted).length;
     }
 };
 

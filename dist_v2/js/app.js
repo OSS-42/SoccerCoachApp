@@ -373,7 +373,11 @@ function showScreen(screenId) {
     if (screenId === 'reports') {
         updateTeamNameBanner('reports-team-name');
         updateTeamSelectorElement('reports-team-selector');
-        renderReportsList();
+        if (typeof ReportsScreen !== 'undefined' && ReportsScreen.renderReportsList) {
+            ReportsScreen.renderReportsList();
+        } else {
+            renderReportsList();
+        }
     } else if (screenId === 'game-setup') {
         // Auto-fill today's date when opening the game setup screen
         const today = new Date();
