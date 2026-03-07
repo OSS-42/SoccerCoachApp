@@ -250,12 +250,21 @@ function handleTeamChange(selectElement) {
     const activeScreen = document.querySelector('.screen.active');
     if (activeScreen) {
         const screenId = activeScreen.id;
-        if (screenId === 'team-setup' && typeof TeamSetupScreen !== 'undefined') {
-            TeamSetupScreen.renderPlayersList();
+        if (screenId === 'team-setup') {
+            // Check if we need to update team setup content
+            const playersTabContent = document.getElementById('players-tab-content');
+            const statsTabContent = document.getElementById('statistics-tab-content');
+            
+            if (playersTabContent && playersTabContent.classList.contains('active')) {
+                if (typeof TeamSetupScreen !== 'undefined') {
+                    TeamSetupScreen.renderPlayersList();
+                }
+            } else if (statsTabContent && statsTabContent.classList.contains('active')) {
+                // Re-render statistics for the new team
+                renderPlayerStatistics();
+            }
         } else if (screenId === 'formation-setup' && typeof FormationScreen !== 'undefined') {
             FormationScreen.renderFormationSetup();
-        } else if (screenId === 'statistics') {
-            renderPlayerStatistics();
         }
     }
 }
