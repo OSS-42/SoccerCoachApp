@@ -91,6 +91,9 @@ const ReportService = {
                         <td>${playerStat.faults}</td>
                         <td>${playerStat.yellowCards.length}</td>
                         <td>${effectiveRedCards}</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
                     </tr>
                 `;
             });
@@ -179,10 +182,10 @@ const ReportService = {
                                     statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
                                 }
                                 if (stats.blockedShots > 0) {
-                                    statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
+                                    statTable += `<tr><th>🛡️</th><td>${stats.blockedShots}</td></tr>`;
                                 }
                                 if (stats.faults > 0) {
-                                    statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
+                                    statTable += `<tr><th>🚩</th><td>${stats.faults}</td></tr>`;
                                 }
                                 if (stats.yellowCards?.length > 0) {
                                     statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
@@ -228,10 +231,10 @@ const ReportService = {
                                     statTable += `<tr><th><img src="img/red-soccer.png" style="width:18px;height:18px;"></th><td>${stats.goalsAllowed}</td></tr>`;
                                 }
                                 if (stats.blockedShots > 0) {
-                                    statTable += `<tr><th>❌</th><td>${stats.blockedShots}</td></tr>`;
+                                    statTable += `<tr><th>🛡️</th><td>${stats.blockedShots}</td></tr>`;
                                 }
                                 if (stats.faults > 0) {
-                                    statTable += `<tr><th>⚠️</th><td>${stats.faults}</td></tr>`;
+                                    statTable += `<tr><th>🚩</th><td>${stats.faults}</td></tr>`;
                                 }
                                 if (stats.yellowCards?.length > 0) {
                                     statTable += `<tr><th>🟨</th><td>${stats.yellowCards.length}</td></tr>`;
@@ -285,6 +288,9 @@ const ReportService = {
                                 <th><span class="stat-emoji">🚩</span></th>
                                 <th><span class="stat-emoji">🟨</span></th>
                                 <th><span class="stat-emoji">🟥</span></th>
+                                <th><img src="img/red-soccer.png" width="16" height="16" alt="Own Goals" class="stat-icon-img"></th>
+                                <th><span class="stat-emoji">🚫</span></th>
+                                <th><span class="stat-emoji">🕐</span></th>
                             </tr>
                         </thead>
                         <tbody>

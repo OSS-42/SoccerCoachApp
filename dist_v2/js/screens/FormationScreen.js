@@ -411,9 +411,13 @@ function dropToSidebar(e) {
     
     // Find and update the player item for this specific player
     const playerItems = document.querySelectorAll('.player-item-draggable');
+    let playerFound = false;
+    
+    // First try to find existing player with number span
     playerItems.forEach(item => {
         const numberSpan = item.querySelector('.player-number');
         if (numberSpan && numberSpan.getAttribute('data-player-id') === playerId) {
+            playerFound = true;
             // Re-enable the player item: remove disabled class and set draggable
             numberSpan.classList.remove('disabled');
             numberSpan.setAttribute('draggable', 'true');
@@ -432,6 +436,28 @@ function dropToSidebar(e) {
             numberSpan.addEventListener('touchend', (e) => touchEnd(e));
         }
     });
+    
+    // If not found, rebuild from empty-spot items
+    if (!playerFound) {
+        playerItems.forEach(item => {
+            if (item.classList.contains('empty-spot') && !playerFound) {
+                // Check if this was the item for this player by checking siblings or by finding the next empty spot
+                const html = '<span class="player-number" draggable="true" data-player-id="' + playerId + '">' + removedPlayer.jerseyNumber + '</span><span class="player-name">' + removedPlayer.name + '</span>';
+                item.innerHTML = html;
+                item.classList.remove('empty-spot');
+                
+                // Re-attach event listeners to newly created number span
+                const newNumberSpan = item.querySelector('.player-number');
+                newNumberSpan.addEventListener('dragstart', (e) => dragStart(e));
+                newNumberSpan.addEventListener('click', (e) => handleTapPlayer(e));
+                newNumberSpan.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
+                newNumberSpan.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
+                newNumberSpan.addEventListener('touchend', (e) => touchEnd(e));
+                
+                playerFound = true;
+            }
+        });
+    }
 }
 
 // ============================================================================

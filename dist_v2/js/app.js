@@ -832,7 +832,7 @@ function renderPlayerGrid() {
     
     // Get formation players if we're in a game
     const formationPlayerIds = appState.currentGame && appState.currentGame.formationPlayers 
-        ? appState.currentGame.formationPlayers.map(p => p.id) 
+        ? appState.currentGame.formationPlayers.map(p => p.playerId) 
         : [];
     
     // Using all players, not filtering by active status anymore
@@ -1054,11 +1054,19 @@ function openAssistSelectionDialog() {
     // Clear previous content
     playersGrid.innerHTML = '';
     
-    // Get all players excluding the goal scorer and red-carded players
-    const activePlayers = getTeamPlayers().filter(p => 
-        p.id !== appState.goalScorer.id && 
-        (!p.stats || p.stats.redCards === 0)
-    );
+    // Get all players excluding the goal scorer and red/yellow-carded players
+    const activePlayers = getTeamPlayers().filter(p => {
+        // Exclude goal scorer
+        if (p.id === appState.goalScorer.id) return false;
+        
+        // Exclude red-carded players
+        if (p.stats && p.stats.redCards > 0) return false;
+        
+        // Exclude players with 2+ yellow cards (auto red)
+        if (p.stats && p.stats.yellowCards >= 2) return false;
+        
+        return true;
+    });
     
     // Add players to the grid
     activePlayers.forEach(player => {
