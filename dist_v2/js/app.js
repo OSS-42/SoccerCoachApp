@@ -1758,6 +1758,12 @@ function startGameFromFormation() {
 
     // Store formation players in the current game so we know who's on field
     appState.currentGame.formationPlayers = getFormationTemp();
+    
+    // Calculate substitutes (all team players not in formation)
+    const formationPlayerIds = getFormationTemp().map(f => f.playerId);
+    const allTeamPlayers = getTeamPlayers().map(p => p.id);
+    appState.currentGame.substitutes = allTeamPlayers.filter(playerId => !formationPlayerIds.includes(playerId));
+    
     saveAppData();
     
     // Start the game
