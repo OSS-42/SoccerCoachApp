@@ -143,7 +143,14 @@ const FormationScreen = {
                 number.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
                 number.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
                 number.addEventListener('touchend', (e) => touchEnd(e));
-                number.addEventListener('click', (e) => handleTapPlayer(e));
+                // Handle both click and touch tap
+                number.addEventListener('click', (e) => handleTapPlayer(e), { passive: true });
+                number.addEventListener('touchend', (e) => {
+                    // On touch devices, also trigger tap if no drag occurred
+                    if (!window.dragInProgress) {
+                        handleTapPlayer(e);
+                    }
+                }, { passive: true });
                 number.setAttribute('data-events-setup', 'true');
             }
         });
@@ -207,6 +214,7 @@ const TapState = {
 
 // Drag event: Player starts being dragged
 function dragStart(e) {
+    window.dragInProgress = true;
     e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
     e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
     e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
@@ -523,7 +531,10 @@ function updateClonePosition(clientX, clientY) {
 }
 
 function touchEnd(e) {
-    if (!draggedElement) return;
+    if (!draggedElement) {
+        window.dragInProgress = false;
+        return;
+    }
     e.preventDefault();
 
     if (clone) {
@@ -559,6 +570,7 @@ function touchEnd(e) {
     }
 
     draggedElement = null;
+    window.dragInProgress = false;
 }
 
 // ============================================================================
@@ -566,8 +578,14 @@ function touchEnd(e) {
 // ============================================================================
 
 function handleTapPlayer(e) {
-    e.stopPropagation();
-    const playerId = e.target.getAttribute('data-player-id');
+    // Ignore tap if drag was in progress
+    if (window.dragInProgress) {
+        window.dragInProgress = false;
+        return;
+    }
+    
+    const playerId = e.target?.getAttribute('data-player-id') || e.currentTarget?.getAttribute('data-player-id');
+    if (!playerId) return;
     
     // If tapping same player, deselect
     if (TapState.playerId === playerId) {
