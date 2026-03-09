@@ -146,26 +146,36 @@ function showMessage(message, type = 'error') {
     const ribbon = document.getElementById('message-ribbon');
     const messageText = document.getElementById('message-text');
     
+    if (!ribbon || !messageText) {
+        console.error('Message ribbon or text element not found');
+        return;
+    }
+    
     // Clear any existing timeout to prevent overlapping messages
     if (messageTimeout) {
         clearTimeout(messageTimeout);
     }
     
+    // Set the message content and type
     messageText.textContent = message;
     ribbon.className = `message-ribbon ${type}`;
     
-    // Show message
-    setTimeout(() => {
-        ribbon.classList.remove('hidden');
-    }, 10);
+    // Ensure ribbon is visible immediately
+    ribbon.classList.remove('hidden');
     
-    // Auto-hide after 5 seconds (both success and error messages)
-    messageTimeout = setTimeout(hideMessage, 5000);
+    // Auto-hide after 5 seconds for success, 7 seconds for errors
+    const hideDelay = type === 'error' ? 7000 : 5000;
+    messageTimeout = setTimeout(hideMessage, hideDelay);
+    
+    // Log message for debugging
+    console.log(`Message (${type}):`, message);
 }
 
 function hideMessage() {
     const ribbon = document.getElementById('message-ribbon');
-    ribbon.classList.add('hidden');
+    if (ribbon) {
+        ribbon.classList.add('hidden');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

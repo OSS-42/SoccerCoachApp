@@ -1,7 +1,8 @@
 {
-  "version": "1.10.22",
+  "version": "1.10.24",
   "lastUpdated": "2026-03-08",
   "changelog": {
+    "1.10.24": "Simplified drag prevention: removed unnecessary JavaScript drag event handlers (dragstart, dragend, dragover, drop, etc) - native browser drag behavior is now prevented cleanly through CSS only (user-select: none on all formation elements), which is the proper approach for preventing HTML5 drag operations without making code more complex, kept tap-to-select functionality clean and simple",
     "1.10.22": "Fixed: native browser drag behavior was still possible on player elements - added dragstart event listener that prevents default to block HTML5 native dragging, added CSS user-select: none and user-drag: none with webkit prefixes to all player elements (.player-number, .player-number-placed, .player-item-draggable) and slot elements (.player-slot, .unavailable-slot) to completely disable dragging and text selection, formation screen now tap-to-select only with zero drag interference",
     "1.10.19": "Fixed: mobile formation/lineup screen tap-to-select now works for all player locations - sidebar bench players, on-field players (player circles), and unavailable slots, added touchstart/touchend event handlers to field slots for mobile detection, improved event target detection in handleTapPlayer to use closest() for reliable element identification, added proper touch event listener cleanup and reattachment when players are moved between sidebar/field/unavailable locations",
     "1.10.18": "Fixed: mobile formation screen layout - bench area players now properly aligned to the left with correct jersey number circle sizing (no ovals), tap-to-select now works reliably on mobile devices (distinguishes tap from drag, ignores accidental taps during drag operations), improved touch support with proper touch-action settings",

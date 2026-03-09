@@ -1,7 +1,7 @@
 /**
  * FormationScreen.js
  * Encapsulates all formation setup screen rendering and tap-to-select logic
- * Version: 1.10.22
+ * Version: 1.10.24
  */
 
 const FormationScreen = {
@@ -99,7 +99,7 @@ const FormationScreen = {
             showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
         }
 
-        // Setup drag-and-drop
+        // Setup tap handlers
         this._setupTapHandlers();
     },
 
@@ -131,19 +131,13 @@ const FormationScreen = {
     },
 
     /**
-     * Setup drag-and-drop event listeners
+     * Setup tap-to-select event listeners (no drag prevention needed - handled by CSS)
      * @private
      */
     _setupTapHandlers() {
         const numbers = document.querySelectorAll('.player-number');
         numbers.forEach(number => {
             if (!number.hasAttribute('data-events-setup')) {
-                // Prevent native browser drag behavior
-                number.addEventListener('dragstart', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, { passive: false });
-                
                 // Handle both click and touch tap
                 number.addEventListener('click', (e) => {
                     e.preventDefault();
