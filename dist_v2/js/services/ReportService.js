@@ -1,7 +1,7 @@
 /**
  * ReportService.js
  * Handles game report generation, display, and export functionality
- * Version: 1.9.81
+ * Version: 1.11 - Enhanced report with timeline, goals, cards, and stats
  */
 
 const ReportService = {
@@ -485,6 +485,339 @@ const ReportService = {
         };
 
         showMessage('Opening print dialog for PDF export', 'success');
+    },
+
+    /**
+     * Generate enhanced v1.11 report with timeline, goals, cards, and stats
+     * @param {string} gameId - ID of the game to report on
+     */
+    generateEnhancedReport(gameId) {
+        // Get the game
+        let game = null;
+        const teamGames = typeof getTeamGames === 'function' ? getTeamGames() : null;
+        if (Array.isArray(teamGames)) {
+            game = teamGames.find(g => g.id === gameId);
+        }
+        if (!game && appState && Array.isArray(appState.games)) {
+            game = appState.games.find(g => g.id === gameId);
+        }
+        if (!game) {
+            showMessage('Game report not found', 'error');
+            return;
+        }
+
+        const teamPlayers = typeof getTeamPlayers === 'function' ? getTeamPlayers() : (appState?.players || []);
+        const teamName = typeof getTeamName === 'function' ? getTeamName() : 'Team';
+        
+        // Parse actions into categories
+        const actions = game.actions || [];
+        const goalActions = actions.filter(a => a.actionType === 'goal');
+        const cardActions = actions.filter(a => ['yellow_card', 'red_card'].includes(a.actionType));
+        const shotActions = actions.filter(a => ['shot_on_goal', 'shot'].includes(a.actionType));
+        const saveActions = actions.filter(a => a.actionType === 'save');
+        const goalAllowedActions = actions.filter(a => a.actionType === 'goal_allowed');
+        const noteActions = actions.filter(a => a.actionType === 'note');
+        const lateActions = actions.filter(a => a.actionType === 'late_to_game');
+        
+        // Generate period score breakdown
+        let periodScores = 'N/A';
+        if (game.numPeriods === 2) {
+            periodScores = `HT: ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}`;
+        } else {
+            // Show score after each period if available
+            periodScores = game.periodScores ? 
+                game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ') :
+                `FT: ${game.homeScore}-${game.awayScore}`;
+        }
+
+        // Build player stats
+        const playerStats = {};
+        teamPlayers.forEach(p => {
+            playerStats[p.id] = {
+                name: p.name,
+                jersey: p.jerseyNumber,
+                goals: 0,
+                assists: 0,
+                shots: 0,
+                saves: 0,
+                goalsAllowed: 0,
+                yellowCards: [],
+                redCards: [],
+                late: false,
+                notes: []
+            };
+        });
+
+        // Organize actions by player
+        actions.forEach(action => {
+            if (!playerStats[action.playerId]) return;
+            
+            switch(action.actionType) {
+                case 'goal': playerStats[action.playerId].goals++; break;
+                case 'assist': playerStats[action.playerId].assists++; break;
+                case 'shot_on_goal': playerStats[action.playerId].shots++; break;
+                case 'save': playerStats[action.playerId].saves++; break;
+                case 'goal_allowed': playerStats[action.playerId].goalsAllowed++; break;
+                case 'yellow_card': playerStats[action.playerId].yellowCards.push(action.gameMinute); break;
+                case 'red_card': playerStats[action.playerId].redCards.push(action.gameMinute); break;
+                case 'late_to_game': playerStats[action.playerId].late = true; break;
+                case 'note': playerStats[action.playerId].notes.push({ minute: action.gameMinute, text: action.noteText }); break;
+            }
+        });
+
+        // Generate timeline HTML
+        const timelineHTML = this._generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers);
+        
+        // Generate goals & cards timeline
+        const goalsCardsHTML = this._generateGoalsCardsTimeline(goalActions, cardActions, teamPlayers);
+        
+        // Generate sections
+        const substitutesHTML = game.substitutes && game.substitutes.length > 0 ?
+            `<h3>Substitutes</h3><p>${game.substitutes.map(id => {
+                const p = teamPlayers.find(x => x.id === id);
+                return p ? `#${p.jerseyNumber} ${p.name}` : '';
+            }).filter(x => x).join(', ')}</p>` : '';
+        
+        const latePlayersHTML = lateActions.length > 0 ?
+            `<h3>Late Arrivals</h3><p>${Array.from(new Set(lateActions.map(a => a.playerId))).map(id => {
+                const p = teamPlayers.find(x => x.id === id);
+                return p ? `#${p.jerseyNumber} ${p.name}` : '';
+            }).join(', ')}</p>` : '';
+        
+        const unavailableHTML = (game.unavailablePlayers && game.unavailablePlayers.length > 0) ?
+            `<h3>Unavailable Players</h3><p>${game.unavailablePlayers.map(id => {
+                const p = teamPlayers.find(x => x.id === id);
+                return p ? `#${p.jerseyNumber} ${p.name}` : '';
+            }).filter(x => x).join(', ')}</p>` : '';
+        
+        const notesHTML = noteActions.length > 0 ?
+            `<h3>Game Notes</h3><div class="report-notes">${noteActions.map(n => 
+                `<div class="note-item">⏱️ ${n.gameMinute}' - ${n.noteText}</div>`
+            ).join('')}</div>` : '';
+        
+        // Generate player stats table
+        const playerStatsTableHTML = this._generatePlayerStatsTable(playerStats);
+        
+        const gameDate = new Date(game.date).toDateString();
+        
+        // Build full report HTML
+        const reportHTML = `
+            <div class="report-v1.11">
+                <!-- Match Header -->
+                <div class="report-header">
+                    <div class="match-info">
+                        <h2>${teamName} vs ${game.opponentName}</h2>
+                        <div class="score">
+                            <span class="final-score">${game.homeScore} - ${game.awayScore}</span>
+                            <span class="period-scores">${periodScores}</span>
+                        </div>
+                        <div class="match-details">
+                            <span>📅 ${gameDate}</span>
+                            <span>🕐 ${game.matchType}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline/Chart -->
+                <div class="report-section">
+                    <h3>Match Timeline</h3>
+                    ${timelineHTML}
+                </div>
+
+                <!-- Goals & Cards Timeline -->
+                <div class="report-section">
+                    <h3>Goals & Cards</h3>
+                    ${goalsCardsHTML}
+                </div>
+
+                <!-- Substitutes -->
+                ${substitutesHTML ? `<div class="report-section">${substitutesHTML}</div>` : ''}
+
+                <!-- Late Arrivals -->
+                ${latePlayersHTML ? `<div class="report-section">${latePlayersHTML}</div>` : ''}
+
+                <!-- Unavailable -->
+                ${unavailableHTML ? `<div class="report-section">${unavailableHTML}</div>` : ''}
+
+                <!-- Notes -->
+                ${notesHTML ? `<div class="report-section">${notesHTML}</div>` : ''}
+
+                <!-- Player Stats Table -->
+                <div class="report-section">
+                    <h3>Player Statistics</h3>
+                    ${playerStatsTableHTML}
+                </div>
+            </div>
+        `;
+
+        // Display in modal
+        let reportDialog = document.getElementById('enhanced-report-dialog');
+        if (!reportDialog) {
+            reportDialog = document.createElement('div');
+            reportDialog.id = 'enhanced-report-dialog';
+            reportDialog.className = 'dialog';
+            document.body.appendChild(reportDialog);
+        }
+
+        reportDialog.innerHTML = `
+            <div class="dialog-content game-report-content">
+                <div class="dialog-header">
+                    <h2>Game Report - v1.11</h2>
+                    <button class="close-btn" onclick="this.closest('.dialog').classList.remove('active')">×</button>
+                </div>
+                ${reportHTML}
+                <div class="report-actions">
+                    <button class="primary-btn" onclick="ReportService.printEnhancedReport('${gameId}')">📄 Print/PDF</button>
+                    <button class="secondary-btn" onclick="ReportService.shareReport('${gameId}')">📤 Share</button>
+                    <button class="secondary-btn" onclick="this.closest('.dialog').classList.remove('active')">Close</button>
+                </div>
+            </div>
+        `;
+
+        reportDialog.classList.add('active');
+    },
+
+    /**
+     * Generate timeline visualization for shots and saves
+     * @private
+     */
+    _generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers) {
+        // TODO: Implement visual timeline with green (user) and blue (opponent) sections
+        const goals = goalActions.map(a => {
+            const p = teamPlayers.find(x => x.id === a.playerId);
+            return `<div class="timeline-event goal" style="left: ${(a.gameMinute / 90) * 100}%">⚽ ${p?.name} (${a.gameMinute}')</div>`;
+        }).join('');
+        
+        return `
+            <div class="timeline-container">
+                <div class="timeline-user">
+                    <h4>User Team (${goalActions.length} goals, ${shotActions.length} shots)</h4>
+                    ${goals}
+                </div>
+                <div class="timeline-opponent">
+                    <h4>Opponent Team (${goalAllowedActions.length} goals allowed, ${saveActions.length} saves)</h4>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Generate goals and cards vertical timeline
+     * @private
+     */
+    _generateGoalsCardsTimeline(goalActions, cardActions, teamPlayers) {
+        // Combine and sort by minute
+        const events = [
+            ...goalActions.map(a => ({
+                minute: a.gameMinute,
+                type: 'goal',
+                player: teamPlayers.find(p => p.id === a.playerId),
+                action: a
+            })),
+            ...cardActions.map(a => ({
+                minute: a.gameMinute,
+                type: a.actionType === 'yellow_card' ? 'yellow' : 'red',
+                player: teamPlayers.find(p => p.id === a.playerId),
+                action: a
+            }))
+        ].sort((a, b) => a.minute - b.minute);
+
+        return events.map(e => {
+            const icon = e.type === 'goal' ? '⚽' : e.type === 'yellow' ? '🟨' : '🟥';
+            return `<div class="timeline-event"><span class="time">${e.minute}'</span> ${icon} ${e.player?.name}</div>`;
+        }).join('');
+    },
+
+    /**
+     * Generate player statistics table
+     * @private
+     */
+    _generatePlayerStatsTable(playerStats) {
+        const stats = Object.values(playerStats)
+            .filter(p => p.goals > 0 || p.assists > 0 || p.shots > 0 || p.saves > 0 || p.goalsAllowed > 0 || p.yellowCards.length > 0 || p.redCards.length > 0)
+            .sort((a, b) => a.jersey - b.jersey);
+
+        return `
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>⚽</th>
+                        <th>👟</th>
+                        <th>🎯</th>
+                        <th>🧤</th>
+                        <th>🔴</th>
+                        <th>🟨</th>
+                        <th>🟥</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${stats.map(p => `
+                        <tr>
+                            <td>${p.jersey}</td>
+                            <td>${p.name}</td>
+                            <td>${p.goals}</td>
+                            <td>${p.assists}</td>
+                            <td>${p.shots}</td>
+                            <td>${p.saves}</td>
+                            <td>${p.goalsAllowed}</td>
+                            <td>${p.yellowCards.length}</td>
+                            <td>${p.redCards.length}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    },
+
+    /**
+     * Print enhanced report as PDF
+     */
+    printEnhancedReport(gameId) {
+        // Get report content
+        const reportContent = document.querySelector('.report-v1\\.11');
+        if (!reportContent) {
+            showMessage('Report not found', 'error');
+            return;
+        }
+
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Game Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .stats-table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                    .stats-table th, .stats-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+                    .stats-table th { background-color: #4CAF50; color: white; }
+                    .report-header { background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+                    .score { font-size: 24px; font-weight: bold; color: #333; }
+                    .report-section { margin: 20px 0; }
+                    .timeline-event { margin: 10px 0; padding: 10px; background: #f9f9f9; border-left: 3px solid #4CAF50; }
+                    @media print { body { margin: 0; } }
+                </style>
+            </head>
+            <body>
+                ${reportContent.innerHTML}
+                <p style="margin-top: 30px; text-align: center; color: #999; font-size: 12px;">
+                    Generated by Soccer Coach Tracker
+                </p>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    },
+
+    /**
+     * Share report
+     */
+    shareReport(gameId) {
+        showMessage('Share feature coming soon!', 'success');
+        // TODO: Implement share via QR code or link
     }
 };
 

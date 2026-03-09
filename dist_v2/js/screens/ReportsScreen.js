@@ -50,7 +50,7 @@ const ReportsScreen = {
                 </div>
                 <div class="report-actions">
                     ${hasActions ? `
-                        <button class="secondary-btn" onclick="ReportService.viewReport('${game.id}')">View Report</button>
+                        <button class="secondary-btn" onclick="ReportService.generateEnhancedReport('${game.id}')">View Report</button>
                         <button class="secondary-btn" onclick="ReportService.exportReport('${game.id}', 'pdf')">PDF</button>
                     ` : `
                         <span class="report-no-data">No data recorded</span>
