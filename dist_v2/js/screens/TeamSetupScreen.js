@@ -12,13 +12,8 @@ const TeamSetupScreen = {
         const playersList = document.getElementById('players-list');
         if (!playersList) return;
         
-        // Clear any previous warning ribbon/delete state
-        const ribbon = document.getElementById('message-ribbon');
-        if (ribbon) {
-            ribbon.classList.add('hidden');
-            ribbon.style.display = 'none';
-            ribbon.innerHTML = '<span id="message-text"></span><button class="close-btn" onclick="hideMessage()">×</button>';
-        }
+        // NOTE: Do NOT manipulate message-ribbon here - let app.js manage it
+        // Only clear the players-list DOM, not the message system
         
         playersList.innerHTML = '';
         const teamPlayerCounter = document.getElementById('team-player-counter');

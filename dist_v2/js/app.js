@@ -211,12 +211,6 @@ function hideMessage() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    /* DEBUG: Test message system - remove after verification */
-    console.log('🔧 Testing message system...');
-    setTimeout(() => {
-        showMessage('✓ Message system is working! (This test message will disappear in 3 seconds)', 'success');
-    }, 500); // Small delay to ensure DOM is fully ready
-    
     // Load saved data if available - this returns a Promise
     loadAppData().then(() => {
         // Initialize team UI after data is fully loaded
@@ -696,6 +690,7 @@ function addPlayer() {
     
     getTeamPlayers().push(player);
     saveAppData();
+    showMessage(`Player "${name}" (${position}) added successfully`, 'success');
     TeamSetupScreen.renderPlayersList();
     closeAddPlayerDialog();
 }
