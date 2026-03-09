@@ -1,7 +1,7 @@
 /**
  * ReportService.js
  * Handles game report generation, display, and export functionality
- * Version: 1.11 - Enhanced report with timeline, goals, cards, and stats
+ * Version: 1.12 - Symmetrical timeline chart with two-column goals & cards layout
  */
 
 const ReportService = {
@@ -602,33 +602,30 @@ const ReportService = {
         
         // Build full report HTML
         const reportHTML = `
-            <div class="report-v1.11">
-                <!-- Match Header -->
+            <div class="report-v1.12">
+                <!-- Match Header with Team Names -->
                 <div class="report-header">
-                    <div class="match-info">
-                        <h2>${teamName} vs ${game.opponentName}</h2>
+                    <div class="match-title">
+                        <h2>${teamName} - ${game.opponentName}</h2>
                         <div class="score">
                             <span class="final-score">${game.homeScore} - ${game.awayScore}</span>
                             <span class="period-scores">${periodScores}</span>
                         </div>
-                        <div class="match-details">
-                            <span>📅 ${gameDate}</span>
-                            <span>🕐 ${game.matchType}</span>
-                        </div>
+                    </div>
+                    <div class="match-meta">
+                        <span>📅 ${gameDate}</span>
+                        <span>🕐 ${game.matchType}</span>
                     </div>
                 </div>
 
-                <!-- Timeline/Chart -->
+                <!-- Timeline/Chart - Symmetrical Design -->
                 <div class="report-section">
-                    <h3>Match Timeline</h3>
+                    <h3>Shot Timeline</h3>
                     ${timelineHTML}
                 </div>
 
-                <!-- Goals & Cards Timeline -->
-                <div class="report-section">
-                    <h3>Goals & Cards</h3>
-                    ${goalsCardsHTML}
-                </div>
+                <!-- Goals & Cards - Two Column Layout -->
+                ${goalsCardsHTML}
 
                 <!-- Substitutes -->
                 ${substitutesHTML ? `<div class="report-section">${substitutesHTML}</div>` : ''}
@@ -678,48 +675,99 @@ const ReportService = {
     },
 
     /**
-     * Generate timeline visualization for shots and saves
+     * Generate symmetrical timeline visualization for shots and saves
+     * X-axis: game minutes (0-90)
+     * Y-axis: User team shoots UP (green for goals, light green for shots)
+     *         Opponent team shoots DOWN (blue for saves, red for goals allowed)
      * @private
      */
     _generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers) {
-        // Combine all actions with timeline info
-        const allActions = [
-            ...goalActions.map(a => ({ minute: a.gameMinute, type: 'goal', player: teamPlayers.find(p => p.id === a.playerId), team: 'user' })),
-            ...shotActions.map(a => ({ minute: a.gameMinute, type: 'shot', player: teamPlayers.find(p => p.id === a.playerId), team: 'user' })),
-            ...saveActions.map(a => ({ minute: a.gameMinute, type: 'save', player: teamPlayers.find(p => p.id === a.playerId), team: 'opponent' })),
-            ...goalAllowedActions.map(a => ({ minute: a.gameMinute, type: 'goal_allowed', player: teamPlayers.find(p => p.id === a.playerId), team: 'opponent' }))
-        ].sort((a, b) => a.minute - b.minute);
+        // Group actions by minute to stack multiple bars at same minute
+        const userShotsByMinute = {};
+        const opponentActionsByMinute = {};
 
-        // Create timeline bars
-        const userActions = allActions.filter(a => a.team === 'user');
-        const opponentActions = allActions.filter(a => a.team === 'opponent');
+        // Count user team shots/goals by minute
+        [...goalActions, ...shotActions].forEach(a => {
+            const min = a.gameMinute || 0;
+            if (!userShotsByMinute[min]) userShotsByMinute[min] = { shots: 0, goals: 0 };
+            if (a.actionType === 'goal') userShotsByMinute[min].goals++;
+            else userShotsByMinute[min].shots++;
+        });
 
-        const userBars = userActions.map(a => `
-            <div class="timeline-bar" style="left: ${(a.minute / 90) * 100}%" title="${a.player?.name || 'Unknown'} - ${a.minute}'">
-                <div class="bar-inner ${a.type === 'goal' ? 'goal' : 'shot'}"></div>
-            </div>
-        `).join('');
+        // Count opponent saves/goals_allowed by minute
+        [...saveActions, ...goalAllowedActions].forEach(a => {
+            const min = a.gameMinute || 0;
+            if (!opponentActionsByMinute[min]) opponentActionsByMinute[min] = { saves: 0, goalsAllowed: 0 };
+            if (a.actionType === 'save') opponentActionsByMinute[min].saves++;
+            else opponentActionsByMinute[min].goalsAllowed++;
+        });
 
-        const opponentBars = opponentActions.map(a => `
-            <div class="timeline-bar opponent" style="left: ${(a.minute / 90) * 100}%" title="${a.type === 'save' ? 'Save' : 'Goal Allowed'} - ${a.minute}'">
-                <div class="bar-inner ${a.type === 'save' ? 'save' : 'goal_allowed'}"></div>
-            </div>
-        `).join('');
+        // Generate bars for user team (above center line)
+        const userBars = Object.entries(userShotsByMinute).map(([minute, counts]) => {
+            const totalHeight = (counts.goals + counts.shots) * 15; // 15px per action
+            const goalsHeight = counts.goals * 15;
+            return `
+                <div class="shot-bar user-team" style="left: ${(minute / 90) * 100}%; height: ${totalHeight}px;" title="${counts.goals} goals, ${counts.shots} shots at ${minute}'">
+                    <div class="goals-section" style="height: ${goalsHeight}px;"></div>
+                    <div class="shots-section" style="height: ${counts.shots * 15}px;"></div>
+                </div>
+            `;
+        }).join('');
+
+        // Generate bars for opponent (below center line - negative space)
+        const opponentBars = Object.entries(opponentActionsByMinute).map(([minute, counts]) => {
+            const totalHeight = (counts.saves + counts.goalsAllowed) * 15;
+            const goalsAllowedHeight = counts.goalsAllowed * 15;
+            return `
+                <div class="shot-bar opponent-team" style="left: ${(minute / 90) * 100}%; height: ${totalHeight}px;" title="${counts.goalsAllowed} goals allowed, ${counts.saves} saves at ${minute}'">
+                    <div class="goalsallowed-section" style="height: ${goalsAllowedHeight}px;"></div>
+                    <div class="saves-section" style="height: ${counts.saves * 15}px;"></div>
+                </div>
+            `;
+        }).join('');
+
+        // Calculate statistics
+        const userGoals = Object.values(userShotsByMinute).reduce((sum, c) => sum + c.goals, 0);
+        const userShots = Object.values(userShotsByMinute).reduce((sum, c) => sum + c.shots, 0);
+        const opponentGoalsAllowed = Object.values(opponentActionsByMinute).reduce((sum, c) => sum + c.goalsAllowed, 0);
+        const opponentSaves = Object.values(opponentActionsByMinute).reduce((sum, c) => sum + c.saves, 0);
 
         return `
-            <div class="timeline-chart">
-                <div class="timeline-section user-team">
-                    <h4>User Team (${goalActions.length} Goals, ${shotActions.length} Shots)</h4>
-                    <div class="timeline-track">
-                        <div class="timeline-line"></div>
-                        ${userBars}
+            <div class="symmetric-timeline">
+                <div class="timeline-container">
+                    <!-- User team (top) -->
+                    <div class="timeline-top">
+                        <div class="bars-container">
+                            ${userBars}
+                        </div>
+                        <div class="timeline-axis">
+                            <span class="axis-label user-label">Your Team</span>
+                            <span class="stat-label">${userGoals} ⚽ | ${userShots} 👟</span>
+                        </div>
                     </div>
-                </div>
-                <div class="timeline-section opponent-team">
-                    <h4>Opponent Team (${goalAllowedActions.length} Goals Allowed, ${saveActions.length} Saves)</h4>
-                    <div class="timeline-track opponent">
-                        <div class="timeline-line"></div>
-                        ${opponentBars}
+
+                    <!-- Center line with minutes -->
+                    <div class="timeline-center">
+                        <div class="minute-markers">
+                            <span class="minute-mark">0</span>
+                            <span class="minute-mark">15</span>
+                            <span class="minute-mark">30</span>
+                            <span class="minute-mark">45</span>
+                            <span class="minute-mark">60</span>
+                            <span class="minute-mark">75</span>
+                            <span class="minute-mark">90</span>
+                        </div>
+                    </div>
+
+                    <!-- Opponent team (bottom) -->
+                    <div class="timeline-bottom">
+                        <div class="timeline-axis">
+                            <span class="stat-label">${opponentGoalsAllowed} 🔴 | ${opponentSaves} 🧤</span>
+                            <span class="axis-label opponent-label">Opponent</span>
+                        </div>
+                        <div class="bars-container opponent">
+                            ${opponentBars}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -727,30 +775,58 @@ const ReportService = {
     },
 
     /**
-     * Generate goals and cards vertical timeline
+     * Generate goals and cards in two-column layout (left: user team, right: opponent team)
      * @private
      */
     _generateGoalsCardsTimeline(goalActions, cardActions, teamPlayers) {
-        // Combine and sort by minute
-        const events = [
-            ...goalActions.map(a => ({
-                minute: a.gameMinute,
-                type: 'goal',
-                player: teamPlayers.find(p => p.id === a.playerId),
-                action: a
-            })),
-            ...cardActions.map(a => ({
-                minute: a.gameMinute,
-                type: a.actionType === 'yellow_card' ? 'yellow' : 'red',
-                player: teamPlayers.find(p => p.id === a.playerId),
-                action: a
-            }))
-        ].sort((a, b) => a.minute - b.minute);
+        // Separate user team and opponent actions
+        const userGoals = goalActions.map(a => ({
+            minute: a.gameMinute,
+            type: 'goal',
+            player: teamPlayers.find(p => p.id === a.playerId),
+            action: a
+        }));
 
-        return events.map(e => {
+        const userCards = cardActions.map(a => ({
+            minute: a.gameMinute,
+            type: a.actionType === 'yellow_card' ? 'yellow' : 'red',
+            player: teamPlayers.find(p => p.id === a.playerId),
+            action: a
+        }));
+
+        // Note: For opponent actions, we would need to track them separately
+        // For now, we'll show user team on left, empty on right
+        // In future: track opponent goals_allowed and their cards
+
+        const userEvents = [...userGoals, ...userCards]
+            .sort((a, b) => a.minute - b.minute);
+
+        const userColumn = userEvents.map(e => {
             const icon = e.type === 'goal' ? '⚽' : e.type === 'yellow' ? '🟨' : '🟥';
-            return `<div class="timeline-event"><span class="time">${e.minute}'</span> ${icon} ${e.player?.name}</div>`;
+            return `
+                <div class="action-item">
+                    <span class="action-time">${e.minute}'</span>
+                    <span class="action-icon">${icon}</span>
+                    <span class="action-player">${e.player?.name || 'Unknown'}</span>
+                </div>
+            `;
         }).join('');
+
+        return `
+            <div class="report-section goals-cards-section">
+                <h3>Goals & Cards</h3>
+                <div class="goals-cards-columns">
+                    <div class="goals-cards-column left-column">
+                        <h4>Your Team</h4>
+                        ${userColumn || '<p class="no-actions">No goals or cards</p>'}
+                    </div>
+                    <div class="goals-cards-column right-column">
+                        <h4>Opponent</h4>
+                        <p class="no-actions">No opponent tracking yet</p>
+                    </div>
+                </div>
+            </div>
+        `;
     },
 
     /**
