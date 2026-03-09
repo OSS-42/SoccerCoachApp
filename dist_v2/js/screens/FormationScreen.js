@@ -1,7 +1,7 @@
 /**
  * FormationScreen.js
  * Encapsulates all formation setup screen rendering and tap-to-select logic
- * Version: 1.10.21
+ * Version: 1.10.22
  */
 
 const FormationScreen = {
@@ -138,6 +138,12 @@ const FormationScreen = {
         const numbers = document.querySelectorAll('.player-number');
         numbers.forEach(number => {
             if (!number.hasAttribute('data-events-setup')) {
+                // Prevent native browser drag behavior
+                number.addEventListener('dragstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, { passive: false });
+                
                 // Handle both click and touch tap
                 number.addEventListener('click', (e) => {
                     e.preventDefault();

@@ -1133,6 +1133,8 @@ body {
     color: #fff;
     border-radius: 50%;
     font-size: 12px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Player grid numbers */
@@ -2133,6 +2135,8 @@ button.no-assist-btn {
         font-size: 11px;
         touch-action: none;
         cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
     }
     
     .player-name {
@@ -2217,6 +2221,8 @@ button.no-assist-btn {
     display: flex;
     align-items: center;
     justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .player-item-draggable.empty-spot {
@@ -2260,6 +2266,8 @@ button.no-assist-btn {
     justify-content: center;
     background: rgba(244, 67, 54, 0.1);
     position: relative;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .unavailable-slot.occupied {
@@ -2337,6 +2345,8 @@ button.no-assist-btn {
     height: 30px;
     background: rgba(200, 200, 200, 0.3); /* Light grey transparent */
     border-radius: 50%;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .gk-slot, .sw-slot {
@@ -2360,6 +2370,8 @@ button.no-assist-btn {
     color: #fff;
     border-radius: 50%;
     font-size: 12px;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Formation field with image */
