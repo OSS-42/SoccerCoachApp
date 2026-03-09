@@ -1,7 +1,7 @@
 /**
  * FormationScreen.js
- * Encapsulates all formation setup screen rendering and drag-and-drop logic
- * Version: 1.9.81
+ * Encapsulates all formation setup screen rendering and tap-to-select logic
+ * Version: 1.10.21
  */
 
 const FormationScreen = {
@@ -40,7 +40,6 @@ const FormationScreen = {
             slot.setAttribute('data-position', spot.position);
             slot.style.left = `${spot.x}%`;
             slot.style.top = `${spot.y}%`;
-            slot.draggable = false;
             formationField.appendChild(slot);
         });
 
@@ -56,7 +55,7 @@ const FormationScreen = {
             const playerItem = document.createElement('div');
             playerItem.className = 'player-item-draggable';
             playerItem.innerHTML = `
-                <span class="player-number ${shouldDisable ? 'disabled' : ''}" draggable="${!shouldDisable}" data-player-id="${player.id}">${player.jerseyNumber}</span>
+                <span class="player-number ${shouldDisable ? 'disabled' : ''}" data-player-id="${player.id}">${player.jerseyNumber}</span>
                 <span class="player-name">${player.name}</span>
             `;
             playerList.appendChild(playerItem);
@@ -87,7 +86,7 @@ const FormationScreen = {
                 const slot = document.getElementById(slotId);
                 if (slot) {
                     slot.innerHTML = `
-                        <span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>
+                        <span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>
                     `;
                     slot.setAttribute('data-player-id', playerId);
                     slot.classList.add('occupied');
@@ -101,7 +100,7 @@ const FormationScreen = {
         }
 
         // Setup drag-and-drop
-        this._setupDragAndDrop();
+        this._setupTapHandlers();
     },
 
     /**
@@ -135,23 +134,10 @@ const FormationScreen = {
      * Setup drag-and-drop event listeners
      * @private
      */
-    _setupDragAndDrop() {
+    _setupTapHandlers() {
         const numbers = document.querySelectorAll('.player-number');
         numbers.forEach(number => {
             if (!number.hasAttribute('data-events-setup')) {
-                number.addEventListener('dragstart', (e) => dragStart(e));
-                number.addEventListener('touchstart', (e) => {
-                    e.stopPropagation();
-                    touchStart(e);
-                }, { passive: false });
-                number.addEventListener('touchmove', (e) => {
-                    e.stopPropagation();
-                    touchMove(e);
-                }, { passive: false });
-                number.addEventListener('touchend', (e) => {
-                    e.stopPropagation();
-                    touchEnd(e);
-                }, { passive: false });
                 // Handle both click and touch tap
                 number.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -164,10 +150,6 @@ const FormationScreen = {
 
         const slots = document.querySelectorAll('.player-slot, .unavailable-slot');
         slots.forEach(slot => {
-            slot.removeEventListener('dragover', (e) => dragOver(e));
-            slot.removeEventListener('drop', (e) => dropToSlot(e));
-            slot.addEventListener('dragover', (e) => dragOver(e));
-            slot.addEventListener('drop', (e) => dropToSlot(e));
             slot.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -190,28 +172,11 @@ const FormationScreen = {
 
         const playerList = document.getElementById('player-list');
         if (playerList) {
-            playerList.removeEventListener('dragover', (e) => dragOver(e));
-            playerList.removeEventListener('drop', (e) => dropToSidebar(e));
-            playerList.addEventListener('dragover', (e) => dragOver(e));
-            playerList.addEventListener('drop', (e) => dropToSidebar(e));
-
             // allow tap-to-remove: if a player is selected and user taps sidebar
             playerList.addEventListener('click', (e) => {
                 if (!TapState.playerId) return;
                 if (TapState.source === 'field' || TapState.source === 'unavailable') {
-                    const fakeEvt = {
-                        preventDefault() {},
-                        dataTransfer: {
-                            getData(key) {
-                                if (key === 'playerId') return TapState.playerId;
-                                if (key === 'source') return TapState.source;
-                                if (key === 'slotId') return TapState.slotId || '';
-                                return '';
-                            }
-                        },
-                        target: playerList
-                    };
-                    dropToSidebar(fakeEvt);
+                    removePlayerFromSlot(TapState.playerId);
                     TapState.clear();
                 }
             });
@@ -236,51 +201,14 @@ const TapState = {
     }
 };
 
-// Drag event: Player starts being dragged
-function dragStart(e) {
-    window.dragInProgress = true;
-    e.dataTransfer.setData('playerId', e.target.getAttribute('data-player-id'));
-    e.dataTransfer.setData('source', e.target.classList.contains('player-number-placed') ? 'field' : 'sidebar');
-    e.dataTransfer.setData('slotId', e.target.parentElement.id || '');
 
-    // Create a custom drag image
-    const dragImage = document.createElement('div');
-    dragImage.textContent = e.target.textContent;
-    dragImage.style.position = 'absolute';
-    dragImage.style.width = '72px';
-    dragImage.style.height = '72px';
-    dragImage.style.lineHeight = '72px';
-    dragImage.style.fontSize = '36px';
-    dragImage.style.borderRadius = '50%';
-    dragImage.style.background = '#000';
-    dragImage.style.color = '#fff';
-    dragImage.style.textAlign = 'center';
-    dragImage.style.opacity = '0.7';
-    dragImage.style.pointerEvents = 'none';
-    dragImage.style.zIndex = '1000';
-    document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 36, 36);
-    setTimeout(() => {
-        document.body.removeChild(dragImage);
-    }, 0);
-}
 
-// Drag over: Allow dropping on slots
-function dragOver(e) {
-    e.preventDefault();
-}
-
-// Drop to slot: Player placed on formation field
-function dropToSlot(e) {
-    e.preventDefault();
-    const playerId = e.dataTransfer.getData('playerId');
-    const source = e.dataTransfer.getData('source');
-    const slotId = e.dataTransfer.getData('slotId');
+// Place player with tap-to-select
+function placePlayerToSlot(playerId, slotElement, source, slotId) {
     const player = getTeamPlayers().find(p => p.id === playerId);
     if (!player) return;
 
-    const slot = e.target.closest('.player-slot, .unavailable-slot');
-    if (!slot) return;
+    if (!slotElement) return;
 
     // First, remove player from all locations (field slots, unavailable slots, sidebar)
     // Remove from all field slots
@@ -304,7 +232,6 @@ function dropToSlot(e) {
     const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
     if (sidebarPlayerNum) {
         sidebarPlayerNum.classList.remove('disabled');
-        sidebarPlayerNum.draggable = true;
     }
 
     // Remove from unavailable list temporarily
@@ -312,7 +239,7 @@ function dropToSlot(e) {
     unavailableList = unavailableList.filter(id => id !== playerId);
 
     // Check if this is unavailable slot
-    if (slot.classList.contains('unavailable-slot')) {
+    if (slotElement.classList.contains('unavailable-slot')) {
         // Remove from formation if currently on field
         const formation = getFormationTemp() || [];
         const updatedFormation = formation.filter(f => f.playerId !== playerId);
@@ -323,30 +250,19 @@ function dropToSlot(e) {
         setUnavailablePlayers(unavailableList);
         
         // Place in unavailable slot
-        slot.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-        slot.setAttribute('data-player-id', playerId);
+        slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+        slotElement.setAttribute('data-player-id', playerId);
         
         // Disable in sidebar
         if (sidebarPlayerNum) {
             sidebarPlayerNum.classList.add('disabled');
-            sidebarPlayerNum.draggable = false;
         }
         
-        // Reattach drag and tap listeners to unavailable slot player so they can be moved
-        const unavailableNum = slot.querySelector(`[data-player-id="${playerId}"]`);
+        // Reattach tap listeners to unavailable slot player so they can be moved
+        const unavailableNum = slotElement.querySelector(`[data-player-id="${playerId}"]`);
         if (unavailableNum) {
-            unavailableNum.draggable = true;
-            unavailableNum.removeEventListener('dragstart', dragStart);
             unavailableNum.removeEventListener('click', handleTapPlayer);
-            unavailableNum.removeEventListener('touchstart', touchStart);
-            unavailableNum.removeEventListener('touchmove', touchMove);
-            unavailableNum.removeEventListener('touchend', touchEnd);
-            
-            unavailableNum.addEventListener('dragstart', dragStart);
-            unavailableNum.addEventListener('click', (e) => handleTapPlayer(e));
-            unavailableNum.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-            unavailableNum.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-            unavailableNum.addEventListener('touchend', (e) => touchEnd(e));
+            unavailableNum.addEventListener('click', (e) => handleTapPlayer(e), { passive: false });
         }
         return;
     }
@@ -354,7 +270,7 @@ function dropToSlot(e) {
     // Regular field slot
     setUnavailablePlayers(unavailableList);
     
-    const position = slot.getAttribute('data-position');
+    const position = slotElement.getAttribute('data-position');
     const formation = getFormationTemp() || [];
     
     // Check if player already exists in formation and remove
@@ -364,15 +280,15 @@ function dropToSlot(e) {
     updatedFormation.push({
         playerId,
         position,
-        x: parseFloat(slot.style.left),
-        y: parseFloat(slot.style.top)
+        x: parseFloat(slotElement.style.left),
+        y: parseFloat(slotElement.style.top)
     });
     setFormationTemp(updatedFormation);
 
     // Update slot UI
-    slot.innerHTML = `<span class="player-number player-number-placed" draggable="true" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-    slot.setAttribute('data-player-id', playerId);
-    slot.classList.add('occupied');
+    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    slotElement.setAttribute('data-player-id', playerId);
+    slotElement.classList.add('occupied');
 
     // Disable player in sidebar - Keep element but clear content
     const sidebarContainer = document.querySelector('.player-list');
@@ -388,27 +304,10 @@ function dropToSlot(e) {
         });
     }
 
-    // Reattach drag listeners to placed players and setup click handlers
+    // Setup click handlers for placed players
     const placedNumbers = document.querySelectorAll('.player-number-placed');
     placedNumbers.forEach(num => {
-        num.removeEventListener('dragstart', dragStart);
         num.removeEventListener('click', handleTapPlayer);
-        num.removeEventListener('touchstart', touchStart);
-        num.removeEventListener('touchmove', touchMove);
-        num.removeEventListener('touchend', touchEnd);
-        num.addEventListener('dragstart', dragStart);
-        num.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            touchStart(e);
-        }, { passive: false });
-        num.addEventListener('touchmove', (e) => {
-            e.stopPropagation();
-            touchMove(e);
-        }, { passive: false });
-        num.addEventListener('touchend', (e) => {
-            e.stopPropagation();
-            touchEnd(e);
-        }, { passive: false });
         num.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -417,16 +316,8 @@ function dropToSlot(e) {
     });
 }
 
-// Drop to sidebar: Remove player from formation
-function dropToSidebar(e) {
-    e.preventDefault();
-    const playerId = e.dataTransfer.getData('playerId');
-    const source = e.dataTransfer.getData('source');
-    const slotId = e.dataTransfer.getData('slotId');
-    
-    // Only allow removing from field
-    if (source === 'sidebar') return;
-
+// Remove player from formation with tap-to-select
+function removePlayerFromSlot(playerId) {
     const formation = getFormationTemp() || [];
     const newFormation = formation.filter(f => f.playerId !== playerId);
     setFormationTemp(newFormation);
@@ -469,34 +360,15 @@ function dropToSidebar(e) {
         const numberSpan = item.querySelector('.player-number');
         if (numberSpan && numberSpan.getAttribute('data-player-id') === playerId) {
             playerFound = true;
-            // Re-enable the player item: remove disabled class and set draggable
+            // Re-enable the player item: remove disabled class
             numberSpan.classList.remove('disabled');
-            numberSpan.setAttribute('draggable', 'true');
             
             // Re-attach event listeners to this specific player
-            numberSpan.removeEventListener('dragstart', dragStart);
             numberSpan.removeEventListener('click', handleTapPlayer);
-            numberSpan.removeEventListener('touchstart', touchStart);
-            numberSpan.removeEventListener('touchmove', touchMove);
-            numberSpan.removeEventListener('touchend', touchEnd);
-            
-            numberSpan.addEventListener('dragstart', (e) => dragStart(e));
             numberSpan.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleTapPlayer(e);
-            }, { passive: false });
-            numberSpan.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-                touchStart(e);
-            }, { passive: false });
-            numberSpan.addEventListener('touchmove', (e) => {
-                e.stopPropagation();
-                touchMove(e);
-            }, { passive: false });
-            numberSpan.addEventListener('touchend', (e) => {
-                e.stopPropagation();
-                touchEnd(e);
             }, { passive: false });
         }
     });
@@ -506,29 +378,16 @@ function dropToSidebar(e) {
         playerItems.forEach(item => {
             if (item.classList.contains('empty-spot') && !playerFound) {
                 // Check if this was the item for this player by checking siblings or by finding the next empty spot
-                const html = '<span class="player-number" draggable="true" data-player-id="' + playerId + '">' + removedPlayer.jerseyNumber + '</span><span class="player-name">' + removedPlayer.name + '</span>';
+                const html = '<span class="player-number" data-player-id="' + playerId + '">' + removedPlayer.jerseyNumber + '</span><span class="player-name">' + removedPlayer.name + '</span>';
                 item.innerHTML = html;
                 item.classList.remove('empty-spot');
                 
                 // Re-attach event listeners to newly created number span
                 const newNumberSpan = item.querySelector('.player-number');
-                newNumberSpan.addEventListener('dragstart', (e) => dragStart(e));
                 newNumberSpan.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     handleTapPlayer(e);
-                }, { passive: false });
-                newNumberSpan.addEventListener('touchstart', (e) => {
-                    e.stopPropagation();
-                    touchStart(e);
-                }, { passive: false });
-                newNumberSpan.addEventListener('touchmove', (e) => {
-                    e.stopPropagation();
-                    touchMove(e);
-                }, { passive: false });
-                newNumberSpan.addEventListener('touchend', (e) => {
-                    e.stopPropagation();
-                    touchEnd(e);
                 }, { passive: false });
                 
                 playerFound = true;
@@ -537,122 +396,13 @@ function dropToSidebar(e) {
     }
 }
 
-// ============================================================================
-// TOUCH EVENT HANDLERS
-// ============================================================================
 
-let draggedElement = null;
-let clone = null;
-let lastVibratedSlot = null;
-
-function touchStart(e) {
-    if (e.target.classList.contains('disabled')) return;
-    e.preventDefault();
-    draggedElement = e.target;
-    const touch = e.targetTouches[0];
-
-    // Haptic feedback
-    if (navigator.vibrate) {
-        navigator.vibrate(50);
-    }
-
-    // Create clone for visual feedback
-    clone = draggedElement.cloneNode(true);
-    clone.style.position = 'absolute';
-    clone.style.opacity = '0.7';
-    clone.style.pointerEvents = 'none';
-    clone.style.zIndex = '1000';
-    clone.style.width = '72px';
-    clone.style.height = '72px';
-    clone.style.lineHeight = '72px';
-    clone.style.fontSize = '36px';
-    clone.style.borderRadius = '50%';
-    clone.style.background = '#000';
-    clone.style.color = '#fff';
-    document.body.appendChild(clone);
-    updateClonePosition(touch.clientX, touch.clientY);
-}
-
-function touchMove(e) {
-    if (!draggedElement) return;
-    e.preventDefault();
-    const touch = e.targetTouches[0];
-    updateClonePosition(touch.clientX, touch.clientY);
-
-    // Haptic feedback when over slot
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const slot = dropTarget?.closest('.player-slot');
-    if (slot && slot !== lastVibratedSlot) {
-        if (navigator.vibrate) {
-            navigator.vibrate(30);
-        }
-        lastVibratedSlot = slot;
-    } else if (!slot) {
-        lastVibratedSlot = null;
-    }
-}
-
-function updateClonePosition(clientX, clientY) {
-    if (clone) {
-        clone.style.left = `${clientX - 36}px`;
-        clone.style.top = `${clientY - 36}px`;
-    }
-}
-
-function touchEnd(e) {
-    if (!draggedElement) {
-        window.dragInProgress = false;
-        return;
-    }
-    e.preventDefault();
-
-    if (clone) {
-        document.body.removeChild(clone);
-        clone = null;
-    }
-
-    const touch = e.changedTouches[0];
-    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-    const playerId = draggedElement.getAttribute('data-player-id');
-    const source = draggedElement.classList.contains('player-number-placed') ? 'field' : 'sidebar';
-    const slotId = draggedElement.parentElement.id || '';
-
-    const slot = dropTarget?.closest('.player-slot, .unavailable-slot');
-    if (slot) {
-        const fakeEvent = {
-            preventDefault() {},
-            dataTransfer: {
-                getData(key) {
-                    if (key === 'playerId') return playerId;
-                    if (key === 'source') return source;
-                    if (key === 'slotId') return slotId;
-                    return '';
-                }
-            },
-            target: slot
-        };
-        if (slot.classList.contains('unavailable-slot')) {
-            dropToSlot(fakeEvent);
-        } else {
-            dropToSlot(fakeEvent);
-        }
-    }
-
-    draggedElement = null;
-    window.dragInProgress = false;
-}
 
 // ============================================================================
 // TAP-TO-SELECT HANDLERS
 // ============================================================================
 
 function handleTapPlayer(e) {
-    // Ignore tap if drag was in progress
-    if (window.dragInProgress) {
-        window.dragInProgress = false;
-        return;
-    }
-    
     // Get the target element (could be the player-number itself)
     let targetElement = e.target || e.currentTarget;
     
@@ -707,21 +457,7 @@ function handleTapSlot(e) {
     // If no player selected, do nothing
     if (!TapState.playerId) return;
 
-    // Create fake event to reuse drop logic
-    const fakeEvent = {
-        preventDefault() {},
-        dataTransfer: {
-            getData(key) {
-                if (key === 'playerId') return TapState.playerId;
-                if (key === 'source') return TapState.source;
-                if (key === 'slotId') return TapState.slotId;
-                return '';
-            }
-        },
-        target: slot
-    };
-
-    dropToSlot(fakeEvent);
+    placePlayerToSlot(TapState.playerId, slot, TapState.source, TapState.slotId);
     TapState.clear();
     
     // Clear visual feedback
