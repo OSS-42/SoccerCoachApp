@@ -26,7 +26,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 1100;
+    z-index: 9999;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
 }
 
@@ -104,7 +104,7 @@ body {
     margin: 0 auto;
     background-color: white;
     min-height: 100vh;
-    position: relative;
+    position: static;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
     overscroll-behavior: none; /* Prevent pull-to-refresh and horizontal overscroll navigation */

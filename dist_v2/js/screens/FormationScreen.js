@@ -1,7 +1,7 @@
 /**
  * FormationScreen.js
  * Encapsulates all formation setup screen rendering and tap-to-select logic
- * Version: 1.10.24
+ * Version: 1.10.25
  */
 
 const FormationScreen = {
