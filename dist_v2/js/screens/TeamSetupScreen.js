@@ -244,7 +244,7 @@ const TeamSetupScreen = {
         const player = team.players.find(p => p.id === playerId);
         if (!player) return;
         
-        const name = document.getElementById('edit-player-name').value.trim();
+        const name = document.getElementById('edit-player-name').value.trim().toUpperCase();
         const jerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
         const position = document.getElementById('edit-position').value;
         

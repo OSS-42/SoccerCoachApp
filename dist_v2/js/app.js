@@ -352,7 +352,7 @@ function addNewTeam() {
     const id = 't' + Date.now();
     const team = {
         id,
-        name,
+        name: name.trim().toUpperCase(),
         players: [],
         games: [],
         settings: { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false },
@@ -405,7 +405,7 @@ function deleteTeam() {
 
 function saveTeamName() {
     const teamNameInput = document.getElementById('team-name-input');
-    const newTeamName = teamNameInput.value.trim();
+    const newTeamName = teamNameInput.value.trim().toUpperCase();
     
     if (newTeamName) {
         setTeamName(newTeamName);
@@ -543,7 +543,7 @@ function setupFormation() {
     }
     
     // Validate required game setup fields
-    const opponentName = document.getElementById('opponent-name').value.trim();
+    const opponentName = document.getElementById('opponent-name').value.trim().toUpperCase();
     const gameDate = document.getElementById('game-date').value;
     const matchType = document.getElementById('match-type').value;
     const numPeriods = document.getElementById('num-periods').value;
@@ -654,7 +654,7 @@ function closeAddPlayerDialog() {
 }
 
 function addPlayer() {
-    const name = document.getElementById('player-name').value.trim();
+    const name = document.getElementById('player-name').value.trim().toUpperCase();
     const jerseyNumber = document.getElementById('jersey-number').value;
     const position = document.getElementById('player-position').value;
     
@@ -697,7 +697,7 @@ function addPlayer() {
 
 // Game Management
 function startGame() {
-    const opponentName = document.getElementById('opponent-name').value.trim();
+    const opponentName = document.getElementById('opponent-name').value.trim().toUpperCase();
     const gameDate = document.getElementById('game-date').value;
     const substitutionTime = document.getElementById('substitution-time').value;
     
@@ -1751,12 +1751,12 @@ function handleFileImport(event) {
 // Add demo players for testing
 function addDemoPlayers() {
     const demoPlayers = [
-        { id: '1', name: 'Alex', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '2', name: 'Jordan', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '3', name: 'Casey', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '4', name: 'Riley', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '5', name: 'Taylor', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
-        { id: '6', name: 'Sam', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
+        { id: '1', name: 'ALEX', jerseyNumber: 1, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '2', name: 'JORDAN', jerseyNumber: 4, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '3', name: 'CASEY', jerseyNumber: 6, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '4', name: 'RILEY', jerseyNumber: 8, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '5', name: 'TAYLOR', jerseyNumber: 10, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } },
+        { id: '6', name: 'SAM', jerseyNumber: 11, active: true, stats: { goals: 0, assists: 0, saves: 0, goalsAllowed: 0 } }
     ];
     
     setTeamPlayers(demoPlayers);

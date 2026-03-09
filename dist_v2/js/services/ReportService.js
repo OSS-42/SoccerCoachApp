@@ -682,20 +682,45 @@ const ReportService = {
      * @private
      */
     _generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers) {
-        // TODO: Implement visual timeline with green (user) and blue (opponent) sections
-        const goals = goalActions.map(a => {
-            const p = teamPlayers.find(x => x.id === a.playerId);
-            return `<div class="timeline-event goal" style="left: ${(a.gameMinute / 90) * 100}%">⚽ ${p?.name} (${a.gameMinute}')</div>`;
-        }).join('');
-        
+        // Combine all actions with timeline info
+        const allActions = [
+            ...goalActions.map(a => ({ minute: a.gameMinute, type: 'goal', player: teamPlayers.find(p => p.id === a.playerId), team: 'user' })),
+            ...shotActions.map(a => ({ minute: a.gameMinute, type: 'shot', player: teamPlayers.find(p => p.id === a.playerId), team: 'user' })),
+            ...saveActions.map(a => ({ minute: a.gameMinute, type: 'save', player: teamPlayers.find(p => p.id === a.playerId), team: 'opponent' })),
+            ...goalAllowedActions.map(a => ({ minute: a.gameMinute, type: 'goal_allowed', player: teamPlayers.find(p => p.id === a.playerId), team: 'opponent' }))
+        ].sort((a, b) => a.minute - b.minute);
+
+        // Create timeline bars
+        const userActions = allActions.filter(a => a.team === 'user');
+        const opponentActions = allActions.filter(a => a.team === 'opponent');
+
+        const userBars = userActions.map(a => `
+            <div class="timeline-bar" style="left: ${(a.minute / 90) * 100}%" title="${a.player?.name || 'Unknown'} - ${a.minute}'">
+                <div class="bar-inner ${a.type === 'goal' ? 'goal' : 'shot'}"></div>
+            </div>
+        `).join('');
+
+        const opponentBars = opponentActions.map(a => `
+            <div class="timeline-bar opponent" style="left: ${(a.minute / 90) * 100}%" title="${a.type === 'save' ? 'Save' : 'Goal Allowed'} - ${a.minute}'">
+                <div class="bar-inner ${a.type === 'save' ? 'save' : 'goal_allowed'}"></div>
+            </div>
+        `).join('');
+
         return `
-            <div class="timeline-container">
-                <div class="timeline-user">
-                    <h4>User Team (${goalActions.length} goals, ${shotActions.length} shots)</h4>
-                    ${goals}
+            <div class="timeline-chart">
+                <div class="timeline-section user-team">
+                    <h4>User Team (${goalActions.length} Goals, ${shotActions.length} Shots)</h4>
+                    <div class="timeline-track">
+                        <div class="timeline-line"></div>
+                        ${userBars}
+                    </div>
                 </div>
-                <div class="timeline-opponent">
-                    <h4>Opponent Team (${goalAllowedActions.length} goals allowed, ${saveActions.length} saves)</h4>
+                <div class="timeline-section opponent-team">
+                    <h4>Opponent Team (${goalAllowedActions.length} Goals Allowed, ${saveActions.length} Saves)</h4>
+                    <div class="timeline-track opponent">
+                        <div class="timeline-line"></div>
+                        ${opponentBars}
+                    </div>
                 </div>
             </div>
         `;
