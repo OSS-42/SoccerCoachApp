@@ -162,6 +162,16 @@ const FormationScreen = {
             slot.addEventListener('dragover', (e) => dragOver(e));
             slot.addEventListener('drop', (e) => dropToSlot(e));
             slot.addEventListener('click', (e) => handleTapSlot(e));
+            // Add touch support for mobile tap detection
+            slot.addEventListener('touchstart', (e) => {
+                slot.dataset.touchStarted = 'true';
+            }, { passive: true });
+            slot.addEventListener('touchend', (e) => {
+                if (slot.dataset.touchStarted === 'true') {
+                    handleTapSlot(e);
+                    delete slot.dataset.touchStarted;
+                }
+            }, { passive: true });
         });
 
         const playerList = document.getElementById('player-list');
@@ -369,8 +379,14 @@ function dropToSlot(e) {
     placedNumbers.forEach(num => {
         num.removeEventListener('dragstart', dragStart);
         num.removeEventListener('click', handleTapPlayer);
+        num.removeEventListener('touchstart', touchStart);
+        num.removeEventListener('touchmove', touchMove);
+        num.removeEventListener('touchend', touchEnd);
         num.addEventListener('dragstart', dragStart);
-        num.addEventListener('click', handleTapPlayer);
+        num.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
+        num.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
+        num.addEventListener('touchend', (e) => touchEnd(e));
+        num.addEventListener('click', handleTapPlayer, { passive: true });
     });
 }
 
@@ -584,7 +600,18 @@ function handleTapPlayer(e) {
         return;
     }
     
-    const playerId = e.target?.getAttribute('data-player-id') || e.currentTarget?.getAttribute('data-player-id');
+    // Get the target element (could be the player-number itself)
+    let targetElement = e.target || e.currentTarget;
+    
+    // Ensure we have the player-number element
+    if (!targetElement.classList.contains('player-number') && 
+        !targetElement.classList.contains('player-number-placed')) {
+        targetElement = targetElement.closest('.player-number, .player-number-placed');
+    }
+    
+    if (!targetElement) return;
+    
+    const playerId = targetElement.getAttribute('data-player-id');
     if (!playerId) return;
     
     // If tapping same player, deselect
@@ -598,26 +625,31 @@ function handleTapPlayer(e) {
 
     // Determine source: field, unavailable slot, or sidebar
     let source = 'sidebar';
-    if (e.target.classList.contains('player-number-placed')) {
+    if (targetElement.classList.contains('player-number-placed')) {
         source = 'field';
-    } else if (e.target.parentElement.classList.contains('unavailable-slot')) {
+    } else if (targetElement.parentElement?.classList.contains('unavailable-slot')) {
         source = 'unavailable';
     }
 
     // Select this player
     TapState.playerId = playerId;
     TapState.source = source;
-    TapState.slotId = e.target.parentElement.id || '';
+    TapState.slotId = targetElement.parentElement?.id || '';
 
     // Visual feedback
     document.querySelectorAll('.player-number').forEach(num => {
-        num.style.outline = num === e.target ? '3px solid #4CAF50' : 'none';
+        num.style.outline = num === targetElement ? '3px solid #4CAF50' : 'none';
     });
 }
 
 function handleTapSlot(e) {
-    e.stopPropagation();
-    const slot = e.currentTarget;
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+    
+    // Get the slot element (use closest in case event.currentTarget doesn't work on touch)
+    const slot = e.currentTarget?.closest?.('.player-slot, .unavailable-slot') || 
+                 e.target?.closest('.player-slot, .unavailable-slot') ||
+                 e.currentTarget;
     
     // If no player selected, do nothing
     if (!TapState.playerId) return;
