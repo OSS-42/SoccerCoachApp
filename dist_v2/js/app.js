@@ -491,6 +491,15 @@ function renderPlayerStatistics() {
 
 // Formation setup function
 function setupFormation() {
+    // Check if team has enough players for the match type
+    const requiredPlayerCount = parseInt(document.getElementById('match-type').value.split('v')[0]);
+    const teamPlayers = getTeamPlayers();
+    
+    if (teamPlayers.length < requiredPlayerCount) {
+        showMessage(`You need at least ${requiredPlayerCount} players for ${document.getElementById('match-type').value}. Your team has ${teamPlayers.length} player${teamPlayers.length !== 1 ? 's' : ''}.`, 'error');
+        return;
+    }
+    
     // Validate required game setup fields
     const opponentName = document.getElementById('opponent-name').value.trim();
     const gameDate = document.getElementById('game-date').value;

@@ -140,17 +140,24 @@ const FormationScreen = {
         numbers.forEach(number => {
             if (!number.hasAttribute('data-events-setup')) {
                 number.addEventListener('dragstart', (e) => dragStart(e));
-                number.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-                number.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-                number.addEventListener('touchend', (e) => touchEnd(e));
-                // Handle both click and touch tap
-                number.addEventListener('click', (e) => handleTapPlayer(e), { passive: true });
+                number.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    touchStart(e);
+                }, { passive: false });
+                number.addEventListener('touchmove', (e) => {
+                    e.stopPropagation();
+                    touchMove(e);
+                }, { passive: false });
                 number.addEventListener('touchend', (e) => {
-                    // On touch devices, also trigger tap if no drag occurred
-                    if (!window.dragInProgress) {
-                        handleTapPlayer(e);
-                    }
-                }, { passive: true });
+                    e.stopPropagation();
+                    touchEnd(e);
+                }, { passive: false });
+                // Handle both click and touch tap
+                number.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTapPlayer(e);
+                }, { passive: false });
                 number.setAttribute('data-events-setup', 'true');
             }
         });
@@ -161,17 +168,24 @@ const FormationScreen = {
             slot.removeEventListener('drop', (e) => dropToSlot(e));
             slot.addEventListener('dragover', (e) => dragOver(e));
             slot.addEventListener('drop', (e) => dropToSlot(e));
-            slot.addEventListener('click', (e) => handleTapSlot(e));
+            slot.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleTapSlot(e);
+            }, { passive: false });
             // Add touch support for mobile tap detection
             slot.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
                 slot.dataset.touchStarted = 'true';
             }, { passive: true });
             slot.addEventListener('touchend', (e) => {
                 if (slot.dataset.touchStarted === 'true') {
+                    e.preventDefault();
+                    e.stopPropagation();
                     handleTapSlot(e);
                     delete slot.dataset.touchStarted;
                 }
-            }, { passive: true });
+            }, { passive: false });
         });
 
         const playerList = document.getElementById('player-list');
@@ -383,10 +397,23 @@ function dropToSlot(e) {
         num.removeEventListener('touchmove', touchMove);
         num.removeEventListener('touchend', touchEnd);
         num.addEventListener('dragstart', dragStart);
-        num.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-        num.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-        num.addEventListener('touchend', (e) => touchEnd(e));
-        num.addEventListener('click', handleTapPlayer, { passive: true });
+        num.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            touchStart(e);
+        }, { passive: false });
+        num.addEventListener('touchmove', (e) => {
+            e.stopPropagation();
+            touchMove(e);
+        }, { passive: false });
+        num.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            touchEnd(e);
+        }, { passive: false });
+        num.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleTapPlayer(e);
+        }, { passive: false });
     });
 }
 
@@ -454,10 +481,23 @@ function dropToSidebar(e) {
             numberSpan.removeEventListener('touchend', touchEnd);
             
             numberSpan.addEventListener('dragstart', (e) => dragStart(e));
-            numberSpan.addEventListener('click', (e) => handleTapPlayer(e));
-            numberSpan.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-            numberSpan.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-            numberSpan.addEventListener('touchend', (e) => touchEnd(e));
+            numberSpan.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleTapPlayer(e);
+            }, { passive: false });
+            numberSpan.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                touchStart(e);
+            }, { passive: false });
+            numberSpan.addEventListener('touchmove', (e) => {
+                e.stopPropagation();
+                touchMove(e);
+            }, { passive: false });
+            numberSpan.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                touchEnd(e);
+            }, { passive: false });
         }
     });
     
@@ -473,10 +513,23 @@ function dropToSidebar(e) {
                 // Re-attach event listeners to newly created number span
                 const newNumberSpan = item.querySelector('.player-number');
                 newNumberSpan.addEventListener('dragstart', (e) => dragStart(e));
-                newNumberSpan.addEventListener('click', (e) => handleTapPlayer(e));
-                newNumberSpan.addEventListener('touchstart', (e) => touchStart(e), { passive: false });
-                newNumberSpan.addEventListener('touchmove', (e) => touchMove(e), { passive: false });
-                newNumberSpan.addEventListener('touchend', (e) => touchEnd(e));
+                newNumberSpan.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTapPlayer(e);
+                }, { passive: false });
+                newNumberSpan.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    touchStart(e);
+                }, { passive: false });
+                newNumberSpan.addEventListener('touchmove', (e) => {
+                    e.stopPropagation();
+                    touchMove(e);
+                }, { passive: false });
+                newNumberSpan.addEventListener('touchend', (e) => {
+                    e.stopPropagation();
+                    touchEnd(e);
+                }, { passive: false });
                 
                 playerFound = true;
             }
