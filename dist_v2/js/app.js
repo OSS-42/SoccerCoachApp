@@ -148,6 +148,9 @@ function showMessage(message, type = 'error') {
     
     if (!ribbon || !messageText) {
         console.error('Message ribbon or text element not found');
+        console.error('ribbon:', ribbon);
+        console.error('messageText:', messageText);
+        alert(`Error: ${message}`); // Fallback to alert if ribbon not found
         return;
     }
     
@@ -156,29 +159,64 @@ function showMessage(message, type = 'error') {
         clearTimeout(messageTimeout);
     }
     
-    // Set the message content and type
-    messageText.textContent = message;
-    ribbon.className = `message-ribbon ${type}`;
+    // Ensure ribbon HTML is correct (TeamSetupScreen may have modified it)
+    if (!ribbon.querySelector('.close-btn')) {
+        ribbon.innerHTML = `<span id="message-text"></span><button class="close-btn" onclick="hideMessage()">×</button>`;
+    }
     
-    // Ensure ribbon is visible immediately
+    // Set the message content
+    const messageTextElement = ribbon.querySelector('#message-text');
+    if (messageTextElement) {
+        messageTextElement.textContent = message;
+    } else {
+        ribbon.innerHTML = `<span id="message-text">${message}</span><button class="close-btn" onclick="hideMessage()">×</button>`;
+    }
+    
+    // Reset classes - start fresh
+    ribbon.className = '';
+    
+    // Add message-ribbon class and type (error/success/warning)
+    ribbon.classList.add('message-ribbon', type);
+    
+    // Remove hidden class to show
     ribbon.classList.remove('hidden');
+    
+    // Force visible with inline styles (overrides any CSS !important)
+    ribbon.style.setProperty('display', 'flex', 'important');
+    ribbon.style.setProperty('visibility', 'visible', 'important');
+    ribbon.style.setProperty('opacity', '1', 'important');
+    ribbon.style.setProperty('height', 'auto', 'important');
+    ribbon.style.setProperty('padding', '20px', 'important');
+    ribbon.style.setProperty('margin', '0', 'important');
+    ribbon.style.setProperty('border', 'none', 'important');
     
     // Auto-hide after 5 seconds for success, 7 seconds for errors
     const hideDelay = type === 'error' ? 7000 : 5000;
     messageTimeout = setTimeout(hideMessage, hideDelay);
     
-    // Log message for debugging
-    console.log(`Message (${type}):`, message);
+    // Log message for debugging - includes element inspection
+    console.log(`✓ Message shown (${type}):`, message);
+    console.log('Ribbon DOM:', ribbon.outerHTML.substring(0, 100));
 }
 
 function hideMessage() {
     const ribbon = document.getElementById('message-ribbon');
     if (ribbon) {
         ribbon.classList.add('hidden');
+        ribbon.style.setProperty('display', 'none', 'important');
+        ribbon.style.setProperty('height', '0', 'important');
+        ribbon.style.setProperty('padding', '0', 'important');
+        console.log('✓ Message hidden');
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    /* DEBUG: Test message system - remove after verification */
+    console.log('🔧 Testing message system...');
+    setTimeout(() => {
+        showMessage('✓ Message system is working! (This test message will disappear in 3 seconds)', 'success');
+    }, 500); // Small delay to ensure DOM is fully ready
+    
     // Load saved data if available - this returns a Promise
     loadAppData().then(() => {
         // Initialize team UI after data is fully loaded

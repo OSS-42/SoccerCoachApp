@@ -7,17 +7,11 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Football Live Action Tracker</title>
-    <link rel="stylesheet" href="css/style.css?v=1.9.78">
+    <link rel="stylesheet" href="css/style.css?v=1.10.26">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
     <div id="app">
-        <!-- Message Ribbon -->
-        <div id="message-ribbon" class="message-ribbon hidden">
-            <span id="message-text"></span>
-            <button class="close-btn" onclick="hideMessage()">×</button>
-        </div>
-        
         <!-- Main Menu Screen -->
         <main id="main-screen" class="screen active" role="main" aria-label="Main menu">
             <div class="app-header">
@@ -558,7 +552,13 @@
         </div>
         
         <!-- Version footer - bottom right corner -->
-        <div id="version-footer" class="version-footer">v1.10.25</div>
+        <div id="version-footer" class="version-footer">v1.10.26</div>
+    </div>
+
+    <!-- Message Ribbon - placed outside #app to prevent containment issues -->
+    <div id="message-ribbon" class="message-ribbon hidden">
+        <span id="message-text"></span>
+        <button class="close-btn" onclick="hideMessage()">×</button>
     </div>
 
     <script src="js/core/StateInit.js"></script>
@@ -575,7 +575,7 @@
     <script src="js/screens/GamePlayScreen.js"></script>
     <script src="js/screens/ReportsScreen.js"></script>
     <script src="js/screens/SettingsScreen.js"></script>
-    <script src="js/app.js?v=1.10.1"></script>
+    <script src="js/app.js?v=1.10.2"></script>
     
     <!-- Load and display version from version.json -->
     <script>

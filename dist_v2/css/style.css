@@ -38,11 +38,11 @@ body {
     background-color: #4caf50;
 }
 .message-ribbon.hidden {
-    display: none !important; /* Ensure hidden state is enforced */
-    height: 0; /* Collapse height */
-    padding: 0; /* Remove padding */
-    margin: 0; /* Remove margin */
-    border: none; /* Remove any borders */
+    display: none;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    border: none;
 }
 
 /* Ensure players-list has no padding by default */
