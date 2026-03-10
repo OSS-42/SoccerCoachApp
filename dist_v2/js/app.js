@@ -547,6 +547,7 @@ function setupFormation() {
     const gameDate = document.getElementById('game-date').value;
     const matchType = document.getElementById('match-type').value;
     const numPeriods = document.getElementById('num-periods').value;
+    const periodDuration = document.getElementById('period-duration').value || 12; // Default to 12 minutes
     const useSubstitutionTimer = !document.getElementById('use-substitution-timer').checked;
     const substitutionTime = document.getElementById('substitution-time').value;
     
@@ -598,6 +599,8 @@ function setupFormation() {
         teamName: teamName,
         opponentName,
         matchType,
+        numPeriods: parseInt(numPeriods),
+        periodDuration: parseInt(periodDuration),
         homeScore: 0,
         awayScore: 0,
         startTime: new Date().toISOString(),
@@ -605,7 +608,8 @@ function setupFormation() {
         actions: [],
         activePlayers: [...getTeamPlayers().map(p => p.id)],
         isCompleted: false,
-        totalGameTime: 0
+        totalGameTime: 0,
+        gameTime: 0
     };
     
     // Save the game data
@@ -923,41 +927,84 @@ function pauseGameTimer() {
 }
 
 function stopGameTimer() {
-    // Show dialog asking if period is finished
+    // Stop the timer first
+    if (appState.gameTimer.isRunning) {
+        clearInterval(appState.gameTimer.interval);
+        appState.gameTimer.isRunning = false;
+    }
+    
+    appState.gameTimer.interval = null;
+    
+    // Stop substitution timer AND reset it to default value
+    pauseTimer();
+    resetTimer();
+    
+    // Calculate current period and total periods
     const game = appState.currentGame;
-    const currentPeriod = Math.floor((game.gameTime || 0) / 60 / 45) + 1;
+    const periodDurationSeconds = (game.periodDuration || 45) * 60;
+    const currentPeriod = Math.floor((game.gameTime || 0) / periodDurationSeconds) + 1;
     const totalPeriods = game.numPeriods || 2;
     
     const isLastPeriod = currentPeriod >= totalPeriods;
-    const message = isLastPeriod 
-        ? 'Is the game finished?' 
-        : `Is period ${currentPeriod} finished?`;
     
-    const confirmText = isLastPeriod ? 'End Game' : 'Finish Period';
+    // Show period finish dialog
+    const title = document.getElementById('period-finish-title');
+    const message = document.getElementById('period-finish-message');
     
-    if (confirm(`${message}\n\nClick OK to ${confirmText.toLowerCase()}, or Cancel to continue playing.`)) {
-        // Stop the timer first
-        if (appState.gameTimer.isRunning) {
-            clearInterval(appState.gameTimer.interval);
-            appState.gameTimer.isRunning = false;
-        }
-        
-        // Do not reset the game timer to 0, just stop it
-        // Keeping the current elapsed time
-        appState.gameTimer.interval = null;
-        
-        // Stop substitution timer AND reset it to default value
-        pauseTimer();
-        resetTimer();
-        
-        // If last period, end game directly
-        if (isLastPeriod) {
-            endGame();
-        } else {
-            // Just pause for period break - save and show pause message
-            saveAppData();
-        }
+    if (isLastPeriod) {
+        title.textContent = 'End Game';
+        message.textContent = 'Is the game finished?';
+        appState.pendingPeriodAction = 'end-game';
+    } else {
+        title.textContent = `Finish Period ${currentPeriod}`;
+        message.textContent = `Is period ${currentPeriod} finished?`;
+        appState.pendingPeriodAction = 'finish-period';
     }
+    
+    toggleDialog('period-finish-dialog', true);
+}
+
+function closePeriodFinishDialog() {
+    toggleDialog('period-finish-dialog', false);
+    appState.pendingPeriodAction = null;
+}
+
+function confirmPeriodFinish() {
+    const action = appState.pendingPeriodAction;
+    closePeriodFinishDialog();
+    
+    if (action === 'end-game') {
+        endGame();
+    } else if (action === 'finish-period') {
+        finishPeriod();
+    }
+}
+
+function finishPeriod() {
+    if (!appState.currentGame) return;
+    
+    const game = appState.currentGame;
+    const periodDuration = game.periodDuration || 45; // Default to 45 minutes if not set
+    const periodDurationSeconds = periodDuration * 60;
+    
+    // Calculate which period we're currently in (0-based)
+    const currentPeriodIndex = Math.floor((game.gameTime || 0) / periodDurationSeconds);
+    
+    // Calculate the start time of the next period (in seconds)
+    const nextPeriodStartSeconds = (currentPeriodIndex + 1) * periodDurationSeconds;
+    
+    // Set gameTime to the start of next period
+    game.gameTime = nextPeriodStartSeconds;
+    
+    // Reset substitution timer with default duration
+    resetTimer();
+    
+    // Save state
+    saveAppData();
+    
+    // Show message
+    const nextPeriodNumber = currentPeriodIndex + 2; // Period number is 1-based
+    showMessage(`Period ${currentPeriodIndex + 1} finished. Starting period ${nextPeriodNumber}.`, 'success');
 }
 
 // Player Actions
@@ -970,6 +1017,12 @@ function openPlayerActionDialog(player) {
     // Don't allow actions on red-carded players
     if (player.stats && player.stats.redCards > 0) {
         showMessage('Cannot perform actions on red-carded players', 'error');
+        return;
+    }
+    
+    // Don't allow actions on injured players
+    if (player.stats && player.stats.injured) {
+        showMessage('Cannot perform actions on injured players', 'error');
         return;
     }
     
@@ -1215,16 +1268,12 @@ function recordAction(actionType, specificPlayerId = null) {
             break;
         case 'injury':
             // Mark player as injured (unavailable) for the rest of the game
-            teamPlayers[playerIndex].stats.redCards = (teamPlayers[playerIndex].stats.redCards || 0) + 1;
+            if (!teamPlayers[playerIndex].stats.injured) {
+                teamPlayers[playerIndex].stats.injured = true;
+            }
             
             // Show message about player injury
             showMessage(`${teamPlayers[playerIndex].name} is injured and no longer available`, 'warning');
-            
-            // Update red card counter (treating injury as unavailable like red card)
-            const injuryRedCounter = document.getElementById('red-card-count');
-            if (injuryRedCounter) {
-                injuryRedCounter.textContent = (parseInt(injuryRedCounter.textContent) || 0) + 1;
-            }
             break;
     }
     
@@ -1259,16 +1308,22 @@ function updatePlayerGridItem(playerId) {
     // Update card classes
     const yellowCards = player.stats.yellowCards || 0;
     const redCards = player.stats.redCards || 0;
+    const isInjured = player.stats.injured || false;
     
-    playerGridItem.classList.remove('yellow-card', 'red-card');
-    if (redCards > 0) {
+    playerGridItem.classList.remove('yellow-card', 'red-card', 'injured');
+    
+    if (isInjured) {
+        playerGridItem.classList.add('injured');
+    } else if (redCards > 0) {
         playerGridItem.classList.add('red-card');
     } else if (yellowCards > 0) {
         playerGridItem.classList.add('yellow-card');
     }
     
-    // Preserve starter/substitute status
-    // (these classes should remain from renderPlayerGrid())
+    // Prevent further actions on injured or carded players
+    const isUnavailable = isInjured || redCards > 0;
+    playerGridItem.style.pointerEvents = isUnavailable ? 'none' : 'auto';
+    playerGridItem.style.opacity = isUnavailable ? '0.6' : '1';
 }
 
 function calculateGameMinute() {
@@ -2030,12 +2085,14 @@ function removeAction(index) {
                 }
                 break;
             case 'red_card':
-            case 'injury':
                 player.stats.redCards = Math.max(0, (player.stats.redCards || 0) - 1);
                 const redCounter = document.getElementById('red-card-count');
                 if (redCounter) {
                     redCounter.textContent = Math.max(0, parseInt(redCounter.textContent) - 1);
                 }
+                break;
+            case 'injury':
+                player.stats.injured = false;
                 break;
         }
     }

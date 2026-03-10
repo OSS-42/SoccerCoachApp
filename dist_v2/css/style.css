@@ -665,7 +665,7 @@ body {
 }
 
 .game-score .team-name {
-    flex: 1;
+    flex: 0 0 auto;
     text-align: left;
     font-weight: bold;
     font-size: 14px;
@@ -673,18 +673,19 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 150px;
 }
 
 .game-score .score {
     font-size: 20px;
     font-weight: bold;
     flex: 0 0 auto;
-    min-width: 60px;
+    min-width: 80px;
     text-align: center;
 }
 
 .game-score .opponent-name {
-    flex: 1;
+    flex: 0 0 auto;
     text-align: right;
     font-weight: bold;
     font-size: 14px;
@@ -692,6 +693,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    max-width: 150px;
 }
 
 .card-counters {
@@ -1120,6 +1122,17 @@ body {
     cursor: default;
 }
 .player-grid-item.red-card:hover {
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.player-grid-item.injured {
+    background-color: #9e9e9e; /* Faint dark grey */
+    opacity: 0.6;
+    cursor: default;
+}
+
+.player-grid-item.injured:hover {
     transform: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }

@@ -1,7 +1,8 @@
 {
-  "version": "1.12.8",
+  "version": "1.12.9",
   "lastUpdated": "2026-03-10",
   "changelog": {
+    "1.12.9": "Fixed Live Game Screen layout: team names now display properly (left-aligned with max-width), score centered in header, CSS improved for game-score spacing; Stop button now uses modal dialog similar to End Game (instead of browser confirm), period finish functionality added with automatic gameTime increment and period counter; injured players now display as faint dark grey tile (opacity 0.6, #9e9e9e) to distinguish from red cards, injury action removed from action removal reverts properly",
     "1.12.8": "Fixed Live Game Screen: team scores now properly centered and aligned left/right with opponent name, Stop button now triggers 'period finished' popup (ends game if last period), added injury action button (#🏥) that makes player unavailable like red card, improved action review dialog to allow removing previously recorded actions with revert of stats, fixed period scores display in report showing individual period breakdowns (P1 X-Y, P2 X-Y, etc)",
     "1.12.7": "Fixed: Report header formatting - team scores now properly centered with flexbox, period scores display format improved (P1: X-Y on separate lines for clarity), removed sticky header positioning, added contrasting light-blue background (#f0f4f8) to timeline chart for better visibility, significantly reduced spacing between report sections (margins 25px→12px, padding 20px→16px), CSS file optimized removing 124 lines of redundant code and dead styles",
     "1.12.6": "Fixed: Report header scores now perfectly centered under team names, period display intelligently shows all periods for 4+ period games (P1: X-Y | P2: X-Y | P3: X-Y | P4: X-Y), timeline grid completely removed for clean appearance, goal indicator balls repositioned to -8px for tight alignment with bar tips",
