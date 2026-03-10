@@ -1,9 +1,9 @@
 {
-  "version": "1.12.2",
+  "version": "1.12.3",
   "lastUpdated": "2026-03-09",
   "changelog": {
-    "1.12.2": "Fixed: Game report now displays proper timeline chart with symmetrical design - bars visible for both user team (top) and opponent (bottom), team names prominently shown in report header, removed hardcoded v1.11 version from dialog, minute scale display, clean two-column goals & cards layout",
-    "1.12.1": "Fixed: Team names visibility (white text on white background), timeline chart display with proper bar positioning, goals & cards section layout, centralized versioning system",
+    "1.12.3": "Fixed: Timeline chart completely rebuilt - simplified structure with proper bar positioning, clean two-section layout (your team top, opponent bottom), clear minute scale (0' to 90'), bars use gradient coloring (green to light-green for user, red to blue for opponent), proper bar sizing and visibility",
+    "1.12.2": "Fixed: Game report header displays team names, timeline chart structure with symmetrical design",
     "1.12": "Enhanced: Game report redesign with symmetrical timeline chart - user team shots display as green bars growing upward, opponent saves display as blue bars growing downward, goals display in separate two-column section (left: your team, right: opponent team), team names now prominently displayed in report header",
     "1.11.1": "Enhanced: Player name capitalization system - all player and team names now stored in uppercase for consistency across all screens and reports, applied capitalization at data entry point (addPlayer, saveEditedPlayer, addNewTeam, saveTeamName, formation setup), seamless report design with unified styling (white backgrounds, subtle borders, no color-coded sections)"
     "1.10.22": "Fixed: native browser drag behavior was still possible on player elements - added dragstart event listener that prevents default to block HTML5 native dragging, added CSS user-select: none and user-drag: none with webkit prefixes to all player elements (.player-number, .player-number-placed, .player-item-draggable) and slot elements (.player-slot, .unavailable-slot) to completely disable dragging and text selection, formation screen now tap-to-select only with zero drag interference",

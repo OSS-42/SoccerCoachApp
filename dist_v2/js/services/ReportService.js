@@ -674,7 +674,7 @@ const ReportService = {
     },
 
     /**
-     * Generate symmetrical timeline visualization matching sports app design
+     * Generate timeline matching sports app design - symmetrical chart
      * @private
      */
     _generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers) {
@@ -696,30 +696,22 @@ const ReportService = {
             else opponentActionsByMinute[min].goalsAllowed++;
         });
 
-        // Generate bars HTML
+        // Generate bars with proper positioning
         const userBars = Object.entries(userShotsByMinute).map(([minute, counts]) => {
-            const totalHeight = (counts.goals + counts.shots) * 8;
             const leftPos = (parseInt(minute) / 90) * 100;
-            const goalsHeight = counts.goals * 8;
+            const height = (counts.goals * 15) + (counts.shots * 12);
             
             return `
-                <div class="chart-bar user-bar" style="left: ${leftPos}%; height: ${totalHeight}px;">
-                    <div class="bar-goals" style="height: ${goalsHeight}px; background: #4CAF50;"></div>
-                    <div class="bar-shots" style="height: ${counts.shots * 8}px; background: #8BC34A;"></div>
-                </div>
+                <div class="timeline-bar" style="left: ${leftPos}%; height: ${height}px; background: linear-gradient(to top, #4CAF50 0%, #8BC34A 100%);" title="${counts.goals} goals, ${counts.shots} shots"></div>
             `;
         }).join('');
 
         const opponentBars = Object.entries(opponentActionsByMinute).map(([minute, counts]) => {
-            const totalHeight = (counts.goalsAllowed + counts.saves) * 8;
             const leftPos = (parseInt(minute) / 90) * 100;
-            const goalsAllowedHeight = counts.goalsAllowed * 8;
+            const height = (counts.goalsAllowed * 15) + (counts.saves * 12);
             
             return `
-                <div class="chart-bar opponent-bar" style="left: ${leftPos}%; height: ${totalHeight}px;">
-                    <div class="bar-goalsallowed" style="height: ${goalsAllowedHeight}px; background: #FF5252;"></div>
-                    <div class="bar-saves" style="height: ${counts.saves * 8}px; background: #2196F3;"></div>
-                </div>
+                <div class="timeline-bar" style="left: ${leftPos}%; height: ${height}px; background: linear-gradient(to top, #FF5252 0%, #2196F3 100%);" title="${counts.goalsAllowed} goals allowed, ${counts.saves} saves"></div>
             `;
         }).join('');
 
@@ -729,35 +721,31 @@ const ReportService = {
         const opponentSaves = Object.values(opponentActionsByMinute).reduce((sum, c) => sum + c.saves, 0);
 
         return `
-            <div class="timeline-chart-wrapper">
-                <div class="timeline-chart">
-                    <!-- Top section: User team shots going UP -->
-                    <div class="chart-section user-section">
-                        <div class="chart-bars-container user-container">
-                            ${userBars}
-                        </div>
-                        <div class="chart-axis-line"></div>
-                        <div class="chart-label">Your Team • ${userGoals} ⚽ ${userShots} 👟</div>
+            <div class="timeline-wrapper">
+                <!-- Your Team -->
+                <div class="timeline-section-top">
+                    <div class="timeline-bars-area" style="height: 80px; position: relative; border: 1px solid #ddd; border-radius: 4px;">
+                        ${userBars}
                     </div>
+                    <div class="timeline-label user-label">Your Team • ${userGoals} ⚽ ${userShots} 👟</div>
+                </div>
 
-                    <!-- Minute scale -->
-                    <div class="chart-minutes">
-                        <div style="flex: 1; text-align: left; font-size: 11px; color: #999;">0'</div>
-                        <div style="flex: 1; text-align: center; font-size: 11px; color: #999;">15'</div>
-                        <div style="flex: 1; text-align: center; font-size: 11px; color: #999;">30'</div>
-                        <div style="flex: 1; text-align: center; font-size: 11px; color: #999;">45'</div>
-                        <div style="flex: 1; text-align: center; font-size: 11px; color: #999;">60'</div>
-                        <div style="flex: 1; text-align: center; font-size: 11px; color: #999;">75'</div>
-                        <div style="flex: 1; text-align: right; font-size: 11px; color: #999;">90'</div>
-                    </div>
+                <!-- Minute Scale -->
+                <div class="timeline-scale">
+                    <span>0'</span>
+                    <span>15'</span>
+                    <span>30'</span>
+                    <span>45'</span>
+                    <span>60'</span>
+                    <span>75'</span>
+                    <span>90'</span>
+                </div>
 
-                    <!-- Bottom section: Opponent saves/goals_allowed going DOWN -->
-                    <div class="chart-section opponent-section">
-                        <div class="chart-label">Opponent • ${opponentGoalsAllowed} 🔴 ${opponentSaves} 🧤</div>
-                        <div class="chart-axis-line"></div>
-                        <div class="chart-bars-container opponent-container">
-                            ${opponentBars}
-                        </div>
+                <!-- Opponent -->
+                <div class="timeline-section-bottom">
+                    <div class="timeline-label opponent-label">Opponent • ${opponentGoalsAllowed} 🔴 ${opponentSaves} 🧤</div>
+                    <div class="timeline-bars-area opponent" style="height: 80px; position: relative; border: 1px solid #ddd; border-radius: 4px;">
+                        ${opponentBars}
                     </div>
                 </div>
             </div>
