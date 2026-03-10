@@ -515,19 +515,27 @@ const ReportService = {
         const shotActions = actions.filter(a => ['shot_on_goal', 'shot'].includes(a.actionType));
         const saveActions = actions.filter(a => a.actionType === 'save');
         const goalAllowedActions = actions.filter(a => a.actionType === 'goal_allowed');
+        const injuryActions = actions.filter(a => a.actionType === 'injury');
         const noteActions = actions.filter(a => a.actionType === 'note');
         const lateActions = actions.filter(a => a.actionType === 'late_to_game');
         
-        // Generate period score breakdown - only show if actual period scores recorded
+        // Generate period score breakdown - show all periods up to numPeriods
         let periodScoresHTML = '';
         const numPeriods = game.numPeriods || 2;
         
         if (game.periodScores && game.periodScores.length > 0) {
-            // Show recorded period scores
+            // Show all periods up to numPeriods, using recorded scores or last recorded score
             const periodLines = [];
-            game.periodScores.forEach((s, i) => {
-                periodLines.push(`<div class="period-score-line">P${i+1} ${s.home}-${s.away}</div>`);
-            });
+            for (let i = 0; i < numPeriods; i++) {
+                if (game.periodScores[i]) {
+                    // Use recorded score for this period
+                    periodLines.push(`<div class="period-score-line">P${i+1} ${game.periodScores[i].home}-${game.periodScores[i].away}</div>`);
+                } else {
+                    // Use last recorded score or final score if no recorded scores yet
+                    const lastScore = game.periodScores[game.periodScores.length - 1] || { home: game.homeScore || 0, away: game.awayScore || 0 };
+                    periodLines.push(`<div class="period-score-line">P${i+1} ${lastScore.home}-${lastScore.away}</div>`);
+                }
+            }
             periodScoresHTML = periodLines.join('');
         } else {
             // Only show half-time score if period scores not tracked
@@ -570,10 +578,10 @@ const ReportService = {
         });
 
         // Generate timeline HTML
-        const timelineHTML = this._generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers);
+        const timelineHTML = this._generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers, game);
         
         // Generate goals & cards timeline
-        const goalsCardsHTML = this._generateGoalsCardsTimeline(goalActions, cardActions, teamPlayers);
+        const goalsCardsHTML = this._generateGoalsCardsTimeline(goalActions, cardActions, goalAllowedActions, injuryActions, teamPlayers);
         
         // Generate sections
         const substitutesHTML = game.substitutes && game.substitutes.length > 0 ?
@@ -681,7 +689,12 @@ const ReportService = {
      * Generate timeline - one complete symmetrical graph
      * @private
      */
-    _generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers) {
+    _generateTimeline(goalActions, shotActions, saveActions, goalAllowedActions, teamPlayers, game) {
+        // Calculate actual game duration in minutes
+        const gameDurationMinutes = (game && game.numPeriods && game.periodDuration) 
+            ? game.numPeriods * game.periodDuration 
+            : 90; // Default to 90 if not specified
+        
         // Group actions by minute
         const userShotsByMinute = {};
         const opponentActionsByMinute = {};
@@ -705,7 +718,7 @@ const ReportService = {
 
         // User team bars (going UP)
         Object.entries(userShotsByMinute).forEach(([minute, counts]) => {
-            const leftPos = (parseInt(minute) / 90) * 100;
+            const leftPos = (parseInt(minute) / gameDurationMinutes) * 100;
             const height = (counts.goals * 12) + (counts.shots * 8);
             const goalIndicator = counts.goals > 0 ? `<div class="goal-indicator user-goal" style="left: ${leftPos}%;">⚽</div>` : '';
             allBars.push(`
@@ -716,7 +729,7 @@ const ReportService = {
 
         // Opponent bars (going DOWN)
         Object.entries(opponentActionsByMinute).forEach(([minute, counts]) => {
-            const leftPos = (parseInt(minute) / 90) * 100;
+            const leftPos = (parseInt(minute) / gameDurationMinutes) * 100;
             const height = (counts.goalsAllowed * 12) + (counts.saves * 8);
             const goalIndicator = counts.goalsAllowed > 0 ? `<div class="goal-indicator opponent-goal" style="left: ${leftPos}%;">⚽</div>` : '';
             allBars.push(`
@@ -730,6 +743,9 @@ const ReportService = {
         const opponentGoalsAllowed = Object.values(opponentActionsByMinute).reduce((sum, c) => sum + c.goalsAllowed, 0);
         const opponentSaves = Object.values(opponentActionsByMinute).reduce((sum, c) => sum + c.saves, 0);
 
+        // Generate timeline scale marks based on game duration
+        const scaleMarks = this._generateTimelineScale(gameDurationMinutes);
+
         return `
             <div class="timeline-chart">
                 <div class="timeline-bars-wrapper">
@@ -738,27 +754,34 @@ const ReportService = {
                     </div>
                 </div>
                 <div class="timeline-scale">
-                    <span>0'</span>
-                    <span>15'</span>
-                    <span>30'</span>
-                    <span>45'</span>
-                    <span>60'</span>
-                    <span>75'</span>
-                    <span>90'</span>
+                    ${scaleMarks}
                 </div>
             </div>
         `;
     },
 
     /**
+     * Generate timeline scale marks based on game duration
+     * @private
+     */
+    _generateTimelineScale(gameDurationMinutes) {
+        const intervals = [];
+        const markCount = Math.ceil(gameDurationMinutes / 15); // Marks every 15 minutes or fewer
+        for (let i = 0; i <= markCount; i++) {
+            intervals.push(`<span>${i * 15}'</span>`);
+        }
+        return intervals.join('');
+    },
+
+    /**
      * Generate goals and cards as simple sequential list
      * @private
      */
-    _generateGoalsCardsTimeline(goalActions, cardActions, teamPlayers) {
+    _generateGoalsCardsTimeline(goalActions, cardActions, goalAllowedActions, injuryActions, teamPlayers) {
         // Sort all events by time
         const allEvents = [];
 
-        // Add goals
+        // Add goals for user team
         let goalCounter = 0;
         goalActions.forEach(a => {
             goalCounter++;
@@ -768,7 +791,21 @@ const ReportService = {
                 type: 'goal',
                 score: goalCounter,
                 player: player?.name || 'Unknown',
-                assist: a.assistedBy ? teamPlayers.find(p => p.id === a.assistedBy)?.name : null
+                assist: a.assistedBy ? teamPlayers.find(p => p.id === a.assistedBy)?.name : null,
+                isOpponent: false
+            });
+        });
+
+        // Add goals allowed (opposing team goals)
+        let opponentGoalCounter = 0;
+        goalAllowedActions.forEach(a => {
+            opponentGoalCounter++;
+            allEvents.push({
+                time: a.gameMinute,
+                type: 'goalAllowed',
+                score: opponentGoalCounter,
+                player: 'Opponent',
+                isOpponent: true
             });
         });
 
@@ -778,7 +815,19 @@ const ReportService = {
             allEvents.push({
                 time: a.gameMinute,
                 type: a.actionType === 'yellow_card' ? 'yellow' : 'red',
-                player: player?.name || 'Unknown'
+                player: player?.name || 'Unknown',
+                isOpponent: false
+            });
+        });
+
+        // Add injuries for user team
+        injuryActions.forEach(a => {
+            const player = teamPlayers.find(p => p.id === a.playerId);
+            allEvents.push({
+                time: a.gameMinute,
+                type: 'injury',
+                player: player?.name || 'Unknown',
+                isOpponent: false
             });
         });
 
@@ -788,7 +837,7 @@ const ReportService = {
         const eventsHTML = allEvents.map(e => {
             if (e.type === 'goal') {
                 return `
-                    <div class="goals-cards-item goal-item">
+                    <div class="goals-cards-item goal-item" style="justify-content: flex-start;">
                         <div class="item-icon">⚽</div>
                         <div class="item-number">#${e.score}</div>
                         <div class="item-details">
@@ -798,9 +847,20 @@ const ReportService = {
                         <div class="item-time">${e.time}'</div>
                     </div>
                 `;
+            } else if (e.type === 'goalAllowed') {
+                return `
+                    <div class="goals-cards-item goal-allowed-item" style="justify-content: flex-end; flex-direction: row-reverse;">
+                        <div class="item-icon">⚽</div>
+                        <div class="item-number">#${e.score}</div>
+                        <div class="item-details" style="text-align: right;">
+                            <div class="item-player">${e.player}</div>
+                        </div>
+                        <div class="item-time">${e.time}'</div>
+                    </div>
+                `;
             } else if (e.type === 'yellow') {
                 return `
-                    <div class="goals-cards-item card-item yellow">
+                    <div class="goals-cards-item card-item yellow" style="justify-content: flex-start;">
                         <div class="item-icon">🟨</div>
                         <div class="item-details">
                             <div class="item-player">${e.player}</div>
@@ -808,10 +868,20 @@ const ReportService = {
                         <div class="item-time">${e.time}'</div>
                     </div>
                 `;
-            } else {
+            } else if (e.type === 'red') {
                 return `
-                    <div class="goals-cards-item card-item red">
+                    <div class="goals-cards-item card-item red" style="justify-content: flex-start;">
                         <div class="item-icon">🟥</div>
+                        <div class="item-details">
+                            <div class="item-player">${e.player}</div>
+                        </div>
+                        <div class="item-time">${e.time}'</div>
+                    </div>
+                `;
+            } else if (e.type === 'injury') {
+                return `
+                    <div class="goals-cards-item injury-item" style="justify-content: flex-start;">
+                        <div class="item-icon">🏥</div>
                         <div class="item-details">
                             <div class="item-player">${e.player}</div>
                         </div>
@@ -824,7 +894,7 @@ const ReportService = {
         return `
             <div class="report-section goals-cards-section">
                 <div class="goals-cards-list">
-                    ${eventsHTML || '<div class="empty-state">No goals or cards recorded</div>'}
+                    ${eventsHTML || '<div class="empty-state">No goals, cards, or injuries recorded</div>'}
                 </div>
             </div>
         `;

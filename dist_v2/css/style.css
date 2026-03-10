@@ -735,7 +735,7 @@ body {
 .team-scores {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
     width: 100%;
     opacity: 1;
 }
@@ -743,42 +743,44 @@ body {
 .team-score {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
-    height: 32px;
+    height: 28px;
     box-sizing: border-box;
     opacity: 1;
+    padding: 0 10px;
 }
 
-/* Team Name: Fixed width for name only, don't expand */
+/* Team Name: Fixed width for name only, far left */
 .team-score .team-name {
     flex: 0 0 auto;
-    max-width: 120px;
+    max-width: 100px;
     min-width: 0;
     text-transform: uppercase;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 13px;
     text-align: left;
-    padding-left: 10px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* Score: Fixed width, right-aligned */
+/* Score with Card Counters: Far right */
 .team-score .score {
-    flex: 0 0 100px; /* Fixed width for score column to align with clock/timer */
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-size: 20px;
     font-weight: bold;
-    text-align: right;
-    padding-right: 10px;
 }
 
 /* Separator Line: 1px thick, stops 10px short of borders */
 .separator-line {
-    width: calc(100% - 20px); /* Full width minus 10px on each side */
+    width: calc(100% - 20px);
     height: 1px;
-    background-color: #ffffff; /* White line for visibility on #1e88e5 background */
-    margin: 0px 10px; /* 5px top/bottom for spacing, 10px left/right for gap */
+    background-color: #ffffff;
+    margin: 0px 10px;
 }
 
 .time-controls-container {
@@ -2106,9 +2108,11 @@ button.no-assist-btn {
 .formation-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     align-items: center;
     width: 100%;
+    height: calc(100vh - 140px);
+    overflow-y: auto;
 }
 
 /* Mobile layout: Available left, Field center, Unavailable right */
@@ -2213,13 +2217,14 @@ button.no-assist-btn {
 .player-list {
     width: 100%;
     background: #f5f5f5;
-    padding: 10px;
+    padding: 8px;
     border-radius: 8px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
-    gap: 10px;
-    touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
-    min-height: 100px;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 8px;
+    touch-action: pan-y;
+    min-height: 70px;
+    max-height: 70px;
 }
 
 .player-item-draggable {
@@ -2259,9 +2264,10 @@ button.no-assist-btn {
 .unavailable-slots {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
-    min-height: 100px;
+    min-height: 70px;
+    max-height: 70px;
 }
 
 .unavailable-slot {
@@ -2320,11 +2326,11 @@ button.no-assist-btn {
 
 .formation-field {
     width: 260px;
-    height: 400px;
+    height: 280px;
     background: url('../img/field.png') no-repeat center center;
-    background-size: auto 400px;
+    background-size: auto 280px;
     position: relative;
-    margin: 0 auto; /* Center horizontally */
+    margin: 0 auto;
     user-select: none;
     -webkit-user-select: none;
     -webkit-user-drag: none;
@@ -2778,6 +2784,19 @@ button.no-assist-btn {
 
 .goals-cards-item.card-item.red {
     border-left-color: #D32F2F;
+}
+
+.goals-cards-item.goal-allowed-item {
+    border-left-color: transparent;
+    border-right-color: #FF6B6B;
+    border-right-width: 3px;
+    border-left-width: 1px;
+    justify-content: flex-end;
+    opacity: 0.8;
+}
+
+.goals-cards-item.injury-item {
+    border-left-color: #FF9800;
 }
 
 .item-icon {
