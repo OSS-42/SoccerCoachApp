@@ -524,22 +524,27 @@ const ReportService = {
         const numPeriods = game.numPeriods || 2;
         
         if (game.periodScores && game.periodScores.length > 0) {
-            // Show all periods up to numPeriods, using recorded scores or last recorded score
+            // Show all periods up to numPeriods, calculating per-period deltas
             const periodLines = [];
             for (let i = 0; i < numPeriods; i++) {
-                if (game.periodScores[i]) {
-                    // Use recorded score for this period
-                    periodLines.push(`<div class="period-score-line">P${i+1} ${game.periodScores[i].home}-${game.periodScores[i].away}</div>`);
+                let homeScore, awayScore;
+                if (i === 0) {
+                    // First period: use first period score as-is
+                    homeScore = game.periodScores[0].home;
+                    awayScore = game.periodScores[0].away;
                 } else {
-                    // Use last recorded score or final score if no recorded scores yet
-                    const lastScore = game.periodScores[game.periodScores.length - 1] || { home: game.homeScore || 0, away: game.awayScore || 0 };
-                    periodLines.push(`<div class="period-score-line">P${i+1} ${lastScore.home}-${lastScore.away}</div>`);
+                    // Subsequent periods: calculate delta from previous period
+                    const prevScore = game.periodScores[i - 1] || { home: 0, away: 0 };
+                    const currScore = game.periodScores[i] || { home: prevScore.home, away: prevScore.away };
+                    homeScore = currScore.home - prevScore.home;
+                    awayScore = currScore.away - prevScore.away;
                 }
+                periodLines.push(`<div class="period-score-line">P${i+1} ${homeScore}-${awayScore}</div>`);
             }
             periodScoresHTML = periodLines.join('');
         } else {
-            // Only show half-time score if period scores not tracked
-            periodScoresHTML = `<div class="period-score-line">HT ${game.homeScore || 0}-${game.awayScore || 0}</div>`;
+            // Only show final score if period scores not tracked
+            periodScoresHTML = `<div class="period-score-line">FT ${game.homeScore || 0}-${game.awayScore || 0}</div>`;
         }
 
         // Build player stats
@@ -778,6 +783,12 @@ const ReportService = {
      * @private
      */
     _generateGoalsCardsTimeline(goalActions, cardActions, goalAllowedActions, injuryActions, teamPlayers) {
+        // Helper function to capitalize text
+        const capitalize = (text) => {
+            if (!text) return 'Unknown';
+            return text.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        };
+
         // Sort all events by time
         const allEvents = [];
 
@@ -790,8 +801,8 @@ const ReportService = {
                 time: a.gameMinute,
                 type: 'goal',
                 score: goalCounter,
-                player: player?.name || 'Unknown',
-                assist: a.assistedBy ? teamPlayers.find(p => p.id === a.assistedBy)?.name : null,
+                player: capitalize(player?.name || 'Unknown'),
+                assist: a.assistedBy ? capitalize(teamPlayers.find(p => p.id === a.assistedBy)?.name) : null,
                 isOpponent: false
             });
         });
@@ -815,7 +826,7 @@ const ReportService = {
             allEvents.push({
                 time: a.gameMinute,
                 type: a.actionType === 'yellow_card' ? 'yellow' : 'red',
-                player: player?.name || 'Unknown',
+                player: capitalize(player?.name || 'Unknown'),
                 isOpponent: false
             });
         });
@@ -826,7 +837,7 @@ const ReportService = {
             allEvents.push({
                 time: a.gameMinute,
                 type: 'injury',
-                player: player?.name || 'Unknown',
+                player: capitalize(player?.name || 'Unknown'),
                 isOpponent: false
             });
         });

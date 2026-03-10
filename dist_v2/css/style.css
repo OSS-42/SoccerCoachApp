@@ -2687,10 +2687,10 @@ button.no-assist-btn {
 
 .timeline-bar {
     position: absolute;
-    width: 6px;
+    width: 12px;
     min-height: 2px;
     cursor: pointer;
-    border-radius: 1px;
+    border-radius: 2px;
     transition: opacity 0.2s ease, box-shadow 0.2s ease;
     z-index: 2;
 }
