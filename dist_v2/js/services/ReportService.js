@@ -518,7 +518,7 @@ const ReportService = {
         const noteActions = actions.filter(a => a.actionType === 'note');
         const lateActions = actions.filter(a => a.actionType === 'late_to_game');
         
-        // Generate period score breakdown - show periods based on game.numPeriods
+        // Generate period score breakdown - only show if actual period scores recorded
         let periodScoresHTML = '';
         const numPeriods = game.numPeriods || 2;
         
@@ -529,16 +529,9 @@ const ReportService = {
                 periodLines.push(`<div class="period-score-line">P${i+1} ${s.home}-${s.away}</div>`);
             });
             periodScoresHTML = periodLines.join('');
-        } else if (numPeriods >= 2) {
-            // Display expected periods even without individual period scores
-            const periodLines = [];
-            for (let i = 1; i <= numPeriods; i++) {
-                periodLines.push(`<div class="period-score-line">P${i} ${game.homeScore || 0}-${game.awayScore || 0}</div>`);
-            }
-            periodScoresHTML = periodLines.join('');
         } else {
-            // Fallback for unexpected cases
-            periodScoresHTML = `<div class="period-score-line">FT ${game.homeScore || 0}-${game.awayScore || 0}</div>`;
+            // Only show half-time score if period scores not tracked
+            periodScoresHTML = `<div class="period-score-line">HT ${game.homeScore || 0}-${game.awayScore || 0}</div>`;
         }
 
         // Build player stats
@@ -622,11 +615,6 @@ const ReportService = {
                         <div class="team-score">${game.homeScore || 0}</div>
                     </div>
                     <div class="period-scores">${periodScoresHTML}</div>
-                    <div class="team-section team-right">
-                        <div class="team-name">${game.opponentName}</div>
-                        <div class="team-record">${game.awayWins || 0}-${game.awayLosses || 0}-${game.awayDraws || 0}</div>
-                        <div class="team-score">${game.awayScore || 0}</div>
-                    </div>
                 </div>
 
                 <!-- Timeline/Chart - Symmetrical Design -->

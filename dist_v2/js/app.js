@@ -609,7 +609,8 @@ function setupFormation() {
         activePlayers: [...getTeamPlayers().map(p => p.id)],
         isCompleted: false,
         totalGameTime: 0,
-        gameTime: 0
+        gameTime: 0,
+        periodScores: []
     };
     
     // Save the game data
@@ -732,7 +733,8 @@ function startGame() {
         actions: [],
         activePlayers: [...getTeamPlayers().map(p => p.id)],
         isCompleted: false,
-        totalGameTime: 0 // Track total game time in seconds
+        totalGameTime: 0, // Track total game time in seconds
+        periodScores: []
     };
     
     // Setup substitution timer
@@ -989,6 +991,13 @@ function finishPeriod() {
     
     // Calculate which period we're currently in (0-based)
     const currentPeriodIndex = Math.floor((game.gameTime || 0) / periodDurationSeconds);
+    
+    // Capture period score before moving to next period
+    if (!game.periodScores) game.periodScores = [];
+    game.periodScores.push({
+        home: game.homeScore || 0,
+        away: game.awayScore || 0
+    });
     
     // Calculate the start time of the next period (in seconds)
     const nextPeriodStartSeconds = (currentPeriodIndex + 1) * periodDurationSeconds;
@@ -1374,7 +1383,9 @@ function endGame() {
     
     // Generate and show the detailed report for this game
     setTimeout(() => {
-        if (typeof ReportService !== 'undefined' && ReportService.viewReport) {
+        if (typeof ReportService !== 'undefined' && ReportService.generateEnhancedReport) {
+            ReportService.generateEnhancedReport(finishedGameId);
+        } else if (typeof ReportService !== 'undefined' && ReportService.viewReport) {
             ReportService.viewReport(finishedGameId);
         } else {
             viewReport(finishedGameId);
