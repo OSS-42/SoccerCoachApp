@@ -703,8 +703,10 @@ const ReportService = {
         Object.entries(userShotsByMinute).forEach(([minute, counts]) => {
             const leftPos = (parseInt(minute) / 90) * 100;
             const height = (counts.goals * 12) + (counts.shots * 8);
+            const goalIndicator = counts.goals > 0 ? `<div class="goal-indicator user-goal" style="left: ${leftPos}%;">⚽</div>` : '';
             allBars.push(`
                 <div class="timeline-bar user" style="left: ${leftPos}%; height: ${height}px; background: linear-gradient(to top, #4CAF50, #8BC34A);" title="${counts.goals}G ${counts.shots}S"></div>
+                ${goalIndicator}
             `);
         });
 
@@ -712,8 +714,10 @@ const ReportService = {
         Object.entries(opponentActionsByMinute).forEach(([minute, counts]) => {
             const leftPos = (parseInt(minute) / 90) * 100;
             const height = (counts.goalsAllowed * 12) + (counts.saves * 8);
+            const goalIndicator = counts.goalsAllowed > 0 ? `<div class="goal-indicator opponent-goal" style="left: ${leftPos}%;">⚽</div>` : '';
             allBars.push(`
                 <div class="timeline-bar opponent" style="left: ${leftPos}%; height: ${height}px; background: linear-gradient(to top, #FF5252, #2196F3);" title="${counts.goalsAllowed}GA ${counts.saves}S"></div>
+                ${goalIndicator}
             `);
         });
 
@@ -737,10 +741,6 @@ const ReportService = {
                     <span>60'</span>
                     <span>75'</span>
                     <span>90'</span>
-                </div>
-                <div class="timeline-legend">
-                    <div class="legend-item user"><span class="colored-box"></span> Your Team: ${userGoals} ⚽ ${userShots} 👟</div>
-                    <div class="legend-item opponent"><span class="colored-box"></span> Opponent: ${opponentGoalsAllowed} 🔴 ${opponentSaves} 🧤</div>
                 </div>
             </div>
         `;
@@ -818,8 +818,7 @@ const ReportService = {
         }).join('');
 
         return `
-            <div class="report-section">
-                <h3>Goals & Cards</h3>
+            <div class="report-section goals-cards-section">
                 <div class="goals-cards-list">
                     ${eventsHTML || '<div class="empty-state">No goals or cards recorded</div>'}
                 </div>

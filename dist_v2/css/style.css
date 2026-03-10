@@ -2632,7 +2632,7 @@ button.no-assist-btn {
 .timeline-bars-wrapper {
     position: relative;
     width: 100%;
-    height: 300px;
+    height: 200px;
     background: linear-gradient(to right, transparent 0%, transparent 100%),
                 linear-gradient(to right, #f0f0f0 1px, transparent 1px) repeat-x;
     background-size: 100% 100%, 11.11% 100%;
@@ -2708,34 +2708,29 @@ button.no-assist-btn {
     text-align: center;
 }
 
-.timeline-legend {
-    display: flex;
-    justify-content: space-around;
-    padding: 15px 0;
-    border-top: 1px solid #e0e0e0;
-    font-size: 12px;
-    color: #666;
+.goal-indicator {
+    position: absolute;
+    font-size: 14px;
+    font-weight: bold;
+    transform: translateX(-50%);
+    z-index: 10;
+    animation: goalPulse 0.5s ease-in-out;
 }
 
-.timeline-legend-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
+.goal-indicator.user-goal {
+    top: -20px;
+    color: #4CAF50;
 }
 
-.timeline-legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
+.goal-indicator.opponent-goal {
+    bottom: -20px;
+    color: #FF5252;
 }
 
-.timeline-legend-color.user {
-    background: linear-gradient(to top, #4CAF50, #8BC34A);
-}
-
-.timeline-legend-color.opponent {
-    background: linear-gradient(to top, #FF5252, #2196F3);
+@keyframes goalPulse {
+    0% { transform: translateX(-50%) scale(0.8); opacity: 0.5; }
+    50% { transform: translateX(-50%) scale(1.2); }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
 /* Goals & Cards - Simple Vertical List */
@@ -2825,7 +2820,7 @@ button.no-assist-btn {
 /* Responsive Design for Timeline */
 @media (max-width: 768px) {
     .timeline-bars-wrapper {
-        height: 250px;
+        height: 180px;
     }
 
     .goals-cards-list {
@@ -2841,7 +2836,7 @@ button.no-assist-btn {
         font-size: 16px;
     }
 
-    .item-score {
+    .item-number {
         font-size: 12px;
     }
 

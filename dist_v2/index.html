@@ -564,7 +564,7 @@
         </div>
         
         <!-- Version footer - bottom right corner -->
-        <div id="version-footer" class="version-footer">v1.11.1</div>
+        <div id="version-footer" class="version-footer"></div>
     </div>
 
     <!-- Message Ribbon - placed outside #app to prevent containment issues -->
@@ -598,15 +598,26 @@
         }
     </script>
     
-    <!-- Load and display version from version.json -->
+    <!-- Initialize version from centralized APP_CONFIG -->
+    <script>
+        // Set initial version from APP_CONFIG (centralized source)
+        if (window.APP_CONFIG && window.APP_CONFIG.APP_VERSION) {
+            document.getElementById('version-footer').textContent = window.APP_CONFIG.APP_VERSION;
+        }
+    </script>
+    
+    <!-- Load and display version from version.json for reference -->
     <script>
         // Force cache-bust to always get latest version
         fetch('version.json?t=' + Date.now())
             .then(r => r.json())
             .then(data => {
-                document.getElementById('version-footer').textContent = 'v' + data.version;
+                // Fallback: if APP_CONFIG version not available, use version.json
+                if (!document.getElementById('version-footer').textContent) {
+                    document.getElementById('version-footer').textContent = 'v' + data.version;
+                }
                 window.APP_VERSION = data.version;
             })
-            .catch(() => console.log('Version file not found, using fallback'));
+            .catch(() => console.log('Version file not found, using APP_CONFIG'));
     </script>
 </html>
