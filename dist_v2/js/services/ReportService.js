@@ -627,8 +627,8 @@ const ReportService = {
                 </div>
 
                 <!-- Timeline/Chart - Symmetrical Design -->
-                <div class="report-section">
-                    <h3>Shot Timeline</h3>
+                <div class="report-section timeline-section">
+                    <h3>Shots Timeline</h3>
                     ${timelineHTML}
                 </div>
 
