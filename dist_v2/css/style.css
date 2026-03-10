@@ -2622,6 +2622,73 @@ button.no-assist-btn {
     color: #666;
 }
 
+/* Report Header - Sports App Style */
+.report-header-score {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+    padding: 25px 20px;
+    background: linear-gradient(135deg, #1a3a52 0%, #4a7080 100%);
+    border-radius: 8px;
+    margin-bottom: 25px;
+    color: white;
+}
+
+.team-section {
+    text-align: center;
+}
+
+.team-section.team-left {
+    text-align: left;
+}
+
+.team-section.team-right {
+    text-align: right;
+}
+
+.team-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team-record {
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.score-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.score-display {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.score-vs {
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0.8;
+    letter-spacing: 1px;
+}
+
+.score-time {
+    font-size: 11px;
+    opacity: 0.85;
+    font-weight: 500;
+}
+
 /* Timeline - Unified Chart with Symmetric Bars */
 .timeline-chart {
     position: relative;
@@ -2632,7 +2699,7 @@ button.no-assist-btn {
 .timeline-bars-wrapper {
     position: relative;
     width: 100%;
-    height: 200px;
+    height: 120px;
     background: linear-gradient(to right, transparent 0%, transparent 100%),
                 linear-gradient(to right, #f0f0f0 1px, transparent 1px) repeat-x;
     background-size: 100% 100%, 11.11% 100%;
@@ -2718,12 +2785,12 @@ button.no-assist-btn {
 }
 
 .goal-indicator.user-goal {
-    top: -20px;
+    top: -18px;
     color: #4CAF50;
 }
 
 .goal-indicator.opponent-goal {
-    bottom: -20px;
+    bottom: -18px;
     color: #FF5252;
 }
 
@@ -2820,7 +2887,7 @@ button.no-assist-btn {
 /* Responsive Design for Timeline */
 @media (max-width: 768px) {
     .timeline-bars-wrapper {
-        height: 180px;
+        height: 100px;
     }
 
     .goals-cards-list {
@@ -2846,6 +2913,31 @@ button.no-assist-btn {
 
     .item-time {
         font-size: 11px;
+    }
+
+    .report-header-score {
+        gap: 10px;
+        padding: 15px 10px;
+    }
+
+    .score-display {
+        font-size: 36px;
+    }
+
+    .team-name {
+        font-size: 14px;
+    }
+
+    .team-record {
+        font-size: 11px;
+    }
+
+    .score-vs {
+        font-size: 10px;
+    }
+
+    .score-time {
+        font-size: 10px;
     }
 }
     margin: 10px 0;

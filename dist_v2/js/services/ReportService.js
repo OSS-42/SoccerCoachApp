@@ -602,18 +602,21 @@ const ReportService = {
         // Build full report HTML
         const reportHTML = `
             <div class="report-v1.12">
-                <!-- Match Header with Team Names -->
-                <div class="report-header">
-                    <div class="match-title">
-                        <h2>${teamName} - ${game.opponentName}</h2>
-                        <div class="score">
-                            <span class="final-score">${game.homeScore} - ${game.awayScore}</span>
-                            <span class="period-scores">${periodScores}</span>
-                        </div>
+                <!-- Match Header - Sports App Style -->
+                <div class="report-header-score">
+                    <div class="team-section team-left">
+                        <div class="team-name">${teamName}</div>
+                        <div class="team-record">${game.homeWins || 0}-${game.homeLosses || 0}-${game.homeDraws || 0}</div>
                     </div>
-                    <div class="match-meta">
-                        <span>📅 ${gameDate}</span>
-                        <span>🕐 ${game.matchType}</span>
+                    <div class="score-section">
+                        <div class="score-display">${game.homeScore || 0}</div>
+                        <div class="score-vs">vs</div>
+                        <div class="score-display">${game.awayScore || 0}</div>
+                        <div class="score-time">${periodScores}</div>
+                    </div>
+                    <div class="team-section team-right">
+                        <div class="team-name">${game.opponentName}</div>
+                        <div class="team-record">${game.awayWins || 0}-${game.awayLosses || 0}-${game.awayDraws || 0}</div>
                     </div>
                 </div>
 
@@ -778,8 +781,8 @@ const ReportService = {
             });
         });
 
-        // Sort by time
-        allEvents.sort((a, b) => a.time - b.time);
+        // Sort by time - latest first
+        allEvents.sort((a, b) => b.time - a.time);
 
         const eventsHTML = allEvents.map(e => {
             if (e.type === 'goal') {
