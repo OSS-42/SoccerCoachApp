@@ -518,12 +518,17 @@ const ReportService = {
         const noteActions = actions.filter(a => a.actionType === 'note');
         const lateActions = actions.filter(a => a.actionType === 'late_to_game');
         
-        // Generate period score breakdown - show all periods
-        let periodScores = 'N/A';
-        if (game.periodScores && game.periodScores.length > 0) {
-            // Show all periods that exist
-            periodScores = game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ');
+        // Generate period score breakdown - show all periods based on game configuration
+        let periodScores = 'FT: N/A';
+        if (game.numPeriods && game.numPeriods >= 4) {
+            // For 4-period games or multi-period games, use periodScores if available
+            if (game.periodScores && game.periodScores.length > 0) {
+                periodScores = game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ');
+            } else {
+                periodScores = `FT: ${game.homeScore}-${game.awayScore}`;
+            }
         } else if (game.numPeriods === 2) {
+            // For 2-period games show half-time
             periodScores = `HT: ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}`;
         } else {
             periodScores = `FT: ${game.homeScore}-${game.awayScore}`;
