@@ -655,6 +655,45 @@ body {
     opacity: 1;
 }
 
+.game-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.game-score .team-name {
+    flex: 1;
+    text-align: left;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-score .score {
+    font-size: 20px;
+    font-weight: bold;
+    flex: 0 0 auto;
+    min-width: 60px;
+    text-align: center;
+}
+
+.game-score .opponent-name {
+    flex: 1;
+    text-align: right;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .card-counters {
     display: flex;
     gap: 5px;
@@ -2924,4 +2963,55 @@ button.no-assist-btn {
     .report-actions button {
         width: 100%;
     }
+}
+
+/* Action Review Dialog */
+.action-review-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px 0;
+    margin: 15px 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.action-review-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.action-review-item:last-child {
+    border-bottom: none;
+}
+
+.action-review-text {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+.action-remove-btn {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    margin-left: 10px;
+}
+
+.action-remove-btn:hover {
+    background: #b71c1c;
 }

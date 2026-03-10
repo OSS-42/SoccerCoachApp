@@ -520,18 +520,24 @@ const ReportService = {
         
         // Generate period score breakdown - show periods based on game.numPeriods
         let periodScoresHTML = '';
-        if (game.numPeriods && game.numPeriods >= 3) {
-            // For 3+ period games, display all periods
+        const numPeriods = game.numPeriods || 2;
+        
+        if (game.periodScores && game.periodScores.length > 0) {
+            // Show recorded period scores
             const periodLines = [];
-            for (let i = 1; i <= game.numPeriods; i++) {
+            game.periodScores.forEach((s, i) => {
+                periodLines.push(`<div class="period-score-line">P${i+1} ${s.home}-${s.away}</div>`);
+            });
+            periodScoresHTML = periodLines.join('');
+        } else if (numPeriods >= 2) {
+            // Display expected periods even without individual period scores
+            const periodLines = [];
+            for (let i = 1; i <= numPeriods; i++) {
                 periodLines.push(`<div class="period-score-line">P${i} ${game.homeScore || 0}-${game.awayScore || 0}</div>`);
             }
             periodScoresHTML = periodLines.join('');
-        } else if (game.numPeriods === 2) {
-            // For 2-period games show HT
-            periodScoresHTML = `<div class="period-score-line">HT ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}</div>`;
         } else {
-            // Fallback
+            // Fallback for unexpected cases
             periodScoresHTML = `<div class="period-score-line">FT ${game.homeScore || 0}-${game.awayScore || 0}</div>`;
         }
 

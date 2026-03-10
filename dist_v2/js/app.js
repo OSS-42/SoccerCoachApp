@@ -923,22 +923,41 @@ function pauseGameTimer() {
 }
 
 function stopGameTimer() {
-    // Stop the timer first
-    if (appState.gameTimer.isRunning) {
-        clearInterval(appState.gameTimer.interval);
-        appState.gameTimer.isRunning = false;
+    // Show dialog asking if period is finished
+    const game = appState.currentGame;
+    const currentPeriod = Math.floor((game.gameTime || 0) / 60 / 45) + 1;
+    const totalPeriods = game.numPeriods || 2;
+    
+    const isLastPeriod = currentPeriod >= totalPeriods;
+    const message = isLastPeriod 
+        ? 'Is the game finished?' 
+        : `Is period ${currentPeriod} finished?`;
+    
+    const confirmText = isLastPeriod ? 'End Game' : 'Finish Period';
+    
+    if (confirm(`${message}\n\nClick OK to ${confirmText.toLowerCase()}, or Cancel to continue playing.`)) {
+        // Stop the timer first
+        if (appState.gameTimer.isRunning) {
+            clearInterval(appState.gameTimer.interval);
+            appState.gameTimer.isRunning = false;
+        }
+        
+        // Do not reset the game timer to 0, just stop it
+        // Keeping the current elapsed time
+        appState.gameTimer.interval = null;
+        
+        // Stop substitution timer AND reset it to default value
+        pauseTimer();
+        resetTimer();
+        
+        // If last period, end game directly
+        if (isLastPeriod) {
+            endGame();
+        } else {
+            // Just pause for period break - save and show pause message
+            saveAppData();
+        }
     }
-    
-    // Do not reset the game timer to 0, just stop it
-    // Keeping the current elapsed time
-    appState.gameTimer.interval = null;
-    
-    // Stop substitution timer AND reset it to default value
-    pauseTimer();
-    resetTimer();
-    
-    // Save the state
-    saveAppData();
 }
 
 // Player Actions
@@ -1192,6 +1211,19 @@ function recordAction(actionType, specificPlayerId = null) {
             const redCounter = document.getElementById('red-card-count');
             if (redCounter) {
                 redCounter.textContent = (parseInt(redCounter.textContent) || 0) + 1;
+            }
+            break;
+        case 'injury':
+            // Mark player as injured (unavailable) for the rest of the game
+            teamPlayers[playerIndex].stats.redCards = (teamPlayers[playerIndex].stats.redCards || 0) + 1;
+            
+            // Show message about player injury
+            showMessage(`${teamPlayers[playerIndex].name} is injured and no longer available`, 'warning');
+            
+            // Update red card counter (treating injury as unavailable like red card)
+            const injuryRedCounter = document.getElementById('red-card-count');
+            if (injuryRedCounter) {
+                injuryRedCounter.textContent = (parseInt(injuryRedCounter.textContent) || 0) + 1;
             }
             break;
     }
@@ -1900,25 +1932,126 @@ function recordGameNote(noteText) {
 
 // Action Review Dialog Function
 function openActionReviewDialog() {
-    if (!appState.currentGame || !appState.currentGame.actions) {
+    if (!appState.currentGame || !appState.currentGame.actions || appState.currentGame.actions.length === 0) {
         showMessage('No actions recorded yet');
         return;
     }
     
-    // Display recent actions as an alert for now; could be enhanced with a proper modal
     const actions = appState.currentGame.actions;
-    const recent = actions.slice(-5).reverse();
-    const summary = recent.map(a => {
-        const player = getTeamPlayers().find(p => p.id === a.playerId);
-        const playerName = player ? player.name : 'Game Event';
-        return `${a.gameMinute}': ${playerName} - ${a.actionType}`;
-    }).join('\n');
+    const dialogContent = document.querySelector('#action-review-dialog .dialog-content');
     
-    if (summary) {
-        alert('Recent Actions:\n\n' + summary);
-    } else {
-        showMessage('No actions recorded yet');
+    if (!dialogContent) {
+        // Dialog doesn't exist, create it
+        createActionReviewDialog();
+        return;
     }
+    
+    // Render actions list
+    const actionsList = document.getElementById('action-review-list') || dialogContent.querySelector('.action-review-list');
+    if (actionsList) {
+        actionsList.innerHTML = '';
+        
+        actions.slice().reverse().forEach((action, index) => {
+            const player = getTeamPlayers().find(p => p.id === action.playerId);
+            const playerName = player ? player.name : 'Game Event';
+            
+            const actionItem = document.createElement('div');
+            actionItem.className = 'action-review-item';
+            actionItem.innerHTML = `
+                <span class="action-review-text">${action.gameMinute}' - ${playerName}: ${formatActionType(action.actionType)}</span>
+                <button class="action-remove-btn" onclick="removeAction(${actions.length - 1 - index})" title="Remove this action">✕</button>
+            `;
+            actionsList.appendChild(actionItem);
+        });
+    }
+    
+    toggleDialog('action-review-dialog', true);
+}
+
+function createActionReviewDialog() {
+    // Create dialog if it doesn't exist
+    const dialog = document.createElement('div');
+    dialog.id = 'action-review-dialog';
+    dialog.className = 'dialog';
+    dialog.innerHTML = `
+        <div class="dialog-content">
+            <h2>Review & Remove Actions</h2>
+            <div class="action-review-list" id="action-review-list"></div>
+            <div class="dialog-buttons">
+                <button class="secondary-btn" onclick="closeActionReviewDialog()">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(dialog);
+    openActionReviewDialog();
+}
+
+function closeActionReviewDialog() {
+    toggleDialog('action-review-dialog', false);
+}
+
+function removeAction(index) {
+    if (!appState.currentGame || !appState.currentGame.actions || index < 0 || index >= appState.currentGame.actions.length) {
+        return;
+    }
+    
+    const removedAction = appState.currentGame.actions[index];
+    const player = getTeamPlayers().find(p => p.id === removedAction.playerId);
+    const playerName = player ? player.name : 'Unknown';
+    
+    if (!confirm(`Remove action: ${removedAction.gameMinute}' - ${playerName} - ${formatActionType(removedAction.actionType)}?`)) {
+        return;
+    }
+    
+    // Revert stats changes based on action type
+    if (player && player.stats) {
+        switch (removedAction.actionType) {
+            case 'goal':
+                player.stats.goals = Math.max(0, (player.stats.goals || 0) - 1);
+                appState.currentGame.homeScore = Math.max(0, (appState.currentGame.homeScore || 0) - 1);
+                document.getElementById('home-score').textContent = appState.currentGame.homeScore;
+                break;
+            case 'assist':
+                player.stats.assists = Math.max(0, (player.stats.assists || 0) - 1);
+                break;
+            case 'save':
+                player.stats.saves = Math.max(0, (player.stats.saves || 0) - 1);
+                break;
+            case 'goal_allowed':
+                player.stats.goalsAllowed = Math.max(0, (player.stats.goalsAllowed || 0) - 1);
+                appState.currentGame.awayScore = Math.max(0, (appState.currentGame.awayScore || 0) - 1);
+                document.getElementById('away-score').textContent = appState.currentGame.awayScore;
+                break;
+            case 'yellow_card':
+                player.stats.yellowCards = Math.max(0, (player.stats.yellowCards || 0) - 1);
+                const yellowCounter = document.getElementById('yellow-card-count');
+                if (yellowCounter) {
+                    yellowCounter.textContent = Math.max(0, parseInt(yellowCounter.textContent) - 1);
+                }
+                break;
+            case 'red_card':
+            case 'injury':
+                player.stats.redCards = Math.max(0, (player.stats.redCards || 0) - 1);
+                const redCounter = document.getElementById('red-card-count');
+                if (redCounter) {
+                    redCounter.textContent = Math.max(0, parseInt(redCounter.textContent) - 1);
+                }
+                break;
+        }
+    }
+    
+    // Remove the action
+    appState.currentGame.actions.splice(index, 1);
+    
+    // Update player grid item
+    if (player) {
+        updatePlayerGridItem(player.id);
+    }
+    
+    saveAppData();
+    
+    // Refresh the dialog
+    openActionReviewDialog();
 }
 
 // Player Statistics Functions
