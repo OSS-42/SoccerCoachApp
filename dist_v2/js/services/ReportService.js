@@ -615,6 +615,10 @@ const ReportService = {
                         <div class="team-score">${game.homeScore || 0}</div>
                     </div>
                     <div class="period-scores">${periodScoresHTML}</div>
+                    <div class="team-section team-right">
+                        <div class="team-name">${game.opponentName}</div>
+                        <div class="team-score">${game.awayScore || 0}</div>
+                    </div>
                 </div>
 
                 <!-- Timeline/Chart - Symmetrical Design -->
