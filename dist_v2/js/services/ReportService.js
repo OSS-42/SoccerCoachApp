@@ -1,7 +1,6 @@
 /**
  * ReportService.js
  * Handles game report generation, display, and export functionality
- * Version: 1.12 - Symmetrical timeline chart with two-column goals & cards layout
  */
 
 const ReportService = {
@@ -688,7 +687,7 @@ const ReportService = {
 
         // Count user team shots/goals by minute
         [...goalActions, ...shotActions].forEach(a => {
-            const min = a.gameMinute || 0;
+            const min = Math.round(a.gameMinute || 0);
             if (!userShotsByMinute[min]) userShotsByMinute[min] = { shots: 0, goals: 0 };
             if (a.actionType === 'goal') userShotsByMinute[min].goals++;
             else userShotsByMinute[min].shots++;
@@ -696,7 +695,7 @@ const ReportService = {
 
         // Count opponent saves/goals_allowed by minute
         [...saveActions, ...goalAllowedActions].forEach(a => {
-            const min = a.gameMinute || 0;
+            const min = Math.round(a.gameMinute || 0);
             if (!opponentActionsByMinute[min]) opponentActionsByMinute[min] = { saves: 0, goalsAllowed: 0 };
             if (a.actionType === 'save') opponentActionsByMinute[min].saves++;
             else opponentActionsByMinute[min].goalsAllowed++;
@@ -704,24 +703,30 @@ const ReportService = {
 
         // Generate bars for user team (above center line)
         const userBars = Object.entries(userShotsByMinute).map(([minute, counts]) => {
-            const totalHeight = (counts.goals + counts.shots) * 15; // 15px per action
-            const goalsHeight = counts.goals * 15;
+            const totalHeight = Math.max(1, (counts.goals + counts.shots) * 20); // 20px per action, min 1px
+            const goalsHeight = Math.max(0, counts.goals * 20);
+            const shotsHeight = Math.max(0, counts.shots * 20);
+            const leftPercent = (parseInt(minute) / 90) * 100;
+            
             return `
-                <div class="shot-bar user-team" style="left: ${(minute / 90) * 100}%; height: ${totalHeight}px;" title="${counts.goals} goals, ${counts.shots} shots at ${minute}'">
+                <div class="shot-bar user-team" style="left: ${leftPercent}%; height: ${totalHeight}px;" title="${counts.goals} goals, ${counts.shots} shots at ${minute}'">
                     <div class="goals-section" style="height: ${goalsHeight}px;"></div>
-                    <div class="shots-section" style="height: ${counts.shots * 15}px;"></div>
+                    ${shotsHeight > 0 ? `<div class="shots-section" style="height: ${shotsHeight}px;"></div>` : ''}
                 </div>
             `;
         }).join('');
 
         // Generate bars for opponent (below center line - negative space)
         const opponentBars = Object.entries(opponentActionsByMinute).map(([minute, counts]) => {
-            const totalHeight = (counts.saves + counts.goalsAllowed) * 15;
-            const goalsAllowedHeight = counts.goalsAllowed * 15;
+            const totalHeight = Math.max(1, (counts.saves + counts.goalsAllowed) * 20);
+            const goalsAllowedHeight = Math.max(0, counts.goalsAllowed * 20);
+            const savesHeight = Math.max(0, counts.saves * 20);
+            const leftPercent = (parseInt(minute) / 90) * 100;
+            
             return `
-                <div class="shot-bar opponent-team" style="left: ${(minute / 90) * 100}%; height: ${totalHeight}px;" title="${counts.goalsAllowed} goals allowed, ${counts.saves} saves at ${minute}'">
+                <div class="shot-bar opponent-team" style="left: ${leftPercent}%; height: ${totalHeight}px;" title="${counts.goalsAllowed} goals allowed, ${counts.saves} saves at ${minute}'">
                     <div class="goalsallowed-section" style="height: ${goalsAllowedHeight}px;"></div>
-                    <div class="saves-section" style="height: ${counts.saves * 15}px;"></div>
+                    ${savesHeight > 0 ? `<div class="saves-section" style="height: ${savesHeight}px;"></div>` : ''}
                 </div>
             `;
         }).join('');
@@ -737,12 +742,12 @@ const ReportService = {
                 <div class="timeline-container">
                     <!-- User team (top) -->
                     <div class="timeline-top">
-                        <div class="bars-container">
-                            ${userBars}
-                        </div>
                         <div class="timeline-axis">
                             <span class="axis-label user-label">Your Team</span>
                             <span class="stat-label">${userGoals} ⚽ | ${userShots} 👟</span>
+                        </div>
+                        <div class="bars-container">
+                            ${userBars || '<p style="padding: 10px; color: #999;">No shots recorded</p>'}
                         </div>
                     </div>
 
@@ -761,12 +766,12 @@ const ReportService = {
 
                     <!-- Opponent team (bottom) -->
                     <div class="timeline-bottom">
+                        <div class="bars-container opponent">
+                            ${opponentBars || '<p style="padding: 10px; color: #999;">No opponent shots recorded</p>'}
+                        </div>
                         <div class="timeline-axis">
                             <span class="stat-label">${opponentGoalsAllowed} 🔴 | ${opponentSaves} 🧤</span>
                             <span class="axis-label opponent-label">Opponent</span>
-                        </div>
-                        <div class="bars-container opponent">
-                            ${opponentBars}
                         </div>
                     </div>
                 </div>

@@ -2585,14 +2585,15 @@ button.no-assist-btn {
 }
 
 .final-score {
-    font-size: 36px;
+    font-size: 24px;
     font-weight: bold;
-    color: #fff;
+    color: #333;
 }
 
 .period-scores {
-    font-size: 14px;
-    opacity: 0.9;
+    font-size: 12px;
+    color: #666;
+    opacity: 1;
 }
 
 .match-details {
@@ -2638,17 +2639,18 @@ button.no-assist-btn {
 /* User Team (Top) */
 .timeline-top {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding-bottom: 20px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    padding-bottom: 10px;
     border-bottom: 3px solid #333;
+    gap: 10px;
 }
 
 .timeline-top .bars-container {
     position: relative;
     width: 100%;
     height: 120px;
-    margin-bottom: 10px;
+    background: rgba(240, 248, 240, 0.5);
 }
 
 /* Center Timeline */
@@ -2687,26 +2689,25 @@ button.no-assist-btn {
 /* Opponent Team (Bottom) */
 .timeline-bottom {
     display: flex;
-    flex-direction: column-reverse;
-    align-items: flex-start;
-    padding-top: 20px;
+    flex-direction: column;
+    align-items: stretch;
+    padding-top: 10px;
     border-top: 3px solid #333;
+    gap: 10px;
 }
 
 .timeline-bottom .bars-container {
     position: relative;
     width: 100%;
     height: 120px;
-    margin-bottom: 10px;
-    transform: scaleY(-1);
+    background: rgba(240, 245, 250, 0.5);
 }
 
 /* Bars Container */
 .bars-container {
     position: relative;
     width: 100%;
-    display: flex;
-    align-items: center;
+    height: 100%;
     border-left: 1px solid #ddd;
     border-right: 1px solid #ddd;
     padding: 0 5px;
@@ -2723,48 +2724,57 @@ button.no-assist-btn {
     display: flex;
     flex-direction: column;
     gap: 0;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
     cursor: pointer;
     min-width: 8px;
-    max-width: 12px;
+    width: 10px;
     transform: translateX(-50%);
+    border-radius: 2px;
+    bottom: auto;
 }
 
 .shot-bar:hover {
     opacity: 1 !important;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
 }
 
 .shot-bar.user-team {
     bottom: 0;
+    top: auto;
 }
 
 .shot-bar.opponent-team {
     top: 0;
+    bottom: auto;
 }
 
 /* Sections within bars */
 .goals-section {
     background: #4CAF50;
     width: 100%;
-    border-right: 2px solid #2E7D32;
+    min-height: 1px;
+    border-bottom: 1px solid #2E7D32;
 }
 
 .shots-section {
     background: #8BC34A;
     width: 100%;
-    border-right: 2px solid #6BA33A;
+    min-height: 1px;
+    border-bottom: 1px solid #6BA33A;
 }
 
 .saves-section {
     background: #2196F3;
     width: 100%;
-    border-right: 2px solid #1565C0;
+    min-height: 1px;
+    border-bottom: 1px solid #1565C0;
 }
 
 .goalsallowed-section {
     background: #FF6B6B;
     width: 100%;
-    border-right: 2px solid #D32F2F;
+    min-height: 1px;
+    border-bottom: 1px solid #D32F2F;
 }
 
 /* Timeline Axis Labels */
@@ -2886,6 +2896,14 @@ button.no-assist-btn {
     margin: 0;
 }
 
+.no-actions {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 10px;
+    margin: 0;
+}
+
 @media (max-width: 768px) {
     .goals-cards-columns {
         grid-template-columns: 1fr;
@@ -2897,6 +2915,10 @@ button.no-assist-btn {
 
     .timeline-bottom .bars-container {
         height: 80px;
+    }
+
+    .timeline-center {
+        padding: 15px 0;
     }
 }
 

@@ -1483,7 +1483,7 @@ function exportReport(gameId, format) {
     // Get the report content from the dialog
     const reportContent = document.querySelector('.report-dialog').innerHTML;
     
-    // Build version: 1.10.1 (patch update for bug fixes)
+    // Build version: 1.12.1 (see constants.js for centralized APP_VERSION)
     // For PDF, we'll use a printable version that users can save as PDF
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -1669,7 +1669,7 @@ function exportTeamData() {
     const currentTeam = getCurrentTeam();
     const exportData = {
         exportDate: new Date().toISOString(),
-        appVersion: window.APP_VERSION || "1.10.3",
+        appVersion: window.APP_VERSION || "1.12.1",
         teamName: currentTeam ? currentTeam.name : 'Team A',
         players: currentTeam ? currentTeam.players : [],
         games: currentTeam ? currentTeam.games : [],

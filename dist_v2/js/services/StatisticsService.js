@@ -1,7 +1,6 @@
 /**
  * StatisticsService.js
  * Handles all player statistics calculations, date filtering, and statistics rendering
- * Version: 1.9.81
  */
 
 const StatisticsService = {

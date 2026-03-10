@@ -1,7 +1,6 @@
 /**
  * GamePlayScreen.js
  * Encapsulates game play screen rendering and game action tracking
- * Version: 1.9.81
  */
 
 const GamePlayScreen = {

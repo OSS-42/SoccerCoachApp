@@ -7,7 +7,19 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Football Live Action Tracker</title>
-    <link rel="stylesheet" href="css/style.css?v=1.12">
+    
+    <!-- Load constants first to set global version -->
+    <script src="js/core/constants.js"></script>
+    
+    <!-- Dynamically set cache bust version from APP_CONFIG -->
+    <script>
+        const appVersion = (window.APP_CONFIG && window.APP_CONFIG.APP_VERSION) ? window.APP_CONFIG.APP_VERSION.replace('v', '') : 'latest';
+        document.write('<link rel="stylesheet" href="css/style.css?v=' + appVersion + '">');
+    </script>
+    <noscript>
+        <link rel="stylesheet" href="css/style.css">
+    </noscript>
+    
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -575,7 +587,16 @@
     <script src="js/screens/GamePlayScreen.js"></script>
     <script src="js/screens/ReportsScreen.js"></script>
     <script src="js/screens/SettingsScreen.js"></script>
-    <script src="js/app.js?v=1.12"></script>
+    
+    <!-- Load app.js with dynamic version from APP_CONFIG -->
+    <script>
+        if (window.APP_CONFIG && window.APP_CONFIG.APP_VERSION) {
+            const appVersion = window.APP_CONFIG.APP_VERSION.replace('v', '');
+            const appScript = document.createElement('script');
+            appScript.src = 'js/app.js?v=' + appVersion;
+            document.currentScript.parentNode.insertBefore(appScript, document.currentScript.nextSibling);
+        }
+    </script>
     
     <!-- Load and display version from version.json -->
     <script>
