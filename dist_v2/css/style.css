@@ -2486,8 +2486,8 @@ button.no-assist-btn {
 }
 
 .report-section {
-    margin: 25px 0;
-    padding: 20px;
+    margin: 12px 0;
+    padding: 16px;
     background: white;
     border-radius: 8px;
     border: 1px solid #e0e0e0;
@@ -2495,7 +2495,8 @@ button.no-assist-btn {
 
 .report-section.timeline-section {
     border: none;
-    padding: 20px 0;
+    padding: 8px 0;
+    margin: 8px 0;
     background: transparent;
 }
 
@@ -2519,7 +2520,7 @@ button.no-assist-btn {
     padding: 25px 20px;
     background: linear-gradient(135deg, #1a3a52 0%, #4a7080 100%);
     border-radius: 8px;
-    margin-bottom: 25px;
+    margin-bottom: 12px;
     color: white;
 }
 
@@ -2559,13 +2560,15 @@ button.no-assist-btn {
 }
 
 .team-score {
-    font-size: 48px;
+    font-size: 56px;
     font-weight: bold;
     line-height: 1;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    margin-top: 8px;
-    min-width: 60px;
-    text-align: center;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
 }
 
 .period-scores {
@@ -2573,13 +2576,17 @@ button.no-assist-btn {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
     text-align: center;
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.3;
     opacity: 1;
     flex: 0 0 auto;
-    white-space: nowrap;
+}
+
+.period-score-line {
+    font-size: 13px;
+    font-weight: 500;
 }
 
 /* Timeline - Unified Chart with Symmetric Bars */
@@ -2593,9 +2600,9 @@ button.no-assist-btn {
     position: relative;
     width: 100%;
     height: 90px;
-    background: white;
+    background: #f0f4f8;
     border-radius: 6px;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: center;

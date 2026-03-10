@@ -519,23 +519,20 @@ const ReportService = {
         const lateActions = actions.filter(a => a.actionType === 'late_to_game');
         
         // Generate period score breakdown - show periods based on game.numPeriods
-        let periodScores = '';
-        if (game.periodScores && game.periodScores.length > 0) {
-            // Show all recorded period scores
-            periodScores = game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ');
-        } else if (game.numPeriods && game.numPeriods >= 3) {
-            // For 3+ period games, display them even without period scores data
-            const periods = [];
+        let periodScoresHTML = '';
+        if (game.numPeriods && game.numPeriods >= 3) {
+            // For 3+ period games, display all periods
+            const periodLines = [];
             for (let i = 1; i <= game.numPeriods; i++) {
-                periods.push(`P${i}: ${game.homeScore || 0}-${game.awayScore || 0}`);
+                periodLines.push(`<div class="period-score-line">P${i} ${game.homeScore || 0}-${game.awayScore || 0}</div>`);
             }
-            periodScores = periods.join(' | ');
+            periodScoresHTML = periodLines.join('');
         } else if (game.numPeriods === 2) {
             // For 2-period games show HT
-            periodScores = `HT: ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}`;
+            periodScoresHTML = `<div class="period-score-line">HT ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}</div>`;
         } else {
             // Fallback
-            periodScores = `FT: ${game.homeScore || 0}-${game.awayScore || 0}`;
+            periodScoresHTML = `<div class="period-score-line">FT ${game.homeScore || 0}-${game.awayScore || 0}</div>`;
         }
 
         // Build player stats
@@ -618,7 +615,7 @@ const ReportService = {
                         <div class="team-record">${game.homeWins || 0}-${game.homeLosses || 0}-${game.homeDraws || 0}</div>
                         <div class="team-score">${game.homeScore || 0}</div>
                     </div>
-                    <div class="period-scores">${periodScores}</div>
+                    <div class="period-scores">${periodScoresHTML}</div>
                     <div class="team-section team-right">
                         <div class="team-name">${game.opponentName}</div>
                         <div class="team-record">${game.awayWins || 0}-${game.awayLosses || 0}-${game.awayDraws || 0}</div>
