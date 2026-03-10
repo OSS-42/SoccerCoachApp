@@ -2622,225 +2622,237 @@ button.no-assist-btn {
     color: #666;
 }
 
-/* Timeline - Simple and Clean */
-.timeline-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.timeline-section-top,
-.timeline-section-bottom {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.timeline-section-bottom {
-    flex-direction: column-reverse;
-}
-
-.timeline-bars-area {
+/* Timeline - Unified Chart with Symmetric Bars */
+.timeline-chart {
     position: relative;
     width: 100%;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    margin: 20px 0;
 }
 
-.timeline-bars-area.opponent {
+.timeline-bars-wrapper {
     position: relative;
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(to right, transparent 0%, transparent 100%),
+                linear-gradient(to right, #f0f0f0 1px, transparent 1px) repeat-x;
+    background-size: 100% 100%, 11.11% 100%;
+    background-position: 0 0, 0 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-bars {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.timeline-center-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: #999;
+    top: 50%;
+    left: 0;
+    z-index: 1;
 }
 
 .timeline-bar {
     position: absolute;
-    bottom: 0;
-    width: 8px;
+    width: 6px;
     min-height: 2px;
     cursor: pointer;
-    border-radius: 2px;
-    transform: translateX(-50%);
-    transition: opacity 0.2s ease;
+    border-radius: 1px;
+    transition: opacity 0.2s ease, box-shadow 0.2s ease;
+    z-index: 2;
 }
 
-.timeline-bars-area.opponent .timeline-bar {
-    bottom: auto;
-    top: 0;
+.timeline-bar.user {
+    bottom: 50%;
+    transform: translateX(-50%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.timeline-bar.opponent {
+    top: 50%;
+    transform: translateX(-50%);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .timeline-bar:hover {
     opacity: 0.8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 3;
 }
 
 .timeline-scale {
     display: flex;
     justify-content: space-between;
-    padding: 8px 4px;
+    padding: 10px 0;
     font-size: 12px;
     font-weight: 600;
-    color: #999;
-    line-height: 1;
+    color: #666;
+    margin-bottom: 15px;
 }
 
-.timeline-label {
-    padding: 10px 12px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 600;
-    background: #f9f9f9;
-    border: 1px solid #e0e0e0;
+.timeline-scale-label {
+    position: relative;
+    left: -3px;
+    flex: 0 0 11.11%;
+    text-align: center;
 }
 
-.timeline-label.user-label {
-    color: #2E7D32;
-    background: rgba(76, 175, 80, 0.08);
-    border: 1px solid rgba(76, 175, 80, 0.3);
+.timeline-legend {
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0;
+    border-top: 1px solid #e0e0e0;
+    font-size: 12px;
+    color: #666;
 }
 
-.timeline-label.opponent-label {
-    color: #1565C0;
-    background: rgba(33, 150, 243, 0.08);
-    border: 1px solid rgba(33, 150, 243, 0.3);
+.timeline-legend-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
 }
 
-/* Goals & Cards Columns Layout */
-.goals-cards-section {
-    margin-top: 25px;
+.timeline-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
 }
 
-.goals-cards-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+.timeline-legend-color.user {
+    background: linear-gradient(to top, #4CAF50, #8BC34A);
+}
+
+.timeline-legend-color.opponent {
+    background: linear-gradient(to top, #FF5252, #2196F3);
+}
+
+/* Goals & Cards - Simple Vertical List */
+.goals-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin-top: 15px;
 }
 
-.goals-cards-column {
-    background: #f9f9f9;
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
-    padding: 15px;
-}
-
-.goals-cards-column h4 {
-    margin: 0 0 15px 0;
-    font-size: 15px;
-    font-weight: 600;
-    color: #333;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 10px;
-}
-
-.left-column h4 {
-    border-bottom-color: #4CAF50;
-    color: #2E7D32;
-}
-
-.right-column h4 {
-    border-bottom-color: #2196F3;
-    color: #1565C0;
-}
-
-.action-item {
+.goals-cards-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px;
-    margin-bottom: 8px;
-    background: white;
-    border-radius: 4px;
+    padding: 12px 15px;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
     border-left: 3px solid #e0e0e0;
-    font-size: 14px;
+    border-radius: 4px;
     transition: all 0.2s ease;
 }
 
-.action-item:hover {
+.goals-cards-item:hover {
     background: #f5f5f5;
-    border-left-color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.left-column .action-item {
+.goals-cards-item.goal-item {
     border-left-color: #4CAF50;
 }
 
-.right-column .action-item {
-    border-left-color: #2196F3;
+.goals-cards-item.card-item.yellow {
+    border-left-color: #FBC02D;
 }
 
-.action-time {
-    font-weight: bold;
-    color: #999;
-    min-width: 35px;
-    font-size: 12px;
+.goals-cards-item.card-item.red {
+    border-left-color: #D32F2F;
 }
 
-.action-icon {
-    font-size: 16px;
+.item-icon {
+    font-size: 18px;
     min-width: 20px;
+    text-align: center;
 }
 
-.action-player {
+.item-number {
+    font-weight: bold;
+    color: #2E7D32;
+    min-width: 35px;
+    font-size: 13px;
+}
+
+.item-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.item-player {
     color: #333;
     font-weight: 500;
-}
-
-.no-actions {
-    color: #999;
-    font-style: italic;
-    text-align: center;
-    padding: 20px 10px;
-    margin: 0;
-}
-
-.no-actions {
-    color: #999;
-    font-style: italic;
-    text-align: center;
-    padding: 20px 10px;
-    margin: 0;
-}
-
-@media (max-width: 768px) {
-    .goals-cards-columns {
-        grid-template-columns: 1fr;
-    }
-
-    .timeline-top .bars-container {
-        height: 80px;
-    }
-
-    .timeline-bottom .bars-container {
-        height: 80px;
-    }
-
-    .timeline-center {
-        padding: 15px 0;
-    }
-}
-
-/* Goals & Cards Timeline - Legacy (Vertical List) */
-.timeline-event {
-    padding: 12px;
-    margin: 10px 0;
-    background: white;
-    border-radius: 4px;
-    border-left: 3px solid #333;
     font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
-.time {
-    font-weight: bold;
-    color: #666;
-    min-width: 40px;
+.item-assist {
+    color: #999;
     font-size: 12px;
+    font-style: italic;
 }
 
-.note-item {
-    padding: 10px;
+.item-time {
+    color: #999;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+}
+
+.empty-state {
+    padding: 30px;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+}
+
+/* Responsive Design for Timeline */
+@media (max-width: 768px) {
+    .timeline-bars-wrapper {
+        height: 250px;
+    }
+
+    .goals-cards-list {
+        gap: 6px;
+    }
+
+    .goals-cards-item {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .item-icon {
+        font-size: 16px;
+    }
+
+    .item-score {
+        font-size: 12px;
+    }
+
+    .item-player {
+        font-size: 13px;
+    }
+
+    .item-time {
+        font-size: 11px;
+    }
+}
     margin: 10px 0;
     background: #f9f9f9;
     border-left: 2px solid #333;
