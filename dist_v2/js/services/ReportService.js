@@ -518,20 +518,24 @@ const ReportService = {
         const noteActions = actions.filter(a => a.actionType === 'note');
         const lateActions = actions.filter(a => a.actionType === 'late_to_game');
         
-        // Generate period score breakdown - show all periods based on game configuration
-        let periodScores = 'FT: N/A';
-        if (game.numPeriods && game.numPeriods >= 4) {
-            // For 4-period games or multi-period games, use periodScores if available
-            if (game.periodScores && game.periodScores.length > 0) {
-                periodScores = game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ');
-            } else {
-                periodScores = `FT: ${game.homeScore}-${game.awayScore}`;
+        // Generate period score breakdown - show periods based on game.numPeriods
+        let periodScores = '';
+        if (game.periodScores && game.periodScores.length > 0) {
+            // Show all recorded period scores
+            periodScores = game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ');
+        } else if (game.numPeriods && game.numPeriods >= 3) {
+            // For 3+ period games, display them even without period scores data
+            const periods = [];
+            for (let i = 1; i <= game.numPeriods; i++) {
+                periods.push(`P${i}: ${game.homeScore || 0}-${game.awayScore || 0}`);
             }
+            periodScores = periods.join(' | ');
         } else if (game.numPeriods === 2) {
-            // For 2-period games show half-time
+            // For 2-period games show HT
             periodScores = `HT: ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}`;
         } else {
-            periodScores = `FT: ${game.homeScore}-${game.awayScore}`;
+            // Fallback
+            periodScores = `FT: ${game.homeScore || 0}-${game.awayScore || 0}`;
         }
 
         // Build player stats

@@ -1,7 +1,8 @@
 {
-  "version": "1.12.5",
+  "version": "1.12.6",
   "lastUpdated": "2026-03-10",
   "changelog": {
+    "1.12.6": "Fixed: Report header scores now perfectly centered under team names, period display intelligently shows all periods for 4+ period games (P1: X-Y | P2: X-Y | P3: X-Y | P4: X-Y), timeline grid completely removed for clean appearance, goal indicator balls repositioned to -8px for tight alignment with bar tips",
     "1.12.5": "Fixed: Report header now displays scores directly under team names with period breakdowns (shows all 4 period scores for multi-period games, references game.numPeriods from game setup), timeline grid removed for cleaner look with subtle minute marker lines, goal indicators repositioned closer to bar tips (12px offset), improved header alignment and spacing for professional appearance",
     "1.12.4": "Fixed: Complete game report redesign - timeline chart now displays as ONE unified graph with center-line symmetric design (user team bars grow UP, opponent bars grow DOWN around center line), minute scale (0' to 90') displays across chart, all bars in single container for true unified visualization, goals & cards section converted to simple sequential list format (time - icon - player - assist info), better readability and professional sports app appearance",
     "1.12.3": "Fixed: Timeline chart completely rebuilt - simplified structure with proper bar positioning, clean two-section layout (your team top, opponent bottom), clear minute scale (0' to 90'), bars use gradient coloring (green to light-green for user, red to blue for opponent), proper bar sizing and visibility",
