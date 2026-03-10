@@ -518,15 +518,15 @@ const ReportService = {
         const noteActions = actions.filter(a => a.actionType === 'note');
         const lateActions = actions.filter(a => a.actionType === 'late_to_game');
         
-        // Generate period score breakdown
+        // Generate period score breakdown - show all periods
         let periodScores = 'N/A';
-        if (game.numPeriods === 2) {
+        if (game.periodScores && game.periodScores.length > 0) {
+            // Show all periods that exist
+            periodScores = game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ');
+        } else if (game.numPeriods === 2) {
             periodScores = `HT: ${game.halfTimeScore?.home || 0}-${game.halfTimeScore?.away || 0}`;
         } else {
-            // Show score after each period if available
-            periodScores = game.periodScores ? 
-                game.periodScores.map((s, i) => `P${i+1}: ${s.home}-${s.away}`).join(' | ') :
-                `FT: ${game.homeScore}-${game.awayScore}`;
+            periodScores = `FT: ${game.homeScore}-${game.awayScore}`;
         }
 
         // Build player stats
@@ -607,16 +607,13 @@ const ReportService = {
                     <div class="team-section team-left">
                         <div class="team-name">${teamName}</div>
                         <div class="team-record">${game.homeWins || 0}-${game.homeLosses || 0}-${game.homeDraws || 0}</div>
+                        <div class="team-score">${game.homeScore || 0}</div>
                     </div>
-                    <div class="score-section">
-                        <div class="score-display">${game.homeScore || 0}</div>
-                        <div class="score-vs">vs</div>
-                        <div class="score-display">${game.awayScore || 0}</div>
-                        <div class="score-time">${periodScores}</div>
-                    </div>
+                    <div class="period-scores">${periodScores}</div>
                     <div class="team-section team-right">
                         <div class="team-name">${game.opponentName}</div>
                         <div class="team-record">${game.awayWins || 0}-${game.awayLosses || 0}-${game.awayDraws || 0}</div>
+                        <div class="team-score">${game.awayScore || 0}</div>
                     </div>
                 </div>
 

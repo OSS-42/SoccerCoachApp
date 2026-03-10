@@ -2626,9 +2626,10 @@ button.no-assist-btn {
 .report-header-score {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 20px;
+    gap: 15px;
     align-items: center;
-    padding: 25px 20px;
+    justify-items: center;
+    padding: 20px;
     background: linear-gradient(135deg, #1a3a52 0%, #4a7080 100%);
     border-radius: 8px;
     margin-bottom: 25px;
@@ -2636,57 +2637,58 @@ button.no-assist-btn {
 }
 
 .team-section {
-    text-align: center;
-}
-
-.team-section.team-left {
-    text-align: left;
-}
-
-.team-section.team-right {
-    text-align: right;
-}
-
-.team-name {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.team-record {
-    font-size: 12px;
-    opacity: 0.9;
-    font-weight: 500;
-}
-
-.score-section {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
 }
 
-.score-display {
-    font-size: 48px;
+.team-section.team-left {
+    grid-column: 1;
+    justify-items: start;
+    align-items: flex-start;
+}
+
+.team-section.team-right {
+    grid-column: 3;
+    justify-items: end;
+    align-items: flex-end;
+}
+
+.team-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+}
+
+.team-record {
+    font-size: 12px;
+    opacity: 0.9;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.team-score {
+    font-size: 42px;
     font-weight: bold;
     line-height: 1;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.score-vs {
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.8;
-    letter-spacing: 1px;
-}
-
-.score-time {
+.period-scores {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
     font-size: 11px;
-    opacity: 0.85;
-    font-weight: 500;
+    line-height: 1.4;
+    opacity: 0.9;
 }
 
 /* Timeline - Unified Chart with Symmetric Bars */
@@ -2699,7 +2701,7 @@ button.no-assist-btn {
 .timeline-bars-wrapper {
     position: relative;
     width: 100%;
-    height: 120px;
+    height: 90px;
     background: linear-gradient(to right, transparent 0%, transparent 100%),
                 linear-gradient(to right, #f0f0f0 1px, transparent 1px) repeat-x;
     background-size: 100% 100%, 11.11% 100%;
@@ -2785,12 +2787,12 @@ button.no-assist-btn {
 }
 
 .goal-indicator.user-goal {
-    top: -18px;
+    top: -16px;
     color: #4CAF50;
 }
 
 .goal-indicator.opponent-goal {
-    bottom: -18px;
+    bottom: -16px;
     color: #FF5252;
 }
 
@@ -2916,12 +2918,12 @@ button.no-assist-btn {
     }
 
     .report-header-score {
-        gap: 10px;
-        padding: 15px 10px;
+        gap: 8px;
+        padding: 15px 8px;
     }
 
-    .score-display {
-        font-size: 36px;
+    .team-score {
+        font-size: 32px;
     }
 
     .team-name {
@@ -2932,12 +2934,12 @@ button.no-assist-btn {
         font-size: 11px;
     }
 
-    .score-vs {
+    .period-scores {
         font-size: 10px;
     }
 
-    .score-time {
-        font-size: 10px;
+    .timeline-bars-wrapper {
+        height: 75px;
     }
 }
     margin: 10px 0;
