@@ -1653,45 +1653,27 @@ function loadAppData() {
             try {
                 const data = JSON.parse(savedData);
                 if (data.teams) {
+                    // Load new format multi-team data
                     appState.teams = data.teams;
                     appState.currentTeamId = data.currentTeamId;
+                    appState.settings = data.settings || appState.settings;
                 } else {
-                    // Migrate legacy data to current team
-                    const initState = function() {
-                        if (!appState.teams || appState.teams.length === 0) {
-                            const hasLegacy = data.teamName || (data.players && data.players.length > 0) || (data.games && data.games.length > 0);
-                            if (hasLegacy) {
-                                const teamA = {
-                                    id: 't1',
-                                    name: data.teamName || 'Team A',
-                                    players: data.players || [],
-                                    games: data.games || [],
-                                    settings: data.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-                                    unavailablePlayers: [],
-                                    formationTemp: null
-                                };
-                                const teamB = {
-                                    id: 't2',
-                                    name: 'Team B',
-                                    players: [],
-                                    games: [],
-                                    settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-                                    unavailablePlayers: [],
-                                    formationTemp: null
-                                };
-                                appState.teams = [teamA, teamB];
-                                appState.currentTeamId = teamA.id;
-                            }
-                        }
-                    };
-                    initState();
+                    // Legacy single-team data - migrate it
+                    appState.teamName = data.teamName || appState.teamName;
+                    appState.players = data.players || [];
+                    appState.games = data.games || [];
+                    appState.unavailablePlayers = data.unavailablePlayers || [];
+                    appState.settings = data.settings || appState.settings;
+                    appState.formationTemp = data.formationTemp || null;
                 }
             } catch (e) {
                 console.error('Failed to parse saved data:', e);
+                // If parsing fails, we'll use default initialization below
             }
         }
-        // Initialize state with multi-team support
-        if (typeof initState === 'function') {
+        // Initialize state with multi-team support if not already initialized
+        // This calls the global initState() from StateInit.js
+        if (typeof initState === 'function' && (!appState.teams || appState.teams.length === 0)) {
             initState();
         }
         initializeStyling();
