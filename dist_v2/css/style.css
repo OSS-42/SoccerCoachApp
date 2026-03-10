@@ -749,10 +749,11 @@ body {
     opacity: 1;
 }
 
-/* Team Name: Flexible width, left-aligned */
+/* Team Name: Fixed width for name only, don't expand */
 .team-score .team-name {
-    flex: 1; /* Grow to take as much space as needed */
-    min-width: 0; /* Allow shrinking */
+    flex: 0 0 auto;
+    max-width: 120px;
+    min-width: 0;
     text-transform: uppercase;
     font-weight: bold;
     font-size: 14px;
@@ -2126,7 +2127,7 @@ button.no-assist-btn {
         flex-direction: column;
         gap: 6px;
         padding: 6px;
-        min-height: 150px;
+        min-height: 80px;
         overflow-y: auto;
     }
     
@@ -2218,7 +2219,7 @@ button.no-assist-btn {
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); /* Smaller min width, max 6 columns */
     gap: 10px;
     touch-action: pan-y; /* Allow vertical touch for drag-and-drop */
-    min-height: 150px;
+    min-height: 100px;
 }
 
 .player-item-draggable {
@@ -2260,7 +2261,7 @@ button.no-assist-btn {
     flex-wrap: wrap;
     gap: 10px;
     justify-content: center;
-    min-height: 200px;
+    min-height: 100px;
 }
 
 .unavailable-slot {

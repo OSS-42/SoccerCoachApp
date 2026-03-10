@@ -758,6 +758,9 @@ function startGame() {
     // Populate player grid
     renderPlayerGrid();
     
+    // Update period counter display
+    updatePeriodCounterDisplay();
+    
     // Switch to game screen
     showScreen('game-tracking');
 }
@@ -869,6 +872,17 @@ function updateGameTimeDisplay() {
     const gameTimeElement = getElement('game-time');
     if (gameTimeElement) {
         gameTimeElement.textContent = `Time: ${formatTime(appState.gameTimer.elapsed)}`;
+    }
+}
+
+function updatePeriodCounterDisplay() {
+    const periodCounterElement = getElement('period-counter');
+    if (periodCounterElement && appState.currentGame) {
+        const periodDuration = (appState.currentGame.periodDuration || 45) * 60; // Convert to seconds
+        const currentPeriodIndex = Math.floor((appState.currentGame.gameTime || 0) / periodDuration);
+        const currentPeriodNumber = currentPeriodIndex + 1; // Convert to 1-based
+        const numPeriods = appState.currentGame.numPeriods || 2;
+        periodCounterElement.textContent = `Period ${currentPeriodNumber} of ${numPeriods}`;
     }
 }
 
@@ -1005,8 +1019,15 @@ function finishPeriod() {
     // Set gameTime to the start of next period
     game.gameTime = nextPeriodStartSeconds;
     
+    // Update game timer to match the period time
+    appState.gameTimer.elapsed = Math.floor(nextPeriodStartSeconds);
+    
     // Reset substitution timer with default duration
     resetTimer();
+    
+    // Update UI displays
+    updateGameTimeDisplay();
+    updatePeriodCounterDisplay();
     
     // Save state
     saveAppData();
