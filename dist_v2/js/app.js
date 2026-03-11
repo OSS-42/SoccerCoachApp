@@ -1359,12 +1359,11 @@ function updatePlayerGridItem(playerId) {
 function calculateGameMinute() {
     if (!appState.currentGame) return 0;
     
-    const startTime = new Date(appState.currentGame.startTime);
-    const now = new Date();
-    const diffMs = now - startTime;
-    const diffMins = Math.floor(diffMs / 60000);
+    // Use gameTimer.elapsed which is synced with periods
+    // Convert seconds to minutes
+    const minutes = Math.floor((appState.gameTimer.elapsed || 0) / 60);
     
-    return diffMins;
+    return minutes;
 }
 
 // End Game
