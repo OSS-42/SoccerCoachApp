@@ -448,10 +448,11 @@ function handleTapSlot(e) {
     if (e.stopPropagation) e.stopPropagation();
     if (e.preventDefault) e.preventDefault();
     
-    // Get the slot element (use closest in case event.currentTarget doesn't work on touch)
-    const slot = e.currentTarget?.closest?.('.player-slot, .unavailable-slot') || 
-                 e.target?.closest('.player-slot, .unavailable-slot') ||
-                 e.currentTarget;
+    // Get the slot element - event listener is attached to slots, so currentTarget is the slot
+    // But handle case where a child element might be tapped
+    const slot = e.currentTarget || e.target?.closest('.player-slot, .unavailable-slot');
+    
+    if (!slot) return;
     
     // If no player selected, do nothing
     if (!TapState.playerId) return;
