@@ -774,8 +774,15 @@ function renderPlayerGrid() {
         ? appState.currentGame.formationPlayers.map(p => p.playerId) 
         : [];
     
+    // Get unavailable players - exclude them from the live game display
+    const unavailablePlayers = getUnavailablePlayers();
+    
     // Using all players, not filtering by active status anymore
     getTeamPlayers().sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        // Skip unavailable players - they don't appear in the live game screen
+        if (unavailablePlayers.includes(player.id)) {
+            return;
+        }
         // Ensure player has stats object
         if (!player.stats) {
             player.stats = {
