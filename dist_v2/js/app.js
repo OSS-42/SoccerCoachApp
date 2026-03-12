@@ -837,7 +837,10 @@ function renderPlayerGrid() {
         // Create a completely redesigned player card (now square shaped)
         playerGridItem.innerHTML = `
             <div class="player-header">
-                <div class="player-number">${player.jerseyNumber}</div>
+                <div class="player-number">
+                    <span class="jersey-num">${player.jerseyNumber}</span>
+                    <span class="player-name-field">${player.name}</span>
+                </div>
                 <div class="player-name">${player.name}</div>
             </div>
             <div class="player-stats-container">

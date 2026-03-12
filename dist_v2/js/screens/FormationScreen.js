@@ -75,7 +75,10 @@ const FormationScreen = {
             const playerItem = document.createElement('div');
             playerItem.className = 'player-item-draggable';
             playerItem.innerHTML = `
-                <span class="player-number ${shouldDisable ? 'disabled' : ''}" data-player-id="${player.id}">${player.jerseyNumber}</span>
+                <span class="player-number ${shouldDisable ? 'disabled' : ''}" data-player-id="${player.id}">
+                    <span class="jersey-num">${player.jerseyNumber}</span>
+                    <span class="player-name-bench">${player.name}</span>
+                </span>
                 <span class="player-name">${player.name}</span>
             `;
             playerList.appendChild(playerItem);
@@ -107,7 +110,7 @@ const FormationScreen = {
             if (player && position) {
                 const slotElement = document.querySelector(`[data-position="${position}"]`);
                 if (slotElement) {
-                    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+                    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${player.name}</span></span>`;
                     slotElement.setAttribute('data-player-id', playerId);
                     slotElement.classList.add('occupied');
                     playersPlaced++;
@@ -553,9 +556,11 @@ function removePlayerFromAllLocations(playerId) {
 }
 
 /**
- * Place player in unavailable slot
+ * Place player in unavailable slot (on the bench)
  */
 function placePlayerInUnavailable(playerId, slotElement, player) {
+    console.log(`   👉 placePlayerInUnavailable: ${player.name}(${player.jerseyNumber}) to bench`);
+    
     // Add to unavailable list
     const unavailableList = getUnavailablePlayers();
     if (!unavailableList.includes(playerId)) {
@@ -563,14 +568,21 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
         setUnavailablePlayers(unavailableList);
     }
 
-    // Update slot
-    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    // Update slot with jersey number AND player name
+    slotElement.innerHTML = `
+        <span class="player-number" data-player-id="${playerId}">
+            <div class="jersey-num">${player.jerseyNumber}</div>
+            <div class="player-name-bench">${player.name}</div>
+        </span>
+    `;
     slotElement.setAttribute('data-player-id', playerId);
+    console.log(`   ✓ Updated unavailable slot with player ${playerId}`);
 
     // Disable in sidebar
     const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
     if (sidebarPlayerNum) {
         sidebarPlayerNum.classList.add('disabled');
+        console.log(`   ✓ Disabled sidebar player ${playerId}`);
     }
 }
 
@@ -579,6 +591,8 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
  */
 function placePlayerOnField(playerId, slotElement, player) {
     const position = slotElement.getAttribute('data-position');
+    console.log(`   👉 placePlayerOnField: ${player.name}(${player.jerseyNumber}) to position ${position}`);
+    
     const formation = getFormationTemp() || [];
     
     // Update formation
@@ -590,16 +604,24 @@ function placePlayerOnField(playerId, slotElement, player) {
         y: parseFloat(slotElement.style.top)
     });
     setFormationTemp(updatedFormation);
+    console.log(`   ✓ Added to formation: ${position}`);
 
-    // Update slot
-    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    // Update slot with jersey number AND player name
+    slotElement.innerHTML = `
+        <span class="player-number player-number-placed" data-player-id="${playerId}">
+            <div class="jersey-num">${player.jerseyNumber}</div>
+            <div class="player-name-field">${player.name}</div>
+        </span>
+    `;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
+    console.log(`   ✓ Occupied field slot, updated with player name`);
 
     // Disable in sidebar
     const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
     if (sidebarPlayerNum) {
         sidebarPlayerNum.classList.add('disabled');
+        console.log(`   ✓ Disabled sidebar player ${playerId}`);
     }
 }
 
