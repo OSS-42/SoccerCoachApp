@@ -2473,13 +2473,14 @@ button.no-assist-btn {
     
     .player-item-draggable {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        justify-content: center;
-        gap: 3px;
-        padding: 2px;
+        justify-content: flex-start;
+        gap: 4px;
+        padding: 2px 4px;
         min-height: auto;
         flex-shrink: 0;
+        width: 100%;
     }
     
     .player-number {
@@ -2500,6 +2501,7 @@ button.no-assist-btn {
         justify-content: center;
         transition: all 0.2s ease;
         box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+        flex-shrink: 0;
     }
     
     .player-number:active {
@@ -2515,18 +2517,17 @@ button.no-assist-btn {
     }
     
     .player-name {
-        font-size: 8px;
-        max-width: 38px;
-        word-break: break-word;
-        text-align: center;
+        font-size: 7px;
+        flex: 1;
+        min-width: 0;
+        text-align: left;
         color: #555;
         font-weight: 500;
-        line-height: 1;
+        line-height: 1.2;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+        white-space: nowrap;
+        padding-left: 2px;
     }
     
     /* SOCCER FIELD - CENTER (PRIMARY) */
@@ -2609,6 +2610,7 @@ button.no-assist-btn {
         transition: all 0.2s ease;
         flex-shrink: 0;
         margin: 0 auto;
+        pointer-events: auto;
     }
     
     .unavailable-slot:hover {
@@ -2811,6 +2813,7 @@ button.no-assist-btn {
         cursor: pointer;
         transition: all 0.2s ease;
         flex-shrink: 0;
+        pointer-events: auto;
     }
     
     .unavailable-slot:hover {
@@ -2864,6 +2867,7 @@ button.no-assist-btn {
     transition: all 0.2s ease;
     transform: translate(-50%, -50%);
     z-index: 10;
+    pointer-events: auto;
 }
 
 /* Empty slot styling */

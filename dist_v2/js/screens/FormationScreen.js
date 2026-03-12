@@ -159,17 +159,27 @@ const FormationScreen = {
      * @private
      */
     _setupTapHandlers() {
-        // Setup handlers for all player numbers (sidebar + placed)
+        // Remove old listeners first
+        document.querySelectorAll('.player-number, .player-number-placed').forEach(el => {
+            el.removeEventListener('click', handleTapPlayer);
+        });
+        document.querySelectorAll('.player-slot, .unavailable-slot').forEach(el => {
+            el.removeEventListener('click', handleTapSlot);
+        });
+
+        // Re-attach handlers for all player numbers (sidebar + placed)
         const allPlayerNumbers = document.querySelectorAll('.player-number, .player-number-placed');
+        console.log(`🔗 Attaching player handlers to ${allPlayerNumbers.length} elements`);
         allPlayerNumbers.forEach(number => {
-            number.removeEventListener('click', handleTapPlayer);
             number.addEventListener('click', handleTapPlayer, { passive: false });
         });
 
-        // Setup handlers for all slots (field + unavailable)
+        // Re-attach handlers for all slots (field + unavailable)
         const slots = document.querySelectorAll('.player-slot, .unavailable-slot');
+        console.log(`🔗 Attaching slot handlers to ${slots.length} slot elements`);
         slots.forEach(slot => {
-            slot.removeEventListener('click', handleTapSlot);
+            slot.style.cursor = 'pointer';
+            slot.style.pointerEvents = 'auto';
             slot.addEventListener('click', handleTapSlot, { passive: false });
         });
 
@@ -177,7 +187,7 @@ const FormationScreen = {
         const playerList = document.getElementById('player-list');
         if (playerList) {
             playerList.removeEventListener('click', handleSidebarTap);
-            playerList.addEventListener('click', handleSidebarTap);
+            playerList.addEventListener('click', handleSidebarTap, { passive: false });
         }
     }
 };
@@ -210,11 +220,13 @@ function handleTapPlayer(e) {
     e.stopPropagation();
     
     let targetElement = e.target || e.currentTarget;
+    console.log(`👆 handleTapPlayer fired. Initial target class: ${targetElement.className}`);
     
     // Ensure we have the player-number element
     if (!targetElement.classList.contains('player-number') && 
         !targetElement.classList.contains('player-number-placed')) {
         targetElement = targetElement.closest('.player-number, .player-number-placed');
+        console.log(`   Searched for closest .player-number, found: ${targetElement ? 'YES' : 'NO'}`);
     }
     
     if (!targetElement) {
@@ -228,7 +240,7 @@ function handleTapPlayer(e) {
         return;
     }
     
-    console.log(`👆 Player tapped: ${playerId}`);
+    console.log(`✓ Found player: ${playerId}`);
     
     // If tapping same player, deselect
     if (TapState.playerId === playerId) {
@@ -250,10 +262,14 @@ function handleTapPlayer(e) {
     TapState.source = source;
     TapState.slotId = targetElement.parentElement?.id || '';
 
+    console.log(`✅ SELECTED Player ${playerId} from ${source}`);
+    console.log(`   State: `, TapState);
+
     // Visual feedback
     clearSelection();
     targetElement.classList.add('tap-selected');
-    console.log(`✅ Player ${playerId} selected from ${source}. Ready to place on field.`);
+    console.log(`   Outline added - player now has tap-selected class`);
+    showMessage(`Player #${playerId} selected - tap a spot to place`, 'info');
 }
 
 /**
@@ -263,21 +279,33 @@ function handleTapSlot(e) {
     e.preventDefault();
     e.stopPropagation();
     
-    const slotElement = e.currentTarget;
-    const position = slotElement.getAttribute('data-position');
+    const slotElement = e.currentTarget || e.target;
+    const position = slotElement?.getAttribute?.('data-position') || slotElement?.getAttribute?.('id') || 'unknown';
     
-    console.log(`🎯 Slot tapped at position: ${position}, TapState.playerId: ${TapState.playerId}`);
+    console.log(`🎯 Slot tapped!`);
+    console.log(`   Position: ${position}`);
+    console.log(`   Has data-position: ${slotElement.getAttribute('data-position')}`);
+    console.log(`   Element: ${slotElement.className}`);
+    console.log(`   TapState.playerId: ${TapState.playerId}`);
+    console.log(`   TapState: `, TapState);
     
     // If no player is selected, show hint
     if (!TapState.playerId) {
-        console.log('💡 No player selected. Tap a player jersey first, then tap a spot.');
+        console.log('💡 No player selected. Tap a player jersey first (should see green outline), then tap a spot.');
+        showMessage('Tap a player first!', 'warning');
         return;
     }
     
     console.log(`📍 Placing player ${TapState.playerId} to position ${position}`);
     
     // Place or move the selected player to this slot
-    placePlayerToSlot(TapState.playerId, slotElement);
+    try {
+        placePlayerToSlot(TapState.playerId, slotElement);
+        console.log('✅ Placement successful!');
+    } catch (err) {
+        console.error('❌ Placement failed:', err);
+    }
+    
     clearSelection();
 }
 
