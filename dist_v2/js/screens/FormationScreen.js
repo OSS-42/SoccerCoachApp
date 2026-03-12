@@ -125,23 +125,28 @@ const FormationScreen = {
             }
         });
         
-        // Restore bench players - iterate through each player that was on bench
-        // Find THAT player's specific bench spot and restore them there
-        const unavailableBenchList = getUnavailablePlayers() || [];
-        unavailableBenchList.forEach((playerId, index) => {
-            const player = getTeamPlayers().find(p => p.id === playerId);
-            if (player) {
-                // Get THIS specific bench spot (unavailable-slot-1, -2, -3, -4, or -5)
-                const slotElement = document.getElementById(`unavailable-slot-${index + 1}`);
+        // Fill bench spots: ALL team players not on field should go into bench spots
+        const teamPlayers = getTeamPlayers();
+        const fieldPlayerIds = (getFormationTemp() || []).map(f => f.playerId);
+        const benchPlayersToRestore = teamPlayers.filter(p => !fieldPlayerIds.includes(p.id));
+        
+        console.log(`📋 Filling bench: ${benchPlayersToRestore.length} players not on field`);
+        
+        benchPlayersToRestore.forEach((player, benchIndex) => {
+            if (benchIndex < 5) {  // Only 5 bench spots available
+                const slotElement = document.getElementById(`unavailable-slot-${benchIndex + 1}`);
                 if (slotElement) {
                     console.log(`   → Restoring ${player.name} to bench spot ${slotElement.id}`);
-                    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
-                    slotElement.setAttribute('data-player-id', playerId);
+                    slotElement.innerHTML = `<span class="player-number" data-player-id="${player.id}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
+                    slotElement.setAttribute('data-player-id', player.id);
                     slotElement.classList.remove('occupied');
                     playersPlaced++;
                 }
             }
         });
+        
+        // Update unavailable list to match bench spots (for state consistency)
+        setUnavailablePlayers(benchPlayersToRestore.map(p => p.id));
         
         if (playersPlaced > 0 && appState.defaultFormation) {
             showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
@@ -701,6 +706,7 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
     // Update THIS SPECIFIC bench spot: Add badge, mark occupied
     slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
+    slotElement.classList.add('occupied');
     console.log(`   ✓ BENCH SPOT: Badge rendered in ${slotElement.id}, spot now occupied`);
 
     // Update SIDEBAR AREA: Find THIS specific player's spot and disable it
