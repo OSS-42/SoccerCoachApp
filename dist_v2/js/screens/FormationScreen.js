@@ -11,10 +11,9 @@ const FormationScreen = {
         const playerList = document.getElementById('player-list');
         const formationField = document.getElementById('formation-field');
         const unavailableSlots = document.getElementById('unavailable-slots');
-        const unavailablePlayers = document.getElementById('unavailable-players');
         
-        if (!playerList || !formationField || !unavailableSlots || !unavailablePlayers) {
-            console.error('❌ Formation screen DOM elements not found:', {playerList: !!playerList, formationField: !!formationField, unavailableSlots: !!unavailableSlots, unavailablePlayers: !!unavailablePlayers});
+        if (!playerList || !formationField || !unavailableSlots) {
+            console.error('❌ Formation screen DOM elements not found');
             return;
         }
         
@@ -27,22 +26,17 @@ const FormationScreen = {
         
         // Reset state
         setUnavailablePlayers([]);
-        if (appState.defaultFormation && appState.defaultFormation.length > 0) {
-            setFormationTemp([...appState.defaultFormation]);
-        } else {
-            setFormationTemp([]);
-        }
+        setFormationTemp([]);
 
         // ============================================================================
-        // STEP 1: Render all 25 field spots (CRITICAL - must happen first)
+        // STEP 1: Render all 25 empty field spots
         // ============================================================================
         const fieldSpots = this._getFieldSpots();
-        console.log(`📌 Rendering ${fieldSpots.length} field spots...`);
+        console.log(`📌 Rendering ${fieldSpots.length} empty field spots...`);
         
         fieldSpots.forEach(spot => {
             const slot = document.createElement('div');
             
-            // Add appropriate classes
             let classNames = 'player-slot';
             if (spot.position === 'GK') classNames += ' gk-slot';
             else if (spot.position === 'SW') classNames += ' sw-slot';
@@ -56,38 +50,10 @@ const FormationScreen = {
             formationField.appendChild(slot);
         });
         
-        console.log(`✅ Created ${formationField.querySelectorAll('.player-slot').length} spots on field`);
+        console.log(`✅ Created ${formationField.querySelectorAll('.player-slot').length} empty field spots`);
 
         // ============================================================================
-        // STEP 2: Render available players in sidebar
-        // ============================================================================
-        const teamPlayers = getTeamPlayers();
-        console.log(`👥 Found ${teamPlayers.length} team players`);
-        
-        const formationTempList = getFormationTemp() || [];
-        const unavailableList = getUnavailablePlayers();
-        
-        teamPlayers.forEach(player => {
-            const isOnField = formationTempList.some(f => f.playerId === player.id);
-            const isUnavailable = unavailableList.includes(player.id);
-            const shouldDisable = isOnField || isUnavailable;
-            
-            const playerItem = document.createElement('div');
-            playerItem.className = 'player-item-draggable';
-            playerItem.innerHTML = `
-                <span class="player-number ${shouldDisable ? 'disabled' : ''}" data-player-id="${player.id}">
-                    <span class="jersey-num">${player.jerseyNumber}</span>
-                    <span class="player-name-bench">${player.name}</span>
-                </span>
-                <span class="player-name">${player.name}</span>
-            `;
-            playerList.appendChild(playerItem);
-        });
-        
-        console.log(`✅ Created ${playerList.querySelectorAll('.player-item-draggable').length} player items in sidebar`);
-
-        // ============================================================================
-        // STEP 3: Create 5 unavailable slots
+        // STEP 2: Create 5 empty bench slots
         // ============================================================================
         for (let i = 1; i <= 5; i++) {
             const slot = document.createElement('div');
@@ -96,66 +62,10 @@ const FormationScreen = {
             unavailableSlots.appendChild(slot);
         }
         
-        console.log(`✅ Created 5 unavailable slots`);
+        console.log(`✅ Created 5 empty bench slots`);
 
         // ============================================================================
-        // STEP 4: Restore previously placed players to their specific spots
-        // ============================================================================
-        // SPOT-LEVEL RESTORATION: Each player is restored to its individual spot
-        // (not area-level - each field spot, each bench spot operates independently)
-        let playersPlaced = 0;
-        
-        // Restore field players - iterate through each player that was on field
-        // Find THAT player's specific field spot and restore them there
-        (getFormationTemp() || []).forEach(formationPlayer => {
-            const playerId = formationPlayer.playerId;
-            const position = formationPlayer.position;
-            const player = getTeamPlayers().find(p => p.id === playerId);
-            
-            if (player && position) {
-                // Query for THIS specific field spot by position (e.g., 'GK', 'CB1', etc.)
-                const slotElement = document.querySelector(`[data-position="${position}"]`);
-                if (slotElement) {
-                    console.log(`   → Restoring ${player.name} to field spot ${position}`);
-                    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${player.name}</span></span>`;
-                    slotElement.setAttribute('data-player-id', playerId);
-                    slotElement.classList.add('occupied');
-                    playersPlaced++;
-                }
-            }
-        });
-        
-        // Fill bench spots: ALL team players not on field should go into bench spots
-        const allTeamPlayers = getTeamPlayers();
-        const fieldPlayerIds = (getFormationTemp() || []).map(f => f.playerId);
-        const benchPlayersToRestore = allTeamPlayers.filter(p => !fieldPlayerIds.includes(p.id));
-        
-        console.log(`📋 Filling bench: ${benchPlayersToRestore.length} players not on field`);
-        
-        benchPlayersToRestore.forEach((player, benchIndex) => {
-            if (benchIndex < 5) {  // Only 5 bench spots available
-                const slotElement = document.getElementById(`unavailable-slot-${benchIndex + 1}`);
-                if (slotElement) {
-                    console.log(`   → Restoring ${player.name} to bench spot ${slotElement.id}`);
-                    slotElement.innerHTML = `<span class="player-number" data-player-id="${player.id}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
-                    slotElement.setAttribute('data-player-id', player.id);
-                    slotElement.classList.remove('occupied');
-                    playersPlaced++;
-                }
-            }
-        });
-        
-        // Update unavailable list to match bench spots (for state consistency)
-        setUnavailablePlayers(benchPlayersToRestore.map(p => p.id));
-        
-        if (playersPlaced > 0 && appState.defaultFormation) {
-            showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
-        }
-        
-        console.log(`✅ Formation screen fully rendered - ${playersPlaced} players placed at individual spots`);
-
-        // ============================================================================
-        // STEP 5: Attach all event handlers
+        // STEP 3: Attach all event handlers
         // ============================================================================
         this._setupTapHandlers();
     },
