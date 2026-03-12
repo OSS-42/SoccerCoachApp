@@ -11,8 +11,9 @@ const FormationScreen = {
         const playerList = document.getElementById('player-list');
         const formationField = document.getElementById('formation-field');
         const benchSlots = document.getElementById('bench-slots');
+        const unavailableSlots = document.getElementById('unavailable-slots');
         
-        if (!playerList || !formationField || !benchSlots) {
+        if (!playerList || !formationField || !benchSlots || !unavailableSlots) {
             console.error('❌ Formation screen DOM elements not found');
             return;
         }
@@ -23,6 +24,7 @@ const FormationScreen = {
         playerList.innerHTML = '';
         formationField.innerHTML = '';
         benchSlots.innerHTML = '';
+        unavailableSlots.innerHTML = '';
         
         // Reset state
         setUnavailablePlayers([]);
@@ -75,7 +77,19 @@ const FormationScreen = {
         console.log(`✅ Created ${numBenchSpots} empty bench slots for ${matchType}`);
 
         // ============================================================================
-        // STEP 3: Attach all event handlers
+        // STEP 3: Create 5 empty unavailable (injury/missing) slots
+        // ============================================================================
+        for (let i = 1; i <= 5; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'unavailable-slot';
+            slot.id = `unavailable-slot-${i}`;
+            unavailableSlots.appendChild(slot);
+        }
+        
+        console.log(`✅ Created 5 empty unavailable slots`);
+
+        // ============================================================================
+        // STEP 4: Attach all event handlers
         // ============================================================================
         this._setupTapHandlers();
     },
