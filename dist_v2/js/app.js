@@ -239,65 +239,10 @@ function hideMessage() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('\n' + '='.repeat(60));
-    console.log('🚀 DOMContentLoaded fired');
-    console.log('='.repeat(60));
-    console.log(`   appState.teams before: ${appState.teams?.length || 0}`);
-    console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
-    
-    // Diagnostic: check if functions are available
-    console.log('\n📋 Pre-flight checks:');
-    console.log(`   ✓ loadAppData available: ${typeof window.loadAppData === 'function'}`);
-    console.log(`   ✓ createDefaultTeams available: ${typeof window.createDefaultTeams === 'function'}`);
-    console.log(`   ✓ migrateLegacyData available: ${typeof window.migrateLegacyData === 'function'}`);
-    console.log(`   ✓ getCurrentTeam available: ${typeof window.getCurrentTeam === 'function'}`);
-    
-    loadAppData().then(() => {
-        console.log('\n✅ loadAppData() resolved');
-        console.log(`   appState.teams after: ${appState.teams?.length || 0}`);
-        console.log(`   currentTeamId: ${appState.currentTeamId}`);
-        
-        if (appState.teams.length === 0) {
-            console.error('❌ CRITICAL: Teams still empty after loadAppData!');
-            return;
-        }
-        
-        // Initialize team UI after data is fully loaded
-        updateTeamSelector();
-        
-        // Populate UI with existing data
-        TeamSetupScreen.renderPlayersList();
-        updateTeamNameUI();
-        
-        // Add demo players if none exist for current team
-        const playersCount = getTeamPlayers().length;
-        if (playersCount === 0) {
-            console.log('   No players, adding demo players...');
-            addDemoPlayers();
-        }
-        
-        // Set today's date as the default
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('game-date').value = today;
-        
-        // Setup note dialog character counter
-        const noteTextarea = document.getElementById('note-text');
-        if (noteTextarea) {
-            noteTextarea.addEventListener('input', function() {
-                document.getElementById('note-char-count').textContent = this.value.length;
-            });
-        }
-        
-        // Show the main screen to start
-        showScreen('main-screen');
-        
-        console.log('\n🎉 Initialization complete - app ready');
-        console.log('='.repeat(60) + '\n');
-    }).catch(err => {
-        console.error('❌ loadAppData() rejected:', err);
-    });
-});
+// ===== INITIALIZATION IS NOW HANDLED BY AppInit.js =====
+// This file contains only the application logic functions
+// Do NOT add DOMContentLoaded handlers here - use AppInit.js instead
+// =========================================================
 
 // Team Name functions
 function updateTeamNameUI() {
@@ -1846,105 +1791,8 @@ function saveAppData() {
     }
 }
 
-function loadAppData() {
-    return new Promise((resolve) => {
-        console.log('\n🚀 loadAppData() starting...');
-        
-        // Step 1: Check if we have localStorage data
-        console.log('1️⃣  Checking localStorage for saved data...');
-        let hasNewFormat = false;
-        let hasLegacyFormat = false;
-        let loadedData = null;
-        
-        try {
-            const newData = localStorage.getItem('soccerCoachApp2');
-            const legacyData = localStorage.getItem('soccerCoachApp');
-            
-            if (newData) {
-                console.log('   ✅ Found soccerCoachApp2');
-                hasNewFormat = true;
-                loadedData = JSON.parse(newData);
-            } else if (legacyData) {
-                console.log('   ✅ Found soccerCoachApp (legacy)');
-                hasLegacyFormat = true;
-                loadedData = JSON.parse(legacyData);
-            } else {
-                console.log('   ❌ No saved data found');
-            }
-        } catch (e) {
-            console.error('   ⚠️  Error reading localStorage:', e.message);
-            console.log('   Proceeding with fresh start...');
-        }
-        
-        // Step 2: If we found data, try to load it
-        console.log('2️⃣  Loading data...');
-        if (loadedData) {
-            if (hasNewFormat) {
-                console.log('   Loading new format (multi-team)...');
-                appState.teams = loadedData.teams || [];
-                appState.currentTeamId = loadedData.currentTeamId || null;
-                appState.settings = loadedData.settings || appState.settings;
-                appState.currentGame = loadedData.currentGame || null;
-                console.log(`   ✅ Loaded ${appState.teams.length} teams`);
-            } else if (hasLegacyFormat) {
-                console.log('   Loading legacy format - migrating...');
-                // Set up legacy fields for migration
-                appState.teamName = loadedData.teamName || 'Team A';
-                appState.players = loadedData.players || [];
-                appState.games = loadedData.games || [];
-                appState.unavailablePlayers = loadedData.unavailablePlayers || [];
-                appState.settings = loadedData.settings || appState.settings;
-                appState.formationTemp = loadedData.formationTemp || null;
-                
-                // Call migration function
-                if (window.migrateLegacyData && typeof window.migrateLegacyData === 'function') {
-                    window.migrateLegacyData();
-                    console.log('   ✅ Legacy data migrated');
-                } else {
-                    console.warn('   ⚠️  migrateLegacyData not available, creating defaults instead');
-                    window.createDefaultTeams();
-                }
-            }
-        }
-        
-        // Step 3: If still no teams, create defaults
-        console.log('3️⃣  Checking if teams exist...');
-        if (!appState.teams || appState.teams.length === 0) {
-            console.log('   No teams found - calling createDefaultTeams()');
-            if (window.createDefaultTeams && typeof window.createDefaultTeams === 'function') {
-                window.createDefaultTeams();
-                console.log('   ✅ Default teams created');
-            } else {
-                console.error('   ❌ createDefaultTeams not available!');
-                // Absolute fallback
-                appState.teams = [
-                    { id: 't1', name: 'Team A', players: [], games: [], settings: appState.settings, unavailablePlayers: [], formationTemp: null },
-                    { id: 't2', name: 'Team B', players: [], games: [], settings: appState.settings, unavailablePlayers: [], formationTemp: null }
-                ];
-                appState.currentTeamId = 't1';
-                console.log('   ✅ Hardcoded default teams created');
-            }
-        }
-        
-        // Step 4: Ensure currentTeamId is valid
-        console.log('4️⃣  Validating currentTeamId...');
-        if (!appState.currentTeamId || !appState.teams.some(t => t.id === appState.currentTeamId)) {
-            appState.currentTeamId = appState.teams[0].id;
-            console.log(`   ✅ Set to: ${appState.currentTeamId}`);
-        }
-        
-        // Step 5: Final summary
-        console.log('5️⃣  Final state:');
-        console.log(`   Teams: ${appState.teams.length}`);
-        appState.teams.forEach(t => {
-            console.log(`      - "${t.name}" (${t.players?.length || 0} players)`);
-        });
-        console.log(`   Current team: ${appState.currentTeamId}`);
-        console.log('✅ loadAppData() complete\n');
-        
-        resolve();
-    });
-}
+// NOTE: Data loading is now handled by AppInit.js
+// This function has been removed - use AppInit.js for initialization
 
 // Function to clear all app data and start fresh
 function clearAppData() {
