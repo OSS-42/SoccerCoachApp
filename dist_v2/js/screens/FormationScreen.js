@@ -14,9 +14,11 @@ const FormationScreen = {
         const unavailablePlayers = document.getElementById('unavailable-players');
         
         if (!playerList || !formationField || !unavailableSlots || !unavailablePlayers) {
-            console.error('Formation screen DOM elements not found');
+            console.error('❌ Formation screen DOM elements not found:', {playerList: !!playerList, formationField: !!formationField, unavailableSlots: !!unavailableSlots, unavailablePlayers: !!unavailablePlayers});
             return;
         }
+        
+        console.log('✅ All DOM elements found');
         
         // Clear all content
         playerList.innerHTML = '';
@@ -35,6 +37,8 @@ const FormationScreen = {
         // STEP 1: Render all 25 field spots (CRITICAL - must happen first)
         // ============================================================================
         const fieldSpots = this._getFieldSpots();
+        console.log(`📌 Rendering ${fieldSpots.length} field spots...`);
+        
         fieldSpots.forEach(spot => {
             const slot = document.createElement('div');
             
@@ -51,11 +55,15 @@ const FormationScreen = {
             
             formationField.appendChild(slot);
         });
+        
+        console.log(`✅ Created ${formationField.querySelectorAll('.player-slot').length} spots on field`);
 
         // ============================================================================
         // STEP 2: Render available players in sidebar
         // ============================================================================
         const teamPlayers = getTeamPlayers();
+        console.log(`👥 Found ${teamPlayers.length} team players`);
+        
         const formationTempList = getFormationTemp() || [];
         const unavailableList = getUnavailablePlayers();
         
@@ -72,6 +80,8 @@ const FormationScreen = {
             `;
             playerList.appendChild(playerItem);
         });
+        
+        console.log(`✅ Created ${playerList.querySelectorAll('.player-item-draggable').length} player items in sidebar`);
 
         // ============================================================================
         // STEP 3: Create 5 unavailable slots
@@ -82,6 +92,8 @@ const FormationScreen = {
             slot.id = `unavailable-slot-${i}`;
             unavailableSlots.appendChild(slot);
         }
+        
+        console.log(`✅ Created 5 unavailable slots`);
 
         // ============================================================================
         // STEP 4: Restore previously placed players to field/unavailable
@@ -106,6 +118,8 @@ const FormationScreen = {
         if (playersPlaced > 0 && appState.defaultFormation) {
             showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
         }
+        
+        console.log(`✅ Formation screen fully rendered - ${playersPlaced} players placed`);
 
         // ============================================================================
         // STEP 5: Attach all event handlers
@@ -397,24 +411,6 @@ function removePlayerFromSlot(playerId) {
 
     // Re-setup handlers
     FormationScreen._setupTapHandlers();
-}
-    
-    // Get the slot element - event listener is attached to slots, so currentTarget is the slot
-    // But handle case where a child element might be tapped
-    const slot = e.currentTarget || e.target?.closest('.player-slot, .unavailable-slot');
-    
-    if (!slot) return;
-    
-    // If no player selected, do nothing
-    if (!TapState.playerId) return;
-
-    placePlayerToSlot(TapState.playerId, slot, TapState.source, TapState.slotId);
-    TapState.clear();
-    
-    // Clear visual feedback
-    document.querySelectorAll('.player-number').forEach(num => {
-        num.style.outline = 'none';
-    });
 }
 
 // Expose globally

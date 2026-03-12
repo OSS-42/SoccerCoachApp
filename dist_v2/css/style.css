@@ -2531,7 +2531,7 @@ button.no-assist-btn {
     /* SOCCER FIELD - CENTER (PRIMARY) */
     .formation-field {
         width: 74%;
-        height: calc(100vh - 120px);
+        height: calc(100vh - 240px);
         order: 2;
         flex-shrink: 0;
         background: url('../img/field.png') no-repeat center center;
@@ -2546,6 +2546,7 @@ button.no-assist-btn {
         justify-content: center;
         border-left: 1px solid #e0e0e0;
         border-right: 1px solid #e0e0e0;
+        overflow: hidden;
     }
     
     /* UNAVAILABLE PLAYERS - RIGHT SIDEBAR */
@@ -2850,8 +2851,8 @@ button.no-assist-btn {
 /* Player slot on field - SINGLE SOURCE OF TRUTH */
 .player-slot {
     position: absolute;
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     cursor: pointer;
     user-select: none;
@@ -2861,12 +2862,14 @@ button.no-assist-btn {
     justify-content: center;
     transition: all 0.2s ease;
     transform: translate(-50%, -50%);
+    z-index: 10;
 }
 
 /* Empty slot styling */
 .player-slot:not(.occupied) {
-    background: rgba(100, 150, 200, 0.2);
-    border: 2px solid #64b5f6;
+    background: rgba(100, 180, 230, 0.4);
+    border: 2px solid #2196f3;
+    opacity: 1;
 }
 
 .player-slot:not(.occupied):hover {
