@@ -32,6 +32,9 @@ window.appState = {
     formationTemp: null // Temporary storage for formation during setup
 };
 
+console.log('✅ StateInit.js: window.appState initialized with empty teams array');
+console.log(`   appState.teams = ${window.appState.teams?.length || 0}`);
+
 // helper used throughout the app to access the active team
 function getCurrentTeam() {
     let team = appState.teams.find(t => t.id === appState.currentTeamId);
@@ -43,80 +46,112 @@ function getCurrentTeam() {
     return team || null;
 }
 
-// perform migration from legacy single-team structure if needed
-function initState() {
-    console.log('🔧 initState() called');
-    console.log(`   Current appState.teams: ${appState.teams?.length || 0}`);
+/**
+ * Create default teams when localStorage is empty
+ * IMPORTANT: This should ONLY be called after localStorage is checked
+ * Do NOT call this automatically during script load
+ */
+function createDefaultTeams() {
+    console.log('🆕 createDefaultTeams() called');
+    console.log(`   Current teams: ${appState.teams?.length || 0}`);
     
-    if (!appState.teams || appState.teams.length === 0) {
-        console.log(`   Teams array is empty, creating defaults...`);
-        const hasLegacy = appState.teamName || (appState.players && appState.players.length > 0) || (appState.games && appState.games.length > 0);
-        console.log(`   Has legacy data: ${hasLegacy}`);
-        
-        if (hasLegacy) {
-            console.log(`   → Creating from legacy format`);
-            // Migrate legacy data to Team A
-            const teamA = {
-                id: 't1',
-                name: appState.teamName || 'Team A',
-                players: appState.players || [],
-                games: appState.games || [],
-                settings: appState.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-                unavailablePlayers: appState.unavailablePlayers || [],
-                formationTemp: appState.formationTemp || null
-            };
-            // Create Team B as new
-            const teamB = {
-                id: 't2',
-                name: 'Team B',
-                players: [],
-                games: [],
-                settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-                unavailablePlayers: [],
-                formationTemp: null
-            };
-            appState.teams = [teamA, teamB];
-            appState.currentTeamId = teamA.id;
-            console.log(`   ✓ Created ${appState.teams.length} teams from legacy data`);
-            // clean up legacy fields
-            delete appState.teamName;
-            delete appState.players;
-            delete appState.games;
-            delete appState.unavailablePlayers;
-        } else {
-            console.log(`   → Creating fresh default teams`);
-            // New install: create default Team A and Team B
-            const teamA = {
-                id: 't1',
-                name: 'Team A',
-                players: [],
-                games: [],
-                settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-                unavailablePlayers: [],
-                formationTemp: null
-            };
-            const teamB = {
-                id: 't2',
-                name: 'Team B',
-                players: [],
-                games: [],
-                settings: { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
-                unavailablePlayers: [],
-                formationTemp: null
-            };
-            appState.teams = [teamA, teamB];
-            appState.currentTeamId = teamA.id;
-            console.log(`   ✓ Created ${appState.teams.length} default teams`);
-        }
-    } else {
-        console.log(`   Teams already exist (${appState.teams.length} teams), no init needed`);
-    }
+    const teamA = {
+        id: 't1',
+        name: 'Team A',
+        players: [],
+        games: [],
+        settings: appState.settings || { 
+            language: 'en', 
+            defaultSubstitutionTime: null, 
+            isSubstitutionDefaultChecked: false 
+        },
+        unavailablePlayers: [],
+        formationTemp: null
+    };
     
-    console.log(`   Final state: ${appState.teams.length} teams, currentTeamId=${appState.currentTeamId}`);
+    const teamB = {
+        id: 't2',
+        name: 'Team B',
+        players: [],
+        games: [],
+        settings: appState.settings || { 
+            language: 'en', 
+            defaultSubstitutionTime: null, 
+            isSubstitutionDefaultChecked: false 
+        },
+        unavailablePlayers: [],
+        formationTemp: null
+    };
+    
+    appState.teams = [teamA, teamB];
+    appState.currentTeamId = teamA.id;
+    
+    console.log(`   ✓ Created ${appState.teams.length} default teams`);
+    console.log(`      Team 0: "${teamA.name}" (id=${teamA.id})`);
+    console.log(`      Team 1: "${teamB.name}" (id=${teamB.id})`);
+    console.log(`   ✓ currentTeamId set to: ${appState.currentTeamId}`);
 }
 
-// make initState available globally
-window.initState = initState;
+/**
+ * Migrate legacy single-team data to new multi-team format
+ */
+function migrateLegacyData() {
+    console.log('🔄 migrateLegacyData() called');
+    console.log(`   Checking for legacy fields...`);
+    
+    const hasLegacy = appState.teamName || (appState.players && appState.players.length > 0);
+    
+    if (!hasLegacy) {
+        console.log(`   ℹ️  No legacy data found`);
+        return false;
+    }
+    
+    console.log(`   ✓ Found legacy data - migrating...`);
+    
+    const teamA = {
+        id: 't1',
+        name: appState.teamName || 'Team A',
+        players: appState.players || [],
+        games: appState.games || [],
+        settings: appState.settings || { 
+            language: 'en', 
+            defaultSubstitutionTime: null, 
+            isSubstitutionDefaultChecked: false 
+        },
+        unavailablePlayers: appState.unavailablePlayers || [],
+        formationTemp: appState.formationTemp || null
+    };
+    
+    const teamB = {
+        id: 't2',
+        name: 'Team B',
+        players: [],
+        games: [],
+        settings: appState.settings || { 
+            language: 'en', 
+            defaultSubstitutionTime: null, 
+            isSubstitutionDefaultChecked: false 
+        },
+        unavailablePlayers: [],
+        formationTemp: null
+    };
+    
+    appState.teams = [teamA, teamB];
+    appState.currentTeamId = teamA.id;
+    
+    // Clean up legacy fields
+    delete appState.teamName;
+    delete appState.players;
+    delete appState.games;
+    delete appState.unavailablePlayers;
+    
+    console.log(`   ✓ Migration complete - created 2 teams from legacy data`);
+    console.log(`      Team A (migrated): "${teamA.name}" (${teamA.players.length} players)`);
+    console.log(`      Team B (new): "Team B" (0 players)`);
+    
+    return true;
+}
 
-// DO NOT call initState() here - it will overwrite saved localStorage data!
-// Instead, loadAppData() in app.js will check localStorage first, then call initState() if needed
+// Make both functions available globally
+window.createDefaultTeams = createDefaultTeams;
+window.migrateLegacyData = migrateLegacyData;
