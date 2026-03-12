@@ -276,7 +276,7 @@ function handleTapPlayer(e) {
     // If tapping same player, deselect
     if (TapState.playerId === playerId) {
         console.log(`🔄 Player ${playerId} already selected - deselecting`);
-        clearSelection();
+        clearSelectionFully();
         return;
     }
 
@@ -357,7 +357,7 @@ function handleTapSlot(e) {
         showMessage('Placement failed!', 'error');
     }
     
-    clearSelection();
+    clearSelectionFully();
 }
 
 /**
@@ -376,13 +376,24 @@ function handleSidebarTap(e) {
     
     console.log(`🔙 Sidebar tap detected - removing player ${TapState.playerId}`);
     removePlayerFromSlot(TapState.playerId);
-    clearSelection();
+    clearSelectionFully();
 }
 
 /**
- * Clear all selection visual feedback
+ * Clear all selection visual feedback (removes outline from other players, but PRESERVES TapState)
  */
 function clearSelection() {
+    document.querySelectorAll('.player-number, .player-number-placed').forEach(num => {
+        num.classList.remove('tap-selected');
+    });
+    // NOTE: Do NOT call TapState.clear() here - we need to preserve the selected player state
+    // TapState should only be cleared after successful placement or when user explicitly deselects
+}
+
+/**
+ * Fully clear selection (visual + state) when resetting
+ */
+function clearSelectionFully() {
     document.querySelectorAll('.player-number, .player-number-placed').forEach(num => {
         num.classList.remove('tap-selected');
     });

@@ -8,8 +8,12 @@ const TeamSetupScreen = {
      * Render the players list with current state
      */
     renderPlayersList() {
+        console.log('🔄 TeamSetupScreen.renderPlayersList() called');
         const playersList = document.getElementById('players-list');
-        if (!playersList) return;
+        if (!playersList) {
+            console.error('   ❌ ERROR: players-list element not found!');
+            return;
+        }
         
         // NOTE: Do NOT manipulate message-ribbon here - let app.js manage it
         // Only clear the players-list DOM, not the message system
@@ -17,8 +21,15 @@ const TeamSetupScreen = {
         playersList.innerHTML = '';
         const teamPlayerCounter = document.getElementById('team-player-counter');
         const players = getTeamPlayers();
-
-        if (players.length === 0) {
+        
+        console.log(`   Teams total: ${appState.teams?.length || 0}`);
+        console.log(`   Current team ID: ${appState.currentTeamId}`);
+        const currentTeam = getCurrentTeam();
+        console.log(`   Current team: ${currentTeam?.name} (id=${currentTeam?.id})`);
+        console.log(`   Players retrieved: ${players?.length || 0}`);
+        
+        if (!players || players.length === 0) {
+            console.log('   ℹ️ No players in current team');
             playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
             if (teamPlayerCounter) {
                 teamPlayerCounter.textContent = '0';
@@ -32,7 +43,9 @@ const TeamSetupScreen = {
         
         const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
         
-        players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach(player => {
+        console.log(`   Rendering ${players.length} players (${anyChecked ? 'with checkboxes checked' : 'no checkboxes'})...`);
+        players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach((player, idx) => {
+            console.log(`      [${idx}] Player: ${player.name} #${player.jerseyNumber} (${player.position})`);
             const playerItem = document.createElement('div');
             playerItem.className = 'player-item';
             playerItem.innerHTML = `
@@ -49,6 +62,7 @@ const TeamSetupScreen = {
             `;
             playersList.appendChild(playerItem);
         });
+        console.log(`   ✅ Rendered ${players.length} player items`);
     },
 
     /**

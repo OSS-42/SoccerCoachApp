@@ -1734,13 +1734,20 @@ function loadAppData() {
         }
         
         // Initialize state with multi-team support if not already initialized
-        // This calls the global initState() from StateInit.js
-        if (typeof initState === 'function' && (!appState.teams || appState.teams.length === 0)) {
-            console.log('   📦 Calling initState()...');
-            initState();
-            console.log(`   ✓ initState() completed. Teams now: ${appState.teams?.length || 0}`);
+        // CRITICAL: Always ensure we have at least Team A and Team B
+        if (!appState.teams || appState.teams.length === 0) {
+            console.log('   📦 No teams found - calling initState() to create defaults...');
+            if (typeof initState === 'function') {
+                initState();
+                console.log(`   ✓ initState() completed. Teams now: ${appState.teams?.length || 0}`);
+                appState.teams.forEach((t, i) => {
+                    console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
+                });
+            } else {
+                console.error('   ❌ initState() function not available!');
+            }
         } else {
-            console.log(`   ℹ️ initState() not called (initState function exists=${typeof initState === 'function'}, teams=${appState.teams?.length || 0})`);
+            console.log(`   ℹ️ Teams already loaded (${appState.teams.length} teams), skipping initState()`);
         }
         
         // CRITICAL: Ensure currentTeamId is set to a valid team
