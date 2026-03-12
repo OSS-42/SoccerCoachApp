@@ -1,51 +1,64 @@
 /**
- * FormationScreen.js
- * Encapsulates all formation setup screen rendering and tap-to-select logic
+ * FormationScreen.js - Formation Setup Screen
+ * Handles rendering field, players, and tap-to-select placement logic
  */
 
 const FormationScreen = {
     /**
-     * Render the formation setup screen with field and player list
+     * Main render function - builds entire formation screen UI
      */
     renderFormationSetup() {
         const playerList = document.getElementById('player-list');
         const formationField = document.getElementById('formation-field');
         const unavailableSlots = document.getElementById('unavailable-slots');
+        const unavailablePlayers = document.getElementById('unavailable-players');
         
-        if (!playerList || !formationField || !unavailableSlots) return;
+        if (!playerList || !formationField || !unavailableSlots || !unavailablePlayers) {
+            console.error('Formation screen DOM elements not found');
+            return;
+        }
         
+        // Clear all content
         playerList.innerHTML = '';
         formationField.innerHTML = '';
         unavailableSlots.innerHTML = '';
         
-        // Initialize unavailable players array (clear for new setup)
+        // Reset state
         setUnavailablePlayers([]);
-        
-        // Initialize formation temp based on global default if present
         if (appState.defaultFormation && appState.defaultFormation.length > 0) {
             setFormationTemp([...appState.defaultFormation]);
         } else {
             setFormationTemp([]);
         }
 
-        // Define spots for 260x400px field
-        const spots = this._getFieldSpots();
-
-        // Render spots
-        spots.forEach(spot => {
+        // ============================================================================
+        // STEP 1: Render all 25 field spots (CRITICAL - must happen first)
+        // ============================================================================
+        const fieldSpots = this._getFieldSpots();
+        fieldSpots.forEach(spot => {
             const slot = document.createElement('div');
-            slot.className = `player-slot ${spot.position === 'GK' ? 'gk-slot' : spot.position === 'SW' ? 'sw-slot' : ''}`;
-            slot.id = spot.position === 'GK' ? 'gk-slot' : spot.position === 'SW' ? 'sw-slot' : `slot-${spot.position}`;
+            
+            // Add appropriate classes
+            let classNames = 'player-slot';
+            if (spot.position === 'GK') classNames += ' gk-slot';
+            else if (spot.position === 'SW') classNames += ' sw-slot';
+            
+            slot.className = classNames;
             slot.setAttribute('data-position', spot.position);
+            slot.style.position = 'absolute';
             slot.style.left = `${spot.x}%`;
             slot.style.top = `${spot.y}%`;
+            
             formationField.appendChild(slot);
         });
 
-        // Render player list using current team's roster
+        // ============================================================================
+        // STEP 2: Render available players in sidebar
+        // ============================================================================
         const teamPlayers = getTeamPlayers();
         const formationTempList = getFormationTemp() || [];
         const unavailableList = getUnavailablePlayers();
+        
         teamPlayers.forEach(player => {
             const isOnField = formationTempList.some(f => f.playerId === player.id);
             const isUnavailable = unavailableList.includes(player.id);
@@ -60,45 +73,43 @@ const FormationScreen = {
             playerList.appendChild(playerItem);
         });
 
-        // Create unavailable player slots
+        // ============================================================================
+        // STEP 3: Create 5 unavailable slots
+        // ============================================================================
         for (let i = 1; i <= 5; i++) {
-            const unavailableSlot = document.createElement('div');
-            unavailableSlot.className = 'unavailable-slot';
-            unavailableSlot.id = `unavailable-slot-${i}`;
-            unavailableSlot.setAttribute('data-slot-type', 'unavailable');
-            unavailableSlots.appendChild(unavailableSlot);
+            const slot = document.createElement('div');
+            slot.className = 'unavailable-slot';
+            slot.id = `unavailable-slot-${i}`;
+            unavailableSlots.appendChild(slot);
         }
 
-        // Restore formation positions
+        // ============================================================================
+        // STEP 4: Restore previously placed players to field/unavailable
+        // ============================================================================
         let playersPlaced = 0;
         (getFormationTemp() || []).forEach(formationPlayer => {
-            const position = formationPlayer.position;
             const playerId = formationPlayer.playerId;
+            const position = formationPlayer.position;
             const player = getTeamPlayers().find(p => p.id === playerId);
             
-            if (player) {
-                let slotId;
-                if (position === 'GK') slotId = 'gk-slot';
-                else if (position === 'SW') slotId = 'sw-slot';
-                else slotId = `slot-${position}`;
-                
-                const slot = document.getElementById(slotId);
-                if (slot) {
-                    slot.innerHTML = `
-                        <span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>
-                    `;
-                    slot.setAttribute('data-player-id', playerId);
-                    slot.classList.add('occupied');
+            if (player && position) {
+                const slotElement = document.querySelector(`[data-position="${position}"]`);
+                if (slotElement) {
+                    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+                    slotElement.setAttribute('data-player-id', playerId);
+                    slotElement.classList.add('occupied');
                     playersPlaced++;
                 }
             }
         });
         
-        if (playersPlaced > 0 && appState.defaultFormation && appState.defaultFormation.length > 0) {
+        if (playersPlaced > 0 && appState.defaultFormation) {
             showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
         }
 
-        // Setup tap handlers
+        // ============================================================================
+        // STEP 5: Attach all event handlers
+        // ============================================================================
         this._setupTapHandlers();
     },
 
