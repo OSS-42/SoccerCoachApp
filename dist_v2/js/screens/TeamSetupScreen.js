@@ -1,82 +1,142 @@
 /**
- * TeamSetupScreen.js
- * Encapsulates all team setup screen rendering and player management logic
+ * TeamSetupScreen.js - Refactored
+ * Manages team setup screen rendering and player management
+ * 
+ * Key Changes:
+ * - Removed all references to legacy appState.players
+ * - Uses getTeamPlayers() and getCurrentTeam() throughout
+ * - Cleaner separation of concerns
+ * - Better error handling and defensive programming
+ * - Simplified methods with single responsibilities
  */
 
 const TeamSetupScreen = {
+    // =====================================================================
+    // RENDERING METHODS
+    // =====================================================================
+    
     /**
-     * Render the players list with current state
+     * Main render function - displays current team's players list
      */
     renderPlayersList() {
-        console.log('🔄 TeamSetupScreen.renderPlayersList() called');
+        console.log('🔄 TeamSetupScreen.renderPlayersList() - START');
+        
         const playersList = document.getElementById('players-list');
         if (!playersList) {
             console.error('   ❌ ERROR: players-list element not found!');
             return;
         }
         
-        // NOTE: Do NOT manipulate message-ribbon here - let app.js manage it
-        // Only clear the players-list DOM, not the message system
-        
-        playersList.innerHTML = '';
-        const teamPlayerCounter = document.getElementById('team-player-counter');
-        const players = getTeamPlayers();
-        
-        console.log(`   Teams total: ${appState.teams?.length || 0}`);
-        console.log(`   Current team ID: ${appState.currentTeamId}`);
-        const currentTeam = getCurrentTeam();
-        console.log(`   Current team: ${currentTeam?.name} (id=${currentTeam?.id})`);
-        console.log(`   Players retrieved: ${players?.length || 0}`);
-        
-        if (!players || players.length === 0) {
-            console.log('   ℹ️ No players in current team');
-            playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
-            if (teamPlayerCounter) {
-                teamPlayerCounter.textContent = '0';
-            }
+        // Get current team and its players
+        const team = getCurrentTeam();
+        if (!team) {
+            console.warn('   ⚠️  No team found');
+            playersList.innerHTML = '<div class="empty-state">No team selected</div>';
+            this.updatePlayerCounter(0);
             return;
         }
         
-        if (teamPlayerCounter) {
-            teamPlayerCounter.textContent = players.length;
+        const players = team.players || [];
+        console.log(`   Team: "${team.name}" (${team.id})`);
+        console.log(`   Players: ${players.length}`);
+        
+        // Clear list
+        playersList.innerHTML = '';
+        
+        // Update counter
+        this.updatePlayerCounter(players.length);
+        
+        // Show empty state if no players
+        if (players.length === 0) {
+            playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
+            console.log('   ✓ Empty state displayed');
+            return;
         }
         
+        // Check if any checkboxes are checked (for disable logic)
         const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
         
-        console.log(`   Rendering ${players.length} players (${anyChecked ? 'with checkboxes checked' : 'no checkboxes'})...`);
-        players.sort((a, b) => a.jerseyNumber - b.jerseyNumber).forEach((player, idx) => {
-            console.log(`      [${idx}] Player: ${player.name} #${player.jerseyNumber} (${player.position})`);
-            const playerItem = document.createElement('div');
-            playerItem.className = 'player-item';
-            playerItem.innerHTML = `
-                <div class="jersey-number">${player.jerseyNumber}</div>
-                <div class="player-info" style="display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px;">
-                    <div class="player-name" style="display: flex; flex-direction: column; flex: 1; color: #2c3e50; font-weight: 600; font-size: 0.85rem; word-break: break-word; overflow: visible; text-overflow: clip;">
-                        <div style="font-weight: 700;">${player.name}</div>
-                        <div style="font-size: 0.75rem; color: #666;">(${player.position})</div>
-                    </div>
-                </div>
-                <div class="player-actions">
-                    <button class="player-action-btn" onclick="TeamSetupScreen.editPlayer('${player.id}')" title="Edit player" ${anyChecked ? 'disabled' : ''}>
-                        <span class="material-icons">edit</span>
-                    </button>
-                    <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="TeamSetupScreen.updateDeletePlayerRibbon()">
-                </div>
-            `;
-            playersList.appendChild(playerItem);
+        // Sort and render each player
+        const sortedPlayers = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber);
+        sortedPlayers.forEach((player, idx) => {
+            this.renderPlayerItem(playersList, player, idx, anyChecked);
         });
-        console.log(`   ✅ Rendered ${players.length} player items`);
+        
+        console.log(`   ✓ Rendered ${players.length} players`);
     },
-
+    
     /**
-     * Show/hide yellow delete warning ribbon based on checkbox states
+     * Render a single player item in the list
+     */
+    renderPlayerItem(container, player, idx, editButtonDisabled) {
+        const playerItem = document.createElement('div');
+        playerItem.className = 'player-item';
+        playerItem.setAttribute('data-player-id', player.id);
+        
+        // Build the player display HTML with proper styling
+        playerItem.innerHTML = `
+            <div class="jersey-number">${player.jerseyNumber}</div>
+            <div class="player-info" style="display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px;">
+                <div class="player-name" style="display: flex; flex-direction: column; flex: 1; color: #2c3e50; font-weight: 600; font-size: 0.85rem; word-break: break-word; overflow: visible; text-overflow: clip;">
+                    <div style="font-weight: 700;">${this.formatPlayerName(player.name)}</div>
+                    <div style="font-size: 0.75rem; color: #666;">(${player.position})</div>
+                </div>
+            </div>
+            <div class="player-actions">
+                <button class="player-action-btn" 
+                        onclick="TeamSetupScreen.editPlayer('${player.id}')" 
+                        title="Edit player" 
+                        ${editButtonDisabled ? 'disabled' : ''}>
+                    <span class="material-icons">edit</span>
+                </button>
+                <input type="checkbox" 
+                       class="player-checkbox" 
+                       data-player-id="${player.id}" 
+                       onchange="TeamSetupScreen.updateDeletePlayerRibbon()">
+            </div>
+        `;
+        
+        container.appendChild(playerItem);
+        console.log(`      [${idx}] ${player.name} #${player.jerseyNumber} (${player.position})`);
+    },
+    
+    /**
+     * Format player name for display
+     */
+    formatPlayerName(name) {
+        if (!name) return '(No name)';
+        return name.toUpperCase().substring(0, 20); // Limit length for display
+    },
+    
+    /**
+     * Update player counter display
+     */
+    updatePlayerCounter(count) {
+        const counter = document.getElementById('team-player-counter');
+        if (counter) {
+            counter.textContent = count;
+        }
+    },
+    
+    // =====================================================================
+    // PLAYER DELETION METHODS
+    // =====================================================================
+    
+    /**
+     * Show/hide delete warning ribbon based on checkbox states
      */
     updateDeletePlayerRibbon() {
         const checkboxes = document.querySelectorAll('.player-checkbox:checked');
         const ribbon = document.getElementById('message-ribbon');
         
+        if (!ribbon) {
+            console.error('Message ribbon not found');
+            return;
+        }
+        
         if (checkboxes.length > 0) {
-            clearTimeout(messageTimeout); // Cancel any existing timeout
+            // Show delete warning
+            clearTimeout(window.messageTimeout);
             ribbon.innerHTML = `
                 <span id="message-text">Selected players will be deleted.</span>
                 <div class="ribbon-buttons">
@@ -89,6 +149,7 @@ const TeamSetupScreen = {
             ribbon.style.display = 'flex';
             this.updateEditButtonStates();
         } else {
+            // Hide delete warning
             ribbon.classList.add('hidden');
             ribbon.style.display = 'none';
             ribbon.innerHTML = `
@@ -97,26 +158,36 @@ const TeamSetupScreen = {
             `;
             this.updateEditButtonStates();
         }
-    },
-
+    
     /**
      * Close the warning ribbon and uncheck all players
      */
     closeWarningRibbon() {
-        const checkboxes = document.querySelectorAll('.player-checkbox');
-        checkboxes.forEach(checkbox => {
+        document.querySelectorAll('.player-checkbox').forEach(checkbox => {
             checkbox.checked = false;
         });
         this.updateDeletePlayerRibbon();
     },
-
+    
     /**
-     * Open confirmation dialog before deleting players
+     * Update edit button disabled states
+     */
+    updateEditButtonStates() {
+        const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
+        document.querySelectorAll('.player-action-btn').forEach(btn => {
+            btn.disabled = anyChecked;
+        });
+    },
+    
+    /**
+     * Open confirmation dialog for player deletion
      */
     openDeletePlayersDialog() {
         const checkboxes = document.querySelectorAll('.player-checkbox:checked');
-        if (checkboxes.length === 0) {
-            hideMessage();
+        const playerIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-player-id'));
+        
+        if (playerIds.length === 0) {
+            showMessage('No players selected', 'error');
             return;
         }
         
@@ -128,7 +199,7 @@ const TeamSetupScreen = {
             document.getElementById('app').appendChild(confirmDialog);
         }
         
-        const playerCount = checkboxes.length;
+        const playerCount = playerIds.length;
         confirmDialog.innerHTML = `
             <div class="dialog-content">
                 <h2>Confirm Delete</h2>
@@ -143,7 +214,7 @@ const TeamSetupScreen = {
         confirmDialog.style.display = 'flex';
         confirmDialog.classList.add('active');
     },
-
+    
     /**
      * Close the delete confirmation dialog
      */
@@ -158,7 +229,7 @@ const TeamSetupScreen = {
         });
         this.updateDeletePlayerRibbon();
     },
-
+    
     /**
      * Confirm and execute player deletion
      */
@@ -167,44 +238,72 @@ const TeamSetupScreen = {
         const playerIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-player-id'));
         
         if (playerIds.length === 0) {
-            hideMessage();
+            this.closeConfirmDeleteDialog();
             return;
         }
         
-        this.closeConfirmDeleteDialog();
+        console.log(`🗑️  Deleting ${playerIds.length} player(s)...`);
         
-        const deletedCount = playerIds.length;
+        // Get the current team and remove players
+        const team = getCurrentTeam();
+        if (!team || !team.players) {
+            console.error('Team or players not found');
+            showMessage('Error: Team not found', 'error');
+            return;
+        }
+        
+        let deletedCount = 0;
         playerIds.forEach(playerId => {
-            const playerIndex = appState.players.findIndex(p => p.id === playerId);
+            const playerIndex = team.players.findIndex(p => p.id === playerId);
             if (playerIndex !== -1) {
-                const player = appState.players[playerIndex];
-                if (!appState.settings.reusablePlayerIds) {
-                    appState.settings.reusablePlayerIds = [];
-                }
-                appState.settings.reusablePlayerIds.push(player.id);
-                appState.players.splice(playerIndex, 1);
+                const player = team.players[playerIndex];
+                console.log(`   Removed: ${player.name} #${player.jerseyNumber}`);
+                team.players.splice(playerIndex, 1);
+                deletedCount++;
             }
         });
         
+        console.log(`   ✓ ${deletedCount} players deleted`);
+        
+        this.closeConfirmDeleteDialog();
         saveAppData();
         this.renderPlayersList();
         updatePlayerCounter();
         
-        showMessage(`${deletedCount} player${deletedCount > 1 ? 's' : ''} removed successfully`, 'success');
+        showMessage(
+            `${deletedCount} player${deletedCount > 1 ? 's' : ''} removed successfully`,
+            'success'
+        );
     },
 
+    
+    // =====================================================================
+    // PLAYER EDIT METHODS
+    // =====================================================================
+    
     /**
-     * Edit a player by ID
-     * @param {string} playerId - The ID of the player to edit
+     * Open edit dialog for a player
      */
     editPlayer(playerId) {
-        console.log(`✏️ editPlayer() called for player ${playerId}`);
-        const player = getTeamPlayers().find(p => p.id === playerId);
-        console.log(`   Player found: ${!!player}, name=${player?.name}`);
-        if (!player) {
-            console.error(`   ❌ Player ${playerId} not found`);
+        console.log(`✏️  editPlayer() called for player ${playerId}`);
+        
+        // Get current team
+        const team = getCurrentTeam();
+        if (!team) {
+            console.error('No team found');
+            showMessage('Error: Team not found', 'error');
             return;
         }
+        
+        // Find player
+        const player = team.players.find(p => p.id === playerId);
+        if (!player) {
+            console.error(`Player ${playerId} not found in team "${team.name}"`);
+            showMessage(`Player not found in team "${team.name}"`, 'error');
+            return;
+        }
+        
+        console.log(`   Found player: ${player.name} #${player.jerseyNumber} (${player.position})`);
         
         let editDialog = document.getElementById('edit-player-dialog');
         if (!editDialog) {
@@ -219,11 +318,18 @@ const TeamSetupScreen = {
                 <h2>Edit Player</h2>
                 <div class="form-group">
                     <label for="edit-player-name">Name:</label>
-                    <input type="text" id="edit-player-name" value="${player.name}">
+                    <input type="text" 
+                           id="edit-player-name" 
+                           value="${this.formatForInput(player.name)}"
+                           placeholder="Player name">
                 </div>
                 <div class="form-group">
                     <label for="edit-jersey-number">Jersey Number:</label>
-                    <input type="number" id="edit-jersey-number" value="${player.jerseyNumber}">
+                    <input type="number" 
+                           id="edit-jersey-number" 
+                           value="${player.jerseyNumber}"
+                           min="0"
+                           max="99">
                 </div>
                 <div class="form-group">
                     <label for="edit-position">Position:</label>
@@ -245,7 +351,7 @@ const TeamSetupScreen = {
         editDialog.style.display = 'flex';
         editDialog.classList.add('active');
     },
-
+    
     /**
      * Close the player edit dialog
      */
@@ -256,45 +362,107 @@ const TeamSetupScreen = {
             editDialog.classList.remove('active');
         }
     },
-
+    
     /**
      * Save edited player data
-     * @param {string} playerId - The ID of the player being edited
      */
     saveEditedPlayer(playerId) {
-        const team = getCurrentTeam();
-        const player = team.players.find(p => p.id === playerId);
-        if (!player) return;
+        console.log(`💾 saveEditedPlayer() called for player ${playerId}`);
         
+        // Get current team
+        const team = getCurrentTeam();
+        if (!team) {
+            console.error('Team not found');
+            showMessage('Error: Team not found', 'error');
+            return;
+        }
+        
+        // Find player
+        const player = team.players.find(p => p.id === playerId);
+        if (!player) {
+            console.error(`Player ${playerId} not found`);
+            showMessage('Player not found', 'error');
+            return;
+        }
+        
+        // Get form values
         const name = document.getElementById('edit-player-name').value.trim().toUpperCase();
         const jerseyNumber = parseInt(document.getElementById('edit-jersey-number').value);
         const position = document.getElementById('edit-position').value;
         
-        if (!name || isNaN(jerseyNumber) || jerseyNumber < 0) {
-            showMessage('Invalid player data', 'error');
+        // Validate
+        if (!name) {
+            showMessage('Please enter a player name', 'error');
             return;
         }
         
+        if (isNaN(jerseyNumber) || jerseyNumber < 0 || jerseyNumber > 99) {
+            showMessage('Jersey number must be between 0 and 99', 'error');
+            return;
+        }
+        
+        // Check for duplicate jersey numbers (excluding current player)
+        const hasDuplicate = team.players.some(p => 
+            p.id !== playerId && p.jerseyNumber === jerseyNumber
+        );
+        if (hasDuplicate) {
+            showMessage('Another player already has this jersey number', 'error');
+            return;
+        }
+        
+        // Update player
+        console.log(`   Old: ${player.name} #${player.jerseyNumber}`);
         player.name = name;
         player.jerseyNumber = jerseyNumber;
         player.position = position;
+        console.log(`   New: ${player.name} #${player.jerseyNumber}`);
         
-        saveAppData();
+        // Save and refresh
         this.closeEditDialog();
+        saveAppData();
         this.renderPlayersList();
-        showMessage('Player updated successfully', 'success');
+        showMessage(`Player "${name}" updated successfully`, 'success');
     },
-
+    
     /**
-     * Update edit button disabled states based on checkbox selection
-     * @private
+     * Escape string for use in HTML attributes
      */
-    updateEditButtonStates() {
-        const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
-        const editButtons = document.querySelectorAll('.player-action-btn');
-        editButtons.forEach(btn => {
-            btn.disabled = anyChecked;
-        });
+    formatForInput(str) {
+        if (!str) return '';
+        return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    },
+    
+    // =====================================================================
+    // DIAGNOSTICS & HELPERS
+    // =====================================================================
+    
+    /**
+     * Debug: Log current team and player state
+     */
+    debugState() {
+        const team = getCurrentTeam();
+        console.log('🔍 TeamSetupScreen.debugState():');
+        console.log(`   Teams in appState: ${appState.teams?.length || 0}`);
+        if (team) {
+            console.log(`   Current team: "${team.name}" (${team.id})`);
+            console.log(`   Players in team: ${team.players?.length || 0}`);
+            team.players?.forEach(p => {
+                console.log(`      - ${p.name} #${p.jerseyNumber} (${p.position})`);
+            });
+        } else {
+            console.log(`   ❌ No team found!`);
+            console.log(`   currentTeamId: ${appState.currentTeamId}`);
+        }
+    },
+    
+    /**
+     * Update player counter display
+     */
+    updatePlayerCounter(count) {
+        const counter = document.getElementById('team-player-counter');
+        if (counter) {
+            counter.textContent = count;
+        }
     }
 };
 

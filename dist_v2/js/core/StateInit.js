@@ -118,5 +118,5 @@ function initState() {
 // make initState available globally
 window.initState = initState;
 
-// immediately run migration on load
-// initState(); // remove this call, will be called after loadAppData
+// CRITICAL: Immediately initialize teams on page load
+initState();

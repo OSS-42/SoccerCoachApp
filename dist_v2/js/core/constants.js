@@ -1,6 +1,6 @@
 // Core constants and configuration for Soccer Coach Tracker
 window.APP_CONFIG = {
-    APP_VERSION: 'v1.12.38',
+    APP_VERSION: 'v1.12.39',
     HAPTIC: {
         PICK_MS: 50,
         HOVER_MS: 30
