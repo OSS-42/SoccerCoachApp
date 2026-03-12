@@ -1,6 +1,5 @@
-// Dynamic cache name based on version - changes with each update to bust old cache
-const VERSION = '1.12.15'; // Must match APP_VERSION in constants.js (without 'v' prefix)
-const CACHE_NAME = `soccer-coach-cache-v${VERSION}`;
+// Cache name uses timestamp to automatically bust on deployment
+const CACHE_NAME = `soccer-coach-cache-${new Date().toISOString().split('T')[0]}`;
 // List of resources to cache during installation. Add additional files as needed.
 const ASSETS_TO_CACHE = [
     '/index.html',
