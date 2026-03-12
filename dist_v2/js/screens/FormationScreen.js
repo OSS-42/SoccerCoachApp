@@ -99,20 +99,45 @@ const FormationScreen = {
         console.log(`✅ Created 5 unavailable slots`);
 
         // ============================================================================
-        // STEP 4: Restore previously placed players to field/unavailable
+        // STEP 4: Restore previously placed players to their specific spots
         // ============================================================================
+        // SPOT-LEVEL RESTORATION: Each player is restored to its individual spot
+        // (not area-level - each field spot, each bench spot operates independently)
         let playersPlaced = 0;
+        
+        // Restore field players - iterate through each player that was on field
+        // Find THAT player's specific field spot and restore them there
         (getFormationTemp() || []).forEach(formationPlayer => {
             const playerId = formationPlayer.playerId;
             const position = formationPlayer.position;
             const player = getTeamPlayers().find(p => p.id === playerId);
             
             if (player && position) {
+                // Query for THIS specific field spot by position (e.g., 'GK', 'CB1', etc.)
                 const slotElement = document.querySelector(`[data-position="${position}"]`);
                 if (slotElement) {
+                    console.log(`   → Restoring ${player.name} to field spot ${position}`);
                     slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${player.name}</span></span>`;
                     slotElement.setAttribute('data-player-id', playerId);
                     slotElement.classList.add('occupied');
+                    playersPlaced++;
+                }
+            }
+        });
+        
+        // Restore bench players - iterate through each player that was on bench
+        // Find THAT player's specific bench spot and restore them there
+        const unavailableList = getUnavailablePlayers() || [];
+        unavailableList.forEach((playerId, index) => {
+            const player = getTeamPlayers().find(p => p.id === playerId);
+            if (player) {
+                // Get THIS specific bench spot (unavailable-slot-1, -2, -3, -4, or -5)
+                const slotElement = document.getElementById(`unavailable-slot-${index + 1}`);
+                if (slotElement) {
+                    console.log(`   → Restoring ${player.name} to bench spot ${slotElement.id}`);
+                    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
+                    slotElement.setAttribute('data-player-id', playerId);
+                    slotElement.classList.remove('occupied');
                     playersPlaced++;
                 }
             }
@@ -122,7 +147,7 @@ const FormationScreen = {
             showMessage(`Default formation loaded: ${playersPlaced} players placed`, 'success');
         }
         
-        console.log(`✅ Formation screen fully rendered - ${playersPlaced} players placed`);
+        console.log(`✅ Formation screen fully rendered - ${playersPlaced} players placed at individual spots`);
 
         // ============================================================================
         // STEP 5: Attach all event handlers
@@ -382,25 +407,39 @@ function handleTapSlot(e) {
         console.log(`   Selected player ${TapState.playerId} is currently at: ${selectedPlayerPosition}`);
         
         if (selectedPlayerPosition) {
-            // Swap: both players are on field/unavailable, so they can exchange places
-            console.log(`   → SWAPPING: Moving ${existingPlayer.id} to ${selectedPlayerPosition}`);
-            // First, remove existing player from all locations
-            removePlayerFromAllLocations(existingPlayer.id);
-            // Then place them at the selected player's position
+            // SWAP: Exchange the two players' positions
+            console.log(`   → SWAPPING: Exchanging positions...`);
+            console.log(`      Existing player ${existingPlayer.id} moves from ${slotId} to ${selectedPlayerPosition}`);
+            console.log(`      Selected player ${TapState.playerId} moves from ${selectedPlayerPosition} to ${slotId}`);
+            
+            // Get both slot elements
             const selectedPlayerSlot = document.querySelector(`[data-position="${selectedPlayerPosition}"]`) || 
                                        document.getElementById(selectedPlayerPosition);
+            
             if (selectedPlayerSlot) {
+                // Step 1: Place existing player to selected player's former position
+                removePlayerFromAllLocations(existingPlayer.id);
                 placePlayerToSlot(existingPlayer.id, selectedPlayerSlot);
+                console.log(`   ✓ Existing player ${existingPlayer.id} now at ${selectedPlayerPosition}`);
+                
+                // Step 2: Place selected player to target slot
+                removePlayerFromAllLocations(TapState.playerId);
+                placePlayerToSlot(TapState.playerId, slotElement);
+                console.log(`   ✓ Selected player ${TapState.playerId} now at ${slotId}`);
+                
+                showMessage(`Swapped! ${existingPlayer.jerseyNumber} ↔ ${getTeamPlayers().find(p => p.id === TapState.playerId)?.jerseyNumber}`, 'success');
+            } else {
+                console.log(`   ❌ Could not find selected player's former slot`);
+                showMessage('Swap failed - slot not found', 'error');
             }
+        } else {
+            console.log(`   ❌ Selected player position not found`);
+            showMessage('Swap failed - player position unknown', 'error');
         }
         
-        // Now move selected player to this slot (will cleanly remove them from previous location)
-        console.log(`   → Moving ${TapState.playerId} to ${slotId}`);
-        // First remove the selected player from all locations to avoid conflicts
-        removePlayerFromAllLocations(TapState.playerId);
-        // Now place them in the target slot
-        placePlayerToSlot(TapState.playerId, slotElement);
-        showMessage(`Players swapped!`, 'success');
+        // Clear tap state after swap
+        TapState.playerId = null;
+        TapState.source = null;
     } else {
         // Normal placement (no swap)
         console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${slotId}`);
@@ -480,21 +519,23 @@ function clearSelectionFully() {
  * Find which position a player is currently at (field or unavailable slot)
  */
 function findPositionOfPlayer(playerId) {
-    // Check field spots
+    // SPOT-LEVEL SEARCH: Check each individual field spot
     const fieldSpots = document.querySelectorAll('[data-position]');
     for (const spot of fieldSpots) {
+        // Check THIS specific field spot to see if it contains this player
         const playerNum = spot.querySelector('.player-number-placed');
         if (playerNum && playerNum.dataset.playerId === playerId) {
             return spot.getAttribute('data-position');
         }
     }
     
-    // Check unavailable slots
+    // SPOT-LEVEL SEARCH: Check each individual bench spot
     const unavailableSpots = document.querySelectorAll('.unavailable-slot');
     for (const spot of unavailableSpots) {
+        // Check THIS specific bench spot to see if it contains this player
         const playerNum = spot.querySelector('.player-number');
         if (playerNum && playerNum.dataset.playerId === playerId) {
-            return spot.id;  // Return the slot ID (e.g., 'unavailable-slot-1')
+            return spot.id;  // Return the specific bench spot ID (e.g., 'unavailable-slot-1')
         }
     }
     
@@ -504,8 +545,11 @@ function findPositionOfPlayer(playerId) {
 /**
  * Find which player is at a specific position (field or unavailable slot)
  */
+/**
+ * Find which player is at a specific position (works with individual spots)
+ */
 function findPlayerAtPosition(position) {
-    // Check field spots
+    // Check THIS specific field spot
     const fieldSpot = document.querySelector(`[data-position="${position}"]`);
     if (fieldSpot) {
         const playerNum = fieldSpot.querySelector('.player-number-placed');
@@ -515,7 +559,7 @@ function findPlayerAtPosition(position) {
         }
     }
     
-    // Check unavailable slots (position is like 'unavailable-slot-1')
+    // Check THIS specific bench spot (position is like 'unavailable-slot-1')
     const unavailableSpot = document.getElementById(position);
     if (unavailableSpot) {
         const playerNum = unavailableSpot.querySelector('.player-number');
@@ -527,10 +571,6 @@ function findPlayerAtPosition(position) {
     
     return null;
 }
-
-/**
- * Move a player to a specific position (helper for swap)
- */
 function movePlayerToPosition(playerId, position) {
     // Try to find field spot first
     let spot = document.querySelector(`[data-position="${position}"]`);
@@ -578,55 +618,83 @@ function placePlayerToSlot(playerId, slotElement) {
 }
 
 /**
- * Remove player from all locations (field, unavailable, sidebar)
+ * Remove player from all locations across all 3 area types
+ * Operates at SPOT LEVEL - each individual spot is checked and cleared independently
+ * Does not clear entire areas, only the specific spot where this player is located
  */
 function removePlayerFromAllLocations(playerId) {
-    // Clear all field slots
-    document.querySelectorAll('.player-slot').forEach(s => {
-        if (s.getAttribute('data-player-id') === playerId) {
-            s.innerHTML = '';
-            s.removeAttribute('data-player-id');
-            s.classList.remove('occupied');
+    console.log(`🗑️ removePlayerFromAllLocations: Clearing player ${playerId} from all spot types...`);
+    
+    // FIELD AREA: Scan each of 25 field spots individually
+    // Only the specific spot containing this player gets cleared
+    let clearedFromField = false;
+    document.querySelectorAll('.player-slot').forEach(spot => {
+        // Check THIS individual spot's data-player-id
+        if (spot.getAttribute('data-player-id') === playerId) {
+            console.log(`   🔴 FIELD SPOT: Clearing from position ${spot.getAttribute('data-position')}`);
+            spot.innerHTML = '';
+            spot.removeAttribute('data-player-id');
+            spot.classList.remove('occupied');
+            clearedFromField = true;
         }
     });
+    if (clearedFromField) console.log(`   ✓ Freed field spot`);
 
-    // Clear all unavailable slots
-    document.querySelectorAll('.unavailable-slot').forEach(s => {
-        if (s.getAttribute('data-player-id') === playerId) {
-            s.innerHTML = '';
-            s.removeAttribute('data-player-id');
-            s.classList.remove('occupied');
+    // BENCH AREA: Scan each of 5 bench spots individually 
+    // Only the specific bench spot containing this player gets cleared
+    let clearedFromBench = false;
+    document.querySelectorAll('.unavailable-slot').forEach(spot => {
+        // Check THIS individual bench spot's data-player-id
+        if (spot.getAttribute('data-player-id') === playerId) {
+            console.log(`   🟡 BENCH SPOT: Clearing from ${spot.id}`);
+            spot.innerHTML = '';
+            spot.removeAttribute('data-player-id');
+            spot.classList.remove('occupied');
+            clearedFromBench = true;
         }
     });
+    if (clearedFromBench) console.log(`   ✓ Freed bench spot`);
 
-    // Clear sidebar
-    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (sidebarPlayerNum) {
-        sidebarPlayerNum.classList.remove('disabled');
+    // SIDEBAR AREA: Find this player's individual spot in sidebar
+    // Only THIS player spot gets re-enabled (can be picked again)
+    let clearedFromSidebar = false;
+    const playerSidebarSpot = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (playerSidebarSpot) {
+        console.log(`   🟢 SIDEBAR SPOT: Re-enabling player`);
+        playerSidebarSpot.classList.remove('disabled');
+        clearedFromSidebar = true;
     }
+    if (clearedFromSidebar) console.log(`   ✓ Freed sidebar spot`);
 
-    // Update state
+    // Update STATE: Remove from unavailable list
     const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
     setUnavailablePlayers(unavailableList);
+    console.log(`   📋 Unavailable state cleared`);
 
+    // Update STATE: Remove from formation
     const formation = (getFormationTemp() || []).filter(f => f.playerId !== playerId);
     setFormationTemp(formation);
+    console.log(`   📋 Formation state cleared`);
+    
+    console.log(`   ✅ Removal complete: field=${clearedFromField}, bench=${clearedFromBench}, sidebar=${clearedFromSidebar}`);
 }
 
 /**
- * Place player in unavailable slot (on the bench)
+ * Place player on a specific bench spot
+ * Operates at SPOT LEVEL - modifies only the target bench spot
  */
 function placePlayerInUnavailable(playerId, slotElement, player) {
-    console.log(`   👉 placePlayerInUnavailable: ${player.name}(${player.jerseyNumber}) to bench`);
+    console.log(`   👉 placePlayerInUnavailable: Placing ${player.name}(${player.jerseyNumber}) on THIS specific bench spot ${slotElement.id}`);
     
-    // Add to unavailable list
+    // Update UNAVAILABLE STATE (bench persistence)
     const unavailableList = getUnavailablePlayers();
     if (!unavailableList.includes(playerId)) {
         unavailableList.push(playerId);
         setUnavailablePlayers(unavailableList);
+        console.log(`   ✓ STATE: Added to unavailable list (bench state)`);
     }
 
-    // Update slot with jersey number AND player name
+    // Update THIS SPECIFIC bench spot: Add badge, mark occupied
     slotElement.innerHTML = `
         <span class="player-number" data-player-id="${playerId}">
             <span class="jersey-num">${player.jerseyNumber}</span>
@@ -634,26 +702,29 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
         </span>
     `;
     slotElement.setAttribute('data-player-id', playerId);
-    console.log(`   ✓ Updated unavailable slot with player ${playerId}`);
+    console.log(`   ✓ BENCH SPOT: Badge rendered in ${slotElement.id}, spot now occupied`);
 
-    // Disable in sidebar
-    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (sidebarPlayerNum) {
-        sidebarPlayerNum.classList.add('disabled');
-        console.log(`   ✓ Disabled sidebar player ${playerId}`);
+    // Update SIDEBAR AREA: Find THIS specific player's spot and disable it
+    const playerSidebarSpot = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (playerSidebarSpot) {
+        playerSidebarSpot.classList.add('disabled');
+        console.log(`   ✓ SIDEBAR SPOT: This player's spot disabled (no longer available to pick)`);
     }
+    
+    console.log(`   ✅ Bench spot placement complete`);
 }
 
 /**
- * Place player on field slot
+ * Place player on a specific field spot
+ * Operates at SPOT LEVEL - modifies only the target field spot
  */
 function placePlayerOnField(playerId, slotElement, player) {
     const position = slotElement.getAttribute('data-position');
-    console.log(`   👉 placePlayerOnField: ${player.name}(${player.jerseyNumber}) to position ${position}`);
+    console.log(`   👉 placePlayerOnField: Placing ${player.name}(${player.jerseyNumber}) on THIS specific field spot at ${position}`);
     
     const formation = getFormationTemp() || [];
     
-    // Update formation
+    // Update FORMATION STATE for this specific field spot
     const updatedFormation = formation.filter(f => f.playerId !== playerId);
     updatedFormation.push({
         playerId,
@@ -662,9 +733,9 @@ function placePlayerOnField(playerId, slotElement, player) {
         y: parseFloat(slotElement.style.top)
     });
     setFormationTemp(updatedFormation);
-    console.log(`   ✓ Added to formation: ${position}`);
+    console.log(`   ✓ STATE: Formation updated for THIS spot position ${position}`);
 
-    // Update slot with jersey number AND player name
+    // Update THIS SPECIFIC field spot: Add badge, mark occupied
     slotElement.innerHTML = `
         <span class="player-number player-number-placed" data-player-id="${playerId}">
             <span class="jersey-num">${player.jerseyNumber}</span>
@@ -673,14 +744,16 @@ function placePlayerOnField(playerId, slotElement, player) {
     `;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
-    console.log(`   ✓ Occupied field slot, updated with player name`);
+    console.log(`   ✓ FIELD SPOT: Badge rendered in position ${position}, spot now occupied`);
 
-    // Disable in sidebar
-    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (sidebarPlayerNum) {
-        sidebarPlayerNum.classList.add('disabled');
-        console.log(`   ✓ Disabled sidebar player ${playerId}`);
+    // Update SIDEBAR AREA: Find THIS specific player's spot and disable it
+    const playerSidebarSpot = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (playerSidebarSpot) {
+        playerSidebarSpot.classList.add('disabled');
+        console.log(`   ✓ SIDEBAR SPOT: This player's spot disabled (no longer available to pick)`);
     }
+    
+    console.log(`   ✅ Field spot placement complete`);
 }
 
 /**
