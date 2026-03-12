@@ -595,6 +595,7 @@ function removePlayerFromAllLocations(playerId) {
         if (s.getAttribute('data-player-id') === playerId) {
             s.innerHTML = '';
             s.removeAttribute('data-player-id');
+            s.classList.remove('occupied');
         }
     });
 

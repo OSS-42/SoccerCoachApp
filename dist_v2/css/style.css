@@ -1349,6 +1349,7 @@ body {
     height: 48px;
     max-width: 48px;
     max-height: 48px;
+    aspect-ratio: 1;
     text-align: center;
     background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
     color: #fff;
@@ -2662,25 +2663,13 @@ button.no-assist-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(229, 57, 53, 0.08);
+        background: rgba(229, 57, 53, 0.12);
         cursor: pointer;
         transition: all 0.2s ease;
         flex-shrink: 0;
         margin: 0 auto;
         pointer-events: auto;
         overflow: hidden;
-    }
-    
-    .unavailable-slot:not(:has(*)) {
-        background: rgba(229, 57, 53, 0.15);
-        border-color: #ef5350;
-    }
-    
-    .unavailable-slot:hover:not(:has(*)) {
-        background: rgba(229, 57, 53, 0.25);
-        box-shadow: 0 0 8px rgba(233, 30, 99, 0.3);
-    }
-        padding: 4px;
     }
     
     .unavailable-slot:hover {
@@ -2883,7 +2872,7 @@ button.no-assist-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(229, 57, 53, 0.08);
+        background: rgba(229, 57, 53, 0.12);
         cursor: pointer;
         transition: all 0.2s ease;
         flex-shrink: 0;
@@ -2892,15 +2881,8 @@ button.no-assist-btn {
         overflow: hidden;
     }
     
-    .unavailable-slot:not(:has(*)) {
-        background: rgba(229, 57, 53, 0.15);
-        border-color: #ef5350;
-    }
-
     .unavailable-slot:hover {
-        background: rgba(229, 57, 53, 0.25);
-        box-shadow: 0 0 8px rgba(233, 30, 99, 0.3);
-    }
+        background: rgba(229, 57, 53, 0.2);
         border-color: #c62828;
         box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
         transform: scale(1.05);
@@ -3004,21 +2986,28 @@ button.no-assist-btn {
 
 /* Player number placed on field */
 .player-number-placed {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: #1a1a1a;
+    width: 48px;
+    height: 48px;
+    max-width: 48px;
+    max-height: 48px;
+    aspect-ratio: 1;
+    text-align: center;
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
     color: #fff;
-    border: 2px solid #fff;
-    border-radius: 50%;
+    border-radius: 4px;
     font-size: 14px;
     font-weight: 700;
     user-select: none;
     -webkit-user-select: none;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
     cursor: pointer;
+    flex-shrink: 0;
+    overflow: hidden;
 }
 
 /* Game report field with image */
