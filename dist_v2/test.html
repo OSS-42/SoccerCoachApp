@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Initialization Unit Tests - Soccer Coach Tracker v1.12.43</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #64b5f6;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #64b5f6;
+            padding-bottom: 10px;
+        }
+        
+        .info {
+            background: #1a237e;
+            border-left: 4px solid #2196f3;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #0b7dda;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        }
+        
+        .console {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            color: #00ff00;
+        }
+        
+        .console-line {
+            margin: 4px 0;
+            word-break: break-all;
+        }
+        
+        .console-pass {
+            color: #4CAF50;
+        }
+        
+        .console-fail {
+            color: #f44336;
+        }
+        
+        .console-test {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        
+        .console-info {
+            color: #888;
+        }
+        
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .summary-card {
+            background: #3d3d3d;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            border: 1px solid #555;
+        }
+        
+        .summary-card h3 {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+        
+        .summary-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #64b5f6;
+        }
+        
+        .summary-card.passed .number {
+            color: #4CAF50;
+        }
+        
+        .summary-card.failed .number {
+            color: #f44336;
+        }
+        
+        .controls {
+            background: #3d3d3d;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .controls h3 {
+            color: #64b5f6;
+            margin-bottom: 10px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.running {
+            background: #1a3a52;
+            color: #2196F3;
+        }
+        
+        .status.passed {
+            background: #1b5e20;
+            color: #4CAF50;
+        }
+        
+        .status.failed {
+            background: #5f2c2c;
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Initialization Unit Tests v1.12.43</h1>
+        
+        <div class="info">
+            <strong>Purpose:</strong> Test StateInit.js, loadAppData(), team creation, and data migration logic.
+            <br><strong>Note:</strong> This page tests ONLY the initialization logic without running the full app.
+        </div>
+        
+        <div class="controls">
+            <h3>Test Controls</h3>
+            <div class="button-group">
+                <button class="btn-primary" onclick="runTests()">▶️ Run All Tests</button>
+                <button class="btn-secondary" onclick="testIndividual('state')">Test State Init</button>
+                <button class="btn-secondary" onclick="testIndividual('create')">Test Create Teams</button>
+                <button class="btn-secondary" onclick="testIndividual('migrate')">Test Migration</button>
+                <button class="btn-danger" onclick="clearConsole()">🗑️ Clear Console</button>
+            </div>
+            <div id="status" class="status" style="display:none;"></div>
+        </div>
+        
+        <div class="console" id="console">
+            <div class="console-line console-info">Console output will appear here...</div>
+        </div>
+        
+        <div class="summary" id="summary" style="display:none;">
+            <div class="summary-card passed">
+                <h3>PASSED</h3>
+                <div class="number" id="passedCount">0</div>
+            </div>
+            <div class="summary-card failed" id="failedSummary" style="display:none;">
+                <h3>FAILED</h3>
+                <div class="number" id="failedCount">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>TOTAL</h3>
+                <div class="number" id="totalCount">0</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts in correct order -->
+    <script src="js/core/StateInit.js"></script>
+    <script src="js/core/constants.js"></script>
+    <script src="js/tests/InitializationTests.js"></script>
+    
+    <script>
+        // Override console to capture output
+        const consoleEl = document.getElementById('console');
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        function addToConsole(message, style = 'console-info') {
+            const line = document.createElement('div');
+            line.className = `console-line ${style}`;
+            line.textContent = message;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            const message = args.join(' ');
+            addToConsole(message, 'console-info');
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            const message = args.join(' ');
+            addToConsole('ERROR: ' + message, 'console-fail');
+            originalError.apply(console, args);
+        };
+        
+        // Intercept test results
+        async function runTests() {
+            const status = document.getElementById('status');
+            const summary = document.getElementById('summary');
+            
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = '⏳ Tests running...';
+            
+            consoleEl.innerHTML = '';
+            addToConsole('🚀 Starting tests...', 'console-test');
+            
+            try {
+                const results = await window.runAllInitTests();
+                
+                // Update summary
+                document.getElementById('passedCount').textContent = results.passed;
+                document.getElementById('failedCount').textContent = results.failed;
+                document.getElementById('totalCount').textContent = results.passed + results.failed;
+                
+                summary.style.display = 'grid';
+                
+                if (results.failed > 0) {
+                    document.getElementById('failedSummary').style.display = 'block';
+                    status.className = 'status failed';
+                    status.textContent = `❌ ${results.failed} test(s) failed`;
+                } else {
+                    document.getElementById('failedSummary').style.display = 'none';
+                    status.className = 'status passed';
+                    status.textContent = '✅ All tests passed!';
+                }
+            } catch (err) {
+                status.className = 'status failed';
+                status.textContent = `❌ Fatal error: ${err.message}`;
+                addToConsole(`Fatal error: ${err.stack}`, 'console-fail');
+            }
+        }
+        
+        function testIndividual(type) {
+            const status = document.getElementById('status');
+            status.style.display = 'block';
+            status.className = 'status running';
+            status.textContent = '⏳ Running individual test...';
+            
+            consoleEl.innerHTML = '';
+            const tester = new InitializationTests();
+            
+            try {
+                switch(type) {
+                    case 'state':
+                        tester.testStateInitialization();
+                        break;
+                    case 'create':
+                        tester.testCreateDefaultTeams();
+                        break;
+                    case 'migrate':
+                        tester.testMigrateLegacyData();
+                        break;
+                }
+                
+                addToConsole(`\nPassed: ${tester.passed}, Failed: ${tester.failed}`, 'console-test');
+                status.className = tester.failed === 0 ? 'status passed' : 'status failed';
+                status.textContent = tester.failed === 0 ? '✅ Test passed!' : `❌ Test failed`;
+            } catch (err) {
+                status.className = 'status failed';
+                status.textContent = `❌ Error: ${err.message}`;
+                addToConsole(`Error: ${err.stack}`, 'console-fail');
+            }
+        }
+        
+        function clearConsole() {
+            consoleEl.innerHTML = '<div class="console-line console-info">Console cleared</div>';
+            document.getElementById('summary').style.display = 'none';
+            document.getElementById('status').style.display = 'none';
+        }
+        
+        // Auto-run tests after a delay
+        window.addEventListener('load', () => {
+            addToConsole('\n🎯 Page loaded - ready to run tests', 'console-test');
+            addToConsole('Click "Run All Tests" button or use console: runAllInitTests()', 'console-info');
+        });
+    </script>
+</body>
+</html>

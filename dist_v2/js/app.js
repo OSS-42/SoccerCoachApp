@@ -240,13 +240,28 @@ function hideMessage() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('\n' + '='.repeat(60));
     console.log('🚀 DOMContentLoaded fired');
+    console.log('='.repeat(60));
     console.log(`   appState.teams before: ${appState.teams?.length || 0}`);
+    console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
+    
+    // Diagnostic: check if functions are available
+    console.log('\n📋 Pre-flight checks:');
+    console.log(`   ✓ loadAppData available: ${typeof window.loadAppData === 'function'}`);
+    console.log(`   ✓ createDefaultTeams available: ${typeof window.createDefaultTeams === 'function'}`);
+    console.log(`   ✓ migrateLegacyData available: ${typeof window.migrateLegacyData === 'function'}`);
+    console.log(`   ✓ getCurrentTeam available: ${typeof window.getCurrentTeam === 'function'}`);
     
     loadAppData().then(() => {
-        console.log('✅ loadAppData() resolved');
+        console.log('\n✅ loadAppData() resolved');
         console.log(`   appState.teams after: ${appState.teams?.length || 0}`);
         console.log(`   currentTeamId: ${appState.currentTeamId}`);
+        
+        if (appState.teams.length === 0) {
+            console.error('❌ CRITICAL: Teams still empty after loadAppData!');
+            return;
+        }
         
         // Initialize team UI after data is fully loaded
         updateTeamSelector();
@@ -276,6 +291,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show the main screen to start
         showScreen('main-screen');
+        
+        console.log('\n🎉 Initialization complete - app ready');
+        console.log('='.repeat(60) + '\n');
     }).catch(err => {
         console.error('❌ loadAppData() rejected:', err);
     });
@@ -1925,6 +1943,8 @@ function loadAppData() {
         console.log('✅ loadAppData() complete\n');
         
         resolve();
+    });
+}
 
 // Function to clear all app data and start fresh
 function clearAppData() {
