@@ -1832,6 +1832,9 @@ function saveAppData() {
 function loadAppData() {
     return new Promise((resolve) => {
         console.log('📂 loadAppData() starting...');
+        console.log('✅ NOTE: initState() is NOT called automatically during script load');
+        console.log('   Instead, localStorage is checked FIRST, then initState() is called only if needed.');
+        console.log('   This ensures saved data is preserved during page refresh!\n');
         console.log('🔍 === LOCALSTORAGE DIAGNOSTIC CHECK ===');
         
         // Check if localStorage is accessible at all

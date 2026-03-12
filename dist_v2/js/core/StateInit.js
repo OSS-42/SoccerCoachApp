@@ -118,5 +118,5 @@ function initState() {
 // make initState available globally
 window.initState = initState;
 
-// CRITICAL: Immediately initialize teams on page load
-initState();
+// DO NOT call initState() here - it will overwrite saved localStorage data!
+// Instead, loadAppData() in app.js will check localStorage first, then call initState() if needed
