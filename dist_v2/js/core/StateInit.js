@@ -45,10 +45,16 @@ function getCurrentTeam() {
 
 // perform migration from legacy single-team structure if needed
 function initState() {
+    console.log('🔧 initState() called');
+    console.log(`   Current appState.teams: ${appState.teams?.length || 0}`);
+    
     if (!appState.teams || appState.teams.length === 0) {
+        console.log(`   Teams array is empty, creating defaults...`);
         const hasLegacy = appState.teamName || (appState.players && appState.players.length > 0) || (appState.games && appState.games.length > 0);
+        console.log(`   Has legacy data: ${hasLegacy}`);
         
         if (hasLegacy) {
+            console.log(`   → Creating from legacy format`);
             // Migrate legacy data to Team A
             const teamA = {
                 id: 't1',
@@ -71,12 +77,14 @@ function initState() {
             };
             appState.teams = [teamA, teamB];
             appState.currentTeamId = teamA.id;
+            console.log(`   ✓ Created ${appState.teams.length} teams from legacy data`);
             // clean up legacy fields
             delete appState.teamName;
             delete appState.players;
             delete appState.games;
             delete appState.unavailablePlayers;
         } else {
+            console.log(`   → Creating fresh default teams`);
             // New install: create default Team A and Team B
             const teamA = {
                 id: 't1',
@@ -98,8 +106,13 @@ function initState() {
             };
             appState.teams = [teamA, teamB];
             appState.currentTeamId = teamA.id;
+            console.log(`   ✓ Created ${appState.teams.length} default teams`);
         }
+    } else {
+        console.log(`   Teams already exist (${appState.teams.length} teams), no init needed`);
     }
+    
+    console.log(`   Final state: ${appState.teams.length} teams, currentTeamId=${appState.currentTeamId}`);
 }
 
 // make initState available globally

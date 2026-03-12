@@ -1,7 +1,36 @@
-// Application State - use the one from StateInit.js (window.appState)
-// StateInit.js loads BEFORE this file and creates window.appState with multi-team support
-// We reference it here to avoid shadowing the global appState
+// Application State - ALWAYS ensure window.appState exists first
+if (!window.appState) {
+    console.warn('⚠️  window.appState not found, creating it now');
+    window.appState = {
+        teams: [],
+        currentTeamId: null,
+        currentGame: null,
+        timer: {
+            duration: 6 * 60,
+            timeLeft: 6 * 60,
+            interval: null,
+            isRunning: false
+        },
+        gameTimer: {
+            elapsed: 0,
+            interval: null,
+            isRunning: false,
+            startTime: null
+        },
+        settings: {
+            language: 'en',
+            defaultSubstitutionTime: null,
+            isSubstitutionDefaultChecked: false
+        },
+        currentPlayer: null,
+        formationTemp: null
+    };
+}
+
+// Reference the global appState
 const appState = window.appState;
+console.log('✅ app.js loaded, appState ready');
+console.log(`   teams: ${appState.teams?.length || 0}, currentTeamId: ${appState.currentTeamId}`);
 
 // Team helper functions - provide team isolation
 function getCurrentTeam() {
@@ -1823,10 +1852,21 @@ function loadAppData() {
                     console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
                 });
             } else {
-                console.error('   ❌❌❌ CRITICAL: Teams still empty after initState!');
+                console.error('   ❌ CRITICAL: Teams still empty after initState!');
             }
         } else {
             console.log(`   ✅ Teams already loaded (${appState.teams.length} teams)`);
+        }
+        
+        // FINAL CHECK - If still empty, create directly
+        if (!appState.teams || appState.teams.length === 0) {
+            console.error('   ❌❌ FINAL CHECK FAILED: Teams are still empty - creating now!');
+            appState.teams = [
+                { id: 't1', name: 'Team A', players: [], games: [], settings: appState.settings, unavailablePlayers: [], formationTemp: null },
+                { id: 't2', name: 'Team B', players: [], games: [], settings: appState.settings, unavailablePlayers: [], formationTemp: null }
+            ];
+            appState.currentTeamId = 't1';
+            console.log(`   ✓ Emergency team creation successful: ${appState.teams.length} teams now exist`);
         }
         
         // CRITICAL: Ensure currentTeamId is set to a valid team
@@ -1851,7 +1891,12 @@ function loadAppData() {
         
         initializeStyling();
         console.log('✅ loadAppData() complete!');
-        console.log(`   Final state: ${appState.teams?.length || 0} teams, currentTeamId=${appState.currentTeamId}, active team players=${getCurrentTeam()?.players?.length || 0}`);
+        console.log(`   FINAL STATE before promise resolves:`);
+        console.log(`   appState.teams: ${appState.teams?.length || 0}`);
+        console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
+        appState.teams?.forEach((t, i) => {
+            console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
+        });
         resolve();
     });
 }
