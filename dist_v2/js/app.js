@@ -659,6 +659,7 @@ function closeAddPlayerDialog() {
 }
 
 function addPlayer() {
+    console.log('🆕 addPlayer() called');
     const name = document.getElementById('player-name').value.trim().toUpperCase();
     const jerseyNumber = document.getElementById('jersey-number').value;
     const position = document.getElementById('player-position').value;
@@ -669,7 +670,9 @@ function addPlayer() {
     }
     
     // Check for duplicate jersey numbers
-    if (getTeamPlayers().some(p => p.jerseyNumber === Number(jerseyNumber))) {
+    const teamPlayers = getTeamPlayers();
+    console.log(`   Current team has ${teamPlayers?.length || 0} players`);
+    if (teamPlayers.some(p => p.jerseyNumber === Number(jerseyNumber))) {
         showMessage('A player with this jersey number already exists', 'error');
         return;
     }
@@ -693,8 +696,16 @@ function addPlayer() {
         }
     };
     
+    console.log(`   ➕ Adding player: ${name} #${jerseyNumber} (${position})`);
+    const team = getCurrentTeam();
+    console.log(`   Team found: ${team?.name}, Players before: ${team?.players?.length || 0}`);
+    
     getTeamPlayers().push(player);
+    console.log(`   Players after push: ${getTeamPlayers()?.length || 0}`);
+    
     saveAppData();
+    console.log(`   ✅ Player added and saved!`);
+    
     showMessage(`Player "${name}" (${position}) added successfully`, 'success');
     TeamSetupScreen.renderPlayersList();
     closeAddPlayerDialog();
@@ -1670,7 +1681,17 @@ function handleLanguageChange() {
 // Data persistence (using localStorage in the prototype)
 function saveAppData() {
     // Save all teams to localStorage
-    localStorage.setItem('soccerCoachApp2', JSON.stringify(appState));
+    try {
+        const dataToSave = JSON.stringify(appState);
+        localStorage.setItem('soccerCoachApp2', dataToSave);
+        console.log(`💾 saveAppData(): Saved successfully. Data size: ${dataToSave.length} bytes`);
+        console.log(`   Teams: ${appState.teams?.length || 0}, Active team has ${getTeamPlayers()?.length || 0} players`);
+    } catch (e) {
+        console.error(`❌ saveAppData(): Failed to save!`, e);
+        if (e.name === 'QuotaExceededError') {
+            console.error('   Storage quota exceeded!');
+        }
+    }
 }
 
 function loadAppData() {
@@ -1689,6 +1710,11 @@ function loadAppData() {
                     appState.settings = data.settings || appState.settings;
                     console.log(`   ✓ Loaded multi-team format: ${data.teams.length} teams`);
                     console.log(`   ✓ currentTeamId loaded as: ${appState.currentTeamId}`);
+                    
+                    // Show detail for each team
+                    data.teams.forEach((t, i) => {
+                        console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
+                    });
                 } else {
                     // Legacy single-team data - migrate it
                     appState.teamName = data.teamName || appState.teamName;
@@ -1728,8 +1754,13 @@ function loadAppData() {
             // Show which team is active and how many players it has
             const activeTeam = appState.teams.find(t => t.id === appState.currentTeamId);
             if (activeTeam) {
-                console.log(`   👥 Active team "${activeTeam.name}" has ${activeTeam.players?.length || 0} players`);
+                console.log(`   👥 Active team "${activeTeam.name}" (id=${activeTeam.id}) has ${activeTeam.players?.length || 0} players`);
+                if (activeTeam.players?.length === 0) {
+                    console.warn(`   ⚠️  WARNING: Active team has NO players!`);
+                }
             }
+        } else {
+            console.warn('   ⚠️  WARNING: No teams found in appState!');
         }
         
         initializeStyling();
