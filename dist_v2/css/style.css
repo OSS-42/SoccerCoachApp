@@ -2436,7 +2436,8 @@ button.no-assist-btn {
 @media screen and (max-width: 768px) {
     .formation-container {
         flex-direction: row;
-        height: calc(100vh - 120px);
+        flex: 1;
+        min-height: 0;
         overflow: hidden;
         gap: 0;
         padding: 0;
@@ -2531,7 +2532,7 @@ button.no-assist-btn {
     /* SOCCER FIELD - CENTER (PRIMARY) */
     .formation-field {
         width: 74%;
-        height: calc(100vh - 240px);
+        height: 100%;
         order: 2;
         flex-shrink: 0;
         background: url('../img/field.png') no-repeat center center;
@@ -2559,7 +2560,7 @@ button.no-assist-btn {
         border-left: 1px solid #ef9a9a;
         padding: 6px 4px;
         gap: 6px;
-        max-height: 100%;
+        height: 100%;
         overflow: hidden;
     }
     
@@ -2750,10 +2751,10 @@ button.no-assist-btn {
     
     /* SOCCER FIELD - CENTERED */
     .formation-field {
-        width: 280px;
-        height: 380px;
+        width: 380px;
+        height: 510px;
         background: url('../img/field.png') no-repeat center center;
-        background-size: auto 380px;
+        background-size: auto 510px;
         position: relative;
         margin: 0 auto;
         user-select: none;

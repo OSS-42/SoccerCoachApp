@@ -217,13 +217,22 @@ function handleTapPlayer(e) {
         targetElement = targetElement.closest('.player-number, .player-number-placed');
     }
     
-    if (!targetElement) return;
+    if (!targetElement) {
+        console.warn('⚠️ handleTapPlayer: targetElement not found');
+        return;
+    }
     
     const playerId = targetElement.getAttribute('data-player-id');
-    if (!playerId) return;
+    if (!playerId) {
+        console.warn('⚠️ handleTapPlayer: playerId not found on element');
+        return;
+    }
+    
+    console.log(`👆 Player tapped: ${playerId}`);
     
     // If tapping same player, deselect
     if (TapState.playerId === playerId) {
+        console.log(`🔄 Player ${playerId} already selected - deselecting`);
         clearSelection();
         return;
     }
@@ -244,6 +253,7 @@ function handleTapPlayer(e) {
     // Visual feedback
     clearSelection();
     targetElement.classList.add('tap-selected');
+    console.log(`✅ Player ${playerId} selected from ${source}. Ready to place on field.`);
 }
 
 /**
@@ -254,9 +264,17 @@ function handleTapSlot(e) {
     e.stopPropagation();
     
     const slotElement = e.currentTarget;
+    const position = slotElement.getAttribute('data-position');
     
-    // If no player is selected, do nothing
-    if (!TapState.playerId) return;
+    console.log(`🎯 Slot tapped at position: ${position}, TapState.playerId: ${TapState.playerId}`);
+    
+    // If no player is selected, show hint
+    if (!TapState.playerId) {
+        console.log('💡 No player selected. Tap a player jersey first, then tap a spot.');
+        return;
+    }
+    
+    console.log(`📍 Placing player ${TapState.playerId} to position ${position}`);
     
     // Place or move the selected player to this slot
     placePlayerToSlot(TapState.playerId, slotElement);
@@ -295,17 +313,26 @@ function clearSelection() {
  */
 function placePlayerToSlot(playerId, slotElement) {
     const player = getTeamPlayers().find(p => p.id === playerId);
-    if (!player || !slotElement) return;
+    if (!player || !slotElement) {
+        console.error(`❌ Cannot place player: player=${!!player}, slot=${!!slotElement}`);
+        return;
+    }
+    
+    console.log(`🔄 placePlayerToSlot called: player=${player.name}(${player.jerseyNumber}), slot=${slotElement.getAttribute('data-position')}`);
 
     // Remove player from ALL locations first
     removePlayerFromAllLocations(playerId);
 
     // Check if target is unavailable slot
     if (slotElement.classList.contains('unavailable-slot')) {
+        console.log(`   → Adding to unavailable`);
         placePlayerInUnavailable(playerId, slotElement, player);
     } else {
+        console.log(`   → Adding to field position`);
         placePlayerOnField(playerId, slotElement, player);
     }
+    
+    console.log(`✅ Player placed successfully`);
     
     // Re-setup event handlers after changes
     FormationScreen._setupTapHandlers();
