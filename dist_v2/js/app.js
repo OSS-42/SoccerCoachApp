@@ -244,7 +244,9 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log(`   appState before loadAppData: teams=${appState.teams?.length || 0}`);
     
     // Load saved data if available - this returns a Promise
-    loadAppData().then(() => {
+    console.log('🔍 About to call loadAppData()...');
+    try {
+        loadAppData().then(() => {
         console.log('✅ loadAppData() promise resolved');
         console.log(`   appState after loadAppData: teams=${appState.teams?.length || 0}, currentTeamId=${appState.currentTeamId}`);
         
@@ -279,7 +281,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show the main screen to start
         showScreen('main-screen');
+    }).catch(err => {
+        console.error('❌ loadAppData() promise rejected:', err);
     });
+    } catch (err) {
+        console.error('❌ Error calling loadAppData():', err);
+    }
 });
 
 // Team Name functions
@@ -1831,22 +1838,23 @@ function saveAppData() {
 
 function loadAppData() {
     return new Promise((resolve) => {
-        console.log('\n📂 ========== loadAppData() START ==========');
-        console.log('  INITIALIZATION FLOW:');
-        console.log('  1. Check if localStorage has saved data');
-        console.log('  2. If YES → load it (from new or legacy format)');
-        console.log('  3. If NO → create default teams');
-        console.log('  4. Ensure teams exist before resolving\n');
-        
-        // =====================================================================
-        // STEP 1: CHECK FOR LOCALSTORAGE DATA
-        // =====================================================================
-        console.log('📦 STEP 1: Checking localStorage...');
-        
-        let savedData = null;
-        let sourceKey = null;
-        
         try {
+            console.log('\n📂 ========== loadAppData() START ==========');
+            console.log('  INITIALIZATION FLOW:');
+            console.log('  1. Check if localStorage has saved data');
+            console.log('  2. If YES → load it (from new or legacy format)');
+            console.log('  3. If NO → create default teams');
+            console.log('  4. Ensure teams exist before resolving\n');
+            
+            // =====================================================================
+            // STEP 1: CHECK FOR LOCALSTORAGE DATA
+            // =====================================================================
+            console.log('📦 STEP 1: Checking localStorage...');
+            
+            let savedData = null;
+            let sourceKey = null;
+            
+            try {
             const data2 = localStorage.getItem('soccerCoachApp2');
             const dataOld = localStorage.getItem('soccerCoachApp');
             
@@ -1961,6 +1969,21 @@ function loadAppData() {
         console.log('📂 ========== loadAppData() END ==========\n');
         
         resolve();
+        } catch (outerErr) {
+            console.error('❌❌ CRITICAL ERROR IN loadAppData():', outerErr);
+            console.error('   Message:', outerErr.message);
+            console.error('   Stack:', outerErr.stack);
+            
+            // Even on error, create default teams as fallback
+            console.log('   Creating emergency default teams...');
+            try {
+                window.createDefaultTeams();
+                console.log('   ✓ Emergency defaults created');
+            } catch (e2) {
+                console.error('   ❌ Failed to create defaults:', e2.message);
+            }
+            resolve();
+        }
     });
 }
 
