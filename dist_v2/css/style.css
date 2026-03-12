@@ -1365,6 +1365,7 @@ body {
     padding: 0;
     cursor: pointer;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .player-number .jersey-num {
@@ -1372,19 +1373,23 @@ body {
     font-weight: bold;
     line-height: 1;
     pointer-events: none;
+    display: block;
+    height: 20px;
 }
 
 .player-number .player-name-bench,
 .player-number .player-name-field {
-    font-size: 7px;
+    font-size: 6px;
     line-height: 1;
     font-weight: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
-    margin-top: 1px;
+    max-width: 48px;
+    margin-top: 0;
     pointer-events: none;
+    display: block;
+    height: 6px;
 }
 
 /* Player grid numbers */
@@ -2551,6 +2556,7 @@ button.no-assist-btn {
         box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
         flex-shrink: 0;
         padding: 0;
+        overflow: hidden;
     }
     
     .player-number:active {
@@ -2662,6 +2668,18 @@ button.no-assist-btn {
         flex-shrink: 0;
         margin: 0 auto;
         pointer-events: auto;
+        overflow: hidden;
+    }
+    
+    .unavailable-slot:not(:has(*)) {
+        background: rgba(229, 57, 53, 0.15);
+        border-color: #ef5350;
+    }
+    
+    .unavailable-slot:hover:not(:has(*)) {
+        background: rgba(229, 57, 53, 0.25);
+        box-shadow: 0 0 8px rgba(233, 30, 99, 0.3);
+    }
         padding: 4px;
     }
     
@@ -2870,11 +2888,19 @@ button.no-assist-btn {
         transition: all 0.2s ease;
         flex-shrink: 0;
         pointer-events: auto;
-        padding: 4px;
+        padding: 0;
+        overflow: hidden;
     }
     
-    .unavailable-slot:hover {
+    .unavailable-slot:not(:has(*)) {
         background: rgba(229, 57, 53, 0.15);
+        border-color: #ef5350;
+    }
+
+    .unavailable-slot:hover {
+        background: rgba(229, 57, 53, 0.25);
+        box-shadow: 0 0 8px rgba(233, 30, 99, 0.3);
+    }
         border-color: #c62828;
         box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
         transform: scale(1.05);
