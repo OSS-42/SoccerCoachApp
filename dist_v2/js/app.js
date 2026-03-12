@@ -1732,22 +1732,99 @@ function handleLanguageChange() {
     }
 }
 
+// =====================================================================
+// STORAGE DIAGNOSTICS - Can be called from console to debug issues
+// =====================================================================
+
+/**
+ * Comprehensive storage diagnostics for troubleshooting
+ * Call from console: window.debugStorage()
+ */
+window.debugStorage = function() {
+    console.log('\n🔧 ===== STORAGE DIAGNOSTICS =====');
+    
+    // Check if Storage API is available
+    console.log('\n1️⃣  Storage API Availability:');
+    console.log(`   typeof(Storage): ${typeof(Storage)}`);
+    console.log(`   localStorage exists: ${!!localStorage}`);
+    console.log(`   typeof(localStorage): ${typeof(localStorage)}`);
+    
+    // Try to read/write
+    console.log('\n2️⃣  localStorage Read/Write Test:');
+    try {
+        localStorage.setItem('__test__', 'works');
+        const testRead = localStorage.getItem('__test__');
+        console.log(`   ✅ localStorage is working (test read: "${testRead}")`);
+        localStorage.removeItem('__test__');
+    } catch (e) {
+        console.error(`   ❌ localStorage disabled/failed: ${e.message}`);
+        console.error(`   Error type: ${e.name}`);
+        return;
+    }
+    
+    // List all keys
+    console.log('\n3️⃣  All localStorage Keys:');
+    console.log(`   Total keys: ${localStorage.length}`);
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const size = localStorage.getItem(key).length;
+        console.log(`      ${i}: "${key}" (${size} bytes)`);
+    }
+    
+    // Check for app-specific keys
+    console.log('\n4️⃣  App Data Keys:');
+    const key1 = localStorage.getItem('soccerCoachApp2');
+    const key2 = localStorage.getItem('soccerCoachApp');
+    console.log(`   soccerCoachApp2: ${key1 ? `✅ ${key1.length} bytes` : '❌ NOT FOUND'}`);
+    console.log(`   soccerCoachApp: ${key2 ? `✅ ${key2.length} bytes (LEGACY)` : '❌ NOT FOUND'}`);
+    
+    // Parse and display structure
+    console.log('\n5️⃣  App State Structure:');
+    console.log(`   appState.teams: ${appState.teams?.length || 0} teams`);
+    appState.teams?.forEach((t, i) => {
+        console.log(`      Team ${i}: "${t.name}" (id=${t.id}, ${t.players?.length || 0} players, ${t.games?.length || 0} games)`);
+    });
+    console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
+    
+    // Browser/Device info
+    console.log('\n6️⃣  Browser/Device Info:');
+    console.log(`   User Agent: ${navigator.userAgent.substring(0, 80)}...`);
+    console.log(`   Platform: ${navigator.platform}`);
+    console.log(`   Language: ${navigator.language}`);
+    console.log(`   Online: ${navigator.onLine}`);
+    
+    console.log('\n🔧 ===== END DIAGNOSTICS =====\n');
+};
+
 // Data persistence (using localStorage in the prototype)
 function saveAppData() {
     // Save all teams to localStorage
     try {
+        // Check localStorage accessibility first
+        if (typeof(Storage) === "undefined" || localStorage === null) {
+            console.error(`❌ localStorage not accessible (browser may be in private mode)`);
+            return;
+        }
+        
         const dataToSave = JSON.stringify(appState);
         localStorage.setItem('soccerCoachApp2', dataToSave);
-        console.log(`💾 saveAppData(): Saved successfully. Data size: ${dataToSave.length} bytes`);
-        console.log(`   Teams: ${appState.teams?.length || 0}`);
+        
+        console.log(`💾 saveAppData(): Saved successfully`);
+        console.log(`   localStorage key: soccerCoachApp2`);
+        console.log(`   Data size: ${dataToSave.length} bytes`);
+        console.log(`   Teams saved: ${appState.teams?.length || 0}`);
         appState.teams?.forEach((t, i) => {
-            console.log(`      Team ${i}: "${t.name}" (players=${t.players?.length || 0})`);
+            console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
         });
-        console.log(`   Active team has ${getTeamPlayers()?.length || 0} players`);
+        console.log(`   Active team (${appState.currentTeamId}): ${getTeamPlayers()?.length || 0} players`);
     } catch (e) {
-        console.error(`❌ saveAppData(): Failed to save!`, e);
+        console.error(`❌ saveAppData(): Failed to save!`, e.message);
         if (e.name === 'QuotaExceededError') {
-            console.error('   Storage quota exceeded!');
+            console.error('   ❌ Storage quota exceeded! (localStorage is full)');
+        } else if (e.name === 'NS_ERROR_FILE_CORRUPTED') {
+            console.error('   ❌ Firefox private mode detected (localStorage disabled)');
+        } else if (e.message.includes('denied')) {
+            console.error('   ❌ Access denied - browser privacy/permissions issue');
         }
     }
 }
@@ -1755,14 +1832,49 @@ function saveAppData() {
 function loadAppData() {
     return new Promise((resolve) => {
         console.log('📂 loadAppData() starting...');
+        console.log('🔍 === LOCALSTORAGE DIAGNOSTIC CHECK ===');
         
-        // Check what's in localStorage
-        const rawData2 = localStorage.getItem('soccerCoachApp2');
-        const rawDataOld = localStorage.getItem('soccerCoachApp');
-        console.log(`   localStorage.soccerCoachApp2 exists: ${!!rawData2} (${rawData2?.length || 0} bytes)`);
-        console.log(`   localStorage.soccerCoachApp exists: ${!!rawDataOld} (${rawDataOld?.length || 0} bytes)`);
+        // Check if localStorage is accessible at all
+        let localStorageAccessible = false;
+        let allKeys = [];
+        try {
+            // Try to access localStorage
+            localStorageAccessible = typeof(Storage) !== "undefined" && localStorage !== null;
+            console.log(`   ✓ localStorage is accessible: ${localStorageAccessible}`);
+            
+            // Get all keys
+            for (let i = 0; i < localStorage.length; i++) {
+                allKeys.push(localStorage.key(i));
+            }
+            console.log(`   📋 Total localStorage keys: ${localStorage.length}`);
+            console.log(`   Available keys: [${allKeys.join(', ')}]`);
+        } catch (e) {
+            console.error(`   ❌ Cannot access localStorage:`, e.message);
+            console.error(`   This might be due to: browser privacy mode, cross-origin restrictions, or permissions`);
+            localStorageAccessible = false;
+        }
+        
+        // Check for specific app data keys
+        console.log('🔎 Looking for app data keys:');
+        let rawData2 = null;
+        let rawDataOld = null;
+        
+        try {
+            rawData2 = localStorage.getItem('soccerCoachApp2');
+            console.log(`   soccerCoachApp2: ${rawData2 ? `✓ FOUND (${rawData2.length} bytes)` : '❌ NOT FOUND'}`);
+        } catch (e) {
+            console.warn(`   soccerCoachApp2: ⚠️  Error reading:`, e.message);
+        }
+        
+        try {
+            rawDataOld = localStorage.getItem('soccerCoachApp');
+            console.log(`   soccerCoachApp: ${rawDataOld ? `✓ FOUND (${rawDataOld.length} bytes - LEGACY)` : '❌ NOT FOUND'}`);
+        } catch (e) {
+            console.warn(`   soccerCoachApp: ⚠️  Error reading:`, e.message);
+        }
         
         const savedData = rawData2 || rawDataOld;
+        console.log('🔍 === END LOCALSTORAGE DIAGNOSTIC ===\n');
         
         if (savedData) {
             console.log('   ✓ Found saved data in localStorage');

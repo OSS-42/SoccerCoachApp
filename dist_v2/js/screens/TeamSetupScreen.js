@@ -158,6 +158,7 @@ const TeamSetupScreen = {
             `;
             this.updateEditButtonStates();
         }
+    },
     
     /**
      * Close the warning ribbon and uncheck all players
