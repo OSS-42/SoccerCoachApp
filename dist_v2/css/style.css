@@ -2609,34 +2609,34 @@ button.no-assist-btn {
         overflow: hidden;
     }
     
-    /* UNAVAILABLE PLAYERS - RIGHT SIDEBAR */
-    .unavailable-players {
+    /* BENCH PLAYERS - RIGHT SIDEBAR */
+    .bench-players {
         width: 13%;
         order: 3;
         display: flex;
         flex-direction: column;
-        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-        border-left: 1px solid #ef9a9a;
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        border-left: 1px solid #81c784;
         padding: 6px 4px;
         gap: 6px;
         height: 100%;
         overflow: hidden;
     }
     
-    .unavailable-players h4 {
+    .bench-players h4 {
         font-size: 10px;
         margin: 0;
-        color: #c62828;
+        color: #2e7d32;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         text-align: center;
         flex-shrink: 0;
         padding: 2px 0;
-        border-bottom: 1px solid #ef9a9a;
+        border-bottom: 1px solid #81c784;
     }
     
-    .unavailable-slots {
+    .bench-slots {
         display: flex;
         flex-direction: column;
         gap: 5px;
@@ -2646,24 +2646,24 @@ button.no-assist-btn {
         -webkit-overflow-scrolling: touch;
     }
     
-    .unavailable-slots::-webkit-scrollbar {
+    .bench-slots::-webkit-scrollbar {
         width: 4px;
     }
     
-    .unavailable-slots::-webkit-scrollbar-thumb {
-        background: #ef9a9a;
+    .bench-slots::-webkit-scrollbar-thumb {
+        background: #81c784;
         border-radius: 2px;
     }
     
-    .unavailable-slot {
+    .bench-slot {
         width: 36px;
         height: 36px;
-        border: 2px dashed #e53935;
+        border: 2px dashed #4caf50;
         border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(229, 57, 53, 0.12);
+        background: rgba(76, 175, 80, 0.12);
         cursor: pointer;
         transition: all 0.2s ease;
         flex-shrink: 0;
@@ -2672,16 +2672,16 @@ button.no-assist-btn {
         overflow: hidden;
     }
     
-    .unavailable-slot:hover {
-        background: rgba(229, 57, 53, 0.15);
-        border-color: #c62828;
-        box-shadow: 0 2px 6px rgba(229, 57, 53, 0.3);
+    .bench-slot:hover {
+        background: rgba(76, 175, 80, 0.15);
+        border-color: #388e3c;
+        box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
     }
     
-    .unavailable-slot.occupied {
+    .bench-slot.occupied {
         border-style: solid;
-        background: rgba(229, 57, 53, 0.2);
-        border-color: #c62828;
+        background: rgba(76, 175, 80, 0.2);
+        border-color: #388e3c;
     }
 }
 
@@ -2831,32 +2831,32 @@ button.no-assist-btn {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
-    /* UNAVAILABLE PLAYERS - BOTTOM SECTION */
-    .unavailable-players {
+    /* BENCH PLAYERS - BOTTOM SECTION */
+    .bench-players {
         width: 100%;
         display: flex;
         align-items: center;
         gap: 12px;
         padding: 12px 16px;
-        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
         border-radius: 8px;
-        border: 2px solid #ef9a9a;
+        border: 2px solid #81c784;
     }
     
-    .unavailable-players h4 {
+    .bench-players h4 {
         font-size: 14px;
         margin: 0;
-        color: #c62828;
+        color: #2e7d32;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         white-space: nowrap;
         flex-shrink: 0;
         padding-right: 12px;
-        border-right: 2px solid #ef9a9a;
+        border-right: 2px solid #81c784;
     }
     
-    .unavailable-slots {
+    .bench-slots {
         display: flex;
         flex-direction: row;
         gap: 10px;
@@ -2864,15 +2864,15 @@ button.no-assist-btn {
         flex-grow: 1;
     }
     
-    .unavailable-slot {
+    .bench-slot {
         width: 50px;
         height: 50px;
-        border: 2px dashed #e53935;
+        border: 2px dashed #4caf50;
         border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(229, 57, 53, 0.12);
+        background: rgba(76, 175, 80, 0.12);
         cursor: pointer;
         transition: all 0.2s ease;
         flex-shrink: 0;
@@ -2881,21 +2881,21 @@ button.no-assist-btn {
         overflow: hidden;
     }
     
-    .unavailable-slot:hover {
-        background: rgba(229, 57, 53, 0.2);
-        border-color: #c62828;
-        box-shadow: 0 2px 8px rgba(229, 57, 53, 0.3);
+    .bench-slot:hover {
+        background: rgba(76, 175, 80, 0.2);
+        border-color: #388e3c;
+        box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
         transform: scale(1.05);
     }
     
-    .unavailable-slot:active {
+    .bench-slot:active {
         transform: scale(0.95);
     }
     
-    .unavailable-slot.occupied {
+    .bench-slot.occupied {
         border-style: solid;
-        background: rgba(229, 57, 53, 0.25);
-        border-color: #c62828;
+        background: rgba(76, 175, 80, 0.25);
+        border-color: #388e3c;
     }
 }
 

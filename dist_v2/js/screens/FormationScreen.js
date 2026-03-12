@@ -10,9 +10,9 @@ const FormationScreen = {
     renderFormationSetup() {
         const playerList = document.getElementById('player-list');
         const formationField = document.getElementById('formation-field');
-        const unavailableSlots = document.getElementById('unavailable-slots');
+        const benchSlots = document.getElementById('bench-slots');
         
-        if (!playerList || !formationField || !unavailableSlots) {
+        if (!playerList || !formationField || !benchSlots) {
             console.error('❌ Formation screen DOM elements not found');
             return;
         }
@@ -22,7 +22,7 @@ const FormationScreen = {
         // Clear all content
         playerList.innerHTML = '';
         formationField.innerHTML = '';
-        unavailableSlots.innerHTML = '';
+        benchSlots.innerHTML = '';
         
         // Reset state
         setUnavailablePlayers([]);
@@ -67,9 +67,9 @@ const FormationScreen = {
         
         for (let i = 1; i <= numBenchSpots; i++) {
             const slot = document.createElement('div');
-            slot.className = 'unavailable-slot';
-            slot.id = `unavailable-slot-${i}`;
-            unavailableSlots.appendChild(slot);
+            slot.className = 'bench-slot';
+            slot.id = `bench-slot-${i}`;
+            benchSlots.appendChild(slot);
         }
         
         console.log(`✅ Created ${numBenchSpots} empty bench slots for ${matchType}`);
@@ -119,7 +119,7 @@ const FormationScreen = {
             el.removeEventListener('click', handleTapPlayer);
             el.removeEventListener('touchstart', handleTapPlayer);
         });
-        document.querySelectorAll('.player-slot, .unavailable-slot').forEach(el => {
+        document.querySelectorAll('.player-slot, .bench-slot').forEach(el => {
             el.removeEventListener('click', handleTapSlot);
             el.removeEventListener('touchstart', handleTapSlot);
         });
@@ -135,7 +135,7 @@ const FormationScreen = {
         });
 
         // RE-ATTACH handlers for all slots (field + unavailable)
-        const slots = document.querySelectorAll('.player-slot, .unavailable-slot');
+        const slots = document.querySelectorAll('.player-slot, .bench-slot');
         console.log(`   🎯 Found ${slots.length} slot elements (20 field + 5 unavailable)`);
         slots.forEach((slot, idx) => {
             slot.style.cursor = 'pointer';
@@ -253,7 +253,7 @@ function handleTapPlayer(e) {
         source = 'field';
     } else if (isDisabled) {
         // Check if player is in unavailable slot or just in sidebar but disabled
-        const inUnavailableSlot = targetElement.closest('.unavailable-slot');
+        const inBenchSlot = targetElement.closest('.bench-slot');
         if (inUnavailableSlot) {
             source = 'unavailable';
         } else {
@@ -293,7 +293,7 @@ function handleTapSlot(e) {
     if (eventType.includes('touch') && e.touches?.length > 0) {
         const touch = e.touches[0];
         const touchedEl = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (touchedEl?.classList.contains('player-slot') || touchedEl?.classList.contains('unavailable-slot')) {
+        if (touchedEl?.classList.contains('player-slot') || touchedEl?.classList.contains('bench-slot')) {
             slotElement = touchedEl;
         }
     }
@@ -304,7 +304,7 @@ function handleTapSlot(e) {
     console.log(`   Position: ${position}`);
     console.log(`   Class: ${slotElement.className}`);
     console.log(`   Is a player-slot: ${slotElement.classList.contains('player-slot')}`);
-    console.log(`   Is unavailable-slot: ${slotElement.classList.contains('unavailable-slot')}`);
+    console.log(`   Is bench-slot: ${slotElement.classList.contains('bench-slot')}`);
     console.log(`   TapState object:`, TapState);
     console.log(`   TapState.playerId: ${TapState.playerId}`);
     
@@ -455,12 +455,12 @@ function findPositionOfPlayer(playerId) {
     }
     
     // SPOT-LEVEL SEARCH: Check each individual bench spot
-    const unavailableSpots = document.querySelectorAll('.unavailable-slot');
-    for (const spot of unavailableSpots) {
+    const benchSpots = document.querySelectorAll('.bench-slot');
+    for (const spot of benchSpots) {
         // Check THIS specific bench spot to see if it contains this player
         const playerNum = spot.querySelector('.player-number');
         if (playerNum && playerNum.dataset.playerId === playerId) {
-            return spot.id;  // Return the specific bench spot ID (e.g., 'unavailable-slot-1')
+            return spot.id;  // Return the specific bench spot ID (e.g., 'bench-slot-1')
         }
     }
     
@@ -484,7 +484,7 @@ function findPlayerAtPosition(position) {
         }
     }
     
-    // Check THIS specific bench spot (position is like 'unavailable-slot-1')
+    // Check THIS specific bench spot (position is like 'bench-slot-1')
     const unavailableSpot = document.getElementById(position);
     if (unavailableSpot) {
         const playerNum = unavailableSpot.querySelector('.player-number');
@@ -532,7 +532,7 @@ function placePlayerToSlot(playerId, slotElement) {
     removePlayerFromAllLocations(playerId);
 
     // Check if target is unavailable slot
-    if (slotElement.classList.contains('unavailable-slot')) {
+    if (slotElement.classList.contains('bench-slot')) {
         console.log(`   → Adding to unavailable`);
         placePlayerInUnavailable(playerId, slotElement, player);
     } else {
@@ -572,7 +572,7 @@ function removePlayerFromAllLocations(playerId) {
     // BENCH AREA: Scan each of 5 bench spots individually 
     // Only the specific bench spot containing this player gets cleared
     let clearedFromBench = false;
-    document.querySelectorAll('.unavailable-slot').forEach(spot => {
+    document.querySelectorAll('.bench-slot').forEach(spot => {
         // Check THIS individual bench spot's data-player-id
         if (spot.getAttribute('data-player-id') === playerId) {
             console.log(`   🟡 BENCH SPOT: Clearing from ${spot.id}`);

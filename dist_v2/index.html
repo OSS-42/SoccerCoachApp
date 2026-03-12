@@ -60,40 +60,21 @@
             margin-bottom: 30px;
         }
         
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-top: 4px solid #64b5f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
         .soccer-ball {
             width: 60px;
             height: 60px;
-            margin: 0 auto 20px;
             font-size: 60px;
-            animation: bounce 2s ease-in-out infinite, spin-smooth 3s linear infinite;
+            animation: bounce-horizontal 3s ease-in-out infinite;
             display: inline-block;
+            margin: 0 auto 20px;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @keyframes spin-smooth {
-            from { transform: rotateZ(0deg); }
-            to { transform: rotateZ(360deg); }
-        }
-        
-        @keyframes bounce {
-            0% { transform: translateY(0) rotateZ(0deg); }
-            25% { transform: translateY(-30px) rotateZ(90deg); }
-            50% { transform: translateY(0) rotateZ(180deg); }
-            75% { transform: translateY(-15px) rotateZ(270deg); }
-            100% { transform: translateY(0) rotateZ(360deg); }
+        @keyframes bounce-horizontal {
+            0% { transform: translateX(-100vw) translateY(0) rotateZ(0deg); }
+            25% { transform: translateX(-75vw) translateY(-30px) rotateZ(90deg); }
+            50% { transform: translateX(0) translateY(0) rotateZ(180deg); }
+            75% { transform: translateX(75vw) translateY(-30px) rotateZ(270deg); }
+            100% { transform: translateX(100vw) translateY(0) rotateZ(360deg); }
         }
         
         #loader-console {
@@ -332,9 +313,9 @@
                 <div class="formation-container">
                     <div class="player-list" id="player-list"></div>
                     <div class="formation-field" id="formation-field"></div>
-                    <div class="unavailable-players" id="unavailable-players">
-                        <h4>Unavailable Players</h4>
-                        <div class="unavailable-slots" id="unavailable-slots"></div>
+                    <div class="bench-players" id="bench-players">
+                        <h4>Bench Players</h4>
+                        <div class="bench-slots" id="bench-slots"></div>
                     </div>
                 </div>
                 <div class="formation-options">
