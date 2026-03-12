@@ -159,36 +159,54 @@ const FormationScreen = {
      * @private
      */
     _setupTapHandlers() {
-        // Remove old listeners first
+        console.log('🔗 _setupTapHandlers() called');
+        
+        // Remove old listeners first - BOTH click and touch events
         document.querySelectorAll('.player-number, .player-number-placed').forEach(el => {
             el.removeEventListener('click', handleTapPlayer);
+            el.removeEventListener('touchstart', handleTapPlayer);
         });
         document.querySelectorAll('.player-slot, .unavailable-slot').forEach(el => {
             el.removeEventListener('click', handleTapSlot);
+            el.removeEventListener('touchstart', handleTapSlot);
         });
 
         // Re-attach handlers for all player numbers (sidebar + placed)
         const allPlayerNumbers = document.querySelectorAll('.player-number, .player-number-placed');
-        console.log(`🔗 Attaching player handlers to ${allPlayerNumbers.length} elements`);
-        allPlayerNumbers.forEach(number => {
+        console.log(`   📌 Found ${allPlayerNumbers.length} player number elements`);
+        allPlayerNumbers.forEach((number, idx) => {
+            // Add BOTH click and touch event handlers for mobile compatibility
             number.addEventListener('click', handleTapPlayer, { passive: false });
+            number.addEventListener('touchstart', handleTapPlayer, { passive: false });
+            if (idx < 3) console.log(`      [${idx}] ${number.getAttribute('data-player-id')} - click+touch listeners added`);
         });
 
-        // Re-attach handlers for all slots (field + unavailable)
+        // RE-ATTACH handlers for all slots (field + unavailable)
         const slots = document.querySelectorAll('.player-slot, .unavailable-slot');
-        console.log(`🔗 Attaching slot handlers to ${slots.length} slot elements`);
-        slots.forEach(slot => {
+        console.log(`   🎯 Found ${slots.length} slot elements (20 field + 5 unavailable)`);
+        slots.forEach((slot, idx) => {
             slot.style.cursor = 'pointer';
             slot.style.pointerEvents = 'auto';
+            slot.style.touchAction = 'none';  /* Prevent touch scrolling on slots */
+            // Add BOTH click and touch event handlers for mobile compatibility
             slot.addEventListener('click', handleTapSlot, { passive: false });
+            slot.addEventListener('touchstart', handleTapSlot, { passive: false });
+            if (idx < 3 || idx >= slots.length - 3) {
+                console.log(`      [${idx}] ${slot.getAttribute('data-position') || slot.id} - position: ${slot.style.position || 'auto'}, click+touch listeners added`);
+            }
         });
 
         // Setup sidebar tap-to-remove functionality
         const playerList = document.getElementById('player-list');
         if (playerList) {
             playerList.removeEventListener('click', handleSidebarTap);
+            playerList.removeEventListener('touchstart', handleSidebarTap);
             playerList.addEventListener('click', handleSidebarTap, { passive: false });
+            playerList.addEventListener('touchstart', handleSidebarTap, { passive: false });
+            console.log(`   ✓ Sidebar listener attached (click + touch)`);
         }
+        
+        console.log(`✅ Event listeners setup complete! (${allPlayerNumbers.length} player + ${slots.length} slot handlers)`);
     }
 };
 
@@ -216,11 +234,24 @@ const TapState = {
  * Handle player number tap - select/deselect player
  */
 function handleTapPlayer(e) {
+    const eventType = e.type;  // 'click', 'touchstart', etc.
+    
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation?.();
     
     let targetElement = e.target || e.currentTarget;
-    console.log(`👆 handleTapPlayer fired. Initial target class: ${targetElement.className}`);
+    
+    // For touch events, find the element at the touch point
+    if (eventType.includes('touch') && e.touches?.length > 0) {
+        const touch = e.touches[0];
+        const touchedEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (touchedEl?.classList.contains('player-number') || touchedEl?.classList.contains('player-number-placed')) {
+            targetElement = touchedEl;
+        }
+    }
+    
+    console.log(`👆 handleTapPlayer fired [${eventType}]. Target class: ${targetElement.className}`);
     
     // Ensure we have the player-number element
     if (!targetElement.classList.contains('player-number') && 
@@ -276,18 +307,29 @@ function handleTapPlayer(e) {
  * Handle slot tap - place selected player or clear slot
  */
 function handleTapSlot(e) {
+    // Handle both touch and click events
+    const eventType = e.type;  // 'click', 'touchstart', 'touchend'
+    
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation?.();
     
-    const slotElement = e.currentTarget || e.target;
+    // For touch events, get the touched element, otherwise use click target
+    let slotElement = e.currentTarget;
+    if (eventType.includes('touch') && e.touches?.length > 0) {
+        const touch = e.touches[0];
+        const touchedEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (touchedEl?.classList.contains('player-slot') || touchedEl?.classList.contains('unavailable-slot')) {
+            slotElement = touchedEl;
+        }
+    }
+    
     const position = slotElement?.getAttribute?.('data-position') || slotElement?.getAttribute?.('id') || 'unknown';
     
-    console.log(`🎯 Slot tapped!`);
+    console.log(`🎯 Slot tapped! [${eventType}]`);
     console.log(`   Position: ${position}`);
-    console.log(`   Has data-position: ${slotElement.getAttribute('data-position')}`);
-    console.log(`   Element: ${slotElement.className}`);
+    console.log(`   Class: ${slotElement.className}`);
     console.log(`   TapState.playerId: ${TapState.playerId}`);
-    console.log(`   TapState: `, TapState);
     
     // If no player is selected, show hint
     if (!TapState.playerId) {
@@ -296,14 +338,16 @@ function handleTapSlot(e) {
         return;
     }
     
-    console.log(`📍 Placing player ${TapState.playerId} to position ${position}`);
+    console.log(`📍 PLACING player ${TapState.playerId} to position ${position}`);
     
     // Place or move the selected player to this slot
     try {
         placePlayerToSlot(TapState.playerId, slotElement);
         console.log('✅ Placement successful!');
+        showMessage('Player placed!', 'success');
     } catch (err) {
         console.error('❌ Placement failed:', err);
+        showMessage('Placement failed!', 'error');
     }
     
     clearSelection();
@@ -313,11 +357,17 @@ function handleTapSlot(e) {
  * Handle sidebar tap to remove players from field/unavailable
  */
 function handleSidebarTap(e) {
+    // Prevent propagation for touch events too
+    if (e.type.includes('touch')) {
+        e.preventDefault();
+    }
+    
     // If a player is selected and user taps sidebar (not on a player)
     if (!TapState.playerId) return;
     if (TapState.source === 'sidebar') return;
     if (!e.target.classList.contains('player-list')) return;
     
+    console.log(`🔙 Sidebar tap detected - removing player ${TapState.playerId}`);
     removePlayerFromSlot(TapState.playerId);
     clearSelection();
 }

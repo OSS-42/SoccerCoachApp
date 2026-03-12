@@ -1675,8 +1675,11 @@ function saveAppData() {
 
 function loadAppData() {
     return new Promise((resolve) => {
+        console.log('📂 loadAppData() starting...');
         const savedData = localStorage.getItem('soccerCoachApp2') || localStorage.getItem('soccerCoachApp');
+        
         if (savedData) {
+            console.log('   ✓ Found saved data in localStorage');
             try {
                 const data = JSON.parse(savedData);
                 if (data.teams) {
@@ -1684,6 +1687,7 @@ function loadAppData() {
                     appState.teams = data.teams;
                     appState.currentTeamId = data.currentTeamId;
                     appState.settings = data.settings || appState.settings;
+                    console.log(`   ✓ Loaded multi-team format: ${data.teams.length} teams`);
                 } else {
                     // Legacy single-team data - migrate it
                     appState.teamName = data.teamName || appState.teamName;
@@ -1692,18 +1696,28 @@ function loadAppData() {
                     appState.unavailablePlayers = data.unavailablePlayers || [];
                     appState.settings = data.settings || appState.settings;
                     appState.formationTemp = data.formationTemp || null;
+                    console.log(`   ✓ Loaded legacy single-team format`);
                 }
             } catch (e) {
-                console.error('Failed to parse saved data:', e);
+                console.error('   ❌ Failed to parse saved data:', e);
                 // If parsing fails, we'll use default initialization below
             }
+        } else {
+            console.log('   ℹ️ No saved data found');
         }
+        
         // Initialize state with multi-team support if not already initialized
         // This calls the global initState() from StateInit.js
         if (typeof initState === 'function' && (!appState.teams || appState.teams.length === 0)) {
+            console.log('   📦 Calling initState()...');
             initState();
+            console.log(`   ✓ initState() completed. Teams now: ${appState.teams?.length || 0}`);
+        } else {
+            console.log(`   ℹ️ initState() not called (initState function exists=${typeof initState === 'function'}, teams=${appState.teams?.length || 0})`);
         }
+        
         initializeStyling();
+        console.log('✅ loadAppData() complete!');
         resolve();
     });
 }
