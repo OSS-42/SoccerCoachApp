@@ -1685,7 +1685,11 @@ function saveAppData() {
         const dataToSave = JSON.stringify(appState);
         localStorage.setItem('soccerCoachApp2', dataToSave);
         console.log(`💾 saveAppData(): Saved successfully. Data size: ${dataToSave.length} bytes`);
-        console.log(`   Teams: ${appState.teams?.length || 0}, Active team has ${getTeamPlayers()?.length || 0} players`);
+        console.log(`   Teams: ${appState.teams?.length || 0}`);
+        appState.teams?.forEach((t, i) => {
+            console.log(`      Team ${i}: "${t.name}" (players=${t.players?.length || 0})`);
+        });
+        console.log(`   Active team has ${getTeamPlayers()?.length || 0} players`);
     } catch (e) {
         console.error(`❌ saveAppData(): Failed to save!`, e);
         if (e.name === 'QuotaExceededError') {
@@ -1736,18 +1740,47 @@ function loadAppData() {
         // Initialize state with multi-team support if not already initialized
         // CRITICAL: Always ensure we have at least Team A and Team B
         if (!appState.teams || appState.teams.length === 0) {
-            console.log('   📦 No teams found - calling initState() to create defaults...');
-            if (typeof initState === 'function') {
-                initState();
-                console.log(`   ✓ initState() completed. Teams now: ${appState.teams?.length || 0}`);
+            console.log('   📦 No teams found - creating defaults...');
+            
+            // Try to use global initState if available
+            if (typeof window.initState === 'function') {
+                console.log('   📦 Calling window.initState()...');
+                window.initState();
+                console.log(`   ✓ window.initState() completed. Teams now: ${appState.teams?.length || 0}`);
+            } else {
+                console.warn('   ⚠️  window.initState() not available, creating teams manually...');
+                // Fallback: create default teams manually
+                const teamA = {
+                    id: 't1',
+                    name: 'Team A',
+                    players: [],
+                    games: [],
+                    settings: appState.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                    unavailablePlayers: [],
+                    formationTemp: null
+                };
+                const teamB = {
+                    id: 't2',
+                    name: 'Team B',
+                    players: [],
+                    games: [],
+                    settings: appState.settings || { language:'en', defaultSubstitutionTime:null, isSubstitutionDefaultChecked:false },
+                    unavailablePlayers: [],
+                    formationTemp: null
+                };
+                appState.teams = [teamA, teamB];
+                appState.currentTeamId = teamA.id;
+                console.log('   ✓ Default teams created manually');
+            }
+            
+            // Show created teams
+            if (appState.teams && appState.teams.length > 0) {
                 appState.teams.forEach((t, i) => {
                     console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
                 });
-            } else {
-                console.error('   ❌ initState() function not available!');
             }
         } else {
-            console.log(`   ℹ️ Teams already loaded (${appState.teams.length} teams), skipping initState()`);
+            console.log(`   ℹ️ Teams already loaded (${appState.teams.length} teams), skipping creation`);
         }
         
         // CRITICAL: Ensure currentTeamId is set to a valid team

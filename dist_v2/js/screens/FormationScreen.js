@@ -369,12 +369,29 @@ function handleSidebarTap(e) {
         e.preventDefault();
     }
     
-    // If a player is selected and user taps sidebar (not on a player)
-    if (!TapState.playerId) return;
-    if (TapState.source === 'sidebar') return;
-    if (!e.target.classList.contains('player-list')) return;
+    // If a player is selected from field/unavailable and user taps sidebar, remove them
+    if (!TapState.playerId) {
+        console.log('💡 Sidebar tapped but no player selected');
+        return;
+    }
     
-    console.log(`🔙 Sidebar tap detected - removing player ${TapState.playerId}`);
+    // Only allow removal of players from field or unavailable slots (not sidebar players)
+    if (TapState.source === 'sidebar') {
+        console.log('Sidebar player already selected - nothing to remove');
+        return;
+    }
+    
+    // Check if click/tap is within the sidebar area
+    const sidebarElement = e.currentTarget || e.target;
+    const isClickInSidebar = sidebarElement.classList.contains('player-list') || 
+                             sidebarElement.closest('.player-list');
+    
+    if (!isClickInSidebar) {
+        console.log('💡 Tap not in sidebar area');
+        return;
+    }
+    
+    console.log(`🔙 Sidebar tap detected - removing player ${TapState.playerId} from ${TapState.source}`);
     removePlayerFromSlot(TapState.playerId);
     clearSelectionFully();
 }
