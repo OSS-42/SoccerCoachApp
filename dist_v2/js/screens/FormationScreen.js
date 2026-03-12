@@ -130,67 +130,40 @@ const FormationScreen = {
     },
 
     /**
-     * Setup tap-to-select event listeners (no drag prevention needed - handled by CSS)
+     * Setup tap-to-select event listeners
      * @private
      */
     _setupTapHandlers() {
-        const numbers = document.querySelectorAll('.player-number');
-        numbers.forEach(number => {
-            if (!number.hasAttribute('data-events-setup')) {
-                // Handle both click and touch tap
-                number.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleTapPlayer(e);
-                }, { passive: false });
-                number.setAttribute('data-events-setup', 'true');
-            }
+        // Setup handlers for all player numbers (sidebar + placed)
+        const allPlayerNumbers = document.querySelectorAll('.player-number, .player-number-placed');
+        allPlayerNumbers.forEach(number => {
+            number.removeEventListener('click', handleTapPlayer);
+            number.addEventListener('click', handleTapPlayer, { passive: false });
         });
 
+        // Setup handlers for all slots (field + unavailable)
         const slots = document.querySelectorAll('.player-slot, .unavailable-slot');
         slots.forEach(slot => {
-            slot.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleTapSlot(e);
-            }, { passive: false });
-            // Add touch support for mobile tap detection
-            slot.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-                slot.dataset.touchStarted = 'true';
-            }, { passive: true });
-            slot.addEventListener('touchend', (e) => {
-                if (slot.dataset.touchStarted === 'true') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleTapSlot(e);
-                    delete slot.dataset.touchStarted;
-                }
-            }, { passive: false });
+            slot.removeEventListener('click', handleTapSlot);
+            slot.addEventListener('click', handleTapSlot, { passive: false });
         });
 
+        // Setup sidebar tap-to-remove functionality
         const playerList = document.getElementById('player-list');
         if (playerList) {
-            // allow tap-to-remove: if a player is selected and user taps sidebar
-            playerList.addEventListener('click', (e) => {
-                if (!TapState.playerId) return;
-                if (TapState.source === 'field' || TapState.source === 'unavailable') {
-                    removePlayerFromSlot(TapState.playerId);
-                    TapState.clear();
-                }
-            });
+            playerList.removeEventListener('click', handleSidebarTap);
+            playerList.addEventListener('click', handleSidebarTap);
         }
     }
 };
 
 // ============================================================================
-// DRAG AND DROP EVENT HANDLERS
+// GLOBAL STATE FOR TAP-TO-SELECT FUNCTIONALITY
 // ============================================================================
 
-// Global state for tap-to-select functionality
 const TapState = {
     playerId: null,
-    source: null, // 'field', 'sidebar', or 'unavailable'
+    source: null, // 'field', 'sidebar', 'unavailable', or 'placed'
     slotId: null,
     
     clear() {
@@ -200,209 +173,17 @@ const TapState = {
     }
 };
 
-
-
-// Place player with tap-to-select
-function placePlayerToSlot(playerId, slotElement, source, slotId) {
-    const player = getTeamPlayers().find(p => p.id === playerId);
-    if (!player) return;
-
-    if (!slotElement) return;
-
-    // First, remove player from all locations (field slots, unavailable slots, sidebar)
-    // Remove from all field slots
-    document.querySelectorAll('.player-slot').forEach(s => {
-        if (s.getAttribute('data-player-id') === playerId) {
-            s.innerHTML = '';
-            s.removeAttribute('data-player-id');
-            s.classList.remove('occupied');
-        }
-    });
-
-    // Remove from all unavailable slots
-    document.querySelectorAll('.unavailable-slot').forEach(s => {
-        if (s.getAttribute('data-player-id') === playerId) {
-            s.innerHTML = '';
-            s.removeAttribute('data-player-id');
-        }
-    });
-
-    // Remove player from sidebar (only one should exist)
-    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (sidebarPlayerNum) {
-        sidebarPlayerNum.classList.remove('disabled');
-    }
-
-    // Remove from unavailable list temporarily
-    let unavailableList = [...getUnavailablePlayers()];
-    unavailableList = unavailableList.filter(id => id !== playerId);
-
-    // Check if this is unavailable slot
-    if (slotElement.classList.contains('unavailable-slot')) {
-        // Remove from formation if currently on field
-        const formation = getFormationTemp() || [];
-        const updatedFormation = formation.filter(f => f.playerId !== playerId);
-        setFormationTemp(updatedFormation);
-        
-        // Add to unavailable list
-        unavailableList.push(playerId);
-        setUnavailablePlayers(unavailableList);
-        
-        // Place in unavailable slot
-        slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-        slotElement.setAttribute('data-player-id', playerId);
-        
-        // Disable in sidebar
-        if (sidebarPlayerNum) {
-            sidebarPlayerNum.classList.add('disabled');
-        }
-        
-        // Reattach tap listeners to unavailable slot player so they can be moved
-        const unavailableNum = slotElement.querySelector(`[data-player-id="${playerId}"]`);
-        if (unavailableNum) {
-            unavailableNum.removeEventListener('click', handleTapPlayer);
-            unavailableNum.addEventListener('click', (e) => handleTapPlayer(e), { passive: false });
-        }
-        return;
-    }
-
-    // Regular field slot
-    setUnavailablePlayers(unavailableList);
-    
-    const position = slotElement.getAttribute('data-position');
-    const formation = getFormationTemp() || [];
-    
-    // Check if player already exists in formation and remove
-    const updatedFormation = formation.filter(f => f.playerId !== playerId);
-    
-    // Add/update player to formation
-    updatedFormation.push({
-        playerId,
-        position,
-        x: parseFloat(slotElement.style.left),
-        y: parseFloat(slotElement.style.top)
-    });
-    setFormationTemp(updatedFormation);
-
-    // Update slot UI
-    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
-    slotElement.setAttribute('data-player-id', playerId);
-    slotElement.classList.add('occupied');
-
-    // Disable player in sidebar - Keep element but clear content
-    const sidebarContainer = document.querySelector('.player-list');
-    if (sidebarContainer) {
-        const sidebarPlayerItems = sidebarContainer.querySelectorAll('.player-item-draggable');
-        sidebarPlayerItems.forEach(playerItem => {
-            const playerNum = playerItem.querySelector(`[data-player-id="${playerId}"]`);
-            if (playerNum) {
-                // Clear the content but keep the element (shows empty bench spot)
-                playerItem.innerHTML = '';
-                playerItem.classList.add('empty-spot');
-            }
-        });
-    }
-
-    // Setup click handlers for placed players
-    const placedNumbers = document.querySelectorAll('.player-number-placed');
-    placedNumbers.forEach(num => {
-        num.removeEventListener('click', handleTapPlayer);
-        num.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleTapPlayer(e);
-        }, { passive: false });
-    });
-}
-
-// Remove player from formation with tap-to-select
-function removePlayerFromSlot(playerId) {
-    const formation = getFormationTemp() || [];
-    const newFormation = formation.filter(f => f.playerId !== playerId);
-    setFormationTemp(newFormation);
-
-    // Clear ALL field slots containing this player
-    document.querySelectorAll('.player-slot').forEach(slot => {
-        if (slot.getAttribute('data-player-id') === playerId) {
-            slot.innerHTML = '';
-            slot.removeAttribute('data-player-id');
-            slot.classList.remove('occupied');
-        }
-    });
-
-    // Clear ALL unavailable slots containing this player
-    document.querySelectorAll('.unavailable-slot').forEach(slot => {
-        if (slot.getAttribute('data-player-id') === playerId) {
-            slot.innerHTML = '';
-            slot.removeAttribute('data-player-id');
-        }
-    });
-
-    // Remove from unavailable list if present
-    const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
-    setUnavailablePlayers(unavailableList);
-    
-    // Only update the removed player in sidebar - don't rebuild entire sidebar
-    const playerList = document.getElementById('player-list');
-    if (!playerList) return;
-    
-    const teamPlayers = getTeamPlayers();
-    const removedPlayer = teamPlayers.find(p => p.id === playerId);
-    if (!removedPlayer) return;
-    
-    // Find and update the player item for this specific player
-    const playerItems = document.querySelectorAll('.player-item-draggable');
-    let playerFound = false;
-    
-    // First try to find existing player with number span
-    playerItems.forEach(item => {
-        const numberSpan = item.querySelector('.player-number');
-        if (numberSpan && numberSpan.getAttribute('data-player-id') === playerId) {
-            playerFound = true;
-            // Re-enable the player item: remove disabled class
-            numberSpan.classList.remove('disabled');
-            
-            // Re-attach event listeners to this specific player
-            numberSpan.removeEventListener('click', handleTapPlayer);
-            numberSpan.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleTapPlayer(e);
-            }, { passive: false });
-        }
-    });
-    
-    // If not found, rebuild from empty-spot items
-    if (!playerFound) {
-        playerItems.forEach(item => {
-            if (item.classList.contains('empty-spot') && !playerFound) {
-                // Check if this was the item for this player by checking siblings or by finding the next empty spot
-                const html = '<span class="player-number" data-player-id="' + playerId + '">' + removedPlayer.jerseyNumber + '</span><span class="player-name">' + removedPlayer.name + '</span>';
-                item.innerHTML = html;
-                item.classList.remove('empty-spot');
-                
-                // Re-attach event listeners to newly created number span
-                const newNumberSpan = item.querySelector('.player-number');
-                newNumberSpan.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleTapPlayer(e);
-                }, { passive: false });
-                
-                playerFound = true;
-            }
-        });
-    }
-}
-
-
-
 // ============================================================================
 // TAP-TO-SELECT HANDLERS
 // ============================================================================
 
+/**
+ * Handle player number tap - select/deselect player
+ */
 function handleTapPlayer(e) {
-    // Get the target element (could be the player-number itself)
+    e.preventDefault();
+    e.stopPropagation();
+    
     let targetElement = e.target || e.currentTarget;
     
     // Ensure we have the player-number element
@@ -418,14 +199,11 @@ function handleTapPlayer(e) {
     
     // If tapping same player, deselect
     if (TapState.playerId === playerId) {
-        TapState.clear();
-        document.querySelectorAll('.player-number').forEach(num => {
-            num.style.outline = 'none';
-        });
+        clearSelection();
         return;
     }
 
-    // Determine source: field, unavailable slot, or sidebar
+    // Determine source
     let source = 'sidebar';
     if (targetElement.classList.contains('player-number-placed')) {
         source = 'field';
@@ -439,14 +217,176 @@ function handleTapPlayer(e) {
     TapState.slotId = targetElement.parentElement?.id || '';
 
     // Visual feedback
-    document.querySelectorAll('.player-number').forEach(num => {
-        num.style.outline = num === targetElement ? '3px solid #4CAF50' : 'none';
-    });
+    clearSelection();
+    targetElement.classList.add('tap-selected');
 }
 
+/**
+ * Handle slot tap - place selected player or clear slot
+ */
 function handleTapSlot(e) {
-    if (e.stopPropagation) e.stopPropagation();
-    if (e.preventDefault) e.preventDefault();
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const slotElement = e.currentTarget;
+    
+    // If no player is selected, do nothing
+    if (!TapState.playerId) return;
+    
+    // Place or move the selected player to this slot
+    placePlayerToSlot(TapState.playerId, slotElement);
+    clearSelection();
+}
+
+/**
+ * Handle sidebar tap to remove players from field/unavailable
+ */
+function handleSidebarTap(e) {
+    // If a player is selected and user taps sidebar (not on a player)
+    if (!TapState.playerId) return;
+    if (TapState.source === 'sidebar') return;
+    if (!e.target.classList.contains('player-list')) return;
+    
+    removePlayerFromSlot(TapState.playerId);
+    clearSelection();
+}
+
+/**
+ * Clear all selection visual feedback
+ */
+function clearSelection() {
+    document.querySelectorAll('.player-number, .player-number-placed').forEach(num => {
+        num.classList.remove('tap-selected');
+    });
+    TapState.clear();
+}
+
+// ============================================================================
+// PLACE & REMOVE PLAYER FUNCTIONS
+// ============================================================================
+
+/**
+ * Place player in a slot (field or unavailable)
+ */
+function placePlayerToSlot(playerId, slotElement) {
+    const player = getTeamPlayers().find(p => p.id === playerId);
+    if (!player || !slotElement) return;
+
+    // Remove player from ALL locations first
+    removePlayerFromAllLocations(playerId);
+
+    // Check if target is unavailable slot
+    if (slotElement.classList.contains('unavailable-slot')) {
+        placePlayerInUnavailable(playerId, slotElement, player);
+    } else {
+        placePlayerOnField(playerId, slotElement, player);
+    }
+    
+    // Re-setup event handlers after changes
+    FormationScreen._setupTapHandlers();
+}
+
+/**
+ * Remove player from all locations (field, unavailable, sidebar)
+ */
+function removePlayerFromAllLocations(playerId) {
+    // Clear all field slots
+    document.querySelectorAll('.player-slot').forEach(s => {
+        if (s.getAttribute('data-player-id') === playerId) {
+            s.innerHTML = '';
+            s.removeAttribute('data-player-id');
+            s.classList.remove('occupied');
+        }
+    });
+
+    // Clear all unavailable slots
+    document.querySelectorAll('.unavailable-slot').forEach(s => {
+        if (s.getAttribute('data-player-id') === playerId) {
+            s.innerHTML = '';
+            s.removeAttribute('data-player-id');
+        }
+    });
+
+    // Clear sidebar
+    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (sidebarPlayerNum) {
+        sidebarPlayerNum.classList.remove('disabled');
+    }
+
+    // Update state
+    const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
+    setUnavailablePlayers(unavailableList);
+
+    const formation = (getFormationTemp() || []).filter(f => f.playerId !== playerId);
+    setFormationTemp(formation);
+}
+
+/**
+ * Place player in unavailable slot
+ */
+function placePlayerInUnavailable(playerId, slotElement, player) {
+    // Add to unavailable list
+    const unavailableList = getUnavailablePlayers();
+    if (!unavailableList.includes(playerId)) {
+        unavailableList.push(playerId);
+        setUnavailablePlayers(unavailableList);
+    }
+
+    // Update slot
+    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    slotElement.setAttribute('data-player-id', playerId);
+
+    // Disable in sidebar
+    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (sidebarPlayerNum) {
+        sidebarPlayerNum.classList.add('disabled');
+    }
+}
+
+/**
+ * Place player on field slot
+ */
+function placePlayerOnField(playerId, slotElement, player) {
+    const position = slotElement.getAttribute('data-position');
+    const formation = getFormationTemp() || [];
+    
+    // Update formation
+    const updatedFormation = formation.filter(f => f.playerId !== playerId);
+    updatedFormation.push({
+        playerId,
+        position,
+        x: parseFloat(slotElement.style.left),
+        y: parseFloat(slotElement.style.top)
+    });
+    setFormationTemp(updatedFormation);
+
+    // Update slot
+    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}">${player.jerseyNumber}</span>`;
+    slotElement.setAttribute('data-player-id', playerId);
+    slotElement.classList.add('occupied');
+
+    // Disable in sidebar
+    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (sidebarPlayerNum) {
+        sidebarPlayerNum.classList.add('disabled');
+    }
+}
+
+/**
+ * Remove player from formation/unavailable back to sidebar
+ */
+function removePlayerFromSlot(playerId) {
+    removePlayerFromAllLocations(playerId);
+
+    // Re-enable in sidebar
+    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
+    if (sidebarPlayerNum) {
+        sidebarPlayerNum.classList.remove('disabled');
+    }
+
+    // Re-setup handlers
+    FormationScreen._setupTapHandlers();
+}
     
     // Get the slot element - event listener is attached to slots, so currentTarget is the slot
     // But handle case where a child element might be tapped
