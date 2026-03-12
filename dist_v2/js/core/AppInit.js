@@ -149,41 +149,85 @@ async function initializeApp() {
         // =====================================================================
         log('🎨 STEP 5: Initializing UI...', 'step');
         
+        if (typeof updateTeamSelector !== 'function') {
+            throw new Error('updateTeamSelector is not defined - app.js may not have loaded');
+        }
         updateTeamSelector();
         log(`✓ Team selector updated`, 'pass');
         
+        if (!window.TeamSetupScreen || typeof TeamSetupScreen.renderPlayersList !== 'function') {
+            throw new Error('TeamSetupScreen.renderPlayersList is not defined');
+        }
         TeamSetupScreen.renderPlayersList();
         log(`✓ Player list rendered`, 'pass');
         
+        if (typeof updateTeamNameUI !== 'function') {
+            throw new Error('updateTeamNameUI is not defined');
+        }
         updateTeamNameUI();
         log(`✓ Team name UI updated`, 'pass');
         
         // Add demo players if needed
+        if (typeof getTeamPlayers !== 'function') {
+            throw new Error('getTeamPlayers is not defined');
+        }
         const playerCount = getTeamPlayers().length;
         log(`✓ Current team has ${playerCount} players`, 'pass');
         
         if (playerCount === 0) {
             log(`ℹ️  Adding demo players...`, 'info');
+            if (typeof addDemoPlayers !== 'function') {
+                throw new Error('addDemoPlayers is not defined');
+            }
             addDemoPlayers();
             log(`✓ Demo players added`, 'pass');
         }
         
         // Set date
         const today = new Date().toISOString().split('T')[0];
-        document.getElementById('game-date').value = today;
-        log(`✓ Date set to today`, 'pass');
+        const gameDate = document.getElementById('game-date');
+        if (gameDate) {
+            gameDate.value = today;
+            log(`✓ Date set to today`, 'pass');
+        }
+        
+        // Setup note dialog character counter if exists
+        const noteTextarea = document.getElementById('note-text');
+        if (noteTextarea) {
+            noteTextarea.addEventListener('input', function() {
+                const counter = document.getElementById('note-char-count');
+                if (counter) {
+                    counter.textContent = this.value.length;
+                }
+            });
+            log(`✓ Note counter setup`, 'pass');
+        }
         
         // Mark as ready
         window.InitState.ready = true;
         
         log('\n🎉 Application initialized successfully!', 'success');
         
-        // Hide loader after 1 second to show final msg
+        // Hide loader and show app
         setTimeout(() => {
             if (loader) {
-                loader.style.display = 'none';
+                loader.style.opacity = '0';
+                loader.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 500);
             }
-            showScreen('main-screen');
+            
+            // Show main screen
+            if (typeof showScreen === 'function') {
+                showScreen('main-screen');
+            } else {
+                log('⚠️  showScreen not defined, setting display directly', 'warn');
+                const mainScreen = document.getElementById('main-screen');
+                if (mainScreen) {
+                    mainScreen.classList.add('active');
+                }
+            }
         }, 800);
         
     } catch (err) {
@@ -202,10 +246,23 @@ async function initializeApp() {
     }
 }
 
-// Ensure initialization runs after DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    // DOM already ready
+// Ensure initialization runs after DOM is ready AND app.js is loaded
+function initializeAppWhenReady() {
+    // Check if required functions exist
+    if (typeof updateTeamSelector !== 'function' || !window.appState) {
+        // Not ready yet, try again in 100ms
+        setTimeout(initializeAppWhenReady, 100);
+        return;
+    }
+    
+    // Ready! Run initialization
     initializeApp();
+}
+
+// Always wait for DOMContentLoaded, even if DOM is already parsed
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeAppWhenReady);
+} else {
+    // DOM is ready, but wait a tick to ensure scripts from HTML are processed
+    setTimeout(initializeAppWhenReady, 50);
 }
