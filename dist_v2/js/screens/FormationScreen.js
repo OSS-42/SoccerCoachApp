@@ -241,50 +241,64 @@ function handleTapPlayer(e) {
     e.stopImmediatePropagation?.();
     
     let targetElement = e.target || e.currentTarget;
+    const originalTarget = targetElement;
     
-    // For touch events, find the element at the touch point
+    console.log(`👆 handleTapPlayer fired [${eventType}]. Original target: ${targetElement.className}`);
+    
+    // For touch events, find the element at the touch point (more accurate than e.target)
     if (eventType.includes('touch') && e.touches?.length > 0) {
         const touch = e.touches[0];
         const touchedEl = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (touchedEl?.classList.contains('player-number') || touchedEl?.classList.contains('player-number-placed')) {
+        if (touchedEl && (touchedEl.classList.contains('player-number') || touchedEl.classList.contains('player-number-placed'))) {
             targetElement = touchedEl;
+            console.log(`   Touch event: corrected target to: ${targetElement.className}`);
         }
     }
     
-    console.log(`👆 handleTapPlayer fired [${eventType}]. Target class: ${targetElement.className}`);
-    
-    // Ensure we have the player-number element
+    // Ensure we have a player-number or player-number-placed element
     if (!targetElement.classList.contains('player-number') && 
         !targetElement.classList.contains('player-number-placed')) {
+        console.log(`   Searching for closest .player-number or .player-number-placed...`);
         targetElement = targetElement.closest('.player-number, .player-number-placed');
-        console.log(`   Searched for closest .player-number, found: ${targetElement ? 'YES' : 'NO'}`);
+        if (targetElement) {
+            console.log(`   Found via closest(): ${targetElement.className}`);
+        }
     }
     
     if (!targetElement) {
-        console.warn('⚠️ handleTapPlayer: targetElement not found');
+        console.warn('⚠️ handleTapPlayer: Could not find player element');
         return;
     }
     
     const playerId = targetElement.getAttribute('data-player-id');
     if (!playerId) {
-        console.warn('⚠️ handleTapPlayer: playerId not found on element');
+        console.warn('⚠️ handleTapPlayer: playerId not found on element', {
+            elementClass: targetElement.className,
+            element: targetElement
+        });
         return;
     }
     
-    console.log(`✓ Found player: ${playerId}`);
+    console.log(`✓ Found player: ${playerId} on element: ${targetElement.className}`);
     
-    // If tapping same player, deselect
+    // Check if this is a placed player on field
+    const isPlaced = targetElement.classList.contains('player-number-placed');
+    const isDisabled = targetElement.classList.contains('disabled');
+    
+    console.log(`   Placed on field: ${isPlaced}, Disabled: ${isDisabled}`);
+    
+    // If tapping same player that's already selected, deselect
     if (TapState.playerId === playerId) {
         console.log(`🔄 Player ${playerId} already selected - deselecting`);
         clearSelectionFully();
         return;
     }
 
-    // Determine source
+    // Determine source (where the player is coming from)
     let source = 'sidebar';
-    if (targetElement.classList.contains('player-number-placed')) {
+    if (isPlaced) {
         source = 'field';
-    } else if (targetElement.parentElement?.classList.contains('unavailable-slot')) {
+    } else if (isDisabled || targetElement.parentElement?.classList.contains('unavailable-slot')) {
         source = 'unavailable';
     }
 
@@ -294,12 +308,12 @@ function handleTapPlayer(e) {
     TapState.slotId = targetElement.parentElement?.id || '';
 
     console.log(`✅ SELECTED Player ${playerId} from ${source}`);
-    console.log(`   State: `, TapState);
+    console.log(`   TapState:`, { playerId: TapState.playerId, source: TapState.source });
 
     // Visual feedback
     clearSelection();
     targetElement.classList.add('tap-selected');
-    console.log(`   Outline added - player now has tap-selected class`);
+    console.log(`   ✓ Added tap-selected class`);
     showMessage(`Player #${playerId} selected - tap a spot to place`, 'info');
 }
 
