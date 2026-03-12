@@ -50,8 +50,8 @@ const TeamSetupScreen = {
             playerItem.className = 'player-item';
             playerItem.innerHTML = `
                 <div class="jersey-number">${player.jerseyNumber}</div>
-                <div class="player-info">
-                    <div class="player-name">${player.name} (${player.position})</div>
+                <div class="player-info" style="display: flex; align-items: center; flex: 1; min-width: 0;">
+                    <div class="player-name" style="display: block; color: #2c3e50; font-weight: 600; font-size: 0.85rem; flex: 1; word-break: break-word; overflow: visible; text-overflow: clip;">${player.name} (${player.position})</div>
                 </div>
                 <div class="player-actions">
                     <button class="player-action-btn" onclick="TeamSetupScreen.editPlayer('${player.id}')" ${anyChecked ? 'disabled' : ''}>

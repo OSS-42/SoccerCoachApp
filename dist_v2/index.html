@@ -634,6 +634,9 @@
                 }
                 window.APP_VERSION = data.version;
             })
-            .catch(() => console.log('Version file not found, using APP_CONFIG'));
+            .catch(() => {
+                // Version file not found (expected on some deployments) - app falls back to APP_CONFIG
+                // This is not an error, just informational logging
+            });
     </script>
 </html>

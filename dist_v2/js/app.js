@@ -1701,40 +1701,54 @@ function saveAppData() {
 function loadAppData() {
     return new Promise((resolve) => {
         console.log('📂 loadAppData() starting...');
-        const savedData = localStorage.getItem('soccerCoachApp2') || localStorage.getItem('soccerCoachApp');
+        
+        // Check what's in localStorage
+        const rawData2 = localStorage.getItem('soccerCoachApp2');
+        const rawDataOld = localStorage.getItem('soccerCoachApp');
+        console.log(`   localStorage.soccerCoachApp2 exists: ${!!rawData2} (${rawData2?.length || 0} bytes)`);
+        console.log(`   localStorage.soccerCoachApp exists: ${!!rawDataOld} (${rawDataOld?.length || 0} bytes)`);
+        
+        const savedData = rawData2 || rawDataOld;
         
         if (savedData) {
             console.log('   ✓ Found saved data in localStorage');
             try {
                 const data = JSON.parse(savedData);
-                if (data.teams) {
+                console.log(`   ✓ Parsed JSON successfully`);
+                console.log(`   Data has 'teams' property: ${!!data.teams}`);
+                console.log(`   Data has 'teamName' property: ${!!data.teamName}`);
+                
+                if (data.teams && Array.isArray(data.teams)) {
                     // Load new format multi-team data
                     appState.teams = data.teams;
                     appState.currentTeamId = data.currentTeamId;
                     appState.settings = data.settings || appState.settings;
-                    console.log(`   ✓ Loaded multi-team format: ${data.teams.length} teams`);
+                    console.log(`   ✅ Loaded multi-team format: ${data.teams.length} teams`);
                     console.log(`   ✓ currentTeamId loaded as: ${appState.currentTeamId}`);
                     
                     // Show detail for each team
                     data.teams.forEach((t, i) => {
                         console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
                     });
-                } else {
+                } else if (data.teamName || (data.players && data.players.length > 0)) {
                     // Legacy single-team data - migrate it
+                    console.log(`   ✓ Detected legacy single-team format`);
                     appState.teamName = data.teamName || appState.teamName;
                     appState.players = data.players || [];
                     appState.games = data.games || [];
                     appState.unavailablePlayers = data.unavailablePlayers || [];
                     appState.settings = data.settings || appState.settings;
                     appState.formationTemp = data.formationTemp || null;
-                    console.log(`   ✓ Loaded legacy single-team format`);
+                    console.log(`   ✓ Legacy data migrated`);
+                } else {
+                    console.warn('   ⚠️  Data parsed but no teams or legacy data found');
                 }
             } catch (e) {
-                console.error('   ❌ Failed to parse saved data:', e);
+                console.error('   ❌ Failed to parse saved data:', e.message);
                 // If parsing fails, we'll use default initialization below
             }
         } else {
-            console.log('   ℹ️ No saved data found');
+            console.log('   ℹ️ No saved data found in localStorage');
         }
         
         // Initialize state with multi-team support if not already initialized
@@ -1745,8 +1759,13 @@ function loadAppData() {
             // Try to use global initState if available
             if (typeof window.initState === 'function') {
                 console.log('   📦 Calling window.initState()...');
-                window.initState();
-                console.log(`   ✓ window.initState() completed. Teams now: ${appState.teams?.length || 0}`);
+                try {
+                    window.initState();
+                    console.log(`   ✓ window.initState() completed successfully`);
+                } catch (err) {
+                    console.error('   ❌ window.initState() threw error:', err);
+                }
+                console.log(`   Teams after initState: ${appState.teams?.length || 0}`);
             } else {
                 console.warn('   ⚠️  window.initState() not available, creating teams manually...');
                 // Fallback: create default teams manually
@@ -1778,9 +1797,11 @@ function loadAppData() {
                 appState.teams.forEach((t, i) => {
                     console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
                 });
+            } else {
+                console.error('   ❌❌❌ CRITICAL: Teams still empty after initState!');
             }
         } else {
-            console.log(`   ℹ️ Teams already loaded (${appState.teams.length} teams), skipping creation`);
+            console.log(`   ✅ Teams already loaded (${appState.teams.length} teams)`);
         }
         
         // CRITICAL: Ensure currentTeamId is set to a valid team
@@ -1796,15 +1817,16 @@ function loadAppData() {
             if (activeTeam) {
                 console.log(`   👥 Active team "${activeTeam.name}" (id=${activeTeam.id}) has ${activeTeam.players?.length || 0} players`);
                 if (activeTeam.players?.length === 0) {
-                    console.warn(`   ⚠️  WARNING: Active team has NO players!`);
+                    console.warn(`   ⚠️  Active team has NO players`);
                 }
             }
         } else {
-            console.warn('   ⚠️  WARNING: No teams found in appState!');
+            console.error('   ❌ CRITICAL: No teams found in appState after initialization!');
         }
         
         initializeStyling();
         console.log('✅ loadAppData() complete!');
+        console.log(`   Final state: ${appState.teams?.length || 0} teams, currentTeamId=${appState.currentTeamId}, active team players=${getCurrentTeam()?.players?.length || 0}`);
         resolve();
     });
 }

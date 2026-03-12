@@ -304,7 +304,7 @@ function handleTapPlayer(e) {
 }
 
 /**
- * Handle slot tap - place selected player or clear slot
+ * Handle slot tap - place selected player or swap with existing player
  */
 function handleTapSlot(e) {
     // Handle both touch and click events
@@ -342,19 +342,38 @@ function handleTapSlot(e) {
         return;
     }
     
-    console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${position}`);
-    console.log(`   Attempting to place player ID: ${TapState.playerId}`);
+    // Check if slot already has a player (for swapping)
+    const slotId = slotElement.getAttribute('data-position') || slotElement.id;
+    const existingPlayer = findPlayerAtPosition(slotId);
     
-    // Place or move the selected player to this slot
-    try {
-        console.log('   → Calling placePlayerToSlot()...');
-        placePlayerToSlot(TapState.playerId, slotElement);
-        console.log('✅ Placement successful!');
-        showMessage('Player placed!', 'success');
-    } catch (err) {
-        console.error('❌ Placement failed:', err);
-        console.error('   Stack:', err.stack);
-        showMessage('Placement failed!', 'error');
+    if (existingPlayer && existingPlayer.id !== TapState.playerId) {
+        console.log(`🔄 SWAP: Player ${existingPlayer.id} currently at ${slotId}, swapping with ${TapState.playerId}`);
+        // Find where the selected player currently is
+        const selectedPlayerPosition = findPositionOfPlayer(TapState.playerId);
+        if (selectedPlayerPosition) {
+            // Move existing player to selected player's position
+            movePlayerToPosition(existingPlayer.id, selectedPlayerPosition);
+            console.log(`   → Moved ${existingPlayer.id} to ${selectedPlayerPosition}`);
+        }
+        // Move selected player to this slot
+        movePlayerToPosition(TapState.playerId, slotId);
+        console.log(`   → Moved ${TapState.playerId} to ${slotId}`);
+        showMessage(`Players swapped!`, 'success');
+    } else {
+        console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${position}`);
+        console.log(`   Attempting to place player ID: ${TapState.playerId}`);
+        
+        // Place or move the selected player to this slot
+        try {
+            console.log('   → Calling placePlayerToSlot()...');
+            placePlayerToSlot(TapState.playerId, slotElement);
+            console.log('✅ Placement successful!');
+            showMessage('Player placed!', 'success');
+        } catch (err) {
+            console.error('❌ Placement failed:', err);
+            console.error('   Stack:', err.stack);
+            showMessage('Placement failed!', 'error');
+        }
     }
     
     clearSelectionFully();
@@ -369,30 +388,24 @@ function handleSidebarTap(e) {
         e.preventDefault();
     }
     
-    // If a player is selected from field/unavailable and user taps sidebar, remove them
-    if (!TapState.playerId) {
-        console.log('💡 Sidebar tapped but no player selected');
+    // If no player is selected from field/unavailable, nothing to remove
+    if (!TapState.playerId || TapState.source === 'sidebar') {
         return;
     }
     
-    // Only allow removal of players from field or unavailable slots (not sidebar players)
-    if (TapState.source === 'sidebar') {
-        console.log('Sidebar player already selected - nothing to remove');
-        return;
-    }
-    
-    // Check if click/tap is within the sidebar area
+    // Check if click/tap is within the sidebar area (not on another player)
     const sidebarElement = e.currentTarget || e.target;
-    const isClickInSidebar = sidebarElement.classList.contains('player-list') || 
-                             sidebarElement.closest('.player-list');
+    const isClickInSidebar = e.target.classList.contains('player-list') || 
+                             e.target.closest('.player-list');
     
     if (!isClickInSidebar) {
-        console.log('💡 Tap not in sidebar area');
         return;
     }
     
-    console.log(`🔙 Sidebar tap detected - removing player ${TapState.playerId} from ${TapState.source}`);
+    console.log(`🔙 REMOVE: User tapped sidebar to move player ${TapState.playerId} back to bench`);
+    console.log(`   Player was from: ${TapState.source}`);
     removePlayerFromSlot(TapState.playerId);
+    showMessage('Player moved back to bench!', 'success');
     clearSelectionFully();
 }
 
@@ -420,6 +433,45 @@ function clearSelectionFully() {
 // ============================================================================
 // PLACE & REMOVE PLAYER FUNCTIONS
 // ============================================================================
+
+/**
+ * Find which position a player is currently at
+ */
+function findPositionOfPlayer(playerId) {
+    // Check field spots
+    const fieldSpots = document.querySelectorAll('[data-position]');
+    for (const spot of fieldSpots) {
+        const playerNum = spot.querySelector('.player-number-placed');
+        if (playerNum && playerNum.dataset.playerId === playerId) {
+            return spot.getAttribute('data-position');
+        }
+    }
+    return null;
+}
+
+/**
+ * Find which player is at a specific position
+ */
+function findPlayerAtPosition(position) {
+    const spot = document.querySelector(`[data-position="${position}"]`);
+    if (!spot) return null;
+    
+    const playerNum = spot.querySelector('.player-number-placed');
+    if (!playerNum) return null;
+    
+    const playerId = playerNum.dataset.playerId;
+    return getTeamPlayers().find(p => p.id === playerId) || null;
+}
+
+/**
+ * Move a player to a specific position (helper for swap)
+ */
+function movePlayerToPosition(playerId, position) {
+    const spot = document.querySelector(`[data-position="${position}"]`);
+    if (spot) {
+        placePlayerToSlot(playerId, spot);
+    }
+}
 
 /**
  * Place player in a slot (field or unavailable)
