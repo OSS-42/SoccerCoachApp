@@ -127,8 +127,8 @@ const FormationScreen = {
         
         // Restore bench players - iterate through each player that was on bench
         // Find THAT player's specific bench spot and restore them there
-        const unavailableList = getUnavailablePlayers() || [];
-        unavailableList.forEach((playerId, index) => {
+        const unavailableBenchList = getUnavailablePlayers() || [];
+        unavailableBenchList.forEach((playerId, index) => {
             const player = getTeamPlayers().find(p => p.id === playerId);
             if (player) {
                 // Get THIS specific bench spot (unavailable-slot-1, -2, -3, -4, or -5)
@@ -571,6 +571,10 @@ function findPlayerAtPosition(position) {
     
     return null;
 }
+
+/**
+ * Move a player to a specific position (helper for swap)
+ */
 function movePlayerToPosition(playerId, position) {
     // Try to find field spot first
     let spot = document.querySelector(`[data-position="${position}"]`);
@@ -695,12 +699,7 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
     }
 
     // Update THIS SPECIFIC bench spot: Add badge, mark occupied
-    slotElement.innerHTML = `
-        <span class="player-number" data-player-id="${playerId}">
-            <span class="jersey-num">${player.jerseyNumber}</span>
-            <span class="player-name-bench">${player.name}</span>
-        </span>
-    `;
+    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
     console.log(`   ✓ BENCH SPOT: Badge rendered in ${slotElement.id}, spot now occupied`);
 
@@ -736,12 +735,7 @@ function placePlayerOnField(playerId, slotElement, player) {
     console.log(`   ✓ STATE: Formation updated for THIS spot position ${position}`);
 
     // Update THIS SPECIFIC field spot: Add badge, mark occupied
-    slotElement.innerHTML = `
-        <span class="player-number player-number-placed" data-player-id="${playerId}">
-            <span class="jersey-num">${player.jerseyNumber}</span>
-            <span class="player-name-field">${player.name}</span>
-        </span>
-    `;
+    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${player.name}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
     console.log(`   ✓ FIELD SPOT: Badge rendered in position ${position}, spot now occupied`);
