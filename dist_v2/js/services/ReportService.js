@@ -619,7 +619,7 @@ const ReportService = {
         
         // Build full report HTML
         const reportHTML = `
-            <div class="report-v1.12">
+            <div class="report">
                 <!-- Match Header - Sports App Style -->
                 <div class="report-header-score">
                     <div class="team-section team-left">
