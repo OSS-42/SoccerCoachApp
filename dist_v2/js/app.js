@@ -1688,6 +1688,7 @@ function loadAppData() {
                     appState.currentTeamId = data.currentTeamId;
                     appState.settings = data.settings || appState.settings;
                     console.log(`   ✓ Loaded multi-team format: ${data.teams.length} teams`);
+                    console.log(`   ✓ currentTeamId loaded as: ${appState.currentTeamId}`);
                 } else {
                     // Legacy single-team data - migrate it
                     appState.teamName = data.teamName || appState.teamName;
@@ -1714,6 +1715,21 @@ function loadAppData() {
             console.log(`   ✓ initState() completed. Teams now: ${appState.teams?.length || 0}`);
         } else {
             console.log(`   ℹ️ initState() not called (initState function exists=${typeof initState === 'function'}, teams=${appState.teams?.length || 0})`);
+        }
+        
+        // CRITICAL: Ensure currentTeamId is set to a valid team
+        if (appState.teams && appState.teams.length > 0) {
+            // If currentTeamId is not set or doesn't exist, default to first team
+            if (!appState.currentTeamId || !appState.teams.find(t => t.id === appState.currentTeamId)) {
+                appState.currentTeamId = appState.teams[0].id;
+                console.log(`   ✅ Set currentTeamId to first team: ${appState.currentTeamId}`);
+            }
+            
+            // Show which team is active and how many players it has
+            const activeTeam = appState.teams.find(t => t.id === appState.currentTeamId);
+            if (activeTeam) {
+                console.log(`   👥 Active team "${activeTeam.name}" has ${activeTeam.players?.length || 0} players`);
+            }
         }
         
         initializeStyling();
