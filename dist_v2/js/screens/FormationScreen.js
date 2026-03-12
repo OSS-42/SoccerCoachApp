@@ -301,8 +301,15 @@ function handleTapPlayer(e) {
     let source = 'sidebar';
     if (isPlaced) {
         source = 'field';
-    } else if (isDisabled || targetElement.parentElement?.classList.contains('unavailable-slot')) {
-        source = 'unavailable';
+    } else if (isDisabled) {
+        // Check if player is in unavailable slot or just in sidebar but disabled
+        const inUnavailableSlot = targetElement.closest('.unavailable-slot');
+        if (inUnavailableSlot) {
+            source = 'unavailable';
+        } else {
+            // Player is disabled in sidebar (on field or unavailable)
+            source = 'field';
+        }
     }
 
     // Select this player
@@ -359,26 +366,34 @@ function handleTapSlot(e) {
         return;
     }
     
-    // Check if slot already has a player (for swapping)
+    // Get slot ID (could be data-position or id)
     const slotId = slotElement.getAttribute('data-position') || slotElement.id;
-    const existingPlayer = findPlayerAtPosition(slotId);
+    console.log(`   Slot ID to place in: ${slotId}`);
     
+    // Check if slot already has a player (for swapping)
+    const existingPlayer = findPlayerAtPosition(slotId);
+    console.log(`   Existing player at slot: ${existingPlayer ? existingPlayer.id : 'NONE'}`);
+    
+    // Only swap if there is an existing player AND it's not the same player we're placing
     if (existingPlayer && existingPlayer.id !== TapState.playerId) {
-        console.log(`🔄 SWAP: Player ${existingPlayer.id} currently at ${slotId}, swapping with ${TapState.playerId}`);
+        console.log(`🔄 SWAP MODE: Player ${existingPlayer.id} at ${slotId}, will swap with ${TapState.playerId}`);
         // Find where the selected player currently is
         const selectedPlayerPosition = findPositionOfPlayer(TapState.playerId);
+        console.log(`   Selected player ${TapState.playerId} is currently at: ${selectedPlayerPosition}`);
+        
         if (selectedPlayerPosition) {
             // Move existing player to selected player's position
+            console.log(`   → Moving ${existingPlayer.id} to ${selectedPlayerPosition}`);
             movePlayerToPosition(existingPlayer.id, selectedPlayerPosition);
-            console.log(`   → Moved ${existingPlayer.id} to ${selectedPlayerPosition}`);
         }
+        
         // Move selected player to this slot
+        console.log(`   → Moving ${TapState.playerId} to ${slotId}`);
         movePlayerToPosition(TapState.playerId, slotId);
-        console.log(`   → Moved ${TapState.playerId} to ${slotId}`);
         showMessage(`Players swapped!`, 'success');
     } else {
-        console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${position}`);
-        console.log(`   Attempting to place player ID: ${TapState.playerId}`);
+        // Normal placement (no swap)
+        console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${slotId}`);
         
         // Place or move the selected player to this slot
         try {

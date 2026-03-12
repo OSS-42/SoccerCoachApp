@@ -1368,6 +1368,7 @@ body {
     font-size: 16px;
     font-weight: bold;
     line-height: 1;
+    pointer-events: none;
 }
 
 .player-number .player-name-bench,
@@ -1380,6 +1381,7 @@ body {
     text-overflow: ellipsis;
     max-width: 100%;
     margin-top: 2px;
+    pointer-events: none;
 }
 
 /* Player grid numbers */
@@ -2640,7 +2642,7 @@ button.no-assist-btn {
     
     .unavailable-slot {
         width: 36px;
-        min-height: 36px;
+        height: 36px;
         border: 2px dashed #e53935;
         border-radius: 4px;
         display: flex;
@@ -2846,7 +2848,7 @@ button.no-assist-btn {
     
     .unavailable-slot {
         width: 50px;
-        min-height: 50px;
+        height: 50px;
         border: 2px dashed #e53935;
         border-radius: 4px;
         display: flex;
@@ -2900,8 +2902,8 @@ button.no-assist-btn {
 /* Player slot on field - SINGLE SOURCE OF TRUTH */
 .player-slot {
     position: absolute;
-    width: 48px;
-    min-height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 4px;
     cursor: pointer;
     user-select: none;
@@ -2914,7 +2916,7 @@ button.no-assist-btn {
     z-index: 10;
     pointer-events: auto;
     touch-action: none;  /* Allow custom touch handling */
-    padding: 4px;
+    padding: 0;
 }
 
 /* Empty slot styling */
