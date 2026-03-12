@@ -50,11 +50,14 @@ const TeamSetupScreen = {
             playerItem.className = 'player-item';
             playerItem.innerHTML = `
                 <div class="jersey-number">${player.jerseyNumber}</div>
-                <div class="player-info" style="display: flex; align-items: center; flex: 1; min-width: 0;">
-                    <div class="player-name" style="display: block; color: #2c3e50; font-weight: 600; font-size: 0.85rem; flex: 1; word-break: break-word; overflow: visible; text-overflow: clip;">${player.name} (${player.position})</div>
+                <div class="player-info" style="display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px;">
+                    <div class="player-name" style="display: flex; flex-direction: column; flex: 1; color: #2c3e50; font-weight: 600; font-size: 0.85rem; word-break: break-word; overflow: visible; text-overflow: clip;">
+                        <div style="font-weight: 700;">${player.name}</div>
+                        <div style="font-size: 0.75rem; color: #666;">(${player.position})</div>
+                    </div>
                 </div>
                 <div class="player-actions">
-                    <button class="player-action-btn" onclick="TeamSetupScreen.editPlayer('${player.id}')" ${anyChecked ? 'disabled' : ''}>
+                    <button class="player-action-btn" onclick="TeamSetupScreen.editPlayer('${player.id}')" title="Edit player" ${anyChecked ? 'disabled' : ''}>
                         <span class="material-icons">edit</span>
                     </button>
                     <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" onchange="TeamSetupScreen.updateDeletePlayerRibbon()">
@@ -195,8 +198,13 @@ const TeamSetupScreen = {
      * @param {string} playerId - The ID of the player to edit
      */
     editPlayer(playerId) {
-        const player = appState.players.find(p => p.id === playerId);
-        if (!player) return;
+        console.log(`✏️ editPlayer() called for player ${playerId}`);
+        const player = getTeamPlayers().find(p => p.id === playerId);
+        console.log(`   Player found: ${!!player}, name=${player?.name}`);
+        if (!player) {
+            console.error(`   ❌ Player ${playerId} not found`);
+            return;
+        }
         
         let editDialog = document.getElementById('edit-player-dialog');
         if (!editDialog) {
@@ -224,6 +232,7 @@ const TeamSetupScreen = {
                         <option value="Defender" ${player.position === 'Defender' ? 'selected' : ''}>Defender</option>
                         <option value="Midfielder" ${player.position === 'Midfielder' ? 'selected' : ''}>Midfielder</option>
                         <option value="Striker" ${player.position === 'Striker' ? 'selected' : ''}>Striker</option>
+                        <option value="Forward" ${player.position === 'Forward' ? 'selected' : ''}>Forward</option>
                     </select>
                 </div>
                 <div class="dialog-buttons">

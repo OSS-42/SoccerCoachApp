@@ -211,17 +211,28 @@ function hideMessage() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 DOMContentLoaded fired');
+    console.log(`   appState before loadAppData: teams=${appState.teams?.length || 0}`);
+    
     // Load saved data if available - this returns a Promise
     loadAppData().then(() => {
+        console.log('✅ loadAppData() promise resolved');
+        console.log(`   appState after loadAppData: teams=${appState.teams?.length || 0}, currentTeamId=${appState.currentTeamId}`);
+        
         // Initialize team UI after data is fully loaded
+        console.log('🔄 Calling updateTeamSelector()...');
         updateTeamSelector();
         
         // Populate UI with existing data
+        console.log('🔄 Calling TeamSetupScreen.renderPlayersList()...');
         TeamSetupScreen.renderPlayersList();
         updateTeamNameUI();
         
         // Add demo players if none exist for current team
-        if (getTeamPlayers().length === 0) {
+        const playersCount = getTeamPlayers().length;
+        console.log(`   Current team has ${playersCount} players`);
+        if (playersCount === 0) {
+            console.log('   No players, adding demo players...');
             addDemoPlayers();
         }
         
@@ -462,6 +473,13 @@ function showScreen(screenId) {
 }
 
 function updateTeamSelector() {
+    console.log('🔄 updateTeamSelector() called');
+    console.log(`   appState.teams: ${appState.teams?.length || 0} teams`);
+    console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
+    appState.teams?.forEach((t, i) => {
+        console.log(`      Team ${i}: "${t.name}" (id=${t.id})`);
+    });
+    
     // Update both selectors
     updateTeamSelectorElement('team-selector');
     updateTeamSelectorElement('main-team-selector');
@@ -471,9 +489,14 @@ function updateTeamSelector() {
 
 function updateTeamSelectorElement(selectorId) {
     const selector = document.getElementById(selectorId);
-    if (!selector) return;
+    console.log(`   Updating ${selectorId}: element found=${!!selector}`);
+    if (!selector) {
+        console.warn(`   ❌ Element ${selectorId} not found!`);
+        return;
+    }
     const teams = appState.teams || [];
     const currentId = appState.currentTeamId;
+    console.log(`   Teams to populate: ${teams.length}, Current: ${currentId}`);
     selector.innerHTML = '';
     teams.forEach(team => {
         const opt = document.createElement('option');
@@ -481,7 +504,9 @@ function updateTeamSelectorElement(selectorId) {
         opt.textContent = team.name || 'Unnamed Team';
         if (team.id === currentId) opt.selected = true;
         selector.appendChild(opt);
+        console.log(`      Added option: "${team.name}"`);
     });
+    console.log(`   ✓ ${selectorId} populated with ${teams.length} teams`);
 }
 
 function updateTeamNameBanner(bannerId) {
