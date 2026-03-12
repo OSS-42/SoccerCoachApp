@@ -241,27 +241,22 @@ function hideMessage() {
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOMContentLoaded fired');
-    console.log(`   appState before loadAppData: teams=${appState.teams?.length || 0}`);
+    console.log(`   appState.teams before: ${appState.teams?.length || 0}`);
     
-    // Load saved data if available - this returns a Promise
-    console.log('🔍 About to call loadAppData()...');
-    try {
-        loadAppData().then(() => {
-        console.log('✅ loadAppData() promise resolved');
-        console.log(`   appState after loadAppData: teams=${appState.teams?.length || 0}, currentTeamId=${appState.currentTeamId}`);
+    loadAppData().then(() => {
+        console.log('✅ loadAppData() resolved');
+        console.log(`   appState.teams after: ${appState.teams?.length || 0}`);
+        console.log(`   currentTeamId: ${appState.currentTeamId}`);
         
         // Initialize team UI after data is fully loaded
-        console.log('🔄 Calling updateTeamSelector()...');
         updateTeamSelector();
         
         // Populate UI with existing data
-        console.log('🔄 Calling TeamSetupScreen.renderPlayersList()...');
         TeamSetupScreen.renderPlayersList();
         updateTeamNameUI();
         
         // Add demo players if none exist for current team
         const playersCount = getTeamPlayers().length;
-        console.log(`   Current team has ${playersCount} players`);
         if (playersCount === 0) {
             console.log('   No players, adding demo players...');
             addDemoPlayers();
@@ -282,11 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show the main screen to start
         showScreen('main-screen');
     }).catch(err => {
-        console.error('❌ loadAppData() promise rejected:', err);
+        console.error('❌ loadAppData() rejected:', err);
     });
-    } catch (err) {
-        console.error('❌ Error calling loadAppData():', err);
-    }
 });
 
 // Team Name functions
@@ -1838,154 +1830,101 @@ function saveAppData() {
 
 function loadAppData() {
     return new Promise((resolve) => {
+        console.log('\n🚀 loadAppData() starting...');
+        
+        // Step 1: Check if we have localStorage data
+        console.log('1️⃣  Checking localStorage for saved data...');
+        let hasNewFormat = false;
+        let hasLegacyFormat = false;
+        let loadedData = null;
+        
         try {
-            console.log('\n📂 ========== loadAppData() START ==========');
-            console.log('  INITIALIZATION FLOW:');
-            console.log('  1. Check if localStorage has saved data');
-            console.log('  2. If YES → load it (from new or legacy format)');
-            console.log('  3. If NO → create default teams');
-            console.log('  4. Ensure teams exist before resolving\n');
+            const newData = localStorage.getItem('soccerCoachApp2');
+            const legacyData = localStorage.getItem('soccerCoachApp');
             
-            // =====================================================================
-            // STEP 1: CHECK FOR LOCALSTORAGE DATA
-            // =====================================================================
-            console.log('📦 STEP 1: Checking localStorage...');
-            
-            let savedData = null;
-            let sourceKey = null;
-            
-            try {
-            const data2 = localStorage.getItem('soccerCoachApp2');
-            const dataOld = localStorage.getItem('soccerCoachApp');
-            
-            if (data2) {
-                console.log(`   ✅ Found soccerCoachApp2 (${data2.length} bytes)`);
-                savedData = data2;
-                sourceKey = 'soccerCoachApp2';
-            } else if (dataOld) {
-                console.log(`   ⚠️  Found soccerCoachApp (${dataOld.length} bytes - LEGACY)`);
-                savedData = dataOld;
-                sourceKey = 'soccerCoachApp';
+            if (newData) {
+                console.log('   ✅ Found soccerCoachApp2');
+                hasNewFormat = true;
+                loadedData = JSON.parse(newData);
+            } else if (legacyData) {
+                console.log('   ✅ Found soccerCoachApp (legacy)');
+                hasLegacyFormat = true;
+                loadedData = JSON.parse(legacyData);
             } else {
-                console.log(`   ℹ️  No saved data found in localStorage`);
+                console.log('   ❌ No saved data found');
             }
-        } catch (err) {
-            console.error(`   ❌ Error accessing localStorage:`, err.message);
-            console.error(`   proceeding with default initialization...`);
+        } catch (e) {
+            console.error('   ⚠️  Error reading localStorage:', e.message);
+            console.log('   Proceeding with fresh start...');
         }
         
-        // =====================================================================
-        // STEP 2: LOAD FROM LOCALSTORAGE IF FOUND
-        // =====================================================================
-        if (savedData) {
-            console.log(`\n💾 STEP 2A: Loading from localStorage (${sourceKey})...`);
-            
-            try {
-                const parsedData = JSON.parse(savedData);
-                console.log(`   ✓ JSON parsed successfully`);
+        // Step 2: If we found data, try to load it
+        console.log('2️⃣  Loading data...');
+        if (loadedData) {
+            if (hasNewFormat) {
+                console.log('   Loading new format (multi-team)...');
+                appState.teams = loadedData.teams || [];
+                appState.currentTeamId = loadedData.currentTeamId || null;
+                appState.settings = loadedData.settings || appState.settings;
+                appState.currentGame = loadedData.currentGame || null;
+                console.log(`   ✅ Loaded ${appState.teams.length} teams`);
+            } else if (hasLegacyFormat) {
+                console.log('   Loading legacy format - migrating...');
+                // Set up legacy fields for migration
+                appState.teamName = loadedData.teamName || 'Team A';
+                appState.players = loadedData.players || [];
+                appState.games = loadedData.games || [];
+                appState.unavailablePlayers = loadedData.unavailablePlayers || [];
+                appState.settings = loadedData.settings || appState.settings;
+                appState.formationTemp = loadedData.formationTemp || null;
                 
-                // Check if this is new format (has teams array)
-                if (parsedData.teams && Array.isArray(parsedData.teams) && parsedData.teams.length > 0) {
-                    console.log(`   ✅ Multi-team format detected (${parsedData.teams.length} teams)`);
-                    
-                    appState.teams = parsedData.teams;
-                    appState.currentTeamId = parsedData.currentTeamId;
-                    appState.settings = parsedData.settings || appState.settings;
-                    appState.currentGame = parsedData.currentGame || null;
-                    
-                    console.log(`   ✓ Loaded ${appState.teams.length} teams:`);
-                    appState.teams.forEach((t, i) => {
-                        console.log(`      Team ${i}: "${t.name}" (id=${t.id}, ${t.players?.length || 0} players)`);
-                    });
-                    
-                    console.log(`   ✓ currentTeamId: ${appState.currentTeamId}`);
-                    console.log(`   ✅ STEP 2A COMPLETE: Data loaded successfully`);
-                    
-                } else if (parsedData.teamName || (parsedData.players && parsedData.players.length > 0)) {
-                    // Legacy single-team format
-                    console.log(`   🔄 Legacy single-team format detected`);
-                    console.log(`   Calling migrateLegacyData()...`);
-                    
-                    appState.teamName = parsedData.teamName || 'Team A';
-                    appState.players = parsedData.players || [];
-                    appState.games = parsedData.games || [];
-                    appState.unavailablePlayers = parsedData.unavailablePlayers || [];
-                    appState.settings = parsedData.settings || appState.settings;
-                    appState.formationTemp = parsedData.formationTemp || null;
-                    
+                // Call migration function
+                if (window.migrateLegacyData && typeof window.migrateLegacyData === 'function') {
                     window.migrateLegacyData();
-                    console.log(`   ✅ STEP 2A COMPLETE: Legacy data migrated`);
-                    
+                    console.log('   ✅ Legacy data migrated');
                 } else {
-                    console.warn(`   ⚠️  Loaded data has no teams or legacy fields`);
-                    console.log(`   Creating default teams...`);
+                    console.warn('   ⚠️  migrateLegacyData not available, creating defaults instead');
                     window.createDefaultTeams();
-                    console.log(`   ✅ STEP 2A COMPLETE: Defaults created`);
                 }
-                
-            } catch (err) {
-                console.error(`   ❌ Failed to parse saved data:`, err.message);
-                console.log(`   Creating default teams...`);
-                window.createDefaultTeams();
-                console.log(`   ✅ STEP 2A COMPLETE: Defaults created after parse error`);
             }
-            
-        } else {
-            // No saved data found
-            console.log(`\n💾 STEP 2B: No saved data - creating defaults...`);
-            window.createDefaultTeams();
-            console.log(`   ✅ STEP 2B COMPLETE: Defaults created`);
         }
         
-        // =====================================================================
-        // STEP 3: FINAL VALIDATION - ENSURE TEAMS EXIST
-        // =====================================================================
-        console.log(`\n✅ STEP 3: Final validation...`);
-        console.log(`   appState.teams: ${appState.teams?.length || 0}`);
-        console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
-        
+        // Step 3: If still no teams, create defaults
+        console.log('3️⃣  Checking if teams exist...');
         if (!appState.teams || appState.teams.length === 0) {
-            console.error(`   ❌❌ CRITICAL: Teams are empty - creating emergency defaults!`);
-            window.createDefaultTeams();
-            console.log(`   ✓ Emergency defaults created`);
+            console.log('   No teams found - calling createDefaultTeams()');
+            if (window.createDefaultTeams && typeof window.createDefaultTeams === 'function') {
+                window.createDefaultTeams();
+                console.log('   ✅ Default teams created');
+            } else {
+                console.error('   ❌ createDefaultTeams not available!');
+                // Absolute fallback
+                appState.teams = [
+                    { id: 't1', name: 'Team A', players: [], games: [], settings: appState.settings, unavailablePlayers: [], formationTemp: null },
+                    { id: 't2', name: 'Team B', players: [], games: [], settings: appState.settings, unavailablePlayers: [], formationTemp: null }
+                ];
+                appState.currentTeamId = 't1';
+                console.log('   ✅ Hardcoded default teams created');
+            }
         }
         
-        // Ensure currentTeamId points to a valid team
-        if (!appState.currentTeamId || !appState.teams.find(t => t.id === appState.currentTeamId)) {
-            console.warn(`   ⚠️  currentTeamId invalid, setting to first team`);
+        // Step 4: Ensure currentTeamId is valid
+        console.log('4️⃣  Validating currentTeamId...');
+        if (!appState.currentTeamId || !appState.teams.some(t => t.id === appState.currentTeamId)) {
             appState.currentTeamId = appState.teams[0].id;
+            console.log(`   ✅ Set to: ${appState.currentTeamId}`);
         }
         
-        // =====================================================================
-        // FINAL STATE
-        // =====================================================================
-        console.log(`\n✅ loadAppData() FINAL STATE:`);
-        console.log(`   Total teams: ${appState.teams.length}`);
-        appState.teams.forEach((t, i) => {
-            const activeMarker = t.id === appState.currentTeamId ? ' ⭐ ACTIVE' : '';
-            console.log(`      Team ${i}: "${t.name}" (${t.players?.length || 0} players)${activeMarker}`);
+        // Step 5: Final summary
+        console.log('5️⃣  Final state:');
+        console.log(`   Teams: ${appState.teams.length}`);
+        appState.teams.forEach(t => {
+            console.log(`      - "${t.name}" (${t.players?.length || 0} players)`);
         });
-        console.log(`   currentTeamId: ${appState.currentTeamId}`);
-        console.log('📂 ========== loadAppData() END ==========\n');
+        console.log(`   Current team: ${appState.currentTeamId}`);
+        console.log('✅ loadAppData() complete\n');
         
         resolve();
-        } catch (outerErr) {
-            console.error('❌❌ CRITICAL ERROR IN loadAppData():', outerErr);
-            console.error('   Message:', outerErr.message);
-            console.error('   Stack:', outerErr.stack);
-            
-            // Even on error, create default teams as fallback
-            console.log('   Creating emergency default teams...');
-            try {
-                window.createDefaultTeams();
-                console.log('   ✓ Emergency defaults created');
-            } catch (e2) {
-                console.error('   ❌ Failed to create defaults:', e2.message);
-            }
-            resolve();
-        }
-    });
-}
 
 // Function to clear all app data and start fresh
 function clearAppData() {
