@@ -2496,19 +2496,9 @@ button.no-assist-btn {
         padding: 0;
     }
     
-    /* Available Players - LEFT SIDEBAR */
+    /* Available Players - HIDDEN */
     .player-list {
-        width: 13%;
-        order: 1;
-        display: flex;
-        flex-direction: column;
-        background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
-        border-right: 1px solid #e0e0e0;
-        overflow-y: auto;
-        padding: 6px 4px;
-        gap: 4px;
-        max-height: 100%;
-        -webkit-overflow-scrolling: touch;
+        display: none;
     }
     
     .player-list::-webkit-scrollbar {
@@ -2811,109 +2801,28 @@ button.no-assist-btn {
 
 @media screen and (min-width: 769px) {
     .formation-container {
-        flex-direction: column;
+        flex-direction: row;
         gap: 12px;
         padding: 12px;
-        height: auto;
-        overflow-y: auto;
+        height: 100%;
+        overflow: hidden;
+        align-items: stretch;
     }
     
-    /* Available Players - TOP SECTION */
+    /* Available Players - HIDDEN ON DESKTOP */
     .player-list {
-        width: 100%;
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 12px;
-        background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-        min-height: 85px;
-        max-height: 85px;
-        overflow-y: auto;
-        align-content: flex-start;
-        -webkit-overflow-scrolling: touch;
+        display: none;
     }
     
-    .player-list::-webkit-scrollbar {
-        height: 4px;
-    }
-    
-    .player-list::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    
-    .player-list::-webkit-scrollbar-thumb {
-        background: #d0d0d0;
-        border-radius: 2px;
-    }
-    
-    .player-item-draggable {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 6px;
-        min-height: auto;
-        flex-shrink: 0;
-    }
-    
-    .player-number {
-        width: 48px;
-        height: 48px;
-        max-width: 48px;
-        max-height: 48px;
-        font-size: 16px;
-        font-weight: 600;
-        touch-action: none;
-        cursor: pointer;
-        user-select: none;
-        -webkit-user-select: none;
-        background: #2196f3;
-        color: white;
-        border-radius: 4px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
-        padding: 0;
-        flex-shrink: 0;
-    }
-    
-    .player-number:hover {
-        transform: scale(1.05);
-        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-    }
-    
-    .player-number:active {
-        transform: scale(0.95);
-    }
-    
-    .player-number.disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        background: #ccc;
-        box-shadow: none;
-    }
-    
-    .player-name {
-        font-size: 12px;
-        color: #555;
-        font-weight: 500;
-        display: none;  /* Hide on desktop, only show on mobile */
-    }
-    
-    /* SOCCER FIELD - CENTERED */
+    /* SOCCER FIELD - CENTER */
     .formation-field {
-        width: 380px;
-        height: 510px;
+        width: auto;
+        height: auto;
+        flex: 1;
+        min-width: 380px;
         background: url('../img/field.png') no-repeat center center;
-        background-size: auto 510px;
+        background-size: auto 100%;
         position: relative;
-        margin: 0 auto;
         user-select: none;
         -webkit-user-select: none;
         -webkit-user-drag: none;
@@ -2928,44 +2837,66 @@ button.no-assist-btn {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        width: 100%;
+        width: 280px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .formation-right-column::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .formation-right-column::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
     }
     
     /* BENCH PLAYERS - TOP RIGHT SECTION */
     .bench-players {
         display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
         background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
         border-radius: 8px;
         border: 2px solid #81c784;
+        flex: 0 1 auto;
     }
     
     .bench-players h4 {
-        font-size: 14px;
+        font-size: 12px;
         margin: 0;
         color: #2e7d32;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        white-space: nowrap;
-        flex-shrink: 0;
-        padding-right: 12px;
-        border-right: 2px solid #81c784;
+        text-align: center;
+        padding: 0;
     }
     
     .bench-slots {
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 6px;
         flex-wrap: wrap;
-        flex-grow: 1;
+        max-height: 150px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .bench-slots::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .bench-slots::-webkit-scrollbar-thumb {
+        background: #81c784;
+        border-radius: 2px;
     }
     
     .bench-slot {
-        width: 50px;
-        height: 50px;
+        width: 38px;
+        height: 38px;
         border: 2px dashed #4caf50;
         border-radius: 4px;
         display: flex;
@@ -3000,38 +2931,48 @@ button.no-assist-btn {
     /* UNAVAILABLE PLAYERS - BOTTOM RIGHT SECTION */
     .unavailable-players {
         display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
         background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
         border-radius: 8px;
         border: 2px solid #ef9a9a;
+        flex: 0 1 auto;
     }
     
     .unavailable-players h4 {
-        font-size: 14px;
+        font-size: 12px;
         margin: 0;
         color: #c62828;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        white-space: nowrap;
-        flex-shrink: 0;
-        padding-right: 12px;
-        border-right: 2px solid #ef9a9a;
+        text-align: center;
+        padding: 0;
     }
     
     .unavailable-slots {
         display: flex;
         flex-direction: row;
-        gap: 10px;
+        gap: 6px;
         flex-wrap: wrap;
-        flex-grow: 1;
+        max-height: 80px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .unavailable-slots::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .unavailable-slots::-webkit-scrollbar-thumb {
+        background: #ef9a9a;
+        border-radius: 2px;
     }
     
     .unavailable-slot {
-        width: 50px;
-        height: 50px;
+        width: 38px;
+        height: 38px;
         border: 2px dashed #e53935;
         border-radius: 4px;
         display: flex;
