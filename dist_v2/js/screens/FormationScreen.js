@@ -452,7 +452,7 @@ function clearSelectionFully() {
 // ============================================================================
 
 /**
- * Find which position a player is currently at
+ * Find which position a player is currently at (field or unavailable slot)
  */
 function findPositionOfPlayer(playerId) {
     // Check field spots
@@ -463,30 +463,62 @@ function findPositionOfPlayer(playerId) {
             return spot.getAttribute('data-position');
         }
     }
+    
+    // Check unavailable slots
+    const unavailableSpots = document.querySelectorAll('.unavailable-slot');
+    for (const spot of unavailableSpots) {
+        const playerNum = spot.querySelector('.player-number');
+        if (playerNum && playerNum.dataset.playerId === playerId) {
+            return spot.id;  // Return the slot ID (e.g., 'unavailable-slot-1')
+        }
+    }
+    
     return null;
 }
 
 /**
- * Find which player is at a specific position
+ * Find which player is at a specific position (field or unavailable slot)
  */
 function findPlayerAtPosition(position) {
-    const spot = document.querySelector(`[data-position="${position}"]`);
-    if (!spot) return null;
+    // Check field spots
+    const fieldSpot = document.querySelector(`[data-position="${position}"]`);
+    if (fieldSpot) {
+        const playerNum = fieldSpot.querySelector('.player-number-placed');
+        if (playerNum) {
+            const playerId = playerNum.dataset.playerId;
+            return getTeamPlayers().find(p => p.id === playerId) || null;
+        }
+    }
     
-    const playerNum = spot.querySelector('.player-number-placed');
-    if (!playerNum) return null;
+    // Check unavailable slots (position is like 'unavailable-slot-1')
+    const unavailableSpot = document.getElementById(position);
+    if (unavailableSpot) {
+        const playerNum = unavailableSpot.querySelector('.player-number');
+        if (playerNum) {
+            const playerId = playerNum.dataset.playerId;
+            return getTeamPlayers().find(p => p.id === playerId) || null;
+        }
+    }
     
-    const playerId = playerNum.dataset.playerId;
-    return getTeamPlayers().find(p => p.id === playerId) || null;
+    return null;
 }
 
 /**
  * Move a player to a specific position (helper for swap)
  */
 function movePlayerToPosition(playerId, position) {
-    const spot = document.querySelector(`[data-position="${position}"]`);
+    // Try to find field spot first
+    let spot = document.querySelector(`[data-position="${position}"]`);
+    
+    // If not found, try unavailable slot
+    if (!spot) {
+        spot = document.getElementById(position);
+    }
+    
     if (spot) {
         placePlayerToSlot(playerId, spot);
+    } else {
+        console.error(`Cannot move player ${playerId}: position ${position} not found`);
     }
 }
 
@@ -571,8 +603,8 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
     // Update slot with jersey number AND player name
     slotElement.innerHTML = `
         <span class="player-number" data-player-id="${playerId}">
-            <div class="jersey-num">${player.jerseyNumber}</div>
-            <div class="player-name-bench">${player.name}</div>
+            <span class="jersey-num">${player.jerseyNumber}</span>
+            <span class="player-name-bench">${player.name}</span>
         </span>
     `;
     slotElement.setAttribute('data-player-id', playerId);
@@ -609,8 +641,8 @@ function placePlayerOnField(playerId, slotElement, player) {
     // Update slot with jersey number AND player name
     slotElement.innerHTML = `
         <span class="player-number player-number-placed" data-player-id="${playerId}">
-            <div class="jersey-num">${player.jerseyNumber}</div>
-            <div class="player-name-field">${player.name}</div>
+            <span class="jersey-num">${player.jerseyNumber}</span>
+            <span class="player-name-field">${player.name}</span>
         </span>
     `;
     slotElement.setAttribute('data-player-id', playerId);
