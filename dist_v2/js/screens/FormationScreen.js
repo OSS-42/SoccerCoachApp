@@ -53,16 +53,26 @@ const FormationScreen = {
         console.log(`✅ Created ${formationField.querySelectorAll('.player-slot').length} empty field spots`);
 
         // ============================================================================
-        // STEP 2: Create 5 empty bench slots
+        // STEP 2: Create empty bench slots based on game type
         // ============================================================================
-        for (let i = 1; i <= 5; i++) {
+        const benchSpotMapping = {
+            '5v5': 10,
+            '7v7': 12,
+            '9v9': 15,
+            '11v11': 18
+        };
+        
+        const matchType = appState.gameSetupMatchType || '11v11';
+        const numBenchSpots = benchSpotMapping[matchType] || 18;
+        
+        for (let i = 1; i <= numBenchSpots; i++) {
             const slot = document.createElement('div');
             slot.className = 'unavailable-slot';
             slot.id = `unavailable-slot-${i}`;
             unavailableSlots.appendChild(slot);
         }
         
-        console.log(`✅ Created 5 empty bench slots`);
+        console.log(`✅ Created ${numBenchSpots} empty bench slots for ${matchType}`);
 
         // ============================================================================
         // STEP 3: Attach all event handlers
