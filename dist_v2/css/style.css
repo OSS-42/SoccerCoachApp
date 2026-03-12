@@ -2531,6 +2531,7 @@ button.no-assist-btn {
     /* SOCCER FIELD - CENTER (PRIMARY) */
     .formation-field {
         width: 74%;
+        height: calc(100vh - 120px);
         order: 2;
         flex-shrink: 0;
         background: url('../img/field.png') no-repeat center center;
@@ -2978,15 +2979,7 @@ button.no-assist-btn {
     border: 2px solid #fff;
 }
 
-/* Formation field with image */
-.formation-field {
-    /* width: 300px; */
-    height: 400px;
-    background: url('../img/field.png') no-repeat center center;
-    background-size: auto 400px;
-    position: relative;
-    /* border: 2px solid #fff; */
-}
+/* Desktop formation field - defined below in desktop media query */
 
 /* Game report field with image */
 .formation-field-report {
