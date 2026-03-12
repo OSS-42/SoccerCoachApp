@@ -2473,7 +2473,7 @@ button.no-assist-btn {
     
     .player-item-draggable {
         display: flex;
-        flex-direction: column;
+        flex-direction: column !important;  /* CRITICAL: override global rule */
         align-items: center;
         justify-content: center;
         gap: 2px;

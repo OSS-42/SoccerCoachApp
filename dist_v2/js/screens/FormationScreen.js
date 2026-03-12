@@ -329,24 +329,31 @@ function handleTapSlot(e) {
     console.log(`🎯 Slot tapped! [${eventType}]`);
     console.log(`   Position: ${position}`);
     console.log(`   Class: ${slotElement.className}`);
+    console.log(`   Is a player-slot: ${slotElement.classList.contains('player-slot')}`);
+    console.log(`   Is unavailable-slot: ${slotElement.classList.contains('unavailable-slot')}`);
+    console.log(`   TapState object:`, TapState);
     console.log(`   TapState.playerId: ${TapState.playerId}`);
     
     // If no player is selected, show hint
     if (!TapState.playerId) {
-        console.log('💡 No player selected. Tap a player jersey first (should see green outline), then tap a spot.');
+        console.log('💡 No player selected. TapState is:', TapState);
+        console.log('💡 Tap a player jersey first (should see green outline), then tap a spot.');
         showMessage('Tap a player first!', 'warning');
         return;
     }
     
-    console.log(`📍 PLACING player ${TapState.playerId} to position ${position}`);
+    console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${position}`);
+    console.log(`   Attempting to place player ID: ${TapState.playerId}`);
     
     // Place or move the selected player to this slot
     try {
+        console.log('   → Calling placePlayerToSlot()...');
         placePlayerToSlot(TapState.playerId, slotElement);
         console.log('✅ Placement successful!');
         showMessage('Player placed!', 'success');
     } catch (err) {
         console.error('❌ Placement failed:', err);
+        console.error('   Stack:', err.stack);
         showMessage('Placement failed!', 'error');
     }
     
