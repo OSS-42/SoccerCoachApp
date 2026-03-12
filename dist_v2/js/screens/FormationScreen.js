@@ -382,14 +382,24 @@ function handleTapSlot(e) {
         console.log(`   Selected player ${TapState.playerId} is currently at: ${selectedPlayerPosition}`);
         
         if (selectedPlayerPosition) {
-            // Move existing player to selected player's position
-            console.log(`   → Moving ${existingPlayer.id} to ${selectedPlayerPosition}`);
-            movePlayerToPosition(existingPlayer.id, selectedPlayerPosition);
+            // Swap: both players are on field/unavailable, so they can exchange places
+            console.log(`   → SWAPPING: Moving ${existingPlayer.id} to ${selectedPlayerPosition}`);
+            // First, remove existing player from all locations
+            removePlayerFromAllLocations(existingPlayer.id);
+            // Then place them at the selected player's position
+            const selectedPlayerSlot = document.querySelector(`[data-position="${selectedPlayerPosition}"]`) || 
+                                       document.getElementById(selectedPlayerPosition);
+            if (selectedPlayerSlot) {
+                placePlayerToSlot(existingPlayer.id, selectedPlayerSlot);
+            }
         }
         
-        // Move selected player to this slot
+        // Now move selected player to this slot (will cleanly remove them from previous location)
         console.log(`   → Moving ${TapState.playerId} to ${slotId}`);
-        movePlayerToPosition(TapState.playerId, slotId);
+        // First remove the selected player from all locations to avoid conflicts
+        removePlayerFromAllLocations(TapState.playerId);
+        // Now place them in the target slot
+        placePlayerToSlot(TapState.playerId, slotElement);
         showMessage(`Players swapped!`, 'success');
     } else {
         // Normal placement (no swap)

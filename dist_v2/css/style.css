@@ -1345,8 +1345,10 @@ body {
 }
 
 .player-number {
-    width: 32px;
-    min-height: 32px;
+    width: 48px;
+    height: 48px;
+    max-width: 48px;
+    max-height: 48px;
     text-align: center;
     background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
     color: #fff;
@@ -1360,12 +1362,13 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 4px 2px;
+    padding: 0;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .player-number .jersey-num {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: bold;
     line-height: 1;
     pointer-events: none;
@@ -1373,21 +1376,23 @@ body {
 
 .player-number .player-name-bench,
 .player-number .player-name-field {
-    font-size: 8px;
-    line-height: 1.2;
+    font-size: 7px;
+    line-height: 1;
     font-weight: normal;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
-    margin-top: 2px;
+    margin-top: 1px;
     pointer-events: none;
 }
 
 /* Player grid numbers */
 .player-grid-item .player-number {
-    width: 32px;
-    min-height: 32px;
+    width: 48px;
+    height: 48px;
+    max-width: 48px;
+    max-height: 48px;
     font-size: 14px;
     font-weight: 700;
     border-radius: 4px;
@@ -1395,7 +1400,8 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 4px 2px;
+    padding: 0;
+    flex-shrink: 0;
 }
 
 .player-name {
@@ -2524,8 +2530,10 @@ button.no-assist-btn {
     }
     
     .player-number {
-        width: 32px;
-        min-height: 32px;
+        width: 40px;
+        height: 40px;
+        max-width: 40px;
+        max-height: 40px;
         font-size: 12px;
         font-weight: 600;
         touch-action: none;
@@ -2542,7 +2550,7 @@ button.no-assist-btn {
         transition: all 0.2s ease;
         box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
         flex-shrink: 0;
-        padding: 4px 2px;
+        padding: 0;
     }
     
     .player-number:active {
@@ -2753,8 +2761,10 @@ button.no-assist-btn {
     }
     
     .player-number {
-        width: 40px;
-        min-height: 40px;
+        width: 48px;
+        height: 48px;
+        max-width: 48px;
+        max-height: 48px;
         font-size: 16px;
         font-weight: 600;
         touch-action: none;
@@ -2770,7 +2780,8 @@ button.no-assist-btn {
         justify-content: center;
         transition: all 0.2s ease;
         box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
-        padding: 4px 2px;
+        padding: 0;
+        flex-shrink: 0;
     }
     
     .player-number:hover {
