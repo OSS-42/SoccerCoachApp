@@ -126,9 +126,9 @@ const FormationScreen = {
         });
         
         // Fill bench spots: ALL team players not on field should go into bench spots
-        const teamPlayers = getTeamPlayers();
+        const allTeamPlayers = getTeamPlayers();
         const fieldPlayerIds = (getFormationTemp() || []).map(f => f.playerId);
-        const benchPlayersToRestore = teamPlayers.filter(p => !fieldPlayerIds.includes(p.id));
+        const benchPlayersToRestore = allTeamPlayers.filter(p => !fieldPlayerIds.includes(p.id));
         
         console.log(`📋 Filling bench: ${benchPlayersToRestore.length} players not on field`);
         
