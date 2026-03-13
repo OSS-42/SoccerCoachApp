@@ -230,8 +230,8 @@ const FormationScreen = {
 
     _getDesktopRowPositions(horizontalSpotWidthPercent) {
         const rowOrder = ['GK', 'SW', 'DEF', 'DM', 'MID', 'OM', 'FWD'];
-        const gkAnchor = 89 - horizontalSpotWidthPercent;
-        const fwdAnchor = 20 + horizontalSpotWidthPercent;
+        const gkAnchor = 89 + horizontalSpotWidthPercent;
+        const fwdAnchor = 20 - horizontalSpotWidthPercent;
         const step = (gkAnchor - fwdAnchor) / (rowOrder.length - 1);
 
         return rowOrder.reduce((positions, rowKey, index) => {
