@@ -77,7 +77,8 @@ const FormationScreen = {
         };
         
         const matchType = appState.gameSetupMatchType || '11v11';
-        const numBenchSpots = benchSpotMapping[matchType] || 18;
+        const teamPlayers = getTeamPlayers() || [];
+        const numBenchSpots = Math.max(benchSpotMapping[matchType] || 18, teamPlayers.length);
         
         for (let i = 1; i <= numBenchSpots; i++) {
             const slot = document.createElement('div');
@@ -85,6 +86,8 @@ const FormationScreen = {
             slot.id = `bench-slot-${i}`;
             benchSlots.appendChild(slot);
         }
+
+        this._populateBenchWithTeamPlayers();
         
         console.log(`✅ Created ${numBenchSpots} empty bench slots for ${matchType}`);
 
@@ -264,59 +267,50 @@ const FormationScreen = {
         }, {});
     },
 
+    _populateBenchWithTeamPlayers() {
+        const sortedPlayers = [...(getTeamPlayers() || [])]
+            .sort((a, b) => (a.jerseyNumber || 0) - (b.jerseyNumber || 0));
+        const benchSlots = Array.from(document.querySelectorAll('.bench-slot'));
+
+        sortedPlayers.forEach((player, index) => {
+            const slot = benchSlots[index];
+            if (!slot) {
+                return;
+            }
+
+            slot.innerHTML = `<span class="player-number" data-player-id="${player.id}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${(player.name || '').toUpperCase()}</span></span>`;
+            slot.setAttribute('data-player-id', player.id);
+            slot.classList.add('occupied');
+        });
+    },
+
     /**
      * Setup tap-to-select event listeners
      * @private
      */
     _setupTapHandlers() {
         console.log('🔗 _setupTapHandlers() called');
-        
-        // Remove old listeners first - BOTH click and touch events
-        document.querySelectorAll('.player-number, .player-number-placed').forEach(el => {
-            el.removeEventListener('click', handleTapPlayer);
-            el.removeEventListener('touchstart', handleTapPlayer);
-        });
-        document.querySelectorAll('.player-slot, .bench-slot').forEach(el => {
+
+        // Spot-only interaction: field, bench, unavailable.
+        document.querySelectorAll('.player-slot, .bench-slot, .unavailable-slot').forEach(el => {
             el.removeEventListener('click', handleTapSlot);
             el.removeEventListener('touchstart', handleTapSlot);
         });
 
-        // Re-attach handlers for all player numbers (sidebar + placed)
-        const allPlayerNumbers = document.querySelectorAll('.player-number, .player-number-placed');
-        console.log(`   📌 Found ${allPlayerNumbers.length} player number elements`);
-        allPlayerNumbers.forEach((number, idx) => {
-            // Add BOTH click and touch event handlers for mobile compatibility
-            number.addEventListener('click', handleTapPlayer, { passive: false });
-            number.addEventListener('touchstart', handleTapPlayer, { passive: false });
-            if (idx < 3) console.log(`      [${idx}] ${number.getAttribute('data-player-id')} - click+touch listeners added`);
-        });
-
-        // RE-ATTACH handlers for all slots (field + unavailable)
-        const slots = document.querySelectorAll('.player-slot, .bench-slot');
-        console.log(`   🎯 Found ${slots.length} slot elements (20 field + 5 unavailable)`);
+        const slots = document.querySelectorAll('.player-slot, .bench-slot, .unavailable-slot');
+        console.log(`   🎯 Found ${slots.length} spot elements`);
         slots.forEach((slot, idx) => {
             slot.style.cursor = 'pointer';
             slot.style.pointerEvents = 'auto';
-            slot.style.touchAction = 'none';  /* Prevent touch scrolling on slots */
-            // Add BOTH click and touch event handlers for mobile compatibility
+            slot.style.touchAction = 'none';
             slot.addEventListener('click', handleTapSlot, { passive: false });
             slot.addEventListener('touchstart', handleTapSlot, { passive: false });
             if (idx < 3 || idx >= slots.length - 3) {
                 console.log(`      [${idx}] ${slot.getAttribute('data-position') || slot.id} - position: ${slot.style.position || 'auto'}, click+touch listeners added`);
             }
         });
-
-        // Setup sidebar tap-to-remove functionality
-        const playerList = document.getElementById('player-list');
-        if (playerList) {
-            playerList.removeEventListener('click', handleSidebarTap);
-            playerList.removeEventListener('touchstart', handleSidebarTap);
-            playerList.addEventListener('click', handleSidebarTap, { passive: false });
-            playerList.addEventListener('touchstart', handleSidebarTap, { passive: false });
-            console.log(`   ✓ Sidebar listener attached (click + touch)`);
-        }
         
-        console.log(`✅ Event listeners setup complete! (${allPlayerNumbers.length} player + ${slots.length} slot handlers)`);
+        console.log(`✅ Event listeners setup complete! (${slots.length} spot handlers)`);
     }
 };
 
@@ -411,6 +405,7 @@ function handleTapPlayer(e) {
     } else if (isDisabled) {
         // Check if player is in unavailable slot or just in sidebar but disabled
         const inBenchSlot = targetElement.closest('.bench-slot');
+        const inUnavailableSlot = targetElement.closest('.unavailable-slot');
         if (inUnavailableSlot) {
             source = 'unavailable';
         } else {
@@ -438,107 +433,78 @@ function handleTapPlayer(e) {
  * Handle slot tap - place selected player or swap with existing player
  */
 function handleTapSlot(e) {
-    // Handle both touch and click events
-    const eventType = e.type;  // 'click', 'touchstart', 'touchend'
-    
+    const eventType = e.type;
+
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation?.();
-    
-    // For touch events, get the touched element, otherwise use click target
+
     let slotElement = e.currentTarget;
     if (eventType.includes('touch') && e.touches?.length > 0) {
         const touch = e.touches[0];
         const touchedEl = document.elementFromPoint(touch.clientX, touch.clientY);
-        if (touchedEl?.classList.contains('player-slot') || touchedEl?.classList.contains('bench-slot')) {
-            slotElement = touchedEl;
+        const touchedSlot = touchedEl?.closest?.('.player-slot, .bench-slot, .unavailable-slot');
+        if (touchedSlot) {
+            slotElement = touchedSlot;
         }
     }
-    
-    const position = slotElement?.getAttribute?.('data-position') || slotElement?.getAttribute?.('id') || 'unknown';
-    
-    console.log(`🎯 Slot tapped! [${eventType}]`);
-    console.log(`   Position: ${position}`);
-    console.log(`   Class: ${slotElement.className}`);
-    console.log(`   Is a player-slot: ${slotElement.classList.contains('player-slot')}`);
-    console.log(`   Is bench-slot: ${slotElement.classList.contains('bench-slot')}`);
-    console.log(`   TapState object:`, TapState);
-    console.log(`   TapState.playerId: ${TapState.playerId}`);
-    
-    // If no player is selected, show hint
-    if (!TapState.playerId) {
-        console.log('💡 No player selected. TapState is:', TapState);
-        console.log('💡 Tap a player jersey first (should see green outline), then tap a spot.');
-        showMessage('Tap a player first!', 'warning');
+
+    if (!slotElement) {
         return;
     }
-    
-    // Get slot ID (could be data-position or id)
-    const slotId = slotElement.getAttribute('data-position') || slotElement.id;
-    console.log(`   Slot ID to place in: ${slotId}`);
-    
-    // Check if slot already has a player (for swapping)
-    const existingPlayer = findPlayerAtPosition(slotId);
-    console.log(`   Existing player at slot: ${existingPlayer ? existingPlayer.id : 'NONE'}`);
-    
-    // Only swap if there is an existing player AND it's not the same player we're placing
-    if (existingPlayer && existingPlayer.id !== TapState.playerId) {
-        console.log(`🔄 SWAP MODE: Player ${existingPlayer.id} at ${slotId}, will swap with ${TapState.playerId}`);
-        // Find where the selected player currently is
-        const selectedPlayerPosition = findPositionOfPlayer(TapState.playerId);
-        console.log(`   Selected player ${TapState.playerId} is currently at: ${selectedPlayerPosition}`);
-        
-        if (selectedPlayerPosition) {
-            // SWAP: Exchange the two players' positions
-            console.log(`   → SWAPPING: Exchanging positions...`);
-            console.log(`      Existing player ${existingPlayer.id} moves from ${slotId} to ${selectedPlayerPosition}`);
-            console.log(`      Selected player ${TapState.playerId} moves from ${selectedPlayerPosition} to ${slotId}`);
-            
-            // Get both slot elements
-            const selectedPlayerSlot = document.querySelector(`[data-position="${selectedPlayerPosition}"]`) || 
-                                       document.getElementById(selectedPlayerPosition);
-            
-            if (selectedPlayerSlot) {
-                // Step 1: Place existing player to selected player's former position
-                removePlayerFromAllLocations(existingPlayer.id);
-                placePlayerToSlot(existingPlayer.id, selectedPlayerSlot);
-                console.log(`   ✓ Existing player ${existingPlayer.id} now at ${selectedPlayerPosition}`);
-                
-                // Step 2: Place selected player to target slot
-                removePlayerFromAllLocations(TapState.playerId);
-                placePlayerToSlot(TapState.playerId, slotElement);
-                console.log(`   ✓ Selected player ${TapState.playerId} now at ${slotId}`);
-                
-                showMessage(`Swapped! ${existingPlayer.jerseyNumber} ↔ ${getTeamPlayers().find(p => p.id === TapState.playerId)?.jerseyNumber}`, 'success');
-            } else {
-                console.log(`   ❌ Could not find selected player's former slot`);
-                showMessage('Swap failed - slot not found', 'error');
-            }
-        } else {
-            console.log(`   ❌ Selected player position not found`);
-            showMessage('Swap failed - player position unknown', 'error');
+
+    const slotId = getSlotId(slotElement);
+    const tappedPlayerId = slotElement.getAttribute('data-player-id');
+
+    if (!TapState.playerId) {
+        if (!tappedPlayerId) {
+            showMessage('Tap an occupied spot first', 'warning');
+            return;
         }
-        
-        // Clear tap state after swap
-        TapState.playerId = null;
-        TapState.source = null;
-    } else {
-        // Normal placement (no swap)
-        console.log(`📍 PLACING player ${TapState.playerId} from ${TapState.source} to position ${slotId}`);
-        
-        // Place or move the selected player to this slot
-        try {
-            console.log('   → Calling placePlayerToSlot()...');
-            placePlayerToSlot(TapState.playerId, slotElement);
-            console.log('✅ Placement successful!');
-            showMessage('Player placed!', 'success');
-        } catch (err) {
-            console.error('❌ Placement failed:', err);
-            console.error('   Stack:', err.stack);
-            showMessage('Placement failed!', 'error');
+
+        TapState.playerId = tappedPlayerId;
+        TapState.source = getSlotType(slotElement);
+        TapState.slotId = slotId;
+
+        clearSelection();
+        const badge = slotElement.querySelector('.player-number, .player-number-placed');
+        if (badge) {
+            badge.classList.add('tap-selected');
         }
+        showMessage(`Player #${getPlayerJersey(TapState.playerId)} selected - tap destination spot`, 'info');
+        return;
     }
-    
+
+    const selectedPlayerId = TapState.playerId;
+    const sourceSlot = getSlotByPlayerId(selectedPlayerId);
+    if (!sourceSlot) {
+        clearSelectionFully();
+        showMessage('Selected player is no longer on the board', 'warning');
+        return;
+    }
+
+    if (slotId === getSlotId(sourceSlot)) {
+        clearSelectionFully();
+        return;
+    }
+
+    const displacedPlayerId = slotElement.getAttribute('data-player-id');
+
+    // Move selected player to destination first.
+    placePlayerToSlot(selectedPlayerId, slotElement);
+
+    if (displacedPlayerId && displacedPlayerId !== selectedPlayerId) {
+        const emptyBenchSpot = findFirstEmptyBenchSpot();
+        if (emptyBenchSpot) {
+            placePlayerToSlot(displacedPlayerId, emptyBenchSpot);
+            showMessage(`Moved #${getPlayerJersey(selectedPlayerId)}. #${getPlayerJersey(displacedPlayerId)} returned to bench`, 'success');
+        } else {
+            showMessage('No empty bench spot for displaced player', 'warning');
+        }
+    } else {
+        showMessage(`Moved #${getPlayerJersey(selectedPlayerId)}`, 'success');
+    }
+
     clearSelectionFully();
 }
 
@@ -546,30 +512,7 @@ function handleTapSlot(e) {
  * Handle sidebar tap to remove players from field/unavailable
  */
 function handleSidebarTap(e) {
-    // Prevent propagation for touch events too
-    if (e.type.includes('touch')) {
-        e.preventDefault();
-    }
-    
-    // If no player is selected from field/unavailable, nothing to remove
-    if (!TapState.playerId || TapState.source === 'sidebar') {
-        return;
-    }
-    
-    // Check if click/tap is within the sidebar area (not on another player)
-    const sidebarElement = e.currentTarget || e.target;
-    const isClickInSidebar = e.target.classList.contains('player-list') || 
-                             e.target.closest('.player-list');
-    
-    if (!isClickInSidebar) {
-        return;
-    }
-    
-    console.log(`🔙 REMOVE: User tapped sidebar to move player ${TapState.playerId} back to bench`);
-    console.log(`   Player was from: ${TapState.source}`);
-    removePlayerFromSlot(TapState.playerId);
-    showMessage('Player moved back to bench!', 'success');
-    clearSelectionFully();
+    // Sidebar interactions are disabled; spots are the only interactive elements.
 }
 
 /**
@@ -591,6 +534,36 @@ function clearSelectionFully() {
         num.classList.remove('tap-selected');
     });
     TapState.clear();
+}
+
+function getSlotId(slotElement) {
+    return slotElement?.getAttribute?.('data-position') || slotElement?.id || '';
+}
+
+function getSlotType(slotElement) {
+    if (!slotElement) return null;
+    if (slotElement.classList.contains('bench-slot')) return 'bench';
+    if (slotElement.classList.contains('unavailable-slot')) return 'unavailable';
+    if (slotElement.classList.contains('player-slot')) return 'field';
+    return null;
+}
+
+function getPlayerJersey(playerId) {
+    return getTeamPlayers().find(p => p.id === playerId)?.jerseyNumber || '?';
+}
+
+function getSlotByPlayerId(playerId) {
+    return document.querySelector(`.player-slot[data-player-id="${playerId}"], .bench-slot[data-player-id="${playerId}"], .unavailable-slot[data-player-id="${playerId}"]`);
+}
+
+function findFirstEmptyBenchSpot() {
+    const benchSpots = document.querySelectorAll('.bench-slot');
+    for (const spot of benchSpots) {
+        if (!spot.getAttribute('data-player-id')) {
+            return spot;
+        }
+    }
+    return null;
 }
 
 // ============================================================================
@@ -618,6 +591,14 @@ function findPositionOfPlayer(playerId) {
         const playerNum = spot.querySelector('.player-number');
         if (playerNum && playerNum.dataset.playerId === playerId) {
             return spot.id;  // Return the specific bench spot ID (e.g., 'bench-slot-1')
+        }
+    }
+
+    const unavailableSpots = document.querySelectorAll('.unavailable-slot');
+    for (const spot of unavailableSpots) {
+        const playerNum = spot.querySelector('.player-number');
+        if (playerNum && playerNum.dataset.playerId === playerId) {
+            return spot.id;
         }
     }
     
@@ -688,10 +669,13 @@ function placePlayerToSlot(playerId, slotElement) {
     // Remove player from ALL locations first
     removePlayerFromAllLocations(playerId);
 
-    // Check if target is unavailable slot
-    if (slotElement.classList.contains('bench-slot')) {
+    // Place into target slot type
+    if (slotElement.classList.contains('unavailable-slot')) {
         console.log(`   → Adding to unavailable`);
         placePlayerInUnavailable(playerId, slotElement, player);
+    } else if (slotElement.classList.contains('bench-slot')) {
+        console.log(`   → Adding to bench`);
+        placePlayerOnBench(playerId, slotElement, player);
     } else {
         console.log(`   → Adding to field position`);
         placePlayerOnField(playerId, slotElement, player);
@@ -726,11 +710,9 @@ function removePlayerFromAllLocations(playerId) {
     });
     if (clearedFromField) console.log(`   ✓ Freed field spot`);
 
-    // BENCH AREA: Scan each of 5 bench spots individually 
-    // Only the specific bench spot containing this player gets cleared
+    // BENCH AREA: Scan each bench spot individually
     let clearedFromBench = false;
     document.querySelectorAll('.bench-slot').forEach(spot => {
-        // Check THIS individual bench spot's data-player-id
         if (spot.getAttribute('data-player-id') === playerId) {
             console.log(`   🟡 BENCH SPOT: Clearing from ${spot.id}`);
             spot.innerHTML = '';
@@ -741,16 +723,18 @@ function removePlayerFromAllLocations(playerId) {
     });
     if (clearedFromBench) console.log(`   ✓ Freed bench spot`);
 
-    // SIDEBAR AREA: Find this player's individual spot in sidebar
-    // Only THIS player spot gets re-enabled (can be picked again)
-    let clearedFromSidebar = false;
-    const playerSidebarSpot = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (playerSidebarSpot) {
-        console.log(`   🟢 SIDEBAR SPOT: Re-enabling player`);
-        playerSidebarSpot.classList.remove('disabled');
-        clearedFromSidebar = true;
-    }
-    if (clearedFromSidebar) console.log(`   ✓ Freed sidebar spot`);
+    // UNAVAILABLE AREA: Scan each unavailable spot individually
+    let clearedFromUnavailable = false;
+    document.querySelectorAll('.unavailable-slot').forEach(spot => {
+        if (spot.getAttribute('data-player-id') === playerId) {
+            console.log(`   🔵 UNAVAILABLE SPOT: Clearing from ${spot.id}`);
+            spot.innerHTML = '';
+            spot.removeAttribute('data-player-id');
+            spot.classList.remove('occupied');
+            clearedFromUnavailable = true;
+        }
+    });
+    if (clearedFromUnavailable) console.log(`   ✓ Freed unavailable spot`);
 
     // Update STATE: Remove from unavailable list
     const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
@@ -762,7 +746,16 @@ function removePlayerFromAllLocations(playerId) {
     setFormationTemp(formation);
     console.log(`   📋 Formation state cleared`);
     
-    console.log(`   ✅ Removal complete: field=${clearedFromField}, bench=${clearedFromBench}, sidebar=${clearedFromSidebar}`);
+    console.log(`   ✅ Removal complete: field=${clearedFromField}, bench=${clearedFromBench}, unavailable=${clearedFromUnavailable}`);
+}
+
+function placePlayerOnBench(playerId, slotElement, player) {
+    const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
+    setUnavailablePlayers(unavailableList);
+
+    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${(player.name || '').toUpperCase()}</span></span>`;
+    slotElement.setAttribute('data-player-id', playerId);
+    slotElement.classList.add('occupied');
 }
 
 /**
@@ -780,18 +773,11 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
         console.log(`   ✓ STATE: Added to unavailable list (bench state)`);
     }
 
-    // Update THIS SPECIFIC bench spot: Add badge, mark occupied
-    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${player.name}</span></span>`;
+    // Update THIS SPECIFIC unavailable spot: Add badge, mark occupied
+    slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${(player.name || '').toUpperCase()}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
-    console.log(`   ✓ BENCH SPOT: Badge rendered in ${slotElement.id}, spot now occupied`);
-
-    // Update SIDEBAR AREA: Find THIS specific player's spot and disable it
-    const playerSidebarSpot = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (playerSidebarSpot) {
-        playerSidebarSpot.classList.add('disabled');
-        console.log(`   ✓ SIDEBAR SPOT: This player's spot disabled (no longer available to pick)`);
-    }
+    console.log(`   ✓ UNAVAILABLE SPOT: Badge rendered in ${slotElement.id}, spot now occupied`);
     
     console.log(`   ✅ Bench spot placement complete`);
 }
@@ -818,17 +804,10 @@ function placePlayerOnField(playerId, slotElement, player) {
     console.log(`   ✓ STATE: Formation updated for THIS spot position ${position}`);
 
     // Update THIS SPECIFIC field spot: Add badge, mark occupied
-    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${player.name}</span></span>`;
+    slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${(player.name || '').toUpperCase()}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
     console.log(`   ✓ FIELD SPOT: Badge rendered in position ${position}, spot now occupied`);
-
-    // Update SIDEBAR AREA: Find THIS specific player's spot and disable it
-    const playerSidebarSpot = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (playerSidebarSpot) {
-        playerSidebarSpot.classList.add('disabled');
-        console.log(`   ✓ SIDEBAR SPOT: This player's spot disabled (no longer available to pick)`);
-    }
     
     console.log(`   ✅ Field spot placement complete`);
 }
@@ -838,12 +817,6 @@ function placePlayerOnField(playerId, slotElement, player) {
  */
 function removePlayerFromSlot(playerId) {
     removePlayerFromAllLocations(playerId);
-
-    // Re-enable in sidebar
-    const sidebarPlayerNum = document.querySelector(`.player-list [data-player-id="${playerId}"]`);
-    if (sidebarPlayerNum) {
-        sidebarPlayerNum.classList.remove('disabled');
-    }
 
     // Re-setup handlers
     FormationScreen._setupTapHandlers();
