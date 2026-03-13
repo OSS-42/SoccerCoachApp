@@ -643,9 +643,21 @@ function setupFormation() {
 
 // Formation validation - called when user clicks Start Formation or tries to move to game tracking
 function validateFormationSetup() {
-    const formationPlayers = getFormationTemp();
+    let formationPlayers = getFormationTemp() || [];
     const requiredPlayerCount = parseInt(appState.gameSetupMatchType.split('v')[0]);
     const unavailablePlayers = getUnavailablePlayers();
+
+    // Prefer current field DOM as source of truth for slot assignments.
+    const fieldSpotPlayers = Array.from(document.querySelectorAll('.player-slot[data-player-id]')).map(spot => ({
+        playerId: spot.getAttribute('data-player-id'),
+        position: spot.getAttribute('data-position'),
+        x: parseFloat(spot.style.left),
+        y: parseFloat(spot.style.top)
+    }));
+    if (fieldSpotPlayers.length > 0) {
+        formationPlayers = fieldSpotPlayers;
+        setFormationTemp(fieldSpotPlayers);
+    }
     
     // Check that on-field players match required count
     if (formationPlayers.length !== requiredPlayerCount) {

@@ -694,6 +694,8 @@ body {
     padding: 2px 5px;
     flex: 1;
 }
+
+.player-position {
     font-size: clamp(0.75rem, 2.2vmin, 1rem);
     font-weight: 500;
     color: #333;
@@ -2581,6 +2583,7 @@ button.no-assist-btn {
         text-overflow: ellipsis;
         display: -webkit-box !important;  /* Override global rule */
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         white-space: normal !important;  /* Override nowrap from global rule */
         text-transform: none !important;  /* Remove uppercase from global rule */
@@ -3055,15 +3058,15 @@ button.no-assist-btn {
 
 /* Empty slot styling */
 .player-slot:not(.occupied) {
-    background: rgba(100, 180, 230, 0.4);
-    border: 2px solid #2196f3;
+    background: transparent;
+    border: 2px dashed rgba(255, 255, 255, 0.8);
     opacity: 1;
 }
 
 .player-slot:not(.occupied):hover {
-    background: rgba(100, 150, 200, 0.3);
-    border-color: #42a5f5;
-    box-shadow: 0 0 16px rgba(66, 165, 245, 0.5);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #ffffff;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
     transform: translate(-50%, -50%) scale(1.15);
 }
 
@@ -3075,7 +3078,7 @@ button.no-assist-btn {
 
 /* Goalkeeper slot - empty state */
 .gk-slot:not(.occupied) {
-    background: rgba(76, 175, 80, 0.2);
+    background: rgba(76, 175, 80, 0.08);
     border: 2px solid #66bb6a;
 }
 
@@ -3088,15 +3091,26 @@ button.no-assist-btn {
 
 /* Sweeper slot - empty state */
 .sw-slot:not(.occupied) {
-    background: rgba(156, 39, 176, 0.2);
-    border: 2px solid #2196f3;
+    background: rgba(255, 193, 7, 0.08);
+    border: 2px solid #ffb300;
 }
 
 .sw-slot:not(.occupied):hover {
-    background: rgba(156, 39, 176, 0.3);
-    border-color: #42a5f5;
-    box-shadow: 0 0 16px rgba(156, 39, 176, 0.5);
+    background: rgba(255, 193, 7, 0.2);
+    border-color: #ffa000;
+    box-shadow: 0 0 16px rgba(255, 193, 7, 0.45);
     transform: translate(-50%, -50%) scale(1.15);
+}
+
+/* Keep player squares readable on desktop while the field surface is rotated. */
+.formation-field-surface.desktop-rotated .player-slot {
+    transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+.formation-field-surface.desktop-rotated .player-slot:not(.occupied):hover,
+.formation-field-surface.desktop-rotated .gk-slot:not(.occupied):hover,
+.formation-field-surface.desktop-rotated .sw-slot:not(.occupied):hover {
+    transform: translate(-50%, -50%) rotate(-90deg) scale(1.15);
 }
 
 /* Player number placed on field */
