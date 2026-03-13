@@ -51,6 +51,8 @@ const FormationScreen = {
             
             slot.className = classNames;
             slot.setAttribute('data-position', spot.position);
+            slot.dataset.baseX = String(spot.x);
+            slot.dataset.baseY = String(spot.y);
             slot.style.position = 'absolute';
             slot.style.left = `${spot.x}%`;
             slot.style.top = `${spot.y}%`;
@@ -179,6 +181,7 @@ const FormationScreen = {
         if (!isDesktopLayout) {
             fieldSurface.style.width = '100%';
             fieldSurface.style.height = '100%';
+            this._syncDesktopSpotOffsets(fieldSurface, false);
             return;
         }
 
@@ -195,6 +198,46 @@ const FormationScreen = {
 
         fieldSurface.style.width = `${landscapeHeight}px`;
         fieldSurface.style.height = `${landscapeWidth}px`;
+        this._syncDesktopSpotOffsets(fieldSurface, true);
+    },
+
+    _syncDesktopSpotOffsets(fieldSurface, isDesktopLayout) {
+        const fieldSlots = fieldSurface.querySelectorAll('.player-slot');
+
+        if (!fieldSlots.length) {
+            return;
+        }
+
+        const slotWidth = fieldSlots[0].offsetWidth || 56;
+        const horizontalSpotWidthPercent = isDesktopLayout && fieldSurface.offsetHeight
+            ? (slotWidth / fieldSurface.offsetHeight) * 100
+            : 0;
+        const desktopRowPositions = isDesktopLayout
+            ? this._getDesktopRowPositions(horizontalSpotWidthPercent)
+            : null;
+
+        fieldSlots.forEach(slot => {
+            const baseX = parseFloat(slot.dataset.baseX || '50');
+            const baseY = parseFloat(slot.dataset.baseY || '50');
+            const position = slot.getAttribute('data-position') || '';
+            const rowKey = position.split('-')[0];
+            const adjustedY = desktopRowPositions?.[rowKey] ?? baseY;
+
+            slot.style.left = `${baseX}%`;
+            slot.style.top = `${Math.max(0, Math.min(100, adjustedY))}%`;
+        });
+    },
+
+    _getDesktopRowPositions(horizontalSpotWidthPercent) {
+        const rowOrder = ['GK', 'SW', 'DEF', 'DM', 'MID', 'OM', 'FWD'];
+        const gkAnchor = 89 - horizontalSpotWidthPercent;
+        const fwdAnchor = 20 + horizontalSpotWidthPercent;
+        const step = (gkAnchor - fwdAnchor) / (rowOrder.length - 1);
+
+        return rowOrder.reduce((positions, rowKey, index) => {
+            positions[rowKey] = gkAnchor - (step * index);
+            return positions;
+        }, {});
     },
 
     /**
