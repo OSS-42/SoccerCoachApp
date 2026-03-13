@@ -2901,10 +2901,9 @@ button.no-assist-btn {
         order: 2;
         width: 100%;
         flex: 1;
-        max-height: 60vh;
-        aspect-ratio: 3 / 1;
         background: url('../img/field.png') no-repeat center center;
-        background-size: cover;
+        background-size: contain;
+        background-repeat: no-repeat;
         position: relative;
         user-select: none;
         -webkit-user-select: none;
@@ -2914,6 +2913,7 @@ button.no-assist-btn {
         overflow: hidden;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         transform: rotate(90deg);
+        min-height: 0;
     }
     
     /* UNAVAILABLE PLAYERS - BOTTOM ROW */
