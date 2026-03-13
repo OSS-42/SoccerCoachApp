@@ -185,7 +185,7 @@ const FormationScreen = {
         if (!isDesktopLayout) {
             fieldSurface.style.width = '100%';
             fieldSurface.style.height = '100%';
-            this._syncDesktopSpotOffsets(fieldSurface, false);
+            this._syncFieldSpotOffsets(fieldSurface, false);
             return;
         }
 
@@ -202,10 +202,10 @@ const FormationScreen = {
 
         fieldSurface.style.width = `${landscapeHeight}px`;
         fieldSurface.style.height = `${landscapeWidth}px`;
-        this._syncDesktopSpotOffsets(fieldSurface, true);
+        this._syncFieldSpotOffsets(fieldSurface, true);
     },
 
-    _syncDesktopSpotOffsets(fieldSurface, isDesktopLayout) {
+    _syncFieldSpotOffsets(fieldSurface, isDesktopLayout) {
         const fieldSlots = fieldSurface.querySelectorAll('.player-slot');
 
         if (!fieldSlots.length) {
@@ -213,19 +213,19 @@ const FormationScreen = {
         }
 
         const slotWidth = fieldSlots[0].offsetWidth || 56;
-        const horizontalSpotWidthPercent = isDesktopLayout && fieldSurface.offsetHeight
+        const spotWidthPercent = fieldSurface.offsetHeight
             ? (slotWidth / fieldSurface.offsetHeight) * 100
             : 0;
-        const desktopRowPositions = isDesktopLayout
-            ? this._getDesktopRowPositions(horizontalSpotWidthPercent)
-            : null;
+        const rowPositions = isDesktopLayout
+            ? this._getDesktopRowPositions(spotWidthPercent)
+            : this._getMobileRowPositions(spotWidthPercent);
 
         fieldSlots.forEach(slot => {
             const baseX = parseFloat(slot.dataset.baseX || '50');
             const baseY = parseFloat(slot.dataset.baseY || '50');
             const position = slot.getAttribute('data-position') || '';
             const rowKey = position.split('-')[0];
-            const adjustedY = desktopRowPositions?.[rowKey] ?? baseY;
+            const adjustedY = rowPositions?.[rowKey] ?? baseY;
 
             slot.style.left = `${baseX}%`;
             slot.style.top = `${Math.max(0, Math.min(100, adjustedY))}%`;
@@ -233,19 +233,31 @@ const FormationScreen = {
     },
 
     _getDesktopRowPositions(horizontalSpotWidthPercent) {
-        const rowOrder = ['GK', 'SW', 'DEF', 'DM', 'MID', 'OM', 'FWD'];
+        const rowOrder = ['GK', 'SW', 'DEF', 'DM', 'MID', 'OM', 'FWD', 'ST'];
         const gkAnchor = 89 + (horizontalSpotWidthPercent * 0.5);
-        const fwdAnchor = 20 - horizontalSpotWidthPercent;
-        const step = (gkAnchor - fwdAnchor) / (rowOrder.length - 1);
+        const baseFwdAnchor = 20 - horizontalSpotWidthPercent;
+        const baseStepToFwd = (gkAnchor - baseFwdAnchor) / 6;
+        const stAnchor = (baseFwdAnchor - baseStepToFwd) + horizontalSpotWidthPercent;
+        const step = (gkAnchor - stAnchor) / (rowOrder.length - 1);
 
-        const positions = rowOrder.reduce((acc, rowKey, index) => {
+        return rowOrder.reduce((acc, rowKey, index) => {
             acc[rowKey] = gkAnchor - (step * index);
             return acc;
         }, {});
+    },
 
-        // Extend one more evenly spaced row beyond FWD for striker spots.
-        positions.ST = positions.FWD - step;
-        return positions;
+    _getMobileRowPositions(spotWidthPercent) {
+        const rowOrder = ['GK', 'SW', 'DEF', 'DM', 'MID', 'OM', 'FWD', 'ST'];
+        const gkAnchor = 95;
+        const baseFwdAnchor = 10;
+        const baseStepToFwd = (gkAnchor - baseFwdAnchor) / 6;
+        const stAnchor = (baseFwdAnchor - baseStepToFwd) + spotWidthPercent;
+        const step = (gkAnchor - stAnchor) / (rowOrder.length - 1);
+
+        return rowOrder.reduce((acc, rowKey, index) => {
+            acc[rowKey] = gkAnchor - (step * index);
+            return acc;
+        }, {});
     },
 
     /**
