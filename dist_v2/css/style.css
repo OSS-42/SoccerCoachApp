@@ -2790,8 +2790,8 @@ button.no-assist-btn {
  * ============================================================================ */
 
 @media screen and (min-width: 769px) {
-    /* DESKTOP: VERTICAL LAYOUT */
-    /* BENCH (TOP) | FIELD (MIDDLE) | UNAVAILABLE (BOTTOM) */
+    /* DESKTOP: STACKED VERTICAL LAYOUT */
+    /* ROW 1: BENCH | ROW 2: FIELD | ROW 3: UNAVAILABLE */
     
     .formation-container {
         flex-direction: column;
@@ -2807,8 +2807,14 @@ button.no-assist-btn {
         display: none;
     }
     
-    /* BENCH PLAYERS - TOP SECTION */
+    /* RIGHT COLUMN - BREAK OUT TO ALLOW VERTICAL STACKING */
+    .formation-right-column {
+        display: contents;
+    }
+    
+    /* BENCH PLAYERS - TOP ROW */
     .bench-players {
+        order: 1;
         display: flex;
         flex-direction: row;
         gap: 8px;
@@ -2820,6 +2826,7 @@ button.no-assist-btn {
         max-height: 120px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        align-items: center;
     }
     
     .bench-players h4 {
@@ -2838,11 +2845,11 @@ button.no-assist-btn {
     .bench-slots {
         display: flex;
         flex-direction: row;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
-        overflow-y: auto;
+        overflow: auto;
         flex: 1;
-        align-content: flex-start;
+        align-content: center;
         -webkit-overflow-scrolling: touch;
     }
     
@@ -2856,8 +2863,8 @@ button.no-assist-btn {
     }
     
     .bench-slot {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
         border: 2px dashed #4caf50;
         border-radius: 4px;
         display: flex;
@@ -2889,13 +2896,13 @@ button.no-assist-btn {
         border-color: #388e3c;
     }
     
-    /* SOCCER FIELD - MIDDLE SECTION (GROWS TO FILL) */
+    /* SOCCER FIELD - MIDDLE ROW (GROWS TO FILL) */
     .formation-field {
-        width: auto;
+        order: 2;
+        width: 100%;
         flex: 1;
-        min-width: 380px;
         background: url('../img/field.png') no-repeat center center;
-        background-size: auto 100%;
+        background-size: contain;
         position: relative;
         user-select: none;
         -webkit-user-select: none;
@@ -2906,18 +2913,9 @@ button.no-assist-btn {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
-    /* RIGHT COLUMN - HIDDEN/RESTRUCTURED (vertical layout now) */
-    .formation-right-column {
-        display: flex;
-        flex-direction: row;
-        gap: 12px;
-        width: 100%;
-        flex-shrink: 0;
-        align-items: stretch;
-    }
-    
-    /* UNAVAILABLE PLAYERS - BOTTOM SECTION */
+    /* UNAVAILABLE PLAYERS - BOTTOM ROW */
     .unavailable-players {
+        order: 3;
         display: flex;
         flex-direction: row;
         gap: 8px;
@@ -2929,6 +2927,7 @@ button.no-assist-btn {
         max-height: 120px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        align-items: center;
     }
     
     .unavailable-players h4 {
@@ -2947,10 +2946,11 @@ button.no-assist-btn {
     .unavailable-slots {
         display: flex;
         flex-direction: row;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
-        max-height: 80px;
-        overflow-y: auto;
+        overflow: auto;
+        flex: 1;
+        align-content: center;
         -webkit-overflow-scrolling: touch;
     }
     
@@ -2964,8 +2964,8 @@ button.no-assist-btn {
     }
     
     .unavailable-slot {
-        width: 38px;
-        height: 38px;
+        width: 40px;
+        height: 40px;
         border: 2px dashed #e53935;
         border-radius: 4px;
         display: flex;
