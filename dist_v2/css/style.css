@@ -2896,13 +2896,13 @@ button.no-assist-btn {
         border-color: #388e3c;
     }
     
-    /* SOCCER FIELD - MIDDLE ROW (GROWS TO FILL, LANDSCAPE) */
+    /* SOCCER FIELD - MIDDLE ROW (GROWS TO FILL, LANDSCAPE ROTATED) */
     .formation-field {
         order: 2;
         width: 100%;
         flex: 1;
         max-height: 60vh;
-        aspect-ratio: 2 / 1;
+        aspect-ratio: 3 / 1;
         background: url('../img/field.png') no-repeat center center;
         background-size: cover;
         position: relative;
@@ -2913,6 +2913,7 @@ button.no-assist-btn {
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: rotate(90deg);
     }
     
     /* UNAVAILABLE PLAYERS - BOTTOM ROW */
