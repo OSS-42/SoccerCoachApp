@@ -217,7 +217,7 @@ const FormationScreen = {
             ? (slotWidth / fieldSurface.offsetHeight) * 100
             : 0;
         const rowPositions = isDesktopLayout
-            ? this._getDesktopRowPositions(spotWidthPercent)
+            ? this._getDesktopRowPositions(spotWidthPercent, slotWidth)
             : this._getMobileRowPositions(spotWidthPercent);
 
         fieldSlots.forEach(slot => {
@@ -232,18 +232,22 @@ const FormationScreen = {
         });
     },
 
-    _getDesktopRowPositions(horizontalSpotWidthPercent) {
-        const rowOrder = ['GK', 'SW', 'DEF', 'DM', 'MID', 'OM', 'FWD', 'ST'];
+    _getDesktopRowPositions(horizontalSpotWidthPercent, slotWidthPx) {
+        const rowOrderFromSw = ['SW', 'DEF', 'DM', 'MID', 'OM', 'FWD', 'ST'];
         const gkAnchor = 89 + (horizontalSpotWidthPercent * 0.5);
         const baseFwdAnchor = 20 - horizontalSpotWidthPercent;
         const baseStepToFwd = (gkAnchor - baseFwdAnchor) / 6;
         const stAnchor = (baseFwdAnchor - baseStepToFwd) + horizontalSpotWidthPercent;
-        const step = (gkAnchor - stAnchor) / (rowOrder.length - 1);
+        const swToGkSpacingPercent = horizontalSpotWidthPercent * (2 / (slotWidthPx || 56));
+        const swAnchor = gkAnchor - swToGkSpacingPercent;
+        const step = (swAnchor - stAnchor) / (rowOrderFromSw.length - 1);
 
-        return rowOrder.reduce((acc, rowKey, index) => {
-            acc[rowKey] = gkAnchor - (step * index);
-            return acc;
-        }, {});
+        const positions = { GK: gkAnchor };
+        rowOrderFromSw.forEach((rowKey, index) => {
+            positions[rowKey] = swAnchor - (step * index);
+        });
+
+        return positions;
     },
 
     _getMobileRowPositions(spotWidthPercent) {
@@ -251,7 +255,7 @@ const FormationScreen = {
         const gkAnchor = 95;
         const baseFwdAnchor = 10;
         const baseStepToFwd = (gkAnchor - baseFwdAnchor) / 6;
-        const stAnchor = (baseFwdAnchor - baseStepToFwd) + spotWidthPercent;
+        const stAnchor = (baseFwdAnchor - baseStepToFwd) + (spotWidthPercent * 2);
         const step = (gkAnchor - stAnchor) / (rowOrder.length - 1);
 
         return rowOrder.reduce((acc, rowKey, index) => {
