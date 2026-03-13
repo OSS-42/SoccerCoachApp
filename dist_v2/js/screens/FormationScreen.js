@@ -121,7 +121,8 @@ const FormationScreen = {
                 DM: 59,
                 MID: 46,
                 OM: 33,
-                FWD: 20
+                FWD: 20,
+                ST: 10
             }
             : {
                 GK: 95,
@@ -130,9 +131,11 @@ const FormationScreen = {
                 DM: 61.38,
                 MID: 44.25,
                 OM: 27.13,
-                FWD: 10
+                FWD: 10,
+                ST: 2
             };
         const lineX = [10, 30, 50, 70, 90];
+        const strikerLineX = [30, 50, 70];
 
         return [
             { position: 'GK', x: 50, y: rowY.GK },
@@ -141,7 +144,8 @@ const FormationScreen = {
             ...lineX.map((x, index) => ({ position: `DM-${index + 1}`, x, y: rowY.DM })),
             ...lineX.map((x, index) => ({ position: `MID-${index + 1}`, x, y: rowY.MID })),
             ...lineX.map((x, index) => ({ position: `OM-${index + 1}`, x, y: rowY.OM })),
-            ...lineX.map((x, index) => ({ position: `FWD-${index + 1}`, x, y: rowY.FWD }))
+            ...lineX.map((x, index) => ({ position: `FWD-${index + 1}`, x, y: rowY.FWD })),
+            ...strikerLineX.map((x, index) => ({ position: `ST-${index + 1}`, x, y: rowY.ST }))
         ];
     },
 
@@ -234,10 +238,14 @@ const FormationScreen = {
         const fwdAnchor = 20 - horizontalSpotWidthPercent;
         const step = (gkAnchor - fwdAnchor) / (rowOrder.length - 1);
 
-        return rowOrder.reduce((positions, rowKey, index) => {
-            positions[rowKey] = gkAnchor - (step * index);
-            return positions;
+        const positions = rowOrder.reduce((acc, rowKey, index) => {
+            acc[rowKey] = gkAnchor - (step * index);
+            return acc;
         }, {});
+
+        // Extend one more evenly spaced row beyond FWD for striker spots.
+        positions.ST = positions.FWD - step;
+        return positions;
     },
 
     /**
