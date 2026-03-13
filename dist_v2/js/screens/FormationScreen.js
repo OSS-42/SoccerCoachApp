@@ -4,6 +4,8 @@
  */
 
 const FormationScreen = {
+    DESKTOP_FIELD_ASPECT_RATIO: 1.55,
+
     /**
      * Main render function - builds entire formation screen UI
      */
@@ -33,6 +35,10 @@ const FormationScreen = {
         // ============================================================================
         // STEP 1: Render all 25 empty field spots
         // ============================================================================
+        const fieldSurface = document.createElement('div');
+        fieldSurface.className = 'formation-field-surface';
+        formationField.appendChild(fieldSurface);
+
         const fieldSpots = this._getFieldSpots();
         console.log(`📌 Rendering ${fieldSpots.length} empty field spots...`);
         
@@ -49,8 +55,12 @@ const FormationScreen = {
             slot.style.left = `${spot.x}%`;
             slot.style.top = `${spot.y}%`;
             
-            formationField.appendChild(slot);
+            fieldSurface.appendChild(slot);
         });
+
+        this._observeFieldSurface(formationField);
+        this._syncFieldSurfaceLayout();
+        requestAnimationFrame(() => this._syncFieldSurfaceLayout());
         
         console.log(`✅ Created ${formationField.querySelectorAll('.player-slot').length} empty field spots`);
 
@@ -131,6 +141,60 @@ const FormationScreen = {
             ...lineX.map((x, index) => ({ position: `OM-${index + 1}`, x, y: rowY.OM })),
             ...lineX.map((x, index) => ({ position: `FWD-${index + 1}`, x, y: rowY.FWD }))
         ];
+    },
+
+    _observeFieldSurface(formationField) {
+        this._ensureFieldResizeHandler();
+
+        if (this._fieldResizeObserver) {
+            this._fieldResizeObserver.disconnect();
+        }
+
+        if ('ResizeObserver' in window) {
+            this._fieldResizeObserver = new ResizeObserver(() => this._syncFieldSurfaceLayout());
+            this._fieldResizeObserver.observe(formationField);
+        }
+    },
+
+    _ensureFieldResizeHandler() {
+        if (this._fieldResizeHandler) {
+            return;
+        }
+
+        this._fieldResizeHandler = () => this._syncFieldSurfaceLayout();
+        window.addEventListener('resize', this._fieldResizeHandler);
+    },
+
+    _syncFieldSurfaceLayout() {
+        const formationField = document.getElementById('formation-field');
+        const fieldSurface = formationField?.querySelector('.formation-field-surface');
+
+        if (!formationField || !fieldSurface) {
+            return;
+        }
+
+        const isDesktopLayout = window.matchMedia('(min-width: 769px)').matches;
+        fieldSurface.classList.toggle('desktop-rotated', isDesktopLayout);
+
+        if (!isDesktopLayout) {
+            fieldSurface.style.width = '100%';
+            fieldSurface.style.height = '100%';
+            return;
+        }
+
+        const wrapperWidth = formationField.clientWidth;
+        const wrapperHeight = formationField.clientHeight;
+
+        if (!wrapperWidth || !wrapperHeight) {
+            requestAnimationFrame(() => this._syncFieldSurfaceLayout());
+            return;
+        }
+
+        const landscapeWidth = Math.min(wrapperWidth, wrapperHeight * this.DESKTOP_FIELD_ASPECT_RATIO);
+        const landscapeHeight = landscapeWidth / this.DESKTOP_FIELD_ASPECT_RATIO;
+
+        fieldSurface.style.width = `${landscapeHeight}px`;
+        fieldSurface.style.height = `${landscapeWidth}px`;
     },
 
     /**

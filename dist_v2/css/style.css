@@ -1665,6 +1665,8 @@ body {
 .content.formation-content {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
     gap: 0;
     padding: 0;
     height: 100%;
@@ -1674,9 +1676,10 @@ body {
 
 @media (min-width: 769px) {
     .content.formation-content {
+        flex: 1;
+        min-height: 0;
         padding: 12px;
-        max-height: auto;
-        overflow-y: auto;
+        overflow: hidden;
         gap: 12px;
     }
 }
@@ -2474,6 +2477,8 @@ button.no-assist-btn {
 .formation-container {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     height: 100%;
     background: #ffffff;
@@ -2586,16 +2591,11 @@ button.no-assist-btn {
         flex: 1;
         order: 2;
         height: 100%;
-        background: url('../img/field.png') no-repeat center center;
-        background-size: auto 100%;
         position: relative;
         margin: 0;
         user-select: none;
         -webkit-user-select: none;
         -webkit-user-drag: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         border: 1px solid #e0e0e0;
         border-radius: 4px;
         overflow: hidden;
@@ -2901,9 +2901,6 @@ button.no-assist-btn {
         order: 2;
         width: 100%;
         flex: 1;
-        background: url('../img/field.png') no-repeat center center;
-        background-size: contain;
-        background-repeat: no-repeat;
         position: relative;
         user-select: none;
         -webkit-user-select: none;
@@ -2912,7 +2909,6 @@ button.no-assist-btn {
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transform: rotate(90deg);
         min-height: 0;
     }
     
@@ -3008,6 +3004,23 @@ button.no-assist-btn {
     font-size: 14px;
     cursor: pointer;
     padding: 5px; /* Compact padding for grid */
+}
+
+.formation-field-surface {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    background: url('../img/field.png') no-repeat center center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    transform-origin: center center;
+}
+
+.formation-field-surface.desktop-rotated {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
 }
 
 /* ============================================================================
