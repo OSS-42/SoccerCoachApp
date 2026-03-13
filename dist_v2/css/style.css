@@ -2896,13 +2896,15 @@ button.no-assist-btn {
         border-color: #388e3c;
     }
     
-    /* SOCCER FIELD - MIDDLE ROW (GROWS TO FILL) */
+    /* SOCCER FIELD - MIDDLE ROW (GROWS TO FILL, LANDSCAPE) */
     .formation-field {
         order: 2;
         width: 100%;
         flex: 1;
+        max-height: 60vh;
+        aspect-ratio: 2 / 1;
         background: url('../img/field.png') no-repeat center center;
-        background-size: contain;
+        background-size: cover;
         position: relative;
         user-select: none;
         -webkit-user-select: none;
