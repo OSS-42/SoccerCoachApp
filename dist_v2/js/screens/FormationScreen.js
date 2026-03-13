@@ -100,24 +100,36 @@ const FormationScreen = {
      * @returns {Array} Array of spot objects with position, x, y coordinates
      */
     _getFieldSpots() {
+        const isDesktopLayout = window.matchMedia('(min-width: 769px)').matches;
+        const rowY = isDesktopLayout
+            ? {
+                GK: 89,
+                SW: 81,
+                DEF: 72,
+                DM: 59,
+                MID: 46,
+                OM: 33,
+                FWD: 20
+            }
+            : {
+                GK: 95,
+                SW: 86.5,
+                DEF: 78.5,
+                DM: 61.38,
+                MID: 44.25,
+                OM: 27.13,
+                FWD: 10
+            };
+        const lineX = [10, 30, 50, 70, 90];
+
         return [
-            { position: 'GK', x: 50, y: 95 },
-            { position: 'SW', x: 50, y: 86.5 },
-            { position: 'DEF-1', x: 10, y: 78.5 }, { position: 'DEF-2', x: 30, y: 78.5 },
-            { position: 'DEF-3', x: 50, y: 78.5 }, { position: 'DEF-4', x: 70, y: 78.5 },
-            { position: 'DEF-5', x: 90, y: 78.5 },
-            { position: 'DM-1', x: 10, y: 61.38 }, { position: 'DM-2', x: 30, y: 61.38 },
-            { position: 'DM-3', x: 50, y: 61.38 }, { position: 'DM-4', x: 70, y: 61.38 },
-            { position: 'DM-5', x: 90, y: 61.38 },
-            { position: 'MID-1', x: 10, y: 44.25 }, { position: 'MID-2', x: 30, y: 44.25 },
-            { position: 'MID-3', x: 50, y: 44.25 }, { position: 'MID-4', x: 70, y: 44.25 },
-            { position: 'MID-5', x: 90, y: 44.25 },
-            { position: 'OM-1', x: 10, y: 27.13 }, { position: 'OM-2', x: 30, y: 27.13 },
-            { position: 'OM-3', x: 50, y: 27.13 }, { position: 'OM-4', x: 70, y: 27.13 },
-            { position: 'OM-5', x: 90, y: 27.13 },
-            { position: 'FWD-1', x: 10, y: 10 }, { position: 'FWD-2', x: 30, y: 10 },
-            { position: 'FWD-3', x: 50, y: 10 }, { position: 'FWD-4', x: 70, y: 10 },
-            { position: 'FWD-5', x: 90, y: 10 }
+            { position: 'GK', x: 50, y: rowY.GK },
+            { position: 'SW', x: 50, y: rowY.SW },
+            ...lineX.map((x, index) => ({ position: `DEF-${index + 1}`, x, y: rowY.DEF })),
+            ...lineX.map((x, index) => ({ position: `DM-${index + 1}`, x, y: rowY.DM })),
+            ...lineX.map((x, index) => ({ position: `MID-${index + 1}`, x, y: rowY.MID })),
+            ...lineX.map((x, index) => ({ position: `OM-${index + 1}`, x, y: rowY.OM })),
+            ...lineX.map((x, index) => ({ position: `FWD-${index + 1}`, x, y: rowY.FWD }))
         ];
     },
 
