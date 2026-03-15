@@ -32,6 +32,10 @@ window.formatTimestamp = function(timestamp) {
     }
 };
 
+window.renderSplitButtonContent = function(label, iconName) {
+    return `<span class="btn-text">${String(label)}</span><span class="material-icons">${String(iconName)}</span>`;
+};
+
 // Small helper to render a compact player stat table; used by report rendering
 window.buildPlayerStatTable = function(stats) {
     let statTable = '<table class="player-stats-table">';

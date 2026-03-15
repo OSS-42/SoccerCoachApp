@@ -51,15 +51,13 @@ const SettingsScreen = {
             <div class="settings-group">
                 <h3>Data Management</h3>
                 <button class="secondary-btn" onclick="SettingsScreen.openClearDataDialog()">
-                    <span class="btn-text">Clear Data</span>
-                    <span class="material-icons">delete</span>
+                    ${window.renderSplitButtonContent('Clear Data', 'delete')}
                 </button>
             </div>
 
             <div class="settings-group">
                 <button class="primary-btn" onclick="SettingsScreen.saveSettings()">
-                    <span class="btn-text">Save Settings</span>
-                    <span class="material-icons">save</span>
+                    ${window.renderSplitButtonContent('Save Settings', 'save')}
                 </button>
             </div>
         `;
@@ -132,8 +130,8 @@ const SettingsScreen = {
                 <h2>Clear All Data?</h2>
                 <p>This will delete all team data, players, games, and settings. This action cannot be undone.</p>
                 <div class="dialog-buttons">
-                    <button class="secondary-btn" onclick="SettingsScreen.closeDialog('clear-data-dialog')">Cancel</button>
-                    <button class="primary-btn delete-btn" onclick="SettingsScreen.confirmClearData()">Clear All Data</button>
+                    <button class="secondary-btn" onclick="SettingsScreen.closeDialog('clear-data-dialog')">${window.renderSplitButtonContent('Cancel', 'close')}</button>
+                    <button class="primary-btn delete-btn" onclick="SettingsScreen.confirmClearData()">${window.renderSplitButtonContent('Clear Data', 'delete_forever')}</button>
                 </div>
             </div>
         `;

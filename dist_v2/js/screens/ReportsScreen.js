@@ -49,8 +49,8 @@ const ReportsScreen = {
                 </div>
                 <div class="report-actions">
                     ${hasActions ? `
-                        <button class="secondary-btn" onclick="ReportService.generateEnhancedReport('${game.id}')"><span class="btn-text">View</span><span class="material-icons">visibility</span></button>
-                        <button class="secondary-btn" onclick="ReportService.exportReport('${game.id}', 'pdf')"><span class="btn-text">PDF</span><span class="material-icons">picture_as_pdf</span></button>
+                        <button class="secondary-btn" onclick="ReportService.generateEnhancedReport('${game.id}')">${window.renderSplitButtonContent('View', 'visibility')}</button>
+                        <button class="secondary-btn" onclick="ReportService.exportReport('${game.id}', 'pdf')">${window.renderSplitButtonContent('PDF', 'picture_as_pdf')}</button>
                     ` : `
                         <span class="report-no-data">No data recorded</span>
                     `}

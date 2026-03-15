@@ -966,7 +966,9 @@ function updateEndPhaseButtonLabel() {
     const isLastPeriod = currentPeriod >= totalPeriods;
 
     const label = isLastPeriod ? 'End Game' : `End Period #${currentPeriod}`;
-    endPhaseButton.innerHTML = `<span class="btn-text">${label}</span><span class="material-icons">stop</span>`;
+    endPhaseButton.innerHTML = window.renderSplitButtonContent
+        ? window.renderSplitButtonContent(label, 'stop')
+        : `<span class="btn-text">${label}</span><span class="material-icons">stop</span>`;
 }
 
 function startTimer() {
@@ -1502,230 +1504,38 @@ function endGame() {
 
 // Reports
 function renderReportsList() {
-    const reportsList = document.getElementById('reports-list');
-    reportsList.innerHTML = '';
-    
-    const completedGames = getTeamGames().filter(game => game.isCompleted);
-    
-    if (completedGames.length === 0) {
-        reportsList.innerHTML = '<div class="empty-state">No completed games yet</div>';
-        return;
+    if (typeof ReportsScreen !== 'undefined' && ReportsScreen.renderReportsList) {
+        return ReportsScreen.renderReportsList();
     }
-    
-    completedGames.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(game => {
-        const reportItem = document.createElement('div');
-        reportItem.className = 'report-item';
-        
-        const gameDate = new Date(game.date).toLocaleDateString();
-        const teamName = game.teamName || 'My Team';
-        reportItem.innerHTML = `
-            <div class="report-header">
-                <div class="report-date">${gameDate}</div>
-                <div class="report-score">${teamName} ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
-            </div>
-            <div class="report-actions">
-                <button class="secondary-btn" onclick="viewReport('${game.id}')"><span class="btn-text">View</span><span class="material-icons">visibility</span></button>
-                <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')"><span class="btn-text">PDF</span><span class="material-icons">picture_as_pdf</span></button>
-            </div>
-        `;
-        reportsList.appendChild(reportItem);
-    });
 }
 
 function viewReport(gameId) {
-    const game = getTeamGames().find(g => g.id === gameId);
-    if (!game) return;
-    
-    // Create a report dialog if it doesn't exist
-    let reportDialog = document.getElementById('detailed-report-dialog');
-    if (!reportDialog) {
-        reportDialog = document.createElement('div');
-        reportDialog.id = 'detailed-report-dialog';
-        reportDialog.className = 'dialog';
-        document.getElementById('app').appendChild(reportDialog);
+    if (typeof ReportService !== 'undefined' && ReportService.viewReport) {
+        return ReportService.viewReport(gameId);
     }
-    
-    // Format date
-    const gameDate = new Date(game.date).toLocaleDateString();
-    const gameTime = game.startTime ? new Date(game.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
-    
-    // Calculate game duration
-    let gameDuration = '';
-    if (game.startTime && game.endTime) {
-        const start = new Date(game.startTime);
-        const end = new Date(game.endTime);
-        const durationMs = end - start;
-        const durationMins = Math.floor(durationMs / 60000);
-        gameDuration = `${durationMins} minutes`;
-    }
-
-    // Get player actions from the game
-    const playerActions = {};
-    
-    // Initialize player actions with all fields
-    game.activePlayers.forEach(playerId => {
-        const player = getTeamPlayers().find(p => p.id === playerId);
-        if (player) {
-            playerActions[playerId] = {
-                name: player.name,
-                jerseyNumber: player.jerseyNumber,
-                goals: 0,
-                assists: 0,
-                saves: 0,
-                goalsAllowed: 0,
-                yellowCards: 0,
-                redCards: 0
-            };
-        }
-    });
-    
-    // Count actions
-    game.actions.forEach(action => {
-        if (playerActions[action.playerId]) {
-            switch (action.actionType) {
-                case 'goal':
-                    playerActions[action.playerId].goals++;
-                    break;
-                case 'assist':
-                    playerActions[action.playerId].assists++;
-                    break;
-                case 'save':
-                    playerActions[action.playerId].saves++;
-                    break;
-                case 'goal_allowed':
-                    playerActions[action.playerId].goalsAllowed++;
-                    break;
-                case 'yellow_card':
-                    playerActions[action.playerId].yellowCards = (playerActions[action.playerId].yellowCards || 0) + 1;
-                    break;
-                case 'red_card':
-                    playerActions[action.playerId].redCards = (playerActions[action.playerId].redCards || 0) + 1;
-                    break;
-            }
-        }
-    });
-    
-    // Build player stats table
-    let playerStatsHTML = '';
-    Object.values(playerActions)
-        .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-        .forEach(playerStat => {
-            playerStatsHTML += `
-                <tr>
-                    <td>${playerStat.jerseyNumber}</td>
-                    <td>${playerStat.name.charAt(0).toUpperCase() + playerStat.name.slice(1).toLowerCase()}</td>
-                    <td>${playerStat.goals}</td>
-                    <td>${playerStat.assists}</td>
-                    <td>${playerStat.saves}</td>
-                    <td>${playerStat.goalsAllowed}</td>
-                    <td>${playerStat.yellowCards}</td>
-                    <td>${playerStat.redCards}</td>
-                </tr>
-            `;
-        });
-    
-    // Generate report HTML
-    const teamName = game.teamName || 'My Team';
-    reportDialog.innerHTML = `
-        <div class="dialog-content report-dialog">
-            <h2>Game Report</h2>
-            <div class="report-header-info">
-                <div><strong>Date:</strong> ${gameDate} ${gameTime}</div>
-                <div><strong>Teams:</strong> ${teamName} vs ${game.opponentName}</div>
-                <div><strong>Final Score:</strong> ${game.homeScore} - ${game.awayScore}</div>
-                <div><strong>Duration:</strong> ${gameDuration}</div>
-            </div>
-            
-            <h3>Player Statistics</h3>
-            <div class="report-table-container">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th><span class="material-icons stat-icon-small">sports_soccer</span></th>
-                            <th><span class="stat-emoji">👟</span></th>
-                            <th><span class="material-icons stat-icon-small">back_hand</span></th>
-                            <th><img src="img/red-soccer.png" width="16" height="16" alt="Goals" class="stat-icon-img"></th>
-                            <th><span class="yellow-card-icon">🟨</span></th>
-                            <th><span class="red-card-icon">🟥</span></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${playerStatsHTML}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="report-actions">
-                <button class="secondary-btn" onclick="exportReport('${gameId}', 'pdf')">Export as PDF</button>
-                <button class="primary-btn" onclick="closeDetailedReport()">Close</button>
-            </div>
-        </div>
-    `;
-    
-    // Show the dialog
-    reportDialog.style.display = 'flex';
 }
 
 function closeDetailedReport() {
-    const reportDialog = document.getElementById('detailed-report-dialog');
-    if (reportDialog) {
-        reportDialog.style.display = 'none';
+    if (typeof ReportService !== 'undefined' && ReportService.closeDetailedReport) {
+        return ReportService.closeDetailedReport();
     }
 }
 
 function exportReport(gameId, format) {
-    const game = getTeamGames().find(g => g.id === gameId);
-    if (!game) {
-        showMessage('Game not found', 'error');
-        return;
+    if (typeof ReportService !== 'undefined' && ReportService.exportReport) {
+        return ReportService.exportReport(gameId, format);
     }
-    
-    // Get the report content from the dialog
-    const reportContent = document.querySelector('.report-dialog').innerHTML;
-    
-    // Build version: 1.12.1 (see constants.js for centralized APP_VERSION)
-    // For PDF, we'll use a printable version that users can save as PDF
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>Game Report - ${game.date}</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                h2, h3 { color: #333; }
-            </style>
-        </head>
-        <body>
-            ${reportContent}
-            <p style="margin-top: 30px; text-align: center; color: #666;">
-                Generated by Soccer Coach Tracker - ${new Date().toLocaleString()}
-            </p>
-            <script>
-                // Auto-print
-                window.onload = function() {
-                    window.print();
-                }
-            </script>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    showMessage('Report opened in new tab for printing/saving as PDF', 'success');
 }
 
 // Settings
 function saveSettings() {
-    const language = document.querySelector('input[name="language"]:checked').value;
-    const defaultTimer = document.getElementById('default-timer').value;
-    
-    appState.settings.language = language;
-    appState.settings.defaultTimer = parseInt(defaultTimer);
-    
+    if (typeof SettingsScreen !== 'undefined' && SettingsScreen.saveSettings) {
+        return SettingsScreen.saveSettings();
+    }
+
+    const selectedLanguage = document.querySelector('input[name="language"]:checked');
+    appState.settings = appState.settings || {};
+    appState.settings.language = selectedLanguage ? selectedLanguage.value : 'en';
     saveAppData();
     showMessage('Settings saved successfully', 'success');
 }
