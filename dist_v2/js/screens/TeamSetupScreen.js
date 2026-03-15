@@ -76,10 +76,10 @@ const TeamSetupScreen = {
         // Build the player display HTML with proper styling
         playerItem.innerHTML = `
             <div class="jersey-number">${player.jerseyNumber}</div>
-            <div class="player-info" style="display: flex; align-items: center; flex: 1; min-width: 0; gap: 8px;">
-                <div class="player-name" style="display: flex; flex-direction: column; flex: 1; color: #2c3e50; font-weight: 600; font-size: 0.85rem; word-break: break-word; overflow: visible; text-overflow: clip;">
-                    <div style="font-weight: 700;">${this.formatPlayerName(player.name)}</div>
-                    <div style="font-size: 0.75rem; color: #666;">(${player.position})</div>
+            <div class="player-info">
+                <div class="player-name-block">
+                    <div class="player-name-main">${this.formatPlayerName(player.name)}</div>
+                    <div class="player-position-text">(${player.position})</div>
                 </div>
             </div>
             <div class="player-actions">

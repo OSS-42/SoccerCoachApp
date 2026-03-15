@@ -166,20 +166,17 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <h1>Team Setup</h1>
-                <button class="action-btn white-btn" onclick="openAddPlayerDialog()">
-                    <span class="material-icons">person_add</span>
-                </button>
             </div>
             <div class="team-name-banner">
-                <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                    <h2 id="team-setup-team-name" style="margin: 0;">Team Name</h2>
-                    <div class="team-name-edit" style="display: flex; gap: 8px;">
-                        <input type="text" id="team-name-input" placeholder="Enter team name" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <button class="secondary-btn" onclick="saveTeamName()" style="background-color: #4CAF50; color: white; border: none;">Save</button>
+                <div class="team-banner-main">
+                    <h2 id="team-setup-team-name" class="team-banner-title">Team Name</h2>
+                    <div class="team-name-edit">
+                        <input type="text" id="team-name-input" placeholder="Enter team name">
+                        <button class="secondary-btn team-save-btn" onclick="saveTeamName()">Save</button>
                     </div>
                 </div>
-                <div class="team-selector" style="display: flex; align-items: center; gap: 8px;">
-                    <select id="team-selector" onchange="handleTeamChange(this)" style="min-width: 150px;"></select>
+                <div class="team-selector">
+                    <select id="team-selector" onchange="handleTeamChange(this)"></select>
                     <button class="secondary-btn small" onclick="addNewTeam()">+</button>
                     <button class="secondary-btn small delete" onclick="deleteTeam()" title="Delete current team">−</button>
                 </div>
@@ -200,6 +197,9 @@
                 <section id="players-tab-content" class="tab-content active" role="tabpanel" aria-labelledby="players-tab">
                     <div class="players-header">
                         <h2>Players</h2>
+                        <button class="secondary-btn add-player-inline-btn" onclick="openAddPlayerDialog()" title="Add new player">
+                            <span class="material-icons">person_add</span>
+                        </button>
                         <span class="player-counter-team">
                             <span class="material-icons">person</span>
                             <span id="team-player-counter">0</span>
@@ -294,7 +294,7 @@
                         </label>
                     </div>
                 </div>
-                <button class="primary-btn" onclick="setupFormation()">Formation Setup</button>
+                <button class="primary-btn setup-formation-btn" onclick="setupFormation()">Formation Setup</button>
             </div>
         </div>
 

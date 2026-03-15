@@ -4447,6 +4447,264 @@ button.back-btn::after {
     }
 }
 
+/* ============================================================================
+ * LAYOUT FIXES AFTER GLOBAL BUTTON REVAMP
+ * ============================================================================ */
+
+/* 8) Main screen buttons match counter height */
+.menu-row {
+    height: var(--rev-btn-height);
+}
+
+.main-menu > .menu-btn,
+.menu-row .menu-btn {
+    height: var(--rev-btn-height);
+    min-height: var(--rev-btn-height);
+}
+
+.player-counter,
+.game-report-counter {
+    width: var(--rev-btn-height);
+    height: var(--rev-btn-height);
+    aspect-ratio: auto;
+}
+
+/* 1,2) Team setup name/save/selector responsive layout */
+#team-setup .team-name-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#team-setup .team-banner-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 380px;
+    min-width: 0;
+}
+
+#team-setup .team-banner-title {
+    margin: 0;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+#team-setup .team-name-edit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+#team-setup #team-name-input {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#team-setup .team-save-btn {
+    --rev-btn-icon-zone: 22%;
+    width: 108px;
+    min-width: 108px;
+    flex: 0 0 108px;
+}
+
+#team-setup .team-selector {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 1 auto;
+}
+
+#team-setup .team-selector select {
+    min-width: 160px;
+    max-width: 220px;
+}
+
+/* 3) Add-player button moved left of counter and compact */
+#team-setup .players-header {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+}
+
+#team-setup .add-player-inline-btn {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #2b8fdb;
+    border-radius: 8px;
+    background: #eef6ff;
+    color: #1c66ab;
+    padding: 0;
+}
+
+#team-setup .add-player-inline-btn .material-icons {
+    font-size: 20px;
+}
+
+/* 4,5) Player rows adopt split design and mobile text readability */
+#team-setup .player-item {
+    --player-row-main: #2b8fdb;
+    --player-row-contrast: #eef6ff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 24% 10px 12px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--player-row-main) 68%, #1d2a36 32%);
+    background: var(--player-row-main);
+    overflow: hidden;
+}
+
+#team-setup .player-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 25%;
+    height: 100%;
+    background: var(--player-row-contrast);
+    clip-path: polygon(26% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+#team-setup .jersey-number {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    margin-right: 2px;
+    font-weight: 700;
+    flex: 0 0 auto;
+}
+
+#team-setup .player-info {
+    min-width: 0;
+}
+
+#team-setup .player-name-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+#team-setup .player-name-main {
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-transform: uppercase;
+    white-space: normal;
+    word-break: break-word;
+}
+
+#team-setup .player-position-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.74rem;
+    line-height: 1.1;
+}
+
+#team-setup .player-actions {
+    position: absolute;
+    right: 6%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#team-setup .player-action-btn {
+    color: #1c66ab;
+    background: transparent;
+}
+
+/* 6) Game setup CTA less wide on desktop */
+#game-setup .setup-formation-btn {
+    --rev-btn-icon-zone: 20%;
+    width: fit-content;
+    min-width: 220px;
+    max-width: 240px;
+}
+
+/* 7) Improve text centering perception in report action buttons */
+#reports .report-actions button {
+    padding-left: 10px;
+    padding-right: calc(var(--rev-btn-icon-zone) + 14px);
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    #team-setup .team-banner-main {
+        flex-direction: column;
+        align-items: stretch;
+        flex-basis: 100%;
+    }
+
+    #team-setup .team-banner-title {
+        white-space: normal;
+        text-align: left;
+    }
+
+    #team-setup .team-name-edit {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    #team-setup #team-name-input {
+        flex: 1 1 190px;
+    }
+
+    #team-setup .team-save-btn {
+        width: 96px;
+        min-width: 96px;
+        flex-basis: 96px;
+    }
+
+    #team-setup .team-selector {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    #team-setup .team-selector select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    #team-setup .player-item {
+        padding-right: 29%;
+    }
+
+    #team-setup .player-name-main {
+        font-size: 0.8rem;
+    }
+
+    #team-setup .player-position-text {
+        font-size: 0.7rem;
+    }
+
+    #game-setup .setup-formation-btn {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+}
+
 /* Action Review Dialog */
 .action-review-list {
     max-height: 400px;
