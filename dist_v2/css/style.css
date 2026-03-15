@@ -3797,23 +3797,26 @@ button.no-assist-btn {
     border-radius: 12px;
     background: linear-gradient(135deg, rgba(24, 59, 78, 0.95) 0%, rgba(41, 84, 106, 0.9) 100%);
     box-sizing: border-box;
+    overflow: visible;
 }
 
 #game-tracking .team-section {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: auto auto auto;
     align-items: center;
     justify-content: center;
+    align-content: center;
     gap: 4px;
     min-width: 0;
     flex: 0 1 clamp(110px, 21vw, 220px);
+    min-height: clamp(76px, 10dvh, 110px);
 }
 
 #game-tracking .team-section .team-name {
-    font-size: clamp(0.78rem, 1.6vw, 1rem);
+    font-size: clamp(0.76rem, 1.55vw, 0.98rem);
     font-weight: 700;
     letter-spacing: 0.06em;
-    color: var(--gt-chip-muted);
+    color: #ffffff;
     text-transform: uppercase;
     text-align: center;
     width: 100%;
@@ -3830,7 +3833,7 @@ button.no-assist-btn {
     padding: 0.12em 0.46em;
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.28);
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.26);
     color: #fff;
     font-size: clamp(1.36rem, 3.6vw, 2.2rem);
     font-weight: 800;
@@ -3839,6 +3842,7 @@ button.no-assist-btn {
 
 #game-tracking .live-cards {
     margin: 0;
+    min-height: 24px;
 }
 
 #game-tracking .card-counters {
@@ -3846,6 +3850,7 @@ button.no-assist-btn {
     display: flex;
     gap: 6px;
     align-items: center;
+    justify-content: center;
 }
 
 #game-tracking .card-counter {
@@ -3859,7 +3864,7 @@ button.no-assist-btn {
 }
 
 #game-tracking .live-period-panel {
-    flex: 1 1 auto;
+    flex: 1 1 clamp(260px, 36vw, 540px);
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -3979,7 +3984,7 @@ button.no-assist-btn {
     padding: clamp(6px, 0.85dvh, 10px);
     border-radius: 12px;
     border: 1px solid rgba(9, 24, 39, 0.24);
-    background: linear-gradient(160deg, #f9fcff 0%, #eef4f9 100%);
+    background: linear-gradient(160deg, #fbfdff 0%, #edf2f7 100%);
     box-shadow: 0 3px 10px rgba(3, 17, 29, 0.11);
     display: flex;
     align-items: center;
@@ -4029,24 +4034,25 @@ button.no-assist-btn {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(6px, 0.9dvh, 10px);
+    gap: clamp(7px, 1dvh, 12px);
     margin: 0;
 }
 
 #game-tracking .game-jersey-badge {
-    width: clamp(36px, 4.4dvh, 50px);
-    height: clamp(36px, 4.4dvh, 50px);
-    border-radius: 10px;
+    width: clamp(40px, 5dvh, 56px);
+    height: clamp(40px, 5dvh, 56px);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(145deg, #1f8feb 0%, #0e73c7 100%);
+    background: linear-gradient(145deg, #0f2940 0%, #224a6a 100%);
     color: #ffffff;
-    box-shadow: 0 3px 8px rgba(15, 94, 163, 0.32);
+    border: 2px solid rgba(255, 255, 255, 0.26);
+    box-shadow: 0 4px 10px rgba(12, 38, 58, 0.34);
 }
 
 #game-tracking .game-jersey-badge .jersey-num {
-    font-size: clamp(0.82rem, 1.9vw, 1.1rem);
+    font-size: clamp(0.88rem, 2vw, 1.18rem);
     font-weight: 800;
     line-height: 1;
 }
@@ -4054,7 +4060,7 @@ button.no-assist-btn {
 #game-tracking .game-player-name {
     width: 100%;
     text-align: center;
-    font-size: clamp(0.58rem, 1.25vw, 0.76rem);
+    font-size: clamp(0.62rem, 1.32vw, 0.82rem);
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -4093,6 +4099,7 @@ button.no-assist-btn {
 
     #game-tracking .team-section {
         flex-basis: clamp(84px, 24vw, 132px);
+        min-height: clamp(70px, 11dvh, 102px);
     }
 
     #game-tracking .team-section .score {

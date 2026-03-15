@@ -947,7 +947,7 @@ function updateEndPhaseButtonLabel() {
     const totalPeriods = appState.currentGame.numPeriods || 2;
     const isLastPeriod = currentPeriod >= totalPeriods;
 
-    endPhaseButton.textContent = isLastPeriod ? 'End Game' : 'End Period';
+    endPhaseButton.textContent = isLastPeriod ? 'End Game' : `End Period #${currentPeriod}`;
 }
 
 function startTimer() {
