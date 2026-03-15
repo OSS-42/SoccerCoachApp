@@ -238,12 +238,12 @@ const FormationScreen = {
     _getDesktopRowPositions(horizontalSpotWidthPercent, slotWidthPx) {
         const rowOrderFromSw = ['SW', 'DEF', 'DM', 'MID', 'OM', 'FWD', 'ST'];
         const gkAnchor = 89 + (horizontalSpotWidthPercent * 0.5);
-        const baseFwdAnchor = 20 - horizontalSpotWidthPercent;
-        const baseStepToFwd = (gkAnchor - baseFwdAnchor) / 6;
-        const stAnchor = (baseFwdAnchor - baseStepToFwd) + horizontalSpotWidthPercent;
+        const edgeGapPx = 2;
         // SW should sit next to GK: center distance = one full spot width + 2px edge gap.
-        const swToGkSpacingPercent = horizontalSpotWidthPercent * ((slotWidthPx + 2) / (slotWidthPx || 56));
+        const swToGkSpacingPercent = horizontalSpotWidthPercent * ((slotWidthPx + edgeGapPx) / (slotWidthPx || 56));
         const swAnchor = gkAnchor + swToGkSpacingPercent;
+        // Treat ST as the right anchor on desktop and space all rows evenly from SW -> ST.
+        const stAnchor = Math.max(10, horizontalSpotWidthPercent * 0.5);
         const step = (swAnchor - stAnchor) / (rowOrderFromSw.length - 1);
 
         const positions = { GK: gkAnchor };
