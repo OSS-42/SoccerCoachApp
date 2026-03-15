@@ -3946,7 +3946,7 @@ button.no-assist-btn {
     min-width: 0;
     min-height: 30px;
     height: 100%;
-    padding: 1px 4px;
+    padding: 0 calc(var(--rev-btn-icon-zone) + 10px) 0 10px;
     border-radius: 9px;
     border: 1px solid rgba(8, 17, 28, 0.46);
     font-size: clamp(0.54rem, 1.05vw, 0.72rem);
@@ -4071,18 +4071,19 @@ button.no-assist-btn {
 }
 
 #game-tracking .game-jersey-badge {
-    width: auto;
-    height: auto;
+    width: 25%;
+    height: 100%;
     border-radius: 0;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: flex-end;
     position: absolute;
-    right: 6%;
-    bottom: 10%;
+    right: 0;
+    bottom: 0;
     left: auto;
-    top: auto;
+    top: 0;
     transform: none;
+    padding: 0 clamp(8px, 1vw, 12px) clamp(8px, 1vw, 12px) 0;
     background: transparent;
     color: var(--tile-accent);
     border: none;
@@ -4528,9 +4529,9 @@ button.back-btn::after {
 
 #team-setup .team-save-btn {
     --rev-btn-icon-zone: 22%;
-    width: 96px;
-    min-width: 96px;
-    flex: 0 0 96px;
+    width: 112px;
+    min-width: 112px;
+    flex: 0 0 112px;
 }
 
 #team-setup .team-selector {
@@ -4668,7 +4669,7 @@ button.back-btn::after {
     .main-menu > .menu-btn {
         width: calc(100% - (var(--rev-btn-height) + 5px));
         max-width: calc(760px - (var(--rev-btn-height) + 5px));
-        align-self: center;
+        align-self: flex-start;
     }
 
     #team-setup .team-name-banner {
@@ -4680,7 +4681,7 @@ button.back-btn::after {
 
     #team-setup .team-banner-main {
         display: grid;
-        grid-template-columns: auto minmax(300px, 1fr) 92px;
+        grid-template-columns: auto minmax(240px, 360px) 112px;
         align-items: center;
         gap: 10px;
     }
@@ -4700,9 +4701,9 @@ button.back-btn::after {
     }
 
     #team-setup .team-save-btn {
-        width: 92px;
-        min-width: 92px;
-        flex-basis: 92px;
+        width: 112px;
+        min-width: 112px;
+        flex-basis: 112px;
     }
 
     #team-setup .team-selector {
@@ -4746,9 +4747,9 @@ button.back-btn::after {
     }
 
     #reports .report-actions button {
-        min-width: 112px;
-        max-width: 112px;
-        flex: 0 0 112px;
+        min-width: 128px;
+        max-width: 128px;
+        flex: 0 0 128px;
     }
 
     #settings .data-management-buttons {
