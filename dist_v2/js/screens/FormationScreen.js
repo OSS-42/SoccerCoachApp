@@ -241,8 +241,9 @@ const FormationScreen = {
         const baseFwdAnchor = 20 - horizontalSpotWidthPercent;
         const baseStepToFwd = (gkAnchor - baseFwdAnchor) / 6;
         const stAnchor = (baseFwdAnchor - baseStepToFwd) + horizontalSpotWidthPercent;
-        const swToGkSpacingPercent = horizontalSpotWidthPercent * (2 / (slotWidthPx || 56));
-        const swAnchor = gkAnchor - swToGkSpacingPercent;
+        // SW should sit next to GK: center distance = one full spot width + 2px edge gap.
+        const swToGkSpacingPercent = horizontalSpotWidthPercent * ((slotWidthPx + 2) / (slotWidthPx || 56));
+        const swAnchor = gkAnchor + swToGkSpacingPercent;
         const step = (swAnchor - stAnchor) / (rowOrderFromSw.length - 1);
 
         const positions = { GK: gkAnchor };

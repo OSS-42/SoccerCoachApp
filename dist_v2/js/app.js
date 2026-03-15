@@ -645,7 +645,7 @@ function setupFormation() {
 function validateFormationSetup() {
     let formationPlayers = getFormationTemp() || [];
     const requiredPlayerCount = parseInt(appState.gameSetupMatchType.split('v')[0]);
-    const unavailablePlayers = getUnavailablePlayers();
+    const isDesktopLayout = window.matchMedia('(min-width: 769px)').matches;
 
     // Prefer current field DOM as source of truth for slot assignments.
     const fieldSpotPlayers = Array.from(document.querySelectorAll('.player-slot[data-player-id]')).map(spot => ({
@@ -665,10 +665,35 @@ function validateFormationSetup() {
         return false;
     }
     
-    // Check that goalkeeper position (GK) has a player
-    const goalkeeperPosition = formationPlayers.find(p => p.position === 'GK');
-    if (!goalkeeperPosition) {
-        showMessage('Goalkeeper position (bottom of field) must be filled', 'error');
+    // Check that the visual GK spot has a player:
+    // mobile = bottom-most row, desktop (rotated field) = left-most spot.
+    let goalkeeperFilled = false;
+    const allFieldSlots = Array.from(document.querySelectorAll('.player-slot[data-position]'));
+    if (allFieldSlots.length > 0) {
+        const allSlotY = allFieldSlots
+            .map(slot => parseFloat(slot.style.top))
+            .filter(y => Number.isFinite(y));
+
+        if (allSlotY.length > 0) {
+            const goalkeeperRowY = Math.max(...allSlotY);
+            const yTolerance = 0.25;
+            const goalkeeperSlots = allFieldSlots.filter(slot => {
+                const y = parseFloat(slot.style.top);
+                return Number.isFinite(y) && Math.abs(y - goalkeeperRowY) <= yTolerance;
+            });
+
+            goalkeeperFilled = goalkeeperSlots.some(slot => !!slot.getAttribute('data-player-id'));
+        }
+    }
+
+    // Fallback for non-rendered states.
+    if (!goalkeeperFilled) {
+        goalkeeperFilled = formationPlayers.some(p => p.position === 'GK');
+    }
+
+    if (!goalkeeperFilled) {
+        const gkLocationText = isDesktopLayout ? 'left side of field' : 'bottom of field';
+        showMessage(`Goalkeeper position (${gkLocationText}) must be filled`, 'error');
         return false;
     }
     
