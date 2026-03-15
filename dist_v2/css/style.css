@@ -1995,6 +1995,39 @@ button.no-assist-btn {
     padding: 10px 0; /* Minimal padding for visual balance */
 }
 
+#reports .reports-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+#reports .reports-delete-btn {
+    --rev-btn-icon-zone: 25%;
+    width: 132px;
+    min-width: 132px;
+    height: var(--rev-btn-height);
+    min-height: var(--rev-btn-height);
+    padding: 0 calc(var(--rev-btn-icon-zone) + 12px) 0 12px !important;
+    --btn-main: #d73333;
+    --btn-top: #ef5350;
+    --btn-bottom: #c62828;
+}
+
+#reports .reports-delete-btn.active {
+    box-shadow: 0 0 0 2px rgba(215, 51, 51, 0.2) inset;
+}
+
+#reports .report-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #d73333;
+    margin-left: 10px;
+}
+
+#reports .report-checkbox.hidden {
+    display: none;
+}
+
 /* Remove border from the last report item */
 .report-item:last-child {
     border-bottom: none;
@@ -4556,6 +4589,12 @@ button.back-btn::after {
     gap: 8px;
 }
 
+#team-setup .players-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 #team-setup .add-player-inline-btn {
     --rev-btn-icon-zone: 25%;
     width: 128px;
@@ -4567,6 +4606,26 @@ button.back-btn::after {
 
 #team-setup .add-player-inline-btn .material-icons {
     font-size: 18px;
+}
+
+#team-setup .delete-player-inline-btn {
+    --rev-btn-icon-zone: 25%;
+    width: 132px;
+    min-width: 132px;
+    height: var(--rev-btn-height);
+    min-height: var(--rev-btn-height);
+    padding: 0 calc(var(--rev-btn-icon-zone) + 12px) 0 12px !important;
+    --btn-main: #d73333;
+    --btn-top: #ef5350;
+    --btn-bottom: #c62828;
+}
+
+#team-setup .delete-player-inline-btn .material-icons {
+    font-size: 18px;
+}
+
+#team-setup .delete-player-inline-btn.active {
+    box-shadow: 0 0 0 2px rgba(215, 51, 51, 0.2) inset;
 }
 
 /* 4,5) Player rows adopt split design and mobile text readability */
@@ -4647,6 +4706,16 @@ button.back-btn::after {
 #team-setup .player-action-btn {
     color: #1c66ab;
     background: transparent;
+}
+
+#team-setup .player-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #d73333;
+}
+
+#team-setup .player-checkbox.hidden {
+    display: none;
 }
 
 /* 6) Game setup CTA less wide on desktop */

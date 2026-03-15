@@ -11,6 +11,8 @@
  */
 
 const TeamSetupScreen = {
+    isDeleteMode: false,
+
     // =====================================================================
     // RENDERING METHODS
     // =====================================================================
@@ -30,6 +32,8 @@ const TeamSetupScreen = {
             console.warn('   ⚠️  No team found');
             playersList.innerHTML = '<div class="empty-state">No team selected</div>';
             this.updatePlayerCounter(0);
+            this.syncDeleteModeButton();
+            this.updateDeletePlayerRibbon();
             return;
         }
         
@@ -44,17 +48,22 @@ const TeamSetupScreen = {
         // Show empty state if no players
         if (players.length === 0) {
             playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
+            this.syncDeleteModeButton();
+            this.updateDeletePlayerRibbon();
             return;
         }
         
-        // Check if any checkboxes are checked (for disable logic)
-        const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
+        // Disable edit button while in delete mode
+        const disableEdit = this.isDeleteMode;
         
         // Sort and render each player
         const sortedPlayers = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber);
         sortedPlayers.forEach((player, idx) => {
-            this.renderPlayerItem(playersList, player, idx, anyChecked);
+            this.renderPlayerItem(playersList, player, idx, disableEdit);
         });
+
+        this.syncDeleteModeButton();
+        this.updateDeletePlayerRibbon();
     },
     
     /**
@@ -82,7 +91,7 @@ const TeamSetupScreen = {
                     <span class="material-icons">edit</span>
                 </button>
                 <input type="checkbox" 
-                       class="player-checkbox" 
+                       class="player-checkbox ${this.isDeleteMode ? '' : 'hidden'}" 
                        data-player-id="${player.id}" 
                        onchange="TeamSetupScreen.updateDeletePlayerRibbon()">
             </div>
@@ -112,11 +121,65 @@ const TeamSetupScreen = {
     // =====================================================================
     // PLAYER DELETION METHODS
     // =====================================================================
+
+    toggleDeleteMode() {
+        this.isDeleteMode = !this.isDeleteMode;
+
+        if (!this.isDeleteMode) {
+            this.clearPlayerSelections();
+        }
+
+        this.renderPlayersList();
+    },
+
+    syncDeleteModeButton() {
+        const deleteButton = document.getElementById('team-delete-mode-btn');
+        if (!deleteButton) return;
+
+        const label = deleteButton.querySelector('.btn-text');
+        const icon = deleteButton.querySelector('.material-icons');
+
+        deleteButton.classList.toggle('active', this.isDeleteMode);
+        deleteButton.title = this.isDeleteMode ? 'Exit delete mode' : 'Delete players';
+
+        if (label) {
+            label.textContent = this.isDeleteMode ? 'Done' : 'Delete';
+        }
+        if (icon) {
+            icon.textContent = this.isDeleteMode ? 'close' : 'delete';
+        }
+    },
+
+    clearPlayerSelections() {
+        document.querySelectorAll('.player-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    },
+
+    cancelDeleteSelection() {
+        this.clearPlayerSelections();
+        this.updateDeletePlayerRibbon();
+    },
     
     /**
      * Show/hide delete warning ribbon based on checkbox states
      */
     updateDeletePlayerRibbon() {
+        if (!this.isDeleteMode) {
+            const ribbon = document.getElementById('message-ribbon');
+            if (ribbon) {
+                ribbon.classList.add('hidden');
+                ribbon.style.setProperty('display', 'none', 'important');
+                ribbon.style.setProperty('height', '0', 'important');
+                ribbon.style.setProperty('padding', '0', 'important');
+                ribbon.innerHTML = `
+                    <span id="message-text"></span>
+                    <button class="close-btn" onclick="hideMessage()">×</button>
+                `;
+            }
+            return;
+        }
+
         const checkboxes = document.querySelectorAll('.player-checkbox:checked');
         const ribbon = document.getElementById('message-ribbon');
         
@@ -129,10 +192,10 @@ const TeamSetupScreen = {
             // Show delete warning
             clearTimeout(window.messageTimeout);
             ribbon.innerHTML = `
-                <span id="message-text">Selected players will be deleted.</span>
+                <span id="message-text">Delete ${checkboxes.length} selected player${checkboxes.length > 1 ? 's' : ''}?</span>
                 <div class="ribbon-buttons">
-                    <button class="warning-delete-btn" onclick="TeamSetupScreen.openDeletePlayersDialog()">Delete</button>
-                    <span class="close-btn" onclick="TeamSetupScreen.closeWarningRibbon()">×</span>
+                    <button class="warning-delete-btn" onclick="TeamSetupScreen.confirmDeleteFromRibbon()">Yes</button>
+                    <button class="close-btn" onclick="TeamSetupScreen.cancelDeleteSelection()">No</button>
                 </div>
             `;
             ribbon.className = 'message-ribbon warning';
@@ -161,10 +224,38 @@ const TeamSetupScreen = {
      * Close the warning ribbon and uncheck all players
      */
     closeWarningRibbon() {
-        document.querySelectorAll('.player-checkbox').forEach(checkbox => {
-            checkbox.checked = false;
-        });
+        this.clearPlayerSelections();
         this.updateDeletePlayerRibbon();
+    },
+
+    confirmDeleteFromRibbon() {
+        const checkboxes = document.querySelectorAll('.player-checkbox:checked');
+        const playerIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-player-id'));
+
+        if (playerIds.length === 0) {
+            this.updateDeletePlayerRibbon();
+            return;
+        }
+
+        const team = getCurrentTeam();
+        if (!team || !Array.isArray(team.players)) {
+            showMessage('Error: Team not found', 'error');
+            return;
+        }
+
+        const initialCount = team.players.length;
+        team.players = team.players.filter(player => !playerIds.includes(player.id));
+        const deletedCount = initialCount - team.players.length;
+
+        saveAppData();
+        this.clearPlayerSelections();
+        this.renderPlayersList();
+        updatePlayerCounter();
+
+        showMessage(
+            `${deletedCount} player${deletedCount > 1 ? 's' : ''} removed successfully`,
+            'success'
+        );
     },
     
     /**
@@ -173,7 +264,7 @@ const TeamSetupScreen = {
     updateEditButtonStates() {
         const anyChecked = document.querySelectorAll('.player-checkbox:checked').length > 0;
         document.querySelectorAll('.player-action-btn').forEach(btn => {
-            btn.disabled = anyChecked;
+            btn.disabled = anyChecked || this.isDeleteMode;
         });
     },
     

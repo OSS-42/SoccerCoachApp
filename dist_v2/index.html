@@ -131,10 +131,16 @@
                 <section id="players-tab-content" class="tab-content active" role="tabpanel" aria-labelledby="players-tab">
                     <div class="players-header">
                         <h2>Players</h2>
-                        <button class="secondary-btn add-player-inline-btn" onclick="openAddPlayerDialog()" title="Add new player">
-                            <span class="btn-text">Add</span>
-                            <span class="material-icons">person_add</span>
-                        </button>
+                        <div class="players-header-actions">
+                            <button class="secondary-btn add-player-inline-btn" onclick="openAddPlayerDialog()" title="Add new player">
+                                <span class="btn-text">Add</span>
+                                <span class="material-icons">person_add</span>
+                            </button>
+                            <button id="team-delete-mode-btn" class="secondary-btn delete-player-inline-btn" onclick="TeamSetupScreen.toggleDeleteMode()" title="Delete players">
+                                <span class="btn-text">Delete</span>
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
                         <span class="player-counter-team">
                             <span class="material-icons">person</span>
                             <span id="team-player-counter">0</span>
@@ -388,9 +394,17 @@
                     <select id="reports-team-selector" onchange="handleTeamChange(this)" style="min-width: 150px;"></select>
                 </div>
             </div>
-            <div class="content" id="reports-list">
-                <!-- Game reports will be listed here -->
-                <div class="empty-state">No completed games yet</div>
+            <div class="content">
+                <div class="reports-toolbar">
+                    <button id="reports-delete-mode-btn" class="secondary-btn reports-delete-btn" onclick="ReportsScreen.toggleDeleteMode()">
+                        <span class="btn-text">Delete</span>
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+                <div id="reports-list">
+                    <!-- Game reports will be listed here -->
+                    <div class="empty-state">No completed games yet</div>
+                </div>
             </div>
         </div>
 
