@@ -60,7 +60,7 @@ body {
     background-color: #ffca28;
     color: #000;
     position: fixed;
-    top: var(--header-height);
+    top: 0;
     bottom: auto;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     display: flex;
@@ -2003,8 +2003,8 @@ button.no-assist-btn {
 
 #reports .reports-delete-btn {
     --rev-btn-icon-zone: 25%;
-    width: 132px;
-    min-width: 132px;
+    width: 108px;
+    min-width: 108px;
     height: var(--rev-btn-height);
     min-height: var(--rev-btn-height);
     padding: 0 calc(var(--rev-btn-icon-zone) + 12px) 0 12px !important;

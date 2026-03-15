@@ -88,18 +88,8 @@ const ReportsScreen = {
         const deleteButton = document.getElementById('reports-delete-mode-btn');
         if (!deleteButton) return;
 
-        const label = deleteButton.querySelector('.btn-text');
-        const icon = deleteButton.querySelector('.material-icons');
-
         deleteButton.classList.toggle('active', this.isDeleteMode);
-        deleteButton.title = this.isDeleteMode ? 'Exit delete mode' : 'Delete reports';
-
-        if (label) {
-            label.textContent = this.isDeleteMode ? 'Done' : 'Delete';
-        }
-        if (icon) {
-            icon.textContent = this.isDeleteMode ? 'close' : 'delete';
-        }
+        deleteButton.title = 'Delete reports';
     },
 
     clearSelectedReports() {

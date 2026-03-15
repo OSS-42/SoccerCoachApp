@@ -136,18 +136,8 @@ const TeamSetupScreen = {
         const deleteButton = document.getElementById('team-delete-mode-btn');
         if (!deleteButton) return;
 
-        const label = deleteButton.querySelector('.btn-text');
-        const icon = deleteButton.querySelector('.material-icons');
-
         deleteButton.classList.toggle('active', this.isDeleteMode);
-        deleteButton.title = this.isDeleteMode ? 'Exit delete mode' : 'Delete players';
-
-        if (label) {
-            label.textContent = this.isDeleteMode ? 'Done' : 'Delete';
-        }
-        if (icon) {
-            icon.textContent = this.isDeleteMode ? 'close' : 'delete';
-        }
+        deleteButton.title = 'Delete players';
     },
 
     clearPlayerSelections() {
