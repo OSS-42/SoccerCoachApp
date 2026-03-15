@@ -4076,11 +4076,13 @@ button.no-assist-btn {
     border-radius: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     position: absolute;
-    left: 87.5%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    right: 6%;
+    bottom: 10%;
+    left: auto;
+    top: auto;
+    transform: none;
     background: transparent;
     color: var(--tile-accent);
     border: none;
@@ -4232,6 +4234,7 @@ button.stats-report-btn,
     text-transform: uppercase;
     letter-spacing: 0.03em;
     font-weight: 700;
+    white-space: nowrap;
     box-shadow: 0 3px 10px rgba(5, 26, 44, 0.16);
     transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
@@ -4382,6 +4385,7 @@ button.tab-btn.active {
 
 /* Keep tiny utility icon-only controls untouched. */
 button.secondary-btn.small,
+button.secondary-btn.add-player-inline-btn,
 button.close-btn,
 button.back-btn {
     overflow: visible;
@@ -4395,6 +4399,8 @@ button.back-btn {
 
 button.secondary-btn.small::before,
 button.secondary-btn.small::after,
+button.secondary-btn.add-player-inline-btn::before,
+button.secondary-btn.add-player-inline-btn::after,
 button.close-btn::before,
 button.close-btn::after,
 button.back-btn::before,
@@ -4536,22 +4542,27 @@ button.back-btn::after {
 }
 
 #team-setup .add-player-inline-btn {
-    width: 36px;
-    min-width: 36px;
-    height: 36px;
-    min-height: 36px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 1px solid #2b8fdb;
-    border-radius: 8px;
-    background: #eef6ff;
-    color: #1c66ab;
-    padding: 0;
+    border-radius: 10px;
+    background: #eef6ff !important;
+    color: #1c66ab !important;
+    padding: 0 !important;
+    box-shadow: 0 3px 8px rgba(28, 102, 171, 0.16);
 }
 
 #team-setup .add-player-inline-btn .material-icons {
-    font-size: 20px;
+    position: static !important;
+    transform: none !important;
+    font-size: 24px;
+    line-height: 1;
+    color: currentColor !important;
 }
 
 /* 4,5) Player rows adopt split design and mobile text readability */
@@ -4640,6 +4651,94 @@ button.back-btn::after {
     width: fit-content;
     min-width: 220px;
     max-width: 240px;
+}
+
+#game-tracking .end-game-btn::after {
+    content: 'stop';
+    font-family: 'Material Icons';
+    position: absolute;
+    right: calc((var(--rev-btn-icon-zone) * 0.5) - 0.5em);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--btn-icon) !important;
+    font-size: clamp(12px, 1.25vw, 16px);
+    line-height: 1;
+    z-index: 1;
+}
+
+@media (min-width: 769px) {
+    .main-menu {
+        align-items: center;
+    }
+
+    .menu-row {
+        width: min(100%, 760px);
+        align-self: center;
+    }
+
+    .main-menu > .menu-btn {
+        width: calc(100% - (var(--rev-btn-height) + 5px));
+        max-width: calc(760px - (var(--rev-btn-height) + 5px));
+        align-self: center;
+    }
+
+    #team-setup .team-name-banner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 14px;
+    }
+
+    #team-setup .team-banner-main {
+        display: grid;
+        grid-template-columns: auto minmax(300px, 1fr) 92px;
+        align-items: center;
+        gap: 10px;
+    }
+
+    #team-setup .team-name-edit {
+        display: contents;
+    }
+
+    #team-setup .team-banner-title {
+        padding-right: 4px;
+    }
+
+    #team-setup #team-name-input,
+    #team-setup .team-selector select {
+        height: var(--rev-btn-height);
+        min-height: var(--rev-btn-height);
+    }
+
+    #team-setup .team-save-btn {
+        width: 92px;
+        min-width: 92px;
+        flex-basis: 92px;
+    }
+
+    #team-setup .team-selector {
+        margin-left: 0;
+        align-items: center;
+    }
+
+    #team-setup .tab-navigation {
+        gap: 10px;
+        border-bottom: none;
+    }
+
+    #team-setup .tab-btn {
+        flex: 0 0 auto;
+        min-width: 230px;
+        max-width: 270px;
+    }
+
+    #game-setup .setup-formation-btn {
+        width: 248px;
+        min-width: 248px;
+        max-width: 248px;
+        align-self: flex-start;
+        font-size: clamp(0.8rem, 0.95vw, 0.92rem);
+    }
 }
 
 /* 7) Improve text centering perception in report action buttons */
