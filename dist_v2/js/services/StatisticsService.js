@@ -267,7 +267,8 @@ const StatisticsService = {
         
         // Build table HTML
         let tableHTML = `
-            <table class="statistics-table">
+            <div class="stats-table-container">
+            <table class="stats-table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -315,6 +316,7 @@ const StatisticsService = {
         tableHTML += `
                 </tbody>
             </table>
+            </div>
         `;
         
         container.innerHTML = tableHTML;

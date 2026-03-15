@@ -137,12 +137,18 @@ const TeamSetupScreen = {
             `;
             ribbon.className = 'message-ribbon warning';
             ribbon.classList.remove('hidden');
-            ribbon.style.display = 'flex';
+            ribbon.style.setProperty('display', 'flex', 'important');
+            ribbon.style.setProperty('visibility', 'visible', 'important');
+            ribbon.style.setProperty('opacity', '1', 'important');
+            ribbon.style.setProperty('height', 'auto', 'important');
+            ribbon.style.setProperty('padding', '20px', 'important');
             this.updateEditButtonStates();
         } else {
             // Hide delete warning
             ribbon.classList.add('hidden');
-            ribbon.style.display = 'none';
+            ribbon.style.setProperty('display', 'none', 'important');
+            ribbon.style.setProperty('height', '0', 'important');
+            ribbon.style.setProperty('padding', '0', 'important');
             ribbon.innerHTML = `
                 <span id="message-text"></span>
                 <button class="close-btn" onclick="hideMessage()">×</button>
