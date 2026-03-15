@@ -4273,6 +4273,22 @@ button.stats-report-btn > *,
     z-index: 1;
 }
 
+button.menu-btn .btn-text,
+button.primary-btn .btn-text,
+button.secondary-btn .btn-text,
+button.action-btn .btn-text,
+button.control-btn .btn-text,
+button.tab-btn .btn-text,
+button.stats-report-btn .btn-text,
+.report-actions button .btn-text,
+.dialog-buttons button .btn-text,
+.data-management-buttons button .btn-text {
+    display: block;
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+}
+
 button.menu-btn .material-icons,
 button.primary-btn .material-icons,
 button.secondary-btn .material-icons,
@@ -4385,7 +4401,6 @@ button.tab-btn.active {
 
 /* Keep tiny utility icon-only controls untouched. */
 button.secondary-btn.small,
-button.secondary-btn.add-player-inline-btn,
 button.close-btn,
 button.back-btn {
     overflow: visible;
@@ -4399,8 +4414,6 @@ button.back-btn {
 
 button.secondary-btn.small::before,
 button.secondary-btn.small::after,
-button.secondary-btn.add-player-inline-btn::before,
-button.secondary-btn.add-player-inline-btn::after,
 button.close-btn::before,
 button.close-btn::after,
 button.back-btn::before,
@@ -4515,9 +4528,9 @@ button.back-btn::after {
 
 #team-setup .team-save-btn {
     --rev-btn-icon-zone: 22%;
-    width: 108px;
-    min-width: 108px;
-    flex: 0 0 108px;
+    width: 96px;
+    min-width: 96px;
+    flex: 0 0 96px;
 }
 
 #team-setup .team-selector {
@@ -4542,27 +4555,16 @@ button.back-btn::after {
 }
 
 #team-setup .add-player-inline-btn {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #2b8fdb;
-    border-radius: 10px;
-    background: #eef6ff !important;
-    color: #1c66ab !important;
-    padding: 0 !important;
-    box-shadow: 0 3px 8px rgba(28, 102, 171, 0.16);
+    --rev-btn-icon-zone: 25%;
+    width: 128px;
+    min-width: 128px;
+    height: var(--rev-btn-height);
+    min-height: var(--rev-btn-height);
+    padding: 0 calc(var(--rev-btn-icon-zone) + 12px) 0 12px !important;
 }
 
 #team-setup .add-player-inline-btn .material-icons {
-    position: static !important;
-    transform: none !important;
-    font-size: 24px;
-    line-height: 1;
-    color: currentColor !important;
+    font-size: 18px;
 }
 
 /* 4,5) Player rows adopt split design and mobile text readability */
@@ -4653,19 +4655,6 @@ button.back-btn::after {
     max-width: 240px;
 }
 
-#game-tracking .end-game-btn::after {
-    content: 'stop';
-    font-family: 'Material Icons';
-    position: absolute;
-    right: calc((var(--rev-btn-icon-zone) * 0.5) - 0.5em);
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--btn-icon) !important;
-    font-size: clamp(12px, 1.25vw, 16px);
-    line-height: 1;
-    z-index: 1;
-}
-
 @media (min-width: 769px) {
     .main-menu {
         align-items: center;
@@ -4728,16 +4717,52 @@ button.back-btn::after {
 
     #team-setup .tab-btn {
         flex: 0 0 auto;
-        min-width: 230px;
-        max-width: 270px;
+        min-width: 190px;
+        max-width: 210px;
     }
 
     #game-setup .setup-formation-btn {
-        width: 248px;
-        min-width: 248px;
-        max-width: 248px;
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
         align-self: flex-start;
         font-size: clamp(0.8rem, 0.95vw, 0.92rem);
+    }
+
+    #formation-setup .formation-buttons {
+        gap: 10px;
+    }
+
+    #formation-setup .formation-buttons .secondary-btn,
+    #formation-setup .formation-buttons .primary-btn {
+        flex: 0 0 210px;
+        min-width: 210px;
+        max-width: 210px;
+    }
+
+    #reports .report-actions {
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+
+    #reports .report-actions button {
+        min-width: 112px;
+        max-width: 112px;
+        flex: 0 0 112px;
+    }
+
+    #settings .data-management-buttons {
+        align-items: stretch;
+    }
+
+    #settings .data-management-buttons button {
+        min-width: 0;
+        font-size: clamp(0.72rem, 0.92vw, 0.88rem);
+    }
+
+    #settings .data-management-buttons .danger-btn,
+    #settings .data-management-buttons .warning-btn {
+        flex: 1 1 180px;
     }
 }
 

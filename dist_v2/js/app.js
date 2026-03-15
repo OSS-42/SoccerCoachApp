@@ -965,7 +965,8 @@ function updateEndPhaseButtonLabel() {
     const totalPeriods = appState.currentGame.numPeriods || 2;
     const isLastPeriod = currentPeriod >= totalPeriods;
 
-    endPhaseButton.textContent = isLastPeriod ? 'End Game' : `End Period #${currentPeriod}`;
+    const label = isLastPeriod ? 'End Game' : `End Period #${currentPeriod}`;
+    endPhaseButton.innerHTML = `<span class="btn-text">${label}</span><span class="material-icons">stop</span>`;
 }
 
 function startTimer() {
@@ -1523,8 +1524,8 @@ function renderReportsList() {
                 <div class="report-score">${teamName} ${game.homeScore} - ${game.awayScore} ${game.opponentName}</div>
             </div>
             <div class="report-actions">
-                <button class="secondary-btn" onclick="viewReport('${game.id}')">View Report</button>
-                <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')">PDF</button>
+                <button class="secondary-btn" onclick="viewReport('${game.id}')"><span class="btn-text">View</span><span class="material-icons">visibility</span></button>
+                <button class="secondary-btn" onclick="exportReport('${game.id}', 'pdf')"><span class="btn-text">PDF</span><span class="material-icons">picture_as_pdf</span></button>
             </div>
         `;
         reportsList.appendChild(reportItem);

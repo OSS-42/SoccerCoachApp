@@ -172,7 +172,10 @@
                     <h2 id="team-setup-team-name" class="team-banner-title">Team Name</h2>
                     <div class="team-name-edit">
                         <input type="text" id="team-name-input" placeholder="Enter team name">
-                        <button class="secondary-btn team-save-btn" onclick="saveTeamName()">Save</button>
+                        <button class="secondary-btn team-save-btn" onclick="saveTeamName()">
+                            <span class="btn-text">Save</span>
+                            <span class="material-icons">save</span>
+                        </button>
                     </div>
                 </div>
                 <div class="team-selector">
@@ -186,10 +189,12 @@
                 <!-- Tab Navigation -->
                 <nav class="tab-navigation" role="tablist" aria-label="Team setup tabs">
                     <button class="tab-btn active" onclick="switchTeamTab('players')" id="players-tab" role="tab" aria-selected="true" aria-controls="players-tab-content">
-                        <span class="material-icons">people</span> Players
+                        <span class="btn-text">Players</span>
+                        <span class="material-icons">people</span>
                     </button>
                     <button class="tab-btn" onclick="switchTeamTab('statistics')" id="statistics-tab" role="tab" aria-selected="false" aria-controls="statistics-tab-content">
-                        <span class="material-icons">analytics</span> Statistics
+                        <span class="btn-text">Statistics</span>
+                        <span class="material-icons">analytics</span>
                     </button>
                 </nav>
                 
@@ -198,6 +203,7 @@
                     <div class="players-header">
                         <h2>Players</h2>
                         <button class="secondary-btn add-player-inline-btn" onclick="openAddPlayerDialog()" title="Add new player">
+                            <span class="btn-text">Add</span>
                             <span class="material-icons">person_add</span>
                         </button>
                         <span class="player-counter-team">
@@ -294,7 +300,10 @@
                         </label>
                     </div>
                 </div>
-                <button class="primary-btn setup-formation-btn" onclick="setupFormation()">Formation Setup</button>
+                <button class="primary-btn setup-formation-btn" onclick="setupFormation()">
+                    <span class="btn-text">Formation Setup</span>
+                    <span class="material-icons">sports_soccer</span>
+                </button>
             </div>
         </div>
 
@@ -332,8 +341,14 @@
                     </label>
                 </div>
                 <div class="formation-buttons">
-                    <button class="secondary-btn" onclick="clearFormation()">Clear Formation</button>
-                    <button class="primary-btn" onclick="startGameFromFormation()">Start Game</button>
+                    <button class="secondary-btn" onclick="clearFormation()">
+                        <span class="btn-text">Clear Formation</span>
+                        <span class="material-icons">clear_all</span>
+                    </button>
+                    <button class="primary-btn" onclick="startGameFromFormation()">
+                        <span class="btn-text">Start Game</span>
+                        <span class="material-icons">play_arrow</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -389,31 +404,39 @@
             <div class="controls-row">
                 <div class="game-controls">
                     <button class="control-btn play-btn" onclick="startGameTimer(); startTimer();">
-                        <span class="material-icons">play_arrow</span> Play
+                        <span class="btn-text">Play</span>
+                        <span class="material-icons">play_arrow</span>
                     </button>
                     <button class="control-btn pause-btn" onclick="pauseGameTimer(); pauseTimer();">
-                        <span class="material-icons">pause</span> Pause
+                        <span class="btn-text">Pause</span>
+                        <span class="material-icons">pause</span>
                     </button>
                     <button class="control-btn reset-btn" onclick="resetTimer()">
-                        <span class="material-icons">replay</span> Reset Sub
+                        <span class="btn-text">Reset Sub</span>
+                        <span class="material-icons">replay</span>
                     </button>
                     <button class="control-btn end-game-btn" id="end-phase-btn" onclick="stopGameTimer()">
-                        End Period
+                        <span class="btn-text">End Period</span>
+                        <span class="material-icons">stop</span>
                     </button>
                     <button class="control-btn action-review-btn" onclick="openActionReviewDialog()" id="action-review-btn">
-                        <span class="material-icons">rule</span> Action Review
+                        <span class="btn-text">Action Review</span>
+                        <span class="material-icons">rule</span>
                     </button>
                     <button class="control-btn note-btn" onclick="openGameNoteDialog()" title="Add general game note">
-                        <span class="material-icons">note_add</span> Game Note
+                        <span class="btn-text">Game Note</span>
+                        <span class="material-icons">note_add</span>
                     </button>
                 </div>
                 <!-- Mobile secondary controls row -->
                 <div class="mobile-secondary-controls">
                     <button class="control-btn action-review-btn" onclick="openActionReviewDialog()">
-                        <span class="material-icons">rule</span> Action Review
+                        <span class="btn-text">Action Review</span>
+                        <span class="material-icons">rule</span>
                     </button>
                     <button class="control-btn note-btn" onclick="openGameNoteDialog()" title="Add general game note">
-                        <span class="material-icons">note_add</span> Game Note
+                        <span class="btn-text">Game Note</span>
+                        <span class="material-icons">note_add</span>
                     </button>
                 </div>
             </div>
@@ -470,30 +493,33 @@
                     <h2>Data Management</h2>
                     <div class="setting-option data-management-buttons">
                         <button class="secondary-btn" onclick="exportTeamData()">
+                            <span class="btn-text">Export Team Data (JSON)</span>
                             <span class="material-icons">file_download</span>
-                            Export Team Data (JSON)
                         </button>
                         <button class="secondary-btn" onclick="exportTeamData('pdf')">
+                            <span class="btn-text">Export Team Data (PDF)</span>
                             <span class="material-icons">picture_as_pdf</span>
-                            Export Team Data (PDF)
                         </button>
                         <button class="secondary-btn" onclick="importTeamData()">
+                            <span class="btn-text">Import Team Data</span>
                             <span class="material-icons">file_upload</span>
-                            Import Team Data
                         </button>
                         <button class="secondary-btn danger-btn" onclick="clearAppData()">
+                            <span class="btn-text">Clear Data</span>
                             <span class="material-icons">delete_forever</span>
-                            Clear All Data
                         </button>
                         <button class="secondary-btn warning-btn" onclick="resetPlayerStatistics()">
+                            <span class="btn-text">Reset Stats</span>
                             <span class="material-icons">restart_alt</span>
-                            Reset Player Statistics
                         </button>
                     </div>
                     <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleFileImport(event)">
                 </div>
 
-                <button class="primary-btn" onclick="saveSettings()">Save Settings</button>
+                <button class="primary-btn" onclick="saveSettings()">
+                    <span class="btn-text">Save Settings</span>
+                    <span class="material-icons">save</span>
+                </button>
             </div>
         </div>
 

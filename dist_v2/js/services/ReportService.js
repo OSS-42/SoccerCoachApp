@@ -338,8 +338,8 @@ const ReportService = {
                     ${notesHTML}
                 </div>
                 <div class="report-actions">
-                    <button class="secondary-btn" onclick="ReportService.exportReport('${gameId}', 'pdf')">Export as PDF</button>
-                    <button class="primary-btn" onclick="ReportService.closeDetailedReport()">Close</button>
+                    <button class="secondary-btn" onclick="ReportService.exportReport('${gameId}', 'pdf')"><span class="btn-text">PDF</span><span class="material-icons">picture_as_pdf</span></button>
+                    <button class="primary-btn" onclick="ReportService.closeDetailedReport()"><span class="btn-text">Close</span><span class="material-icons">close</span></button>
                 </div>
             </div>
         `;
@@ -680,9 +680,9 @@ const ReportService = {
                 </div>
                 ${reportHTML}
                 <div class="report-actions">
-                    <button class="primary-btn" onclick="ReportService.printEnhancedReport('${gameId}')">📄 Print/PDF</button>
-                    <button class="secondary-btn" onclick="ReportService.shareReport('${gameId}')">📤 Share</button>
-                    <button class="secondary-btn" onclick="this.closest('.dialog').classList.remove('active')">Close</button>
+                    <button class="primary-btn" onclick="ReportService.printEnhancedReport('${gameId}')"><span class="btn-text">PDF</span><span class="material-icons">picture_as_pdf</span></button>
+                    <button class="secondary-btn" onclick="ReportService.shareReport('${gameId}')"><span class="btn-text">Share</span><span class="material-icons">share</span></button>
+                    <button class="secondary-btn" onclick="this.closest('.dialog').classList.remove('active')"><span class="btn-text">Close</span><span class="material-icons">close</span></button>
                 </div>
             </div>
         `;

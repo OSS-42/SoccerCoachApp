@@ -51,12 +51,16 @@ const SettingsScreen = {
             <div class="settings-group">
                 <h3>Data Management</h3>
                 <button class="secondary-btn" onclick="SettingsScreen.openClearDataDialog()">
-                    <span class="material-icons">delete</span> Clear All Data
+                    <span class="btn-text">Clear Data</span>
+                    <span class="material-icons">delete</span>
                 </button>
             </div>
 
             <div class="settings-group">
-                <button class="primary-btn" onclick="SettingsScreen.saveSettings()">Save Settings</button>
+                <button class="primary-btn" onclick="SettingsScreen.saveSettings()">
+                    <span class="btn-text">Save Settings</span>
+                    <span class="material-icons">save</span>
+                </button>
             </div>
         `;
     },
