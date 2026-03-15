@@ -353,32 +353,36 @@
         <!-- Game Tracking Screen -->
         <div id="game-tracking" class="screen">
             <div class="game-header">
-                <div class="team-scores">
-                    <div class="team-score">
+                <div class="team-scores report-header-score">
+                    <div class="team-section team-left">
                         <div class="team-name" id="home-team-name">My Team</div>
-                        <div class="card-counters">
-                            <div class="card-counter yellow-card" id="yellow-card-count">0</div>
-                            <div class="card-counter red-card" id="red-card-count">0</div>
+                        <div class="team-record live-cards">
+                            <div class="card-counters">
+                                <div class="card-counter yellow-card" id="yellow-card-count">0</div>
+                                <div class="card-counter red-card" id="red-card-count">0</div>
+                            </div>
                         </div>
                         <div class="score" id="home-score">0</div>
                     </div>
-                    <div class="separator-line"></div>
-                    <div class="team-score">
+
+                    <div class="period-scores live-period-panel">
+                        <div class="period-counter" id="period-counter">Period 1 of 4</div>
+                        <div class="live-meta-row">
+                            <div class="game-time-wrapper live-meta-card">
+                                <div class="game-time-label">Time</div>
+                                <div class="game-time" id="game-time">00:00</div>
+                            </div>
+                            <div class="substitution-timer-small live-meta-card" id="substitution-timer">
+                                <div class="timer-label">Next sub in</div>
+                                <div class="timer-value">6:00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="team-section team-right">
                         <div class="team-name" id="opponent-team-name">Opponent</div>
                         <div class="score" id="away-score">0</div>
                     </div>
-                    <div class="separator-line"></div>
-                    <div class="game-time-container">
-                        <div class="game-time-wrapper">
-                            <div class="game-time-label">Time</div>
-                            <div class="game-time" id="game-time">00:00</div>
-                        </div>
-                        <div class="substitution-timer-small" id="substitution-timer">
-                            <div class="timer-label">Next sub in</div>
-                            <div class="timer-value">6:00</div>
-                        </div>
-                    </div>
-                    <div class="period-counter" id="period-counter">Period 1 of 4</div>
                 </div>
                 
             </div>

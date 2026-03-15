@@ -3784,73 +3784,61 @@ button.no-assist-btn {
     box-sizing: border-box;
 }
 
-#game-tracking .team-scores {
-    display: grid;
-    grid-template-rows: auto 1px auto 1px auto auto;
-    gap: var(--gt-gap);
+#game-tracking .team-scores.report-header-score {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: clamp(12px, 2.1vw, 28px);
     width: 100%;
     min-height: 0;
-}
-
-#game-tracking .team-score {
-    width: 100%;
-    min-height: 0;
-    padding: clamp(6px, 0.9dvh, 10px) clamp(10px, 1.6dvw, 16px);
+    margin: 0;
+    padding: clamp(8px, 1dvh, 12px) clamp(10px, 1.2dvw, 16px);
     border: 1px solid var(--gt-header-line);
     border-radius: 12px;
-    background: var(--gt-chip-bg);
+    background: linear-gradient(135deg, rgba(24, 59, 78, 0.95) 0%, rgba(41, 84, 106, 0.9) 100%);
     box-sizing: border-box;
 }
 
-#game-tracking .team-score:first-child {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+#game-tracking .team-section {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: clamp(8px, 1.2dvw, 14px);
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    flex: 0 1 clamp(110px, 21vw, 220px);
 }
 
-#game-tracking .team-score:last-of-type {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: clamp(8px, 1.2dvw, 14px);
-}
-
-#game-tracking .team-score .team-name {
-    font-size: clamp(0.8rem, 1.8vw, 1rem);
+#game-tracking .team-section .team-name {
+    font-size: clamp(0.78rem, 1.6vw, 1rem);
     font-weight: 700;
     letter-spacing: 0.06em;
     color: var(--gt-chip-muted);
+    text-transform: uppercase;
+    text-align: center;
+    width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
 }
 
-#game-tracking .team-score .score {
+#game-tracking .team-section .score {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.8ch;
-    padding: 0.16em 0.52em;
+    min-width: 2.6ch;
+    padding: 0.12em 0.46em;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.26);
-    background: rgba(255, 255, 255, 0.19);
-    color: var(--gt-chip-text);
-    line-height: 1;
-    font-size: clamp(1.15rem, 3vw, 1.85rem);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: clamp(1.36rem, 3.6vw, 2.2rem);
     font-weight: 800;
-    justify-self: end;
+    line-height: 1;
 }
 
-#game-tracking #home-team-name,
-#game-tracking #opponent-team-name {
-    justify-self: start;
-}
-
-#game-tracking #home-score,
-#game-tracking #away-score {
-    justify-self: end;
+#game-tracking .live-cards {
+    margin: 0;
 }
 
 #game-tracking .card-counters {
@@ -3870,22 +3858,20 @@ button.no-assist-btn {
     border: 1px solid rgba(0, 0, 0, 0.35);
 }
 
-#game-tracking .team-score:last-of-type .card-counters {
-    display: none !important;
+#game-tracking .live-period-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: clamp(6px, 0.9dvh, 10px);
 }
 
-#game-tracking .separator-line {
-    width: 100%;
-    margin: 0;
-    background: rgba(255, 255, 255, 0.17);
-}
-
-#game-tracking .game-time-container {
-    margin-top: 0;
-    width: 100%;
+#game-tracking .live-meta-row {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(7px, 1dvh, 11px);
+    gap: clamp(6px, 1dvh, 11px);
 }
 
 #game-tracking .game-time-wrapper,
@@ -4098,6 +4084,23 @@ button.no-assist-btn {
     #game-tracking .controls-row {
         grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
         gap: 4px;
+    }
+
+    #game-tracking .team-scores.report-header-score {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    #game-tracking .team-section {
+        flex-basis: clamp(84px, 24vw, 132px);
+    }
+
+    #game-tracking .team-section .score {
+        font-size: clamp(1.15rem, 4vw, 1.65rem);
+    }
+
+    #game-tracking .live-meta-row {
+        gap: 6px;
     }
 
     #game-tracking .game-controls {
