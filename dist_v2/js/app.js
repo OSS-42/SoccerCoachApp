@@ -460,6 +460,7 @@ function showScreen(screenId) {
     } else if (screenId === 'game-tracking') {
         // Render player grid when entering game tracking screen
         renderPlayerGrid();
+        updateEndPhaseButtonLabel();
     }
 }
 
@@ -931,6 +932,22 @@ function updatePeriodCounterDisplay() {
         const numPeriods = appState.currentGame.numPeriods || 2;
         periodCounterElement.textContent = `Period ${currentPeriodNumber} of ${numPeriods}`;
     }
+
+    updateEndPhaseButtonLabel();
+}
+
+function updateEndPhaseButtonLabel() {
+    const endPhaseButton = document.getElementById('end-phase-btn');
+    if (!endPhaseButton || !appState.currentGame) {
+        return;
+    }
+
+    const periodDurationSeconds = (appState.currentGame.periodDuration || 45) * 60;
+    const currentPeriod = Math.floor((appState.currentGame.gameTime || 0) / periodDurationSeconds) + 1;
+    const totalPeriods = appState.currentGame.numPeriods || 2;
+    const isLastPeriod = currentPeriod >= totalPeriods;
+
+    endPhaseButton.textContent = isLastPeriod ? 'End Game' : 'End Period';
 }
 
 function startTimer() {
@@ -1075,6 +1092,7 @@ function finishPeriod() {
     // Update UI displays
     updateGameTimeDisplay();
     updatePeriodCounterDisplay();
+    updateEndPhaseButtonLabel();
     
     // Save state
     saveAppData();
@@ -2027,6 +2045,7 @@ function startGameFromFormation() {
     // Start the game
     showScreen('game-tracking');
     renderPlayerGrid();
+    updateEndPhaseButtonLabel();
     startGameTimer();
     startTimer();
 }

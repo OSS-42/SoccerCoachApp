@@ -3750,7 +3750,7 @@ button.no-assist-btn {
 
 #game-tracking {
     --gt-header-h: clamp(160px, 23dvh, 214px);
-    --gt-controls-h: clamp(66px, 10dvh, 92px);
+    --gt-controls-h: clamp(56px, 8.5dvh, 76px);
     --gt-gap: clamp(6px, 0.9dvh, 10px);
     --gt-player-gap: clamp(5px, 0.8dvh, 10px);
     --gt-player-pad: clamp(5px, 0.9dvh, 10px);
@@ -3840,6 +3840,17 @@ button.no-assist-btn {
     line-height: 1;
     font-size: clamp(1.15rem, 3vw, 1.85rem);
     font-weight: 800;
+    justify-self: end;
+}
+
+#game-tracking #home-team-name,
+#game-tracking #opponent-team-name {
+    justify-self: start;
+}
+
+#game-tracking #home-score,
+#game-tracking #away-score {
+    justify-self: end;
 }
 
 #game-tracking .card-counters {
@@ -3934,7 +3945,7 @@ button.no-assist-btn {
 #game-tracking .game-controls {
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: clamp(4px, 0.6dvw, 7px);
 }
 
@@ -3967,16 +3978,17 @@ button.no-assist-btn {
     margin: 0;
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    grid-auto-rows: 1fr;
+    grid-auto-rows: auto;
     gap: var(--gt-player-gap);
-    align-content: stretch;
+    align-content: start;
     justify-items: stretch;
     box-sizing: border-box;
 }
 
 #game-tracking .player-grid-item {
     width: 100%;
-    height: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
     min-height: 0;
     padding: clamp(6px, 0.85dvh, 10px);
     border-radius: 12px;
@@ -4080,7 +4092,7 @@ button.no-assist-btn {
 @media (max-width: 768px) and (orientation: portrait) {
     #game-tracking {
         --gt-header-h: clamp(172px, 27dvh, 230px);
-        --gt-controls-h: clamp(98px, 16dvh, 132px);
+        --gt-controls-h: clamp(86px, 14.5dvh, 118px);
     }
 
     #game-tracking .controls-row {
@@ -4089,7 +4101,7 @@ button.no-assist-btn {
     }
 
     #game-tracking .game-controls {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 4px;
     }
 
@@ -4119,7 +4131,7 @@ button.no-assist-btn {
 @media (max-width: 1100px) and (orientation: landscape), (max-height: 740px) {
     #game-tracking {
         --gt-header-h: clamp(128px, 22dvh, 170px);
-        --gt-controls-h: clamp(58px, 9.5dvh, 80px);
+        --gt-controls-h: clamp(52px, 8.5dvh, 72px);
     }
 
     #game-tracking .player-grid {

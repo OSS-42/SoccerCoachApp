@@ -390,14 +390,11 @@
                     <button class="control-btn pause-btn" onclick="pauseGameTimer(); pauseTimer();">
                         <span class="material-icons">pause</span> Pause
                     </button>
-                    <button class="control-btn stop-btn" onclick="stopGameTimer()">
-                        <span class="material-icons">stop</span> Stop
-                    </button>
                     <button class="control-btn reset-btn" onclick="resetTimer()">
                         <span class="material-icons">replay</span> Reset Sub
                     </button>
-                    <button class="control-btn end-game-btn" onclick="confirmEndGame()">
-                        End Game
+                    <button class="control-btn end-game-btn" id="end-phase-btn" onclick="stopGameTimer()">
+                        End Period
                     </button>
                     <button class="control-btn action-review-btn" onclick="openActionReviewDialog()" id="action-review-btn">
                         <span class="material-icons">rule</span> Action Review
