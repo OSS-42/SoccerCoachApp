@@ -19,15 +19,12 @@ const TeamSetupScreen = {
      * Main render function - displays current team's players list
      */
     renderPlayersList() {
-        console.log('🔄 TeamSetupScreen.renderPlayersList() - START');
-        
         const playersList = document.getElementById('players-list');
         if (!playersList) {
             console.error('   ❌ ERROR: players-list element not found!');
             return;
         }
         
-        // Get current team and its players
         const team = getCurrentTeam();
         if (!team) {
             console.warn('   ⚠️  No team found');
@@ -37,8 +34,6 @@ const TeamSetupScreen = {
         }
         
         const players = team.players || [];
-        console.log(`   Team: "${team.name}" (${team.id})`);
-        console.log(`   Players: ${players.length}`);
         
         // Clear list
         playersList.innerHTML = '';
@@ -49,7 +44,6 @@ const TeamSetupScreen = {
         // Show empty state if no players
         if (players.length === 0) {
             playersList.innerHTML = '<div class="empty-state">No players added yet</div>';
-            console.log('   ✓ Empty state displayed');
             return;
         }
         
@@ -61,8 +55,6 @@ const TeamSetupScreen = {
         sortedPlayers.forEach((player, idx) => {
             this.renderPlayerItem(playersList, player, idx, anyChecked);
         });
-        
-        console.log(`   ✓ Rendered ${players.length} players`);
     },
     
     /**
@@ -97,7 +89,6 @@ const TeamSetupScreen = {
         `;
         
         container.appendChild(playerItem);
-        console.log(`      [${idx}] ${player.name} #${player.jerseyNumber} (${player.position})`);
     },
     
     /**
@@ -243,9 +234,6 @@ const TeamSetupScreen = {
             return;
         }
         
-        console.log(`🗑️  Deleting ${playerIds.length} player(s)...`);
-        
-        // Get the current team and remove players
         const team = getCurrentTeam();
         if (!team || !team.players) {
             console.error('Team or players not found');
@@ -257,14 +245,10 @@ const TeamSetupScreen = {
         playerIds.forEach(playerId => {
             const playerIndex = team.players.findIndex(p => p.id === playerId);
             if (playerIndex !== -1) {
-                const player = team.players[playerIndex];
-                console.log(`   Removed: ${player.name} #${player.jerseyNumber}`);
                 team.players.splice(playerIndex, 1);
                 deletedCount++;
             }
         });
-        
-        console.log(`   ✓ ${deletedCount} players deleted`);
         
         this.closeConfirmDeleteDialog();
         saveAppData();
@@ -286,9 +270,6 @@ const TeamSetupScreen = {
      * Open edit dialog for a player
      */
     editPlayer(playerId) {
-        console.log(`✏️  editPlayer() called for player ${playerId}`);
-        
-        // Get current team
         const team = getCurrentTeam();
         if (!team) {
             console.error('No team found');
@@ -296,15 +277,12 @@ const TeamSetupScreen = {
             return;
         }
         
-        // Find player
         const player = team.players.find(p => p.id === playerId);
         if (!player) {
             console.error(`Player ${playerId} not found in team "${team.name}"`);
             showMessage(`Player not found in team "${team.name}"`, 'error');
             return;
         }
-        
-        console.log(`   Found player: ${player.name} #${player.jerseyNumber} (${player.position})`);
         
         let editDialog = document.getElementById('edit-player-dialog');
         if (!editDialog) {
@@ -368,9 +346,6 @@ const TeamSetupScreen = {
      * Save edited player data
      */
     saveEditedPlayer(playerId) {
-        console.log(`💾 saveEditedPlayer() called for player ${playerId}`);
-        
-        // Get current team
         const team = getCurrentTeam();
         if (!team) {
             console.error('Team not found');
@@ -378,7 +353,6 @@ const TeamSetupScreen = {
             return;
         }
         
-        // Find player
         const player = team.players.find(p => p.id === playerId);
         if (!player) {
             console.error(`Player ${playerId} not found`);
@@ -412,11 +386,9 @@ const TeamSetupScreen = {
         }
         
         // Update player
-        console.log(`   Old: ${player.name} #${player.jerseyNumber}`);
         player.name = name;
         player.jerseyNumber = jerseyNumber;
         player.position = position;
-        console.log(`   New: ${player.name} #${player.jerseyNumber}`);
         
         // Save and refresh
         this.closeEditDialog();

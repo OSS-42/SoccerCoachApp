@@ -29,8 +29,6 @@ if (!window.appState) {
 
 // Reference the global appState
 const appState = window.appState;
-console.log('✅ app.js loaded, appState ready');
-console.log(`   teams: ${appState.teams?.length || 0}, currentTeamId: ${appState.currentTeamId}`);
 
 // Team helper functions - provide team isolation
 function normalizeTeamData(team) {
@@ -194,8 +192,6 @@ function showMessage(message, type = 'error') {
     
     if (!ribbon || !messageText) {
         console.error('Message ribbon or text element not found');
-        console.error('ribbon:', ribbon);
-        console.error('messageText:', messageText);
         alert(`Error: ${message}`); // Fallback to alert if ribbon not found
         return;
     }
@@ -240,9 +236,6 @@ function showMessage(message, type = 'error') {
     const hideDelay = type === 'error' ? 7000 : 5000;
     messageTimeout = setTimeout(hideMessage, hideDelay);
     
-    // Log message for debugging - includes element inspection
-    console.log(`✓ Message shown (${type}):`, message);
-    console.log('Ribbon DOM:', ribbon.outerHTML.substring(0, 100));
 }
 
 function hideMessage() {
@@ -252,7 +245,6 @@ function hideMessage() {
         ribbon.style.setProperty('display', 'none', 'important');
         ribbon.style.setProperty('height', '0', 'important');
         ribbon.style.setProperty('padding', '0', 'important');
-        console.log('✓ Message hidden');
     }
 }
 
@@ -483,13 +475,6 @@ function showScreen(screenId) {
 }
 
 function updateTeamSelector() {
-    console.log('🔄 updateTeamSelector() called');
-    console.log(`   appState.teams: ${appState.teams?.length || 0} teams`);
-    console.log(`   appState.currentTeamId: ${appState.currentTeamId}`);
-    appState.teams?.forEach((t, i) => {
-        console.log(`      Team ${i}: "${t.name}" (id=${t.id})`);
-    });
-    
     // Update both selectors
     updateTeamSelectorElement('team-selector');
     updateTeamSelectorElement('main-team-selector');
@@ -499,14 +484,9 @@ function updateTeamSelector() {
 
 function updateTeamSelectorElement(selectorId) {
     const selector = document.getElementById(selectorId);
-    console.log(`   Updating ${selectorId}: element found=${!!selector}`);
-    if (!selector) {
-        console.warn(`   ❌ Element ${selectorId} not found!`);
-        return;
-    }
+    if (!selector) return;
     const teams = appState.teams || [];
     const currentId = appState.currentTeamId;
-    console.log(`   Teams to populate: ${teams.length}, Current: ${currentId}`);
     selector.innerHTML = '';
     teams.forEach(team => {
         const opt = document.createElement('option');
@@ -514,9 +494,7 @@ function updateTeamSelectorElement(selectorId) {
         opt.textContent = team.name || 'Unnamed Team';
         if (team.id === currentId) opt.selected = true;
         selector.appendChild(opt);
-        console.log(`      Added option: "${team.name}"`);
     });
-    console.log(`   ✓ ${selectorId} populated with ${teams.length} teams`);
 }
 
 function updateTeamNameBanner(bannerId) {
@@ -731,7 +709,6 @@ function closeAddPlayerDialog() {
 }
 
 function addPlayer() {
-    console.log('🆕 addPlayer() called');
     const name = document.getElementById('player-name').value.trim().toUpperCase();
     const jerseyNumber = document.getElementById('jersey-number').value;
     const position = document.getElementById('player-position').value;
@@ -743,7 +720,6 @@ function addPlayer() {
     
     // Check for duplicate jersey numbers
     const teamPlayers = getTeamPlayers();
-    console.log(`   Current team has ${teamPlayers?.length || 0} players`);
     if (teamPlayers.some(p => p.jerseyNumber === Number(jerseyNumber))) {
         showMessage('A player with this jersey number already exists', 'error');
         return;
@@ -764,19 +740,14 @@ function addPlayer() {
             goals: 0,
             assists: 0,
             saves: 0,
-            goalsAllowed: 0
+            goalsAllowed: 0,
+            yellowCards: 0,
+            redCards: 0
         }
     };
     
-    console.log(`   ➕ Adding player: ${name} #${jerseyNumber} (${position})`);
-    const team = getCurrentTeam();
-    console.log(`   Team found: ${team?.name}, Players before: ${team?.players?.length || 0}`);
-    
     getTeamPlayers().push(player);
-    console.log(`   Players after push: ${getTeamPlayers()?.length || 0}`);
-    
     saveAppData();
-    console.log(`   ✅ Player added and saved!`);
     
     showMessage(`Player "${name}" (${position}) added successfully`, 'success');
     TeamSetupScreen.renderPlayersList();
@@ -1630,15 +1601,6 @@ function saveAppData() {
         
         const dataToSave = JSON.stringify(appState);
         localStorage.setItem('soccerCoachApp2', dataToSave);
-        
-        console.log(`💾 saveAppData(): Saved successfully`);
-        console.log(`   localStorage key: soccerCoachApp2`);
-        console.log(`   Data size: ${dataToSave.length} bytes`);
-        console.log(`   Teams saved: ${appState.teams?.length || 0}`);
-        appState.teams?.forEach((t, i) => {
-            console.log(`      Team ${i}: "${t.name}" (id=${t.id}, players=${t.players?.length || 0})`);
-        });
-        console.log(`   Active team (${appState.currentTeamId}): ${getTeamPlayers()?.length || 0} players`);
     } catch (e) {
         console.error(`❌ saveAppData(): Failed to save!`, e.message);
         if (e.name === 'QuotaExceededError') {
@@ -1738,7 +1700,7 @@ function exportTeamData() {
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
     // Create a temporary link element
-    const exportFileDefaultName = `${appState.teamName.replace(/\s+/g, '_')}_data.json`;
+    const exportFileDefaultName = `${(currentTeam ? currentTeam.name : 'team').replace(/\s+/g, '_')}_data.json`;
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);

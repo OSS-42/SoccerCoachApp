@@ -32,9 +32,6 @@ window.appState = {
     formationTemp: null // Temporary storage for formation during setup
 };
 
-console.log('✅ StateInit.js: window.appState initialized with empty teams array');
-console.log(`   appState.teams = ${window.appState.teams?.length || 0}`);
-
 // helper used throughout the app to access the active team
 function getCurrentTeam() {
     let team = appState.teams.find(t => t.id === appState.currentTeamId);
@@ -52,9 +49,6 @@ function getCurrentTeam() {
  * Do NOT call this automatically during script load
  */
 function createDefaultTeams() {
-    console.log('🆕 createDefaultTeams() called');
-    console.log(`   Current teams: ${appState.teams?.length || 0}`);
-    
     const teamA = {
         id: 't1',
         name: 'Team A',
@@ -87,28 +81,17 @@ function createDefaultTeams() {
     
     appState.teams = [teamA, teamB];
     appState.currentTeamId = teamA.id;
-    
-    console.log(`   ✓ Created ${appState.teams.length} default teams`);
-    console.log(`      Team 0: "${teamA.name}" (id=${teamA.id})`);
-    console.log(`      Team 1: "${teamB.name}" (id=${teamB.id})`);
-    console.log(`   ✓ currentTeamId set to: ${appState.currentTeamId}`);
 }
 
 /**
  * Migrate legacy single-team data to new multi-team format
  */
 function migrateLegacyData() {
-    console.log('🔄 migrateLegacyData() called');
-    console.log(`   Checking for legacy fields...`);
-    
     const hasLegacy = appState.teamName || (appState.players && appState.players.length > 0);
     
     if (!hasLegacy) {
-        console.log(`   ℹ️  No legacy data found`);
         return false;
     }
-    
-    console.log(`   ✓ Found legacy data - migrating...`);
     
     const teamA = {
         id: 't1',
@@ -149,10 +132,6 @@ function migrateLegacyData() {
     delete appState.games;
     delete appState.unavailablePlayers;
     delete appState.defaultFormation;
-    
-    console.log(`   ✓ Migration complete - created 2 teams from legacy data`);
-    console.log(`      Team A (migrated): "${teamA.name}" (${teamA.players.length} players)`);
-    console.log(`      Team B (new): "Team B" (0 players)`);
     
     return true;
 }

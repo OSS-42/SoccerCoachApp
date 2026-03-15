@@ -29,8 +29,6 @@ const FormationScreen = {
             ? teamFormation
             : (skipDefault ? [] : teamDefaultFormation);
 
-        console.log('✅ All DOM elements found');
-        
         // Clear all content
         playerList.innerHTML = '';
         formationField.innerHTML = '';
@@ -49,8 +47,6 @@ const FormationScreen = {
         formationField.appendChild(fieldSurface);
 
         const fieldSpots = this._getFieldSpots();
-        console.log(`📌 Rendering ${fieldSpots.length} empty field spots...`);
-        
         fieldSpots.forEach(spot => {
             const slot = document.createElement('div');
             
@@ -72,8 +68,6 @@ const FormationScreen = {
         this._observeFieldSurface(formationField);
         this._syncFieldSurfaceLayout();
         requestAnimationFrame(() => this._syncFieldSurfaceLayout());
-        
-        console.log(`✅ Created ${formationField.querySelectorAll('.player-slot').length} empty field spots`);
 
         // ============================================================================
         // STEP 2: Create empty bench slots based on game type
@@ -97,8 +91,6 @@ const FormationScreen = {
         }
 
         this._populateBenchWithTeamPlayers();
-        
-        console.log(`✅ Created ${numBenchSpots} empty bench slots for ${matchType}`);
 
         // ============================================================================
         // STEP 3: Create 5 empty unavailable (injury/missing) slots
@@ -109,8 +101,6 @@ const FormationScreen = {
             slot.id = `unavailable-slot-${i}`;
             unavailableSlots.appendChild(slot);
         }
-        
-        console.log(`✅ Created 5 empty unavailable slots`);
 
         // ============================================================================
         // STEP 4: Re-apply saved formation/default formation
@@ -350,8 +340,6 @@ const FormationScreen = {
      * @private
      */
     _setupTapHandlers() {
-        console.log('🔗 _setupTapHandlers() called');
-
         // Spot-only interaction: field, bench, unavailable.
         document.querySelectorAll('.player-slot, .bench-slot, .unavailable-slot').forEach(el => {
             el.removeEventListener('click', handleTapSlot);
@@ -359,19 +347,13 @@ const FormationScreen = {
         });
 
         const slots = document.querySelectorAll('.player-slot, .bench-slot, .unavailable-slot');
-        console.log(`   🎯 Found ${slots.length} spot elements`);
-        slots.forEach((slot, idx) => {
+        slots.forEach((slot) => {
             slot.style.cursor = 'pointer';
             slot.style.pointerEvents = 'auto';
             slot.style.touchAction = 'none';
             slot.addEventListener('click', handleTapSlot, { passive: false });
             slot.addEventListener('touchstart', handleTapSlot, { passive: false });
-            if (idx < 3 || idx >= slots.length - 3) {
-                console.log(`      [${idx}] ${slot.getAttribute('data-position') || slot.id} - position: ${slot.style.position || 'auto'}, click+touch listeners added`);
-            }
         });
-        
-        console.log(`✅ Event listeners setup complete! (${slots.length} spot handlers)`);
     }
 };
 
@@ -406,9 +388,6 @@ function handleTapPlayer(e) {
     e.stopImmediatePropagation?.();
     
     let targetElement = e.target || e.currentTarget;
-    const originalTarget = targetElement;
-    
-    console.log(`👆 handleTapPlayer fired [${eventType}]. Original target: ${targetElement.className}`);
     
     // For touch events, find the element at the touch point (more accurate than e.target)
     if (eventType.includes('touch') && e.touches?.length > 0) {
@@ -416,18 +395,13 @@ function handleTapPlayer(e) {
         const touchedEl = document.elementFromPoint(touch.clientX, touch.clientY);
         if (touchedEl && (touchedEl.classList.contains('player-number') || touchedEl.classList.contains('player-number-placed'))) {
             targetElement = touchedEl;
-            console.log(`   Touch event: corrected target to: ${targetElement.className}`);
         }
     }
     
     // Ensure we have a player-number or player-number-placed element
     if (!targetElement.classList.contains('player-number') && 
         !targetElement.classList.contains('player-number-placed')) {
-        console.log(`   Searching for closest .player-number or .player-number-placed...`);
         targetElement = targetElement.closest('.player-number, .player-number-placed');
-        if (targetElement) {
-            console.log(`   Found via closest(): ${targetElement.className}`);
-        }
     }
     
     if (!targetElement) {
@@ -444,17 +418,12 @@ function handleTapPlayer(e) {
         return;
     }
     
-    console.log(`✓ Found player: ${playerId} on element: ${targetElement.className}`);
-    
     // Check if this is a placed player on field
     const isPlaced = targetElement.classList.contains('player-number-placed');
     const isDisabled = targetElement.classList.contains('disabled');
     
-    console.log(`   Placed on field: ${isPlaced}, Disabled: ${isDisabled}`);
-    
     // If tapping same player that's already selected, deselect
     if (TapState.playerId === playerId) {
-        console.log(`🔄 Player ${playerId} already selected - deselecting`);
         clearSelectionFully();
         return;
     }
@@ -480,13 +449,9 @@ function handleTapPlayer(e) {
     TapState.source = source;
     TapState.slotId = targetElement.parentElement?.id || '';
 
-    console.log(`✅ SELECTED Player ${playerId} from ${source}`);
-    console.log(`   TapState:`, { playerId: TapState.playerId, source: TapState.source });
-
     // Visual feedback
     clearSelection();
     targetElement.classList.add('tap-selected');
-    console.log(`   ✓ Added tap-selected class`);
     showMessage(`Player #${playerId} selected - tap a spot to place`, 'info');
 }
 
@@ -724,26 +689,19 @@ function placePlayerToSlot(playerId, slotElement) {
         console.error(`❌ Cannot place player: player=${!!player}, slot=${!!slotElement}`);
         return;
     }
-    
-    console.log(`🔄 placePlayerToSlot called: player=${player.name}(${player.jerseyNumber}), slot=${slotElement.getAttribute('data-position')}`);
 
     // Remove player from ALL locations first
     removePlayerFromAllLocations(playerId);
 
     // Place into target slot type
     if (slotElement.classList.contains('unavailable-slot')) {
-        console.log(`   → Adding to unavailable`);
         placePlayerInUnavailable(playerId, slotElement, player);
     } else if (slotElement.classList.contains('bench-slot')) {
-        console.log(`   → Adding to bench`);
         placePlayerOnBench(playerId, slotElement, player);
     } else {
-        console.log(`   → Adding to field position`);
         placePlayerOnField(playerId, slotElement, player);
     }
-    
-    console.log(`✅ Player placed successfully`);
-    
+
     // Re-setup event handlers after changes
     FormationScreen._setupTapHandlers();
 }
@@ -754,60 +712,41 @@ function placePlayerToSlot(playerId, slotElement) {
  * Does not clear entire areas, only the specific spot where this player is located
  */
 function removePlayerFromAllLocations(playerId) {
-    console.log(`🗑️ removePlayerFromAllLocations: Clearing player ${playerId} from all spot types...`);
-    
-    // FIELD AREA: Scan each of 25 field spots individually
-    // Only the specific spot containing this player gets cleared
     let clearedFromField = false;
     document.querySelectorAll('.player-slot').forEach(spot => {
-        // Check THIS individual spot's data-player-id
         if (spot.getAttribute('data-player-id') === playerId) {
-            console.log(`   🔴 FIELD SPOT: Clearing from position ${spot.getAttribute('data-position')}`);
             spot.innerHTML = '';
             spot.removeAttribute('data-player-id');
             spot.classList.remove('occupied');
             clearedFromField = true;
         }
     });
-    if (clearedFromField) console.log(`   ✓ Freed field spot`);
 
-    // BENCH AREA: Scan each bench spot individually
     let clearedFromBench = false;
     document.querySelectorAll('.bench-slot').forEach(spot => {
         if (spot.getAttribute('data-player-id') === playerId) {
-            console.log(`   🟡 BENCH SPOT: Clearing from ${spot.id}`);
             spot.innerHTML = '';
             spot.removeAttribute('data-player-id');
             spot.classList.remove('occupied');
             clearedFromBench = true;
         }
     });
-    if (clearedFromBench) console.log(`   ✓ Freed bench spot`);
 
-    // UNAVAILABLE AREA: Scan each unavailable spot individually
     let clearedFromUnavailable = false;
     document.querySelectorAll('.unavailable-slot').forEach(spot => {
         if (spot.getAttribute('data-player-id') === playerId) {
-            console.log(`   🔵 UNAVAILABLE SPOT: Clearing from ${spot.id}`);
             spot.innerHTML = '';
             spot.removeAttribute('data-player-id');
             spot.classList.remove('occupied');
             clearedFromUnavailable = true;
         }
     });
-    if (clearedFromUnavailable) console.log(`   ✓ Freed unavailable spot`);
 
-    // Update STATE: Remove from unavailable list
     const unavailableList = getUnavailablePlayers().filter(id => id !== playerId);
     setUnavailablePlayers(unavailableList);
-    console.log(`   📋 Unavailable state cleared`);
 
-    // Update STATE: Remove from formation
     const formation = (getFormationTemp() || []).filter(f => f.playerId !== playerId);
     setFormationTemp(formation);
-    console.log(`   📋 Formation state cleared`);
-    
-    console.log(`   ✅ Removal complete: field=${clearedFromField}, bench=${clearedFromBench}, unavailable=${clearedFromUnavailable}`);
 }
 
 function placePlayerOnBench(playerId, slotElement, player) {
@@ -824,23 +763,15 @@ function placePlayerOnBench(playerId, slotElement, player) {
  * Operates at SPOT LEVEL - modifies only the target bench spot
  */
 function placePlayerInUnavailable(playerId, slotElement, player) {
-    console.log(`   👉 placePlayerInUnavailable: Placing ${player.name}(${player.jerseyNumber}) on THIS specific bench spot ${slotElement.id}`);
-    
-    // Update UNAVAILABLE STATE (bench persistence)
     const unavailableList = getUnavailablePlayers();
     if (!unavailableList.includes(playerId)) {
         unavailableList.push(playerId);
         setUnavailablePlayers(unavailableList);
-        console.log(`   ✓ STATE: Added to unavailable list (bench state)`);
     }
 
-    // Update THIS SPECIFIC unavailable spot: Add badge, mark occupied
     slotElement.innerHTML = `<span class="player-number" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${(player.name || '').toUpperCase()}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
-    console.log(`   ✓ UNAVAILABLE SPOT: Badge rendered in ${slotElement.id}, spot now occupied`);
-    
-    console.log(`   ✅ Bench spot placement complete`);
 }
 
 /**
@@ -849,11 +780,8 @@ function placePlayerInUnavailable(playerId, slotElement, player) {
  */
 function placePlayerOnField(playerId, slotElement, player) {
     const position = slotElement.getAttribute('data-position');
-    console.log(`   👉 placePlayerOnField: Placing ${player.name}(${player.jerseyNumber}) on THIS specific field spot at ${position}`);
-    
     const formation = getFormationTemp() || [];
     
-    // Update FORMATION STATE for this specific field spot
     const updatedFormation = formation.filter(f => f.playerId !== playerId);
     updatedFormation.push({
         playerId,
@@ -862,15 +790,10 @@ function placePlayerOnField(playerId, slotElement, player) {
         y: parseFloat(slotElement.style.top)
     });
     setFormationTemp(updatedFormation);
-    console.log(`   ✓ STATE: Formation updated for THIS spot position ${position}`);
 
-    // Update THIS SPECIFIC field spot: Add badge, mark occupied
     slotElement.innerHTML = `<span class="player-number player-number-placed" data-player-id="${playerId}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-field">${(player.name || '').toUpperCase()}</span></span>`;
     slotElement.setAttribute('data-player-id', playerId);
     slotElement.classList.add('occupied');
-    console.log(`   ✓ FIELD SPOT: Badge rendered in position ${position}, spot now occupied`);
-    
-    console.log(`   ✅ Field spot placement complete`);
 }
 
 /**
