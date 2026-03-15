@@ -2003,14 +2003,20 @@ button.no-assist-btn {
 
 #reports .reports-delete-btn {
     --rev-btn-icon-zone: 25%;
-    width: 108px;
-    min-width: 108px;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+    flex: 0 0 96px;
     height: var(--rev-btn-height);
     min-height: var(--rev-btn-height);
     padding: 0 calc(var(--rev-btn-icon-zone) + 12px) 0 12px !important;
     --btn-main: #d73333;
     --btn-top: #ef5350;
     --btn-bottom: #c62828;
+}
+
+#reports .reports-delete-btn .material-icons {
+    font-size: 18px;
 }
 
 #reports .reports-delete-btn.active {

@@ -1434,13 +1434,30 @@ function closeEndGameDialog() {
 
 function endGame() {
     if (!appState.currentGame) return;
+
+    const game = appState.currentGame;
+
+    // Ensure the current period score is captured before finalizing.
+    // Without this, goals scored in the last active period can be missing from recap deltas.
+    const numPeriods = game.numPeriods || 2;
+    const periodDurationSeconds = (game.periodDuration || 45) * 60;
+    const rawPeriodIndex = Math.floor((game.gameTime || 0) / periodDurationSeconds);
+    const currentPeriodIndex = Math.min(Math.max(rawPeriodIndex, 0), numPeriods - 1);
+
+    if (!Array.isArray(game.periodScores)) {
+        game.periodScores = [];
+    }
+    game.periodScores[currentPeriodIndex] = {
+        home: game.homeScore || 0,
+        away: game.awayScore || 0
+    };
     
-    appState.currentGame.endTime = new Date().toISOString();
-    appState.currentGame.isCompleted = true;
+    game.endTime = new Date().toISOString();
+    game.isCompleted = true;
     
     // Store the game in our games array
-    const finishedGameId = appState.currentGame.id;
-    getTeamGames().push({...appState.currentGame});
+    const finishedGameId = game.id;
+    getTeamGames().push({...game});
     
     // Stop both timers
     pauseTimer();
