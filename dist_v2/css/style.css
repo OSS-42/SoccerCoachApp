@@ -3745,56 +3745,61 @@ button.no-assist-btn {
 }
 
 /* ============================================================================
- * GAMEPLAY SCREEN OVERHAUL (NO-SCROLL / 3-BAND LAYOUT)
+ * GAMEPLAY SCREEN OVERHAUL V2 (NO-SCROLL / CLEAN LAYOUT)
  * ============================================================================ */
 
 #game-tracking {
-    --gt-header-h: clamp(176px, 27dvh, 252px);
-    --gt-controls-h: clamp(96px, 16dvh, 146px);
-    --gt-gap: clamp(6px, 1.1dvh, 12px);
-    --gt-panel-bg: linear-gradient(145deg, #0f202d 0%, #17364a 55%, #1e4257 100%);
-    --gt-panel-line: rgba(255, 255, 255, 0.16);
-    --gt-chip-bg: rgba(255, 255, 255, 0.12);
-    --gt-chip-bg-strong: rgba(255, 255, 255, 0.2);
-    --gt-text: #f7fbff;
-    --gt-muted: rgba(236, 244, 250, 0.82);
-    --gt-player-gap: clamp(4px, 0.8dvh, 10px);
-    --gt-player-pad: clamp(4px, 0.8dvh, 10px);
+    --gt-header-h: clamp(160px, 23dvh, 214px);
+    --gt-controls-h: clamp(66px, 10dvh, 92px);
+    --gt-gap: clamp(6px, 0.9dvh, 10px);
+    --gt-player-gap: clamp(5px, 0.8dvh, 10px);
+    --gt-player-pad: clamp(5px, 0.9dvh, 10px);
+    --gt-shell-bg: radial-gradient(circle at 14% 16%, rgba(124, 182, 226, 0.16), transparent 40%),
+        radial-gradient(circle at 84% 92%, rgba(255, 198, 124, 0.08), transparent 40%),
+        #0f1f2d;
+    --gt-header-bg: linear-gradient(135deg, #16364a 0%, #214b62 58%, #285871 100%);
+    --gt-header-line: rgba(255, 255, 255, 0.17);
+    --gt-chip-bg: rgba(255, 255, 255, 0.11);
+    --gt-chip-text: #f3f9ff;
+    --gt-chip-muted: rgba(225, 236, 245, 0.84);
     display: grid !important;
     grid-template-rows: var(--gt-header-h) var(--gt-controls-h) minmax(0, 1fr);
     width: 100%;
     height: 100dvh !important;
     overflow: hidden !important;
-    background: radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.1), transparent 42%),
-        radial-gradient(circle at 88% 95%, rgba(255, 255, 255, 0.06), transparent 38%),
-        #0e1b25;
+    background: var(--gt-shell-bg);
     font-family: Rajdhani, Barlow Condensed, Segoe UI, sans-serif;
 }
 
 #game-tracking .game-header {
+    display: flex;
+    flex-direction: column;
     height: 100%;
-    padding: clamp(8px, 1.4dvh, 14px) clamp(10px, 1.8dvw, 18px);
+    width: 100%;
+    padding: clamp(8px, 1.1dvh, 12px) clamp(10px, 1.5dvw, 16px);
     gap: var(--gt-gap);
-    background: var(--gt-panel-bg);
-    border-bottom: 1px solid var(--gt-panel-line);
-    color: var(--gt-text);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+    background: var(--gt-header-bg);
+    border-bottom: 1px solid var(--gt-header-line);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
 }
 
 #game-tracking .team-scores {
-    height: 100%;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) 1px minmax(0, 1fr) 1px auto auto;
+    grid-template-rows: auto 1px auto 1px auto auto;
     gap: var(--gt-gap);
+    width: 100%;
+    min-height: 0;
 }
 
 #game-tracking .team-score {
-    height: auto;
+    width: 100%;
     min-height: 0;
-    border: 1px solid var(--gt-panel-line);
+    padding: clamp(6px, 0.9dvh, 10px) clamp(10px, 1.6dvw, 16px);
+    border: 1px solid var(--gt-header-line);
     border-radius: 12px;
     background: var(--gt-chip-bg);
-    padding: clamp(6px, 1dvh, 10px) clamp(10px, 1.8dvw, 16px);
+    box-sizing: border-box;
 }
 
 #game-tracking .team-score:first-child {
@@ -3812,133 +3817,142 @@ button.no-assist-btn {
 }
 
 #game-tracking .team-score .team-name {
-    max-width: none;
-    font-size: clamp(0.82rem, 2.2vw, 1rem);
+    font-size: clamp(0.8rem, 1.8vw, 1rem);
     font-weight: 700;
     letter-spacing: 0.06em;
-    color: var(--gt-muted);
+    color: var(--gt-chip-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 #game-tracking .team-score .score {
-    font-size: clamp(1.25rem, 3.6vw, 2rem);
-    font-weight: 800;
-    color: var(--gt-text);
-    line-height: 1;
-    padding: 0.22em 0.5em;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    background: var(--gt-chip-bg-strong);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 2.8ch;
-    text-align: center;
+    padding: 0.16em 0.52em;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    background: rgba(255, 255, 255, 0.19);
+    color: var(--gt-chip-text);
+    line-height: 1;
+    font-size: clamp(1.15rem, 3vw, 1.85rem);
+    font-weight: 800;
+}
+
+#game-tracking .card-counters {
+    margin: 0;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+#game-tracking .card-counter {
+    width: clamp(18px, 2.2dvh, 26px);
+    min-width: clamp(18px, 2.2dvh, 26px);
+    height: clamp(22px, 2.8dvh, 28px);
+    border-radius: 5px;
+    font-size: clamp(0.68rem, 1.5vw, 0.9rem);
+    font-weight: 700;
+    border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+#game-tracking .team-score:last-of-type .card-counters {
+    display: none !important;
 }
 
 #game-tracking .separator-line {
     width: 100%;
     margin: 0;
-    background: rgba(255, 255, 255, 0.18);
-}
-
-/* Opponent row intentionally has no card counters (name + score only). */
-#game-tracking .team-score:last-of-type .card-counters {
-    display: none !important;
-}
-
-#game-tracking .card-counters {
-    margin: 0;
-    gap: 6px;
-}
-
-#game-tracking .card-counter {
-    width: clamp(20px, 2.4dvh, 28px);
-    min-width: clamp(20px, 2.4dvh, 28px);
-    height: clamp(24px, 3.1dvh, 30px);
-    border-radius: 4px;
-    border: 1px solid rgba(0, 0, 0, 0.35);
-    font-size: clamp(0.72rem, 1.7vw, 0.95rem);
-    font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.17);
 }
 
 #game-tracking .game-time-container {
     margin-top: 0;
-    gap: clamp(6px, 1dvh, 12px);
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(7px, 1dvh, 11px);
 }
 
 #game-tracking .game-time-wrapper,
 #game-tracking .substitution-timer-small {
-    border: 1px solid var(--gt-panel-line);
-    border-radius: 12px;
+    border: 1px solid var(--gt-header-line);
+    border-radius: 11px;
     background: var(--gt-chip-bg);
-    padding: clamp(4px, 0.7dvh, 8px) clamp(6px, 1.3dvw, 12px);
+    padding: clamp(4px, 0.65dvh, 8px) clamp(7px, 1.2dvw, 11px);
     min-height: 0;
     gap: 2px;
 }
 
 #game-tracking .game-time-label,
 #game-tracking .substitution-timer-small .timer-label {
-    font-size: clamp(0.66rem, 1.7vw, 0.86rem);
+    font-size: clamp(0.62rem, 1.35vw, 0.8rem);
     font-weight: 700;
     letter-spacing: 0.05em;
-    color: var(--gt-muted);
     text-transform: uppercase;
+    color: var(--gt-chip-muted);
 }
 
 #game-tracking .game-time,
 #game-tracking .substitution-timer-small .timer-value {
-    font-size: clamp(1.1rem, 3.8vw, 1.9rem);
-    line-height: 1;
+    font-size: clamp(1.02rem, 3vw, 1.72rem);
     font-weight: 800;
-    color: #ffffff;
+    color: var(--gt-chip-text);
+    line-height: 1;
 }
 
 #game-tracking .period-counter {
     margin-top: 0;
-    border: 1px solid var(--gt-panel-line);
+    width: 100%;
+    text-align: center;
+    border: 1px solid var(--gt-header-line);
     border-radius: 999px;
     background: var(--gt-chip-bg);
     padding: 4px 10px;
-    font-size: clamp(0.66rem, 1.7vw, 0.84rem);
-    font-weight: 700;
+    font-size: clamp(0.62rem, 1.25vw, 0.8rem);
     letter-spacing: 0.05em;
-    color: var(--gt-text);
+    font-weight: 700;
+    color: var(--gt-chip-text);
+    box-sizing: border-box;
 }
 
 #game-tracking .controls-row {
     height: 100%;
     min-height: 0;
-    padding: clamp(6px, 1.1dvh, 10px) clamp(8px, 1.5dvw, 14px);
-    background: #ffffff;
-    border-bottom: 1px solid #d4dde4;
+    padding: clamp(4px, 0.8dvh, 8px) clamp(8px, 1.4dvw, 14px);
+    background: #f4f8fb;
+    border-bottom: 1px solid #d5dee7;
     display: grid;
     grid-template-rows: minmax(0, 1fr);
     gap: 0;
+    box-sizing: border-box;
 }
 
 #game-tracking .game-controls {
     height: 100%;
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: clamp(4px, 0.7dvw, 8px);
+    gap: clamp(4px, 0.6dvw, 7px);
 }
 
 #game-tracking .control-btn {
-    border: 1px solid #0f1720;
-    border-right: 1px solid #0f1720;
-    border-radius: 10px;
     min-width: 0;
+    min-height: 34px;
     height: 100%;
-    min-height: 42px;
-    padding: 2px 6px;
-    font-size: clamp(0.62rem, 1.45vw, 0.86rem);
-    line-height: 1.1;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    padding: 2px 4px;
+    border-radius: 9px;
+    border: 1px solid rgba(8, 17, 28, 0.46);
+    font-size: clamp(0.58rem, 1.2vw, 0.76rem);
+    line-height: 1;
+    letter-spacing: 0.03em;
     white-space: nowrap;
 }
 
 #game-tracking .control-btn .material-icons {
-    font-size: clamp(14px, 1.8vw, 19px);
+    font-size: clamp(13px, 1.45vw, 17px);
 }
 
 #game-tracking .mobile-secondary-controls {
@@ -3957,88 +3971,105 @@ button.no-assist-btn {
     gap: var(--gt-player-gap);
     align-content: stretch;
     justify-items: stretch;
-    background: transparent;
+    box-sizing: border-box;
 }
 
 #game-tracking .player-grid-item {
     width: 100%;
     height: 100%;
-    aspect-ratio: auto;
     min-height: 0;
-    padding: clamp(5px, 0.9dvh, 10px);
+    padding: clamp(6px, 0.85dvh, 10px);
     border-radius: 12px;
-    border: 1px solid rgba(15, 23, 32, 0.22);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.16s ease, box-shadow 0.16s ease;
-    display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr);
-    gap: clamp(4px, 0.8dvh, 8px);
+    border: 1px solid rgba(9, 24, 39, 0.24);
+    background: linear-gradient(160deg, #f9fcff 0%, #eef4f9 100%);
+    box-shadow: 0 3px 10px rgba(3, 17, 29, 0.11);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+#game-tracking .player-grid-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(6, 23, 39, 0.17);
 }
 
 #game-tracking .player-grid-item:active {
     transform: scale(0.985);
 }
 
-#game-tracking .player-grid-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.16);
+#game-tracking .player-grid-item.starter {
+    border-left: 3px solid #2e7d32;
+}
+
+#game-tracking .player-grid-item.substitute {
+    border-left: 3px solid #1976d2;
+    background: linear-gradient(160deg, #f7f9ff 0%, #eef1fa 100%);
+}
+
+#game-tracking .player-grid-item.yellow-card {
+    background: linear-gradient(160deg, #fffde7 0%, #fff9c4 100%);
+    border-left: 3px solid #fbc02d;
+}
+
+#game-tracking .player-grid-item.red-card {
+    background: linear-gradient(160deg, #ffebee 0%, #ffcdd2 100%);
+    border-left: 3px solid #d32f2f;
+    opacity: 0.9;
+}
+
+#game-tracking .player-grid-item.injured {
+    background: linear-gradient(160deg, #f2f4f5 0%, #e6ebef 100%);
+    border-left: 3px solid #90a4ae;
+    opacity: 0.85;
 }
 
 #game-tracking .player-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(6px, 0.9dvh, 10px);
     margin: 0;
-    gap: 4px;
 }
 
-#game-tracking .player-grid-item .player-number {
-    width: clamp(34px, 5.3dvh, 52px);
-    height: clamp(34px, 5.3dvh, 52px);
-    max-width: none;
-    max-height: none;
-    border-radius: 8px;
+#game-tracking .game-jersey-badge {
+    width: clamp(36px, 4.4dvh, 50px);
+    height: clamp(36px, 4.4dvh, 50px);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #1f8feb 0%, #0e73c7 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 8px rgba(15, 94, 163, 0.32);
 }
 
-#game-tracking .player-grid-item .player-number .jersey-num {
-    font-size: clamp(0.82rem, 2.1vw, 1.18rem);
+#game-tracking .game-jersey-badge .jersey-num {
+    font-size: clamp(0.82rem, 1.9vw, 1.1rem);
+    font-weight: 800;
+    line-height: 1;
 }
 
-#game-tracking .player-grid-item .player-number .player-name-field {
-    display: none;
+#game-tracking .game-player-name {
+    width: 100%;
+    text-align: center;
+    font-size: clamp(0.58rem, 1.25vw, 0.76rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #1f3548;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-#game-tracking .player-grid-item .player-name {
-    font-size: clamp(0.58rem, 1.35vw, 0.8rem);
-    letter-spacing: 0.05em;
-    line-height: 1.05;
-}
-
-#game-tracking .player-stats-container {
-    gap: clamp(2px, 0.45dvh, 6px);
-}
-
-#game-tracking .stat-item {
-    border-radius: 6px;
-    padding: clamp(2px, 0.35dvh, 4px);
-    gap: 1px;
-}
-
-#game-tracking .stat-label {
-    font-size: clamp(11px, 1.1vw, 15px);
-}
-
-#game-tracking .stat-label img.red-soccer-icon {
-    width: clamp(10px, 1.05vw, 14px);
-    height: clamp(10px, 1.05vw, 14px);
-}
-
-#game-tracking .stat-value {
-    font-size: clamp(0.55rem, 1.25vw, 0.78rem);
-}
-
-/* Desktop widescreen */
 @media (min-width: 1200px) {
     #game-tracking {
-        --gt-header-h: clamp(184px, 23dvh, 248px);
-        --gt-controls-h: clamp(96px, 14dvh, 138px);
+        --gt-header-h: clamp(156px, 21dvh, 206px);
+        --gt-controls-h: clamp(64px, 8.8dvh, 88px);
     }
 
     #game-tracking .player-grid {
@@ -4046,12 +4077,10 @@ button.no-assist-btn {
     }
 }
 
-/* Mobile portrait */
 @media (max-width: 768px) and (orientation: portrait) {
     #game-tracking {
-        --gt-header-h: clamp(188px, 29dvh, 262px);
-        --gt-controls-h: clamp(122px, 21dvh, 178px);
-        --gt-player-pad: clamp(4px, 0.7dvh, 8px);
+        --gt-header-h: clamp(172px, 27dvh, 230px);
+        --gt-controls-h: clamp(98px, 16dvh, 132px);
     }
 
     #game-tracking .controls-row {
@@ -4078,10 +4107,8 @@ button.no-assist-btn {
 
     #game-tracking .mobile-secondary-controls .control-btn {
         display: flex !important;
-        height: 100%;
-        min-height: 40px;
-        border-radius: 10px;
-        border-right: 1px solid #0f1720;
+        min-height: 34px;
+        border-right: 1px solid rgba(8, 17, 28, 0.46);
     }
 
     #game-tracking .player-grid {
@@ -4089,30 +4116,18 @@ button.no-assist-btn {
     }
 }
 
-/* Mobile landscape and short-height viewports */
 @media (max-width: 1100px) and (orientation: landscape), (max-height: 740px) {
     #game-tracking {
-        --gt-header-h: clamp(138px, 24dvh, 186px);
-        --gt-controls-h: clamp(84px, 14dvh, 118px);
+        --gt-header-h: clamp(128px, 22dvh, 170px);
+        --gt-controls-h: clamp(58px, 9.5dvh, 80px);
     }
 
     #game-tracking .player-grid {
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        --gt-player-gap: clamp(3px, 0.45dvh, 6px);
+        --gt-player-gap: clamp(4px, 0.5dvh, 7px);
     }
 
-    #game-tracking .player-grid-item {
-        grid-template-rows: auto auto minmax(0, 1fr);
-        padding: clamp(3px, 0.5dvh, 6px);
-        gap: clamp(2px, 0.4dvh, 4px);
-    }
-
-    #game-tracking .player-grid-item .player-name {
-        font-size: clamp(0.5rem, 1.2vw, 0.66rem);
-    }
-
-    #game-tracking .stat-value {
-        font-size: clamp(0.5rem, 1vw, 0.66rem);
+    #game-tracking .game-player-name {
+        font-size: clamp(0.5rem, 1.05vw, 0.64rem);
     }
 }
 

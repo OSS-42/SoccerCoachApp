@@ -871,40 +871,13 @@ function renderPlayerGrid() {
             playerGridItem.classList.add('substitute');
         }
         
-        // Create a completely redesigned player card (now square shaped)
+        // Live-game tile content: jersey + name only (no per-tile stat grid).
         playerGridItem.innerHTML = `
             <div class="player-header">
-                <div class="player-number">
+                <div class="game-jersey-badge">
                     <span class="jersey-num">${player.jerseyNumber}</span>
-                    <span class="player-name-field">${player.name}</span>
                 </div>
-                <div class="player-name">${player.name}</div>
-            </div>
-            <div class="player-stats-container">
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="material-icons">sports_soccer</span>
-                    </div>
-                    <div class="stat-value">${player.stats.goals}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="stat-emoji">👟</span>
-                    </div>
-                    <div class="stat-value">${player.stats.assists}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <span class="material-icons">back_hand</span>
-                    </div>
-                    <div class="stat-value">${player.stats.saves}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-label">
-                        <img src="img/red-soccer.png" width="18" height="18" alt="Goals Allowed">
-                    </div>
-                    <div class="stat-value">${player.stats.goalsAllowed}</div>
-                </div>
+                <div class="game-player-name">${player.name}</div>
             </div>
         `;
         
