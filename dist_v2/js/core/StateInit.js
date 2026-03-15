@@ -66,7 +66,8 @@ function createDefaultTeams() {
             isSubstitutionDefaultChecked: false 
         },
         unavailablePlayers: [],
-        formationTemp: null
+        formationTemp: [],
+        defaultFormation: []
     };
     
     const teamB = {
@@ -80,7 +81,8 @@ function createDefaultTeams() {
             isSubstitutionDefaultChecked: false 
         },
         unavailablePlayers: [],
-        formationTemp: null
+        formationTemp: [],
+        defaultFormation: []
     };
     
     appState.teams = [teamA, teamB];
@@ -119,7 +121,8 @@ function migrateLegacyData() {
             isSubstitutionDefaultChecked: false 
         },
         unavailablePlayers: appState.unavailablePlayers || [],
-        formationTemp: appState.formationTemp || null
+        formationTemp: appState.formationTemp || [],
+        defaultFormation: appState.defaultFormation || []
     };
     
     const teamB = {
@@ -133,7 +136,8 @@ function migrateLegacyData() {
             isSubstitutionDefaultChecked: false 
         },
         unavailablePlayers: [],
-        formationTemp: null
+        formationTemp: [],
+        defaultFormation: []
     };
     
     appState.teams = [teamA, teamB];
@@ -144,6 +148,7 @@ function migrateLegacyData() {
     delete appState.players;
     delete appState.games;
     delete appState.unavailablePlayers;
+    delete appState.defaultFormation;
     
     console.log(`   ✓ Migration complete - created 2 teams from legacy data`);
     console.log(`      Team A (migrated): "${teamA.name}" (${teamA.players.length} players)`);

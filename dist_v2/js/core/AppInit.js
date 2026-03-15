@@ -133,6 +133,16 @@ async function initializeApp() {
             window.createDefaultTeams();
         }
         
+        // Normalize older saved team objects so new team-scoped fields are always present.
+        window.appState.teams = window.appState.teams.map(team => ({
+            ...team,
+            players: Array.isArray(team.players) ? team.players : [],
+            games: Array.isArray(team.games) ? team.games : [],
+            unavailablePlayers: Array.isArray(team.unavailablePlayers) ? team.unavailablePlayers : [],
+            formationTemp: Array.isArray(team.formationTemp) ? team.formationTemp : [],
+            defaultFormation: Array.isArray(team.defaultFormation) ? team.defaultFormation : []
+        }));
+
         log(`✓ Teams loaded: ${window.appState.teams.length}`, 'pass');
         window.appState.teams.forEach((t, i) => {
             const marker = t.id === window.appState.currentTeamId ? ' ⭐' : '';

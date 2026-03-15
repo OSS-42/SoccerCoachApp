@@ -33,6 +33,23 @@ console.log('✅ app.js loaded, appState ready');
 console.log(`   teams: ${appState.teams?.length || 0}, currentTeamId: ${appState.currentTeamId}`);
 
 // Team helper functions - provide team isolation
+function normalizeTeamData(team) {
+    if (!team || typeof team !== 'object') {
+        return team;
+    }
+
+    if (!Array.isArray(team.players)) team.players = [];
+    if (!Array.isArray(team.games)) team.games = [];
+    if (!team.settings || typeof team.settings !== 'object') {
+        team.settings = { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false };
+    }
+    if (!Array.isArray(team.unavailablePlayers)) team.unavailablePlayers = [];
+    if (!Array.isArray(team.formationTemp)) team.formationTemp = [];
+    if (!Array.isArray(team.defaultFormation)) team.defaultFormation = [];
+
+    return team;
+}
+
 function getCurrentTeam() {
     if (appState.teams && appState.teams.length > 0) {
         let team = appState.teams.find(t => t.id === appState.currentTeamId);
@@ -40,7 +57,7 @@ function getCurrentTeam() {
             team = appState.teams[0];
             appState.currentTeamId = team.id;
         }
-        return team;
+        return normalizeTeamData(team);
     }
     return null;
 }
@@ -97,12 +114,12 @@ function setUnavailablePlayers(list) {
 
 function getFormationTemp() {
     const team = getCurrentTeam();
-    return team ? team.formationTemp : null;
+    return team ? team.formationTemp : [];
 }
 
 function setFormationTemp(ft) {
     const team = getCurrentTeam();
-    if (team) team.formationTemp = ft;
+    if (team) team.formationTemp = Array.isArray(ft) ? ft : [];
 }
 
 // Export helper functions globally for services
@@ -359,7 +376,8 @@ function addNewTeam() {
         games: [],
         settings: { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false },
         unavailablePlayers: [],
-        formationTemp: null
+        formationTemp: [],
+        defaultFormation: []
     };
     
     appState.teams.push(team);
@@ -1840,7 +1858,8 @@ function clearAppData() {
             games: [],
             settings: { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false },
             unavailablePlayers: [],
-            formationTemp: null
+            formationTemp: [],
+            defaultFormation: []
         };
         const teamB = {
             id: 't2',
@@ -1849,7 +1868,8 @@ function clearAppData() {
             games: [],
             settings: { language: 'en', defaultSubstitutionTime: null, isSubstitutionDefaultChecked: false },
             unavailablePlayers: [],
-            formationTemp: null
+            formationTemp: [],
+            defaultFormation: []
         };
         
         appState.teams = [teamA, teamB];
@@ -2012,7 +2032,7 @@ function backToGameSetup() {
 function clearFormation() {
     setFormationTemp([]);
     setUnavailablePlayers([]);
-    FormationScreen.renderFormationSetup();
+    FormationScreen.renderFormationSetup({ skipDefault: true });
 }
 
 function startGameFromFormation() {
@@ -2029,7 +2049,10 @@ function startGameFromFormation() {
     // Save formation as default if checkbox is checked
     const saveDefault = document.getElementById('save-default-formation');
     if (saveDefault && saveDefault.checked) {
-        appState.defaultFormation = getFormationTemp();
+        const currentTeam = getCurrentTeam();
+        if (currentTeam) {
+            currentTeam.defaultFormation = (getFormationTemp() || []).map(player => ({ ...player }));
+        }
     }
 
     // Store formation players in the current game so we know who's on field

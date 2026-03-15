@@ -9,7 +9,8 @@ const FormationScreen = {
     /**
      * Main render function - builds entire formation screen UI
      */
-    renderFormationSetup() {
+    renderFormationSetup(options = {}) {
+        const { skipDefault = false } = options;
         const playerList = document.getElementById('player-list');
         const formationField = document.getElementById('formation-field');
         const benchSlots = document.getElementById('bench-slots');
@@ -20,6 +21,14 @@ const FormationScreen = {
             return;
         }
         
+        const currentTeam = getCurrentTeam();
+        const teamFormation = Array.isArray(currentTeam?.formationTemp) ? currentTeam.formationTemp : [];
+        const teamDefaultFormation = Array.isArray(currentTeam?.defaultFormation) ? currentTeam.defaultFormation : [];
+        const teamUnavailable = Array.isArray(currentTeam?.unavailablePlayers) ? currentTeam.unavailablePlayers : [];
+        const formationToApply = teamFormation.length > 0
+            ? teamFormation
+            : (skipDefault ? [] : teamDefaultFormation);
+
         console.log('✅ All DOM elements found');
         
         // Clear all content
@@ -28,7 +37,7 @@ const FormationScreen = {
         benchSlots.innerHTML = '';
         unavailableSlots.innerHTML = '';
         
-        // Reset state
+        // Start from a clean board before applying any saved layout
         setUnavailablePlayers([]);
         setFormationTemp([]);
 
@@ -104,7 +113,12 @@ const FormationScreen = {
         console.log(`✅ Created 5 empty unavailable slots`);
 
         // ============================================================================
-        // STEP 4: Attach all event handlers
+        // STEP 4: Re-apply saved formation/default formation
+        // ============================================================================
+        this._applySavedLayout(formationToApply, teamUnavailable);
+
+        // ============================================================================
+        // STEP 5: Attach all event handlers
         // ============================================================================
         this._setupTapHandlers();
     },
@@ -282,6 +296,52 @@ const FormationScreen = {
             slot.innerHTML = `<span class="player-number" data-player-id="${player.id}"><span class="jersey-num">${player.jerseyNumber}</span><span class="player-name-bench">${(player.name || '').toUpperCase()}</span></span>`;
             slot.setAttribute('data-player-id', player.id);
             slot.classList.add('occupied');
+        });
+    },
+
+    _applySavedLayout(formationEntries = [], unavailablePlayerIds = []) {
+        const validFormationEntries = Array.isArray(formationEntries) ? formationEntries : [];
+        const validUnavailableIds = Array.isArray(unavailablePlayerIds) ? unavailablePlayerIds : [];
+
+        if (validFormationEntries.length === 0 && validUnavailableIds.length === 0) {
+            return;
+        }
+
+        const teamPlayersById = new Map((getTeamPlayers() || []).map(player => [player.id, player]));
+        const appliedFieldPlayerIds = new Set();
+
+        validFormationEntries.forEach(entry => {
+            const playerId = entry?.playerId;
+            const position = entry?.position;
+
+            if (!playerId || !position || appliedFieldPlayerIds.has(playerId) || !teamPlayersById.has(playerId)) {
+                return;
+            }
+
+            const slot = document.querySelector(`.player-slot[data-position="${position}"]`);
+            if (!slot || slot.getAttribute('data-player-id')) {
+                return;
+            }
+
+            placePlayerToSlot(playerId, slot);
+            appliedFieldPlayerIds.add(playerId);
+        });
+
+        const unavailableSlots = Array.from(document.querySelectorAll('.unavailable-slot'));
+        let unavailableSlotIndex = 0;
+
+        validUnavailableIds.forEach(playerId => {
+            if (appliedFieldPlayerIds.has(playerId) || !teamPlayersById.has(playerId)) {
+                return;
+            }
+
+            const slot = unavailableSlots[unavailableSlotIndex];
+            if (!slot) {
+                return;
+            }
+
+            placePlayerToSlot(playerId, slot);
+            unavailableSlotIndex += 1;
         });
     },
 
