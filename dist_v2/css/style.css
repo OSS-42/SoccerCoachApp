@@ -3749,8 +3749,8 @@ button.no-assist-btn {
  * ============================================================================ */
 
 #game-tracking {
-    --gt-header-h: clamp(160px, 23dvh, 214px);
-    --gt-controls-h: clamp(56px, 8.5dvh, 76px);
+    --gt-header-h: clamp(176px, 25dvh, 236px);
+    --gt-controls-h: clamp(48px, 7.2dvh, 64px);
     --gt-gap: clamp(6px, 0.9dvh, 10px);
     --gt-player-gap: clamp(5px, 0.8dvh, 10px);
     --gt-player-pad: clamp(5px, 0.9dvh, 10px);
@@ -3785,9 +3785,10 @@ button.no-assist-btn {
 }
 
 #game-tracking .team-scores.report-header-score {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) minmax(320px, 1.6fr) minmax(130px, 1fr);
+    align-items: center;
+    justify-items: stretch;
     gap: clamp(12px, 2.1vw, 28px);
     width: 100%;
     min-height: 0;
@@ -3797,7 +3798,7 @@ button.no-assist-btn {
     border-radius: 12px;
     background: linear-gradient(135deg, rgba(24, 59, 78, 0.95) 0%, rgba(41, 84, 106, 0.9) 100%);
     box-sizing: border-box;
-    overflow: visible;
+    overflow: hidden;
 }
 
 #game-tracking .team-section {
@@ -3808,21 +3809,22 @@ button.no-assist-btn {
     align-content: center;
     gap: 4px;
     min-width: 0;
-    flex: 0 1 clamp(110px, 21vw, 220px);
-    min-height: clamp(76px, 10dvh, 110px);
+    min-height: 0;
+    width: 100%;
 }
 
 #game-tracking .team-section .team-name {
-    font-size: clamp(0.76rem, 1.55vw, 0.98rem);
+    font-size: clamp(0.82rem, 1.6vw, 1.05rem);
     font-weight: 700;
     letter-spacing: 0.06em;
     color: #ffffff;
     text-transform: uppercase;
     text-align: center;
     width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.05;
 }
 
 #game-tracking .team-section .score {
@@ -3835,7 +3837,7 @@ button.no-assist-btn {
     border: 1px solid rgba(255, 255, 255, 0.28);
     background: rgba(255, 255, 255, 0.26);
     color: #fff;
-    font-size: clamp(1.36rem, 3.6vw, 2.2rem);
+    font-size: clamp(1.45rem, 3.8vw, 2.35rem);
     font-weight: 800;
     line-height: 1;
 }
@@ -3864,7 +3866,7 @@ button.no-assist-btn {
 }
 
 #game-tracking .live-period-panel {
-    flex: 1 1 clamp(260px, 36vw, 540px);
+    width: 100%;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -3924,7 +3926,7 @@ button.no-assist-btn {
 #game-tracking .controls-row {
     height: 100%;
     min-height: 0;
-    padding: clamp(4px, 0.8dvh, 8px) clamp(8px, 1.4dvw, 14px);
+    padding: clamp(2px, 0.55dvh, 6px) clamp(7px, 1.2dvw, 12px);
     background: #f4f8fb;
     border-bottom: 1px solid #d5dee7;
     display: grid;
@@ -3942,19 +3944,19 @@ button.no-assist-btn {
 
 #game-tracking .control-btn {
     min-width: 0;
-    min-height: 34px;
+    min-height: 30px;
     height: 100%;
-    padding: 2px 4px;
+    padding: 1px 4px;
     border-radius: 9px;
     border: 1px solid rgba(8, 17, 28, 0.46);
-    font-size: clamp(0.58rem, 1.2vw, 0.76rem);
+    font-size: clamp(0.54rem, 1.05vw, 0.72rem);
     line-height: 1;
     letter-spacing: 0.03em;
     white-space: nowrap;
 }
 
 #game-tracking .control-btn .material-icons {
-    font-size: clamp(13px, 1.45vw, 17px);
+    font-size: clamp(12px, 1.25vw, 16px);
 }
 
 #game-tracking .mobile-secondary-controls {
@@ -3982,10 +3984,10 @@ button.no-assist-btn {
     aspect-ratio: 1 / 1;
     min-height: 0;
     padding: clamp(6px, 0.85dvh, 10px);
-    border-radius: 12px;
-    border: 1px solid rgba(9, 24, 39, 0.24);
-    background: linear-gradient(160deg, #fbfdff 0%, #edf2f7 100%);
-    box-shadow: 0 3px 10px rgba(3, 17, 29, 0.11);
+    border-radius: 10px;
+    border: 1px solid rgba(9, 24, 39, 0.18);
+    background: #f3f6fa;
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3994,8 +3996,8 @@ button.no-assist-btn {
 }
 
 #game-tracking .player-grid-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(6, 23, 39, 0.17);
+    transform: none;
+    box-shadow: none;
 }
 
 #game-tracking .player-grid-item:active {
@@ -4003,28 +4005,28 @@ button.no-assist-btn {
 }
 
 #game-tracking .player-grid-item.starter {
-    border-left: 3px solid #2e7d32;
+    border-left: none;
 }
 
 #game-tracking .player-grid-item.substitute {
-    border-left: 3px solid #1976d2;
-    background: linear-gradient(160deg, #f7f9ff 0%, #eef1fa 100%);
+    border-left: none;
+    background: #f3f6fa;
 }
 
 #game-tracking .player-grid-item.yellow-card {
-    background: linear-gradient(160deg, #fffde7 0%, #fff9c4 100%);
-    border-left: 3px solid #fbc02d;
+    background: #fff9d8;
+    border-left: none;
 }
 
 #game-tracking .player-grid-item.red-card {
-    background: linear-gradient(160deg, #ffebee 0%, #ffcdd2 100%);
-    border-left: 3px solid #d32f2f;
+    background: #ffe1e4;
+    border-left: none;
     opacity: 0.9;
 }
 
 #game-tracking .player-grid-item.injured {
-    background: linear-gradient(160deg, #f2f4f5 0%, #e6ebef 100%);
-    border-left: 3px solid #90a4ae;
+    background: #ebeff2;
+    border-left: none;
     opacity: 0.85;
 }
 
@@ -4039,20 +4041,18 @@ button.no-assist-btn {
 }
 
 #game-tracking .game-jersey-badge {
-    width: clamp(40px, 5dvh, 56px);
-    height: clamp(40px, 5dvh, 56px);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(145deg, #0f2940 0%, #224a6a 100%);
-    color: #ffffff;
-    border: 2px solid rgba(255, 255, 255, 0.26);
-    box-shadow: 0 4px 10px rgba(12, 38, 58, 0.34);
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    display: block;
+    background: transparent;
+    color: #0f2940;
+    border: none;
+    box-shadow: none;
 }
 
 #game-tracking .game-jersey-badge .jersey-num {
-    font-size: clamp(0.88rem, 2vw, 1.18rem);
+    font-size: clamp(1rem, 2.2vw, 1.28rem);
     font-weight: 800;
     line-height: 1;
 }
@@ -4072,8 +4072,8 @@ button.no-assist-btn {
 
 @media (min-width: 1200px) {
     #game-tracking {
-        --gt-header-h: clamp(156px, 21dvh, 206px);
-        --gt-controls-h: clamp(64px, 8.8dvh, 88px);
+        --gt-header-h: clamp(170px, 23dvh, 226px);
+        --gt-controls-h: clamp(46px, 6.7dvh, 60px);
     }
 
     #game-tracking .player-grid {
@@ -4083,8 +4083,8 @@ button.no-assist-btn {
 
 @media (max-width: 768px) and (orientation: portrait) {
     #game-tracking {
-        --gt-header-h: clamp(172px, 27dvh, 230px);
-        --gt-controls-h: clamp(86px, 14.5dvh, 118px);
+        --gt-header-h: clamp(186px, 29dvh, 250px);
+        --gt-controls-h: clamp(78px, 12.6dvh, 104px);
     }
 
     #game-tracking .controls-row {
@@ -4093,12 +4093,12 @@ button.no-assist-btn {
     }
 
     #game-tracking .team-scores.report-header-score {
+        grid-template-columns: minmax(88px, 1fr) minmax(170px, 1.6fr) minmax(88px, 1fr);
         gap: 8px;
         padding: 8px;
     }
 
     #game-tracking .team-section {
-        flex-basis: clamp(84px, 24vw, 132px);
         min-height: clamp(70px, 11dvh, 102px);
     }
 
@@ -4129,7 +4129,7 @@ button.no-assist-btn {
 
     #game-tracking .mobile-secondary-controls .control-btn {
         display: flex !important;
-        min-height: 34px;
+        min-height: 30px;
         border-right: 1px solid rgba(8, 17, 28, 0.46);
     }
 
@@ -4140,8 +4140,8 @@ button.no-assist-btn {
 
 @media (max-width: 1100px) and (orientation: landscape), (max-height: 740px) {
     #game-tracking {
-        --gt-header-h: clamp(128px, 22dvh, 170px);
-        --gt-controls-h: clamp(52px, 8.5dvh, 72px);
+        --gt-header-h: clamp(144px, 23dvh, 186px);
+        --gt-controls-h: clamp(44px, 7.3dvh, 58px);
     }
 
     #game-tracking .player-grid {
