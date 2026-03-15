@@ -239,9 +239,9 @@ const FormationScreen = {
         const rowOrderFromSw = ['SW', 'DEF', 'DM', 'MID', 'OM', 'FWD', 'ST'];
         const gkAnchor = 89 + (horizontalSpotWidthPercent * 0.5);
         const edgeGapPx = 2;
-        // SW should sit next to GK: center distance = one full spot width + 2px edge gap.
+        // SW should sit to the right of GK: center distance = one full spot width + 2px edge gap.
         const swToGkSpacingPercent = horizontalSpotWidthPercent * ((slotWidthPx + edgeGapPx) / (slotWidthPx || 56));
-        const swAnchor = gkAnchor + swToGkSpacingPercent;
+        const swAnchor = gkAnchor - swToGkSpacingPercent;
         // Treat ST as the right anchor on desktop and space all rows evenly from SW -> ST.
         const stAnchor = Math.max(10, horizontalSpotWidthPercent * 0.5);
         const step = (swAnchor - stAnchor) / (rowOrderFromSw.length - 1);
