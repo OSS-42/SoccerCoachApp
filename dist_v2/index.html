@@ -24,105 +24,30 @@
     <style>
         #app-loader {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #fff;
         }
-        
-        .loader-content {
-            text-align: center;
-            max-width: 600px;
-            width: 90%;
-        }
-        
-        .loader-title {
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #64b5f6, #42a5f5);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .loader-subtitle {
-            font-size: 14px;
-            color: #b0bec5;
-            margin-bottom: 30px;
-        }
-        
+
         .soccer-ball {
-            width: 60px;
-            height: 60px;
-            font-size: 60px;
-            animation: bounce-horizontal 3s ease-in-out infinite;
+            font-size: 72px;
             display: inline-block;
-            margin: 0 auto 20px;
+            animation: ball-bounce 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite alternate;
         }
-        
-        @keyframes bounce-horizontal {
-            0% { transform: translateX(-100vw) translateY(0) rotateZ(0deg); }
-            25% { transform: translateX(-75vw) translateY(-30px) rotateZ(90deg); }
-            50% { transform: translateX(0) translateY(0) rotateZ(180deg); }
-            75% { transform: translateX(75vw) translateY(-30px) rotateZ(270deg); }
-            100% { transform: translateX(100vw) translateY(0) rotateZ(360deg); }
-        }
-        
-        #loader-console {
-            display: none;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(100, 181, 246, 0.3);
-            border-radius: 4px;
-            padding: 12px;
-            margin: 20px 0;
-            max-height: 250px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            color: #90caf9;
-            text-align: left;
-        }
-        
-        .log-line {
-            margin: 3px 0;
-            line-height: 1.4;
-        }
-        
-        .log-info { color: #90caf9; }
-        .log-step { color: #64b5f6; font-weight: bold; }
-        .log-pass { color: #81c784; }
-        .log-warn { color: #ffb74d; }
-        .log-error { color: #e57373; font-weight: bold; }
-        .log-success { color: #66bb6a; font-weight: bold; }
-        
-        .error-message {
-            background: rgba(229, 115, 115, 0.2);
-            border: 1px solid #e57373;
-            color: #ffcdd2;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
+
+        @keyframes ball-bounce {
+            from { transform: translateY(-50px) rotate(-15deg); }
+            to   { transform: translateY(0px)   rotate(15deg);  }
         }
     </style>
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="app-loader">
-        <div class="loader-content">
-            <div class="loader-title">⚽ Soccer Coach Tracker</div>
-            <div class="loader-subtitle">Initializing application...</div>
-            <div class="soccer-ball">⚽</div>
-            <div id="loader-console"></div>
-        </div>
+        <div class="soccer-ball">⚽</div>
     </div>
     
     <div id="app">
