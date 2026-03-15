@@ -4360,6 +4360,7 @@ button.secondary-btn,
 button.secondary-btn.danger-btn,
 button.control-btn.end-game-btn,
 button.action-btn.red-card-btn,
+button.action-btn.goal-allowed-btn,
 button.primary-btn[onclick*="endGame"] {
     --btn-main: #d73333;
     --btn-contrast: #fff2f2;

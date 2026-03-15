@@ -892,10 +892,10 @@ function renderPlayerGrid() {
         
         // Live-game tile content: jersey + name only (no per-tile stat grid).
         playerGridItem.innerHTML = `
+            <div class="game-jersey-badge">
+                <span class="jersey-num">${player.jerseyNumber}</span>
+            </div>
             <div class="player-header">
-                <div class="game-jersey-badge">
-                    <span class="jersey-num">${player.jerseyNumber}</span>
-                </div>
                 <div class="game-player-name">${player.name}</div>
             </div>
         `;
