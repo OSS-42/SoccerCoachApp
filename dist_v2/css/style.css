@@ -4668,9 +4668,10 @@ button.back-btn::after {
     }
 
     .main-menu > .menu-btn {
-        width: min(100%, 760px);
-        max-width: 760px;
+        width: calc(min(100%, 760px) - var(--rev-btn-height) - 5px);
+        max-width: calc(760px - var(--rev-btn-height) - 5px);
         align-self: center;
+        margin-right: calc(var(--rev-btn-height) + 5px);
     }
 
     #team-setup .team-name-banner {
