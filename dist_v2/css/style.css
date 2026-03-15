@@ -4153,6 +4153,263 @@ button.no-assist-btn {
     }
 }
 
+/* ============================================================================
+ * GLOBAL BUTTON REVAMP (2/3 + 1/3 ANGLED SPLIT)
+ * ============================================================================ */
+
+:root {
+    --rev-btn-radius: 11px;
+    --rev-btn-icon-zone: 34%;
+    --rev-btn-divider-width: 24px;
+}
+
+button.menu-btn,
+button.primary-btn,
+button.secondary-btn,
+button.action-btn,
+button.control-btn,
+button.tab-btn,
+button.stats-report-btn,
+.report-actions button,
+.dialog-buttons button,
+.data-management-buttons button {
+    --btn-main: #2d8ce6;
+    --btn-contrast: #f2f7ff;
+    --btn-text: #ffffff;
+    --btn-icon: #1f66b5;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--rev-btn-radius) !important;
+    border: 1px solid color-mix(in srgb, var(--btn-main) 66%, #1d2a36 34%) !important;
+    background: var(--btn-main) !important;
+    color: var(--btn-text) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 calc(var(--rev-btn-icon-zone) + 10px) 0 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(5, 26, 44, 0.16);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+button.menu-btn::before,
+button.primary-btn::before,
+button.secondary-btn::before,
+button.action-btn::before,
+button.control-btn::before,
+button.tab-btn::before,
+button.stats-report-btn::before,
+.report-actions button::before,
+.dialog-buttons button::before,
+.data-management-buttons button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: var(--rev-btn-icon-zone);
+    height: 100%;
+    background: var(--btn-contrast);
+}
+
+button.menu-btn::after,
+button.primary-btn::after,
+button.secondary-btn::after,
+button.action-btn::after,
+button.control-btn::after,
+button.tab-btn::after,
+button.stats-report-btn::after,
+.report-actions button::after,
+.dialog-buttons button::after,
+.data-management-buttons button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: var(--rev-btn-icon-zone);
+    width: var(--rev-btn-divider-width);
+    height: 100%;
+    background: var(--btn-main);
+    transform: skewX(-36deg);
+    transform-origin: right center;
+}
+
+button.menu-btn > *,
+button.primary-btn > *,
+button.secondary-btn > *,
+button.action-btn > *,
+button.control-btn > *,
+button.tab-btn > *,
+button.stats-report-btn > *,
+.report-actions button > *,
+.dialog-buttons button > *,
+.data-management-buttons button > * {
+    position: relative;
+    z-index: 1;
+}
+
+button.menu-btn .material-icons,
+button.primary-btn .material-icons,
+button.secondary-btn .material-icons,
+button.action-btn .material-icons,
+button.control-btn .material-icons,
+button.tab-btn .material-icons,
+button.stats-report-btn .material-icons,
+.report-actions button .material-icons,
+.dialog-buttons button .material-icons,
+.data-management-buttons button .material-icons {
+    position: absolute;
+    right: calc((var(--rev-btn-icon-zone) * 0.5) - 0.45em);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--btn-icon) !important;
+    margin: 0 !important;
+}
+
+button.menu-btn:hover,
+button.primary-btn:hover,
+button.secondary-btn:hover,
+button.action-btn:hover,
+button.control-btn:hover,
+button.tab-btn:hover,
+button.stats-report-btn:hover,
+.report-actions button:hover,
+.dialog-buttons button:hover,
+.data-management-buttons button:hover {
+    filter: brightness(1.04);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(5, 26, 44, 0.2);
+}
+
+button.menu-btn:active,
+button.primary-btn:active,
+button.secondary-btn:active,
+button.action-btn:active,
+button.control-btn:active,
+button.tab-btn:active,
+button.stats-report-btn:active,
+.report-actions button:active,
+.dialog-buttons button:active,
+.data-management-buttons button:active {
+    transform: scale(0.985);
+    box-shadow: 0 2px 8px rgba(5, 26, 44, 0.16);
+}
+
+/* Color mappings */
+button.primary-btn,
+button.menu-btn,
+button.action-btn,
+button.stats-report-btn,
+button.control-btn.reset-btn {
+    --btn-main: #2b8fdb;
+    --btn-contrast: #eef6ff;
+    --btn-text: #ffffff;
+    --btn-icon: #1c66ab;
+}
+
+button.secondary-btn,
+.report-actions button {
+    --btn-main: #6f7a89;
+    --btn-contrast: #f3f5f8;
+    --btn-text: #ffffff;
+    --btn-icon: #3f4b58;
+}
+
+button.secondary-btn.danger-btn,
+button.control-btn.end-game-btn,
+button.action-btn.red-card-btn,
+button.primary-btn[onclick*="endGame"] {
+    --btn-main: #d73333;
+    --btn-contrast: #fff2f2;
+    --btn-text: #ffffff;
+    --btn-icon: #ab1f1f;
+}
+
+button.secondary-btn.warning-btn,
+button.control-btn.pause-btn,
+button.action-btn.yellow-card-btn {
+    --btn-main: #f39a08;
+    --btn-contrast: #fff7e8;
+    --btn-text: #ffffff;
+    --btn-icon: #b46a00;
+}
+
+button.control-btn.play-btn,
+button.primary-btn.no-assist-btn {
+    --btn-main: #4caf50;
+    --btn-contrast: #eef9ef;
+    --btn-text: #ffffff;
+    --btn-icon: #2e7d32;
+}
+
+button.control-btn.action-review-btn,
+button.control-btn.note-btn {
+    --btn-main: #0f1115;
+    --btn-contrast: #f4f6f8;
+    --btn-text: #ffffff;
+    --btn-icon: #0f1115;
+}
+
+button.tab-btn.active {
+    --btn-main: #2b8fdb;
+    --btn-contrast: #eef6ff;
+    --btn-text: #ffffff;
+    --btn-icon: #1c66ab;
+    border-color: color-mix(in srgb, #2b8fdb 72%, #1d2a36 28%) !important;
+}
+
+/* Buttons without icons keep clean text area. */
+button.menu-btn:not(:has(.material-icons)),
+button.primary-btn:not(:has(.material-icons)),
+button.secondary-btn:not(:has(.material-icons)),
+button.action-btn:not(:has(.material-icons)),
+button.control-btn:not(:has(.material-icons)),
+button.tab-btn:not(:has(.material-icons)),
+button.stats-report-btn:not(:has(.material-icons)),
+.report-actions button:not(:has(.material-icons)),
+.dialog-buttons button:not(:has(.material-icons)),
+.data-management-buttons button:not(:has(.material-icons)) {
+    padding-left: 14px;
+}
+
+/* Keep tiny utility icon-only controls untouched. */
+button.secondary-btn.small,
+button.close-btn,
+button.back-btn {
+    overflow: visible;
+    border-radius: inherit !important;
+    background: initial !important;
+    box-shadow: none;
+    padding: inherit;
+}
+
+button.secondary-btn.small::before,
+button.secondary-btn.small::after,
+button.close-btn::before,
+button.close-btn::after,
+button.back-btn::before,
+button.back-btn::after {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    button.menu-btn,
+    button.primary-btn,
+    button.secondary-btn,
+    button.action-btn,
+    button.control-btn,
+    button.tab-btn,
+    button.stats-report-btn,
+    .report-actions button,
+    .dialog-buttons button,
+    .data-management-buttons button {
+        --rev-btn-icon-zone: 35%;
+        --rev-btn-divider-width: 20px;
+        font-size: clamp(0.64rem, 2.1vw, 0.82rem);
+    }
+}
+
 /* Action Review Dialog */
 .action-review-list {
     max-height: 400px;
