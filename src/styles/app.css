@@ -348,6 +348,32 @@ body {
     transform: translateY(-2px);
 }
 
+.app-header .action-btn.white-btn {
+    background: #fff;
+    background-image: none;
+    color: #1565c0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    flex-shrink: 0;
+}
+
+.app-header .action-btn.white-btn .material-icons {
+    color: #1565c0;
+    font-size: 22px;
+}
+
+.app-header .action-btn.white-btn:hover,
+.app-header .action-btn.white-btn:active {
+    background: #fff;
+    background-image: none;
+    color: #1565c0;
+}
+
 /* Main Menu Styles */
 .main-menu {
     display: flex;
@@ -749,8 +775,10 @@ body {
 }
 
 #team-setup .player-name {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    max-width: none;
+    width: auto;
     font-size: 16px;
     font-weight: 700;
     line-height: 1.25;
@@ -760,6 +788,9 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 0;
+    display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
 }
 
 #team-setup .player-position {

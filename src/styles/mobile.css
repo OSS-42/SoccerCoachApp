@@ -195,6 +195,10 @@ body {
 
   #team-setup .player-name {
     font-size: 16px;
+    max-width: none;
+    display: block !important;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
   }
 
   #team-setup .player-position {
