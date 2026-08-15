@@ -2,9 +2,9 @@ import './styles/app.css'
 import './styles/mobile.css'
 import { APP_VERSION } from '@/domain/types'
 import { applyDomTranslations } from '@/i18n'
-import { getSave, hydrate, persistClock, subscribe } from '@/state/store'
+import { getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
 import { hideMessage } from '@/ui/message'
-import { onShow, showScreen, type ScreenId } from '@/ui/nav'
+import { bindHistoryNavigation, onShow, showScreen, type ScreenId } from '@/ui/nav'
 import { bindFormation, renderFormation } from '@/screens/formation'
 import { bindGameSetup, renderGameSetup } from '@/screens/gameSetup'
 import { bindLiveGame, renderLiveGame, updateClockLabels } from '@/screens/liveGame'
@@ -16,6 +16,17 @@ import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
 
 function activeScreenId(): ScreenId {
   return (document.querySelector('.screen.active')?.id as ScreenId) ?? 'main-screen'
+}
+
+function blockEdgeSwipeBack(event: TouchEvent): void {
+  const x = event.touches[0]?.clientX ?? 0
+  const edge = 18
+  if (x > edge && x < window.innerWidth - edge) return
+  const target = event.target as Element | null
+  if (target?.closest('.bench-slot, .unavailable-slot, .player-slot, button, input, select, textarea, a')) {
+    return
+  }
+  event.preventDefault()
 }
 
 function renderActive(): void {
@@ -84,6 +95,12 @@ onShow('game-tracking', renderLiveGame)
 onShow('reports', renderReports)
 onShow('settings', renderSettings)
 
+history.replaceState({ screen: 'main-screen' }, '')
+bindHistoryNavigation((from) => {
+  if (from === 'game-tracking' && hasInProgressGame()) return true
+  return false
+})
+document.addEventListener('touchstart', blockEdgeSwipeBack, { passive: false })
 bindNavigation()
 bindTeamSelectors()
 bindMainMenu()
@@ -99,4 +116,4 @@ startClockLoop()
 const footer = document.getElementById('version-footer')
 if (footer) footer.textContent = `v${APP_VERSION}`
 
-showScreen('main-screen')
+showScreen('main-screen', { history: 'replace' })

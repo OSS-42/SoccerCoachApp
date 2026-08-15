@@ -1,3 +1,22 @@
+import { APP_VERSION } from '@/domain/types'
+
+async function hardRefresh(): Promise<void> {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(regs.map((reg) => reg.unregister()))
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys()
+      await Promise.all(keys.map((key) => caches.delete(key)))
+    }
+  } catch {
+    /* still reload */
+  }
+  const url = new URL(window.location.href)
+  url.searchParams.set('v', String(Date.now()))
+  window.location.replace(url.toString())
+}
 import { applyDomTranslations, getLocale, isLocale } from '@/i18n'
 import { t } from '@/i18n'
 import { getCurrentTeam, getSave, importIntoCurrentTeam, resetAllData, setDefaultSubstitution, setLanguage } from '@/state/store'
@@ -19,6 +38,8 @@ export function renderSettings(): void {
   document.querySelectorAll<HTMLInputElement>('input[name="language"]').forEach((radio) => {
     radio.checked = radio.value === current
   })
+  const version = document.getElementById('settings-app-version')
+  if (version) version.textContent = APP_VERSION
 }
 
 export function bindSettings(): void {
@@ -29,6 +50,9 @@ export function bindSettings(): void {
       applyDomTranslations()
       renderSettings()
     })
+  })
+  document.getElementById('reload-latest')?.addEventListener('click', () => {
+    void hardRefresh()
   })
   document.getElementById('save-settings')?.addEventListener('click', () => {
     const raw = (document.getElementById('default-sub-minutes') as HTMLInputElement).value

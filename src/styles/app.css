@@ -173,9 +173,11 @@ body {
     }
 }
 
-#formation-setup {
-    touch-action: auto;
+#formation-setup,
+#game-tracking {
+    touch-action: pan-y;
     overscroll-behavior-x: none;
+    overflow-x: hidden;
     width: 100%;
 }
 
@@ -1394,17 +1396,18 @@ body {
 
 .player-number .player-name-bench,
 .player-number .player-name-field {
-    font-size: 6px;
-    line-height: 1;
-    font-weight: normal;
+    font-size: 10px;
+    line-height: 1.15;
+    font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 48px;
-    margin-top: 0;
+    max-width: 56px;
+    margin-top: 2px;
     pointer-events: none;
     display: block;
-    height: 6px;
+    height: auto;
+    letter-spacing: 0.2px;
 }
 
 /* Player grid numbers */
@@ -3023,7 +3026,7 @@ button.no-assist-btn {
 
 .formation-field-surface {
     position: absolute;
-    inset: 0;
+    inset: 12px;
     margin: auto;
     background: url('../img/field.png') no-repeat center center;
     background-size: 100% 100%;
@@ -3051,8 +3054,8 @@ button.no-assist-btn {
 /* Player slot on field - SINGLE SOURCE OF TRUTH */
 .player-slot {
     position: absolute;
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 64px;
     border-radius: 4px;
     cursor: pointer;
     user-select: none;
@@ -3127,10 +3130,10 @@ button.no-assist-btn {
 
 /* Player number placed on field */
 .player-number-placed {
-    width: 48px;
-    height: 48px;
-    max-width: 48px;
-    max-height: 48px;
+    width: 52px;
+    height: 58px;
+    max-width: 52px;
+    max-height: 58px;
     aspect-ratio: 1;
     text-align: center;
     background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
@@ -3807,6 +3810,13 @@ button.no-assist-btn {
     background: #b71c1c;
 }
 
+.settings-version {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+}
+
 .season-stats-table {
     width: 100%;
     min-width: 720px;
@@ -4081,11 +4091,32 @@ button.no-assist-btn {
 
 #game-tracking .player-grid-item {
     width: 100%;
-    max-width: 180px;
-    aspect-ratio: 1 / 1;
-    min-height: 0;
+    max-width: 140px;
+    aspect-ratio: auto;
+    min-height: 76px;
+    height: auto;
     margin: 0 auto;
-    padding: 8px;
+    padding: 10px 8px;
+    justify-content: center;
+    gap: 6px;
+}
+
+#game-tracking .live-tile-num {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+#game-tracking .live-tile-name {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-align: center;
+    text-transform: uppercase;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 @media screen and (min-width: 769px) {
@@ -4128,7 +4159,16 @@ button.no-assist-btn {
 
     #game-tracking .player-grid-item {
         max-width: none;
-        padding: 6px;
+        min-height: 68px;
+        padding: 8px 6px;
+    }
+
+    #game-tracking .live-tile-num {
+        font-size: 22px;
+    }
+
+    #game-tracking .live-tile-name {
+        font-size: 11px;
     }
 }
 

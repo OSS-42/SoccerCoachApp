@@ -13,8 +13,8 @@ export type FieldSpotDef = {
 
 export function fieldSpotDefs(desktop: boolean): FieldSpotDef[] {
   const rowY = desktop
-    ? { GK: 89, SW: 81, DEF: 72, DM: 59, MID: 46, OM: 33, FWD: 20, ST: 10 }
-    : { GK: 95, SW: 86.5, DEF: 78.5, DM: 61.38, MID: 44.25, OM: 27.13, FWD: 10, ST: 2 }
+    ? { GK: 88, SW: 78, DEF: 68, DM: 56, MID: 44, OM: 32, FWD: 20, ST: 11 }
+    : { GK: 90, SW: 80, DEF: 70, DM: 58, MID: 46, OM: 33, FWD: 20, ST: 10 }
   const lineX = [10, 30, 50, 70, 90]
   const strikerLineX = [30, 50, 70]
   return [

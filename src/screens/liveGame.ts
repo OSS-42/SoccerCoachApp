@@ -147,18 +147,8 @@ export function renderLiveGame(): void {
       item.style.opacity = '0.6'
     }
     item.innerHTML = `
-      <div class="player-header">
-        <div class="player-number">
-          <span class="jersey-num">${player.jerseyNumber}</span>
-          <span class="player-name-field">${escapeHtml(player.name)}</span>
-        </div>
-      </div>
-      <div class="player-stats-container">
-        <div class="stat-item"><div class="stat-label">⚽</div><div class="stat-value">${stats.goals}</div></div>
-        <div class="stat-item"><div class="stat-label">👟</div><div class="stat-value">${stats.assists}</div></div>
-        <div class="stat-item"><div class="stat-label">🧤</div><div class="stat-value">${stats.saves}</div></div>
-        <div class="stat-item"><div class="stat-label">🔴</div><div class="stat-value">${stats.goalsAllowed}</div></div>
-      </div>
+      <span class="live-tile-num">${player.jerseyNumber}</span>
+      <span class="live-tile-name">${escapeHtml(player.name)}</span>
     `
     item.addEventListener('click', () => openActions(player))
     grid.appendChild(item)

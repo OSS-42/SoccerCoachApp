@@ -1,6 +1,7 @@
 import { detectLocale, isLocale } from '@/i18n'
 import { createDefaultTeams, ensureDemoTeam, isPlayerPosition } from './teams'
 import {
+  APP_VERSION,
   DEFAULT_CLOCK,
   MATCH_TYPES,
   SAVE_VERSION,
@@ -222,7 +223,7 @@ export function freshSave(): AppSave {
   const teams = createDefaultTeams()
   return {
     saveVersion: SAVE_VERSION,
-    appVersion: '2.0.0',
+    appVersion: APP_VERSION,
     updatedAt: new Date().toISOString(),
     language: detectLocale(),
     teams,
@@ -245,7 +246,7 @@ export function migrateUnknown(raw: unknown): AppSave {
     const inProgress = currentGame && !currentGame.isCompleted ? currentGame : null
     return {
       saveVersion: SAVE_VERSION,
-      appVersion: '2.0.0',
+      appVersion: APP_VERSION,
       updatedAt: new Date().toISOString(),
       language: migrateLanguage(rec),
       teams: safeTeams,
@@ -275,7 +276,7 @@ export function migrateUnknown(raw: unknown): AppSave {
   const teams = ensureDemoTeam([legacyTeam ?? createDefaultTeams()[0], createDefaultTeams()[1]])
   return {
     saveVersion: SAVE_VERSION,
-    appVersion: '2.0.0',
+    appVersion: APP_VERSION,
     updatedAt: new Date().toISOString(),
     language: migrateLanguage(rec),
     teams,

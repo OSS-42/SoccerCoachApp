@@ -1,5 +1,6 @@
 import { t } from '@/i18n'
 import { calculateSeasonStats } from '@/domain/stats'
+import { askConfirm } from '@/ui/confirm'
 import { PLAYER_POSITIONS, type PlayerPosition } from '@/domain/types'
 import {
   addPlayerToTeam,
@@ -287,10 +288,20 @@ export function bindTeamSetup(): void {
     fillPositionSelect(document.getElementById('edit-position') as HTMLSelectElement, player.position)
     toggleDialog('edit-player-dialog', true)
   })
-  document.getElementById('players-list')?.addEventListener('change', (event) => {
+  document.getElementById('players-list')?.addEventListener('change', async (event) => {
     if (!(event.target as HTMLElement).classList.contains('player-checkbox')) return
     const ids = selectedPlayerIds()
-    if (ids.length && window.confirm(t('deletePlayersAsk', { count: ids.length }))) {
+    if (!ids.length) {
+      renderTeamSetup()
+      return
+    }
+    const ok = await askConfirm({
+      title: t('confirmDeleteTitle'),
+      message: t('deletePlayersAsk', { count: ids.length }),
+      confirmLabel: t('confirmDelete'),
+      cancelLabel: t('cancel'),
+    })
+    if (ok) {
       const result = deletePlayers(ids)
       showMessage(result.message, result.ok ? 'success' : 'error')
     } else {
