@@ -1,100 +1,39 @@
-# Soccer Coach Tracker
+# Football Live Action Tracker
 
-A web-based application designed to help soccer coaches track player statistics, manage team data, and generate game reports.
+Sideline tracker for youth/amateur coaches: roster, formation, live actions, reports.
 
-## Features
+**App version:** 2.0.0 (Vite + TypeScript rewrite). Old `dist_v2/` is kept as reference only.
 
-- **Team Management**: Create and edit players with jersey numbers, mark players as active/inactive
-- **Game Tracking**: Record goals, assists, saves, and goals allowed with a smart goal-assist workflow
-- **Substitution Management**: Track player substitutions with configurable countdown timer
-- **Statistics & Reporting**: Generate detailed game reports and export functionality (PDF/PNG)
-- **Settings & Customization**: Multiple language support, dark mode toggle, configurable timers
-- **Data Portability**: Import/export team data for cross-device usage
+## Run
 
-## Installation
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm test
+npm run build    # writes dist/
+```
 
-No installation required! This is a client-side web application that runs entirely in the browser.
+Data stays in the browser (`localStorage` key `soccerCoachApp.v2`). Saves from the old app (`soccerCoachApp2`) are migrated on first load. Empty rosters stay empty — no demo players.
 
-1. Simply open the `index.html` file in a modern web browser
-2. Alternatively, serve the files using any web server
+## Product rules (v2)
 
-### Repository Structure
+- Two teams max.
+- Mid-game refresh: match is saved; main menu shows **Resume Game**. Clock stays paused.
+- **Start New Game** is blocked while a match is in progress.
+- Season stats come from completed-game actions, not a mutable `player.stats` bag.
+- Opponent own goal adds 1 to your score.
+- Two yellows = send-off. Team yellow count is not wiped.
+- Default formation is remembered per team + match type.
+- French / dark mode / reset-stats button are gone.
 
-This repository contains:
-- `dist/` - Clean distribution version of the web app ready for deployment
-- Main directory - Development version with all source files
-- `serve.py` - Python script to easily serve either version of the app
+## Layout
 
-## Usage
+```
+src/domain/   rules (clock, actions, formation, save migrate)
+src/state/    one store, one save
+src/screens/  UI
+src/lib/      localStorage
+dist_v2/      previous vanilla app (not built anymore)
+```
 
-### Team Setup
-- Add players with jersey numbers
-- Set players as active or inactive for games
-- Customize your team name
-
-### Game Management
-- Create a new game with opponent team name and date
-- Record player actions (goals, assists, saves, goals allowed)
-- Use the substitution timer to track player rotations
-- Monitor game elapsed time alongside substitution timer
-
-### Reports
-- View detailed game statistics
-- Export reports in various formats
-- Browse game history
-
-## Offline Functionality
-
-The app uses browser localStorage for data persistence, ensuring all your data is saved even without an internet connection.
-
-## Changelog
-
-### Version 1.4.0 (2025-05-23)
-- Replaced popup alerts with non-intrusive message ribbon system
-- Enhanced player cards with responsive design that scales with screen size
-- Added custom red soccer ball icon for goals and goals allowed
-- Improved player grid layout with better spacing and organization
-- Made player cards more visually balanced with proportional scaling
-- Converted team and player names to uppercase for better readability
-- Added hover effects to player cards for better interactivity
-
-### Version 1.3.0 (2025-05-22)
-- Added green "No Assist" button for better visibility
-- Implemented dark mode with toggle switch in settings
-- Added game time elapsed counter alongside substitution timer
-- Set landscape orientation for game and report screens
-- Improved header styling in game view
-- Fixed various UI issues for better user experience
-
-### Version 1.2.0 (2025-05-15)
-- Added multi-language support (English, French) - reverted
-- Implemented import/export functionality for team data
-- Enhanced player statistics with detailed breakdowns - reverted
-- Added game history with searchable records - reverted
-- Improved timer functionality with pause/reset options
-- Fixed bugs in player selection during game tracking
-
-### Version 1.1.0 (2025-05-08)
-- Added smart goal-assist workflow
-- Implemented report generation and export options
-- Enhanced UI with material design icons
-- Added configurable substitution timer
-- Improved mobile responsiveness for different devices
-- Fixed data persistence issues
-
-### Version 1.0.0 (2025-05-01)
-- Initial release with core functionality
-- Basic team management (add, edit, delete players)
-- Game tracking with basic statistics
-- Simple substitution timer
-- Local storage implementation for offline use
-
-## License
-
-This project is available for free use by soccer coaches and teams.
-
-## Future Development
-
-Future considered features include:
-- Card tracking (yellow/red)
-- Game events timeline
+OTA / APK is not wired yet. The planned CDN channel is `/sca/live` on the droplet (separate from Mokkori `/live`).

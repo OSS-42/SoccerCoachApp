@@ -1,0 +1,11 @@
+node_modules
+dist
+release
+.env.ota.local
+.DS_Store
+*.log
+.vite
+coverage
+*.tsbuildinfo
+android/app/build
+android/.gradle

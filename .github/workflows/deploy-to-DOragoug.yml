@@ -13,6 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -22,13 +33,13 @@ jobs:
 
       - name: Deploy with rsync
         run: |
-          rsync -avz \
+          rsync -avz --delete \
             --exclude='.git*' \
             --exclude='.github' \
             --exclude='*.DS_Store' \
             --exclude='Thumbs.db' \
             --exclude='.vscode' \
             --exclude='node_modules' \
-            dist_v2/ \
+            dist/ \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.TARGET_FOLDER }}/

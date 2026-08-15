@@ -1,0 +1,352 @@
+/* Phone-first overrides. Desktop keeps the wider layouts in app.css. */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.screen {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.app-header {
+  padding-top: max(12px, env(safe-area-inset-top));
+}
+
+#game-tracking .game-header {
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
+.version-footer {
+  bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+#player-statistics-container.statistics-container {
+  -webkit-overflow-scrolling: touch;
+}
+
+.season-stats-cards {
+  display: none;
+}
+
+.season-stats-table-wrap {
+  display: block;
+  overflow: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .app-header {
+    padding: max(10px, env(safe-area-inset-top)) 10px 10px;
+    flex-shrink: 0;
+  }
+
+  .app-header h1 {
+    font-size: 16px;
+    line-height: 1.2;
+    padding: 0 6px;
+  }
+
+  .team-name-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .team-name-banner h2,
+  .team-name-banner > div {
+    min-width: 0 !important;
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .team-name-edit {
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .team-name-edit input {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .team-name-banner .team-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .team-name-banner .team-selector select {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .content {
+    padding: 12px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .main-menu {
+    padding: 16px;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .menu-btn,
+  .primary-btn,
+  .secondary-btn {
+    min-height: 48px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea,
+  input[type='number'],
+  input[type='text'],
+  input[type='date'],
+  select,
+  textarea {
+    font-size: 16px;
+    max-width: 100%;
+  }
+
+  .date-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-filter input[type='date'] {
+    width: 100%;
+  }
+
+  .data-management-buttons {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .data-management-buttons .secondary-btn,
+  .settings-group .primary-btn {
+    width: 100%;
+  }
+
+  .player-item {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .jersey-number {
+    width: 36px;
+    height: 36px;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .dialog {
+    align-items: flex-end;
+  }
+
+  .dialog-content,
+  .dialog-content.report-dialog {
+    width: 100%;
+    max-width: none;
+    max-height: min(92dvh, 100%);
+    overflow: auto;
+    border-radius: 16px 16px 0 0;
+    padding: 16px 14px max(16px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
+  }
+
+  .action-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .action-btn {
+    min-height: 48px;
+    font-size: 13px;
+  }
+
+  .report-table-container,
+  .report-dialog {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .report-table,
+  .statistics-table {
+    min-width: 560px;
+  }
+
+  .message-ribbon {
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    font-size: 14px;
+  }
+
+  .version-footer {
+    display: none;
+  }
+
+  .season-stats-table-wrap {
+    display: none;
+  }
+
+  .season-stats-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .season-stat-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+
+  .season-stat-card header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .season-stat-card .stat-card-name {
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .season-stat-card.is-totals {
+    background: #1e2937;
+    color: #f8fafc;
+    border-color: #0f172a;
+  }
+
+  .season-stat-card.is-totals .stat-chip {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+  }
+
+  .season-stat-card.is-totals .stat-chip.is-zero {
+    color: #94a3b8;
+  }
+
+  .stat-chip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stat-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    background: #f8fafc;
+    min-width: 0;
+  }
+
+  .stat-chip-icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .stat-chip-value {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+  }
+
+  .stat-chip-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.1;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stat-chip.is-zero .stat-chip-value {
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+
+  .stat-chip.stat-goal:not(.is-zero) .stat-chip-value {
+    color: #15803d;
+  }
+
+  .stat-chip.stat-against:not(.is-zero) .stat-chip-value {
+    color: #b91c1c;
+  }
+
+  .stat-chip.stat-yellow:not(.is-zero) {
+    background: #fffbeb;
+  }
+
+  .stat-chip.stat-red:not(.is-zero) {
+    background: #fef2f2;
+  }
+
+  #player-statistics-container.statistics-container {
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  #team-setup .content {
+    overflow-x: hidden;
+  }
+
+  .substitution-timer-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .live-team-name {
+    max-width: 88px;
+  }
+
+  #game-tracking .control-btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 0;
+  }
+
+  .players-selection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .stat-chip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .live-score {
+    font-size: 22px;
+  }
+
+  .app-header h1 {
+    font-size: 14px;
+  }
+}
