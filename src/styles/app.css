@@ -3635,6 +3635,10 @@ button.no-assist-btn {
     opacity: 0.8;
 }
 
+.goals-cards-item.substitution-item {
+    border-left: 4px solid #2196f3;
+}
+
 .goals-cards-item.injury-item {
     border-left-color: #FF9800;
 }
@@ -4229,7 +4233,12 @@ button.no-assist-btn {
     padding: 10px 8px;
     justify-content: center;
     gap: 6px;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
+
+
 
 #game-tracking .live-tile-num {
     font-size: 26px;
@@ -4269,27 +4278,6 @@ button.no-assist-btn {
     letter-spacing: 0.4px;
     text-transform: uppercase;
     color: #c62828;
-}
-
-#game-tracking .live-tile-act {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 28px;
-    height: 22px;
-    padding: 0;
-    border: 0;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.08);
-    color: #263238;
-    font-size: 16px;
-    font-weight: 800;
-    line-height: 18px;
-    cursor: pointer;
-}
-
-#game-tracking .live-tile-act:active {
-    background: rgba(0, 0, 0, 0.18);
 }
 
 @media screen and (min-width: 769px) {

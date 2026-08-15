@@ -95,13 +95,9 @@ function handleSlotPointer(event: PointerEvent): void {
   if (!slot || !slotKind(slot)) return
   const tappedId = slot.dataset.playerId ?? null
   if (!selectedPlayerId) {
-    if (!tappedId) {
-      showMessage(t('tapOccupied'), 'warning')
-      return
-    }
+    if (!tappedId) return
     selectedPlayerId = tappedId
     slot.querySelector('.player-number')?.classList.add('tap-selected')
-    showMessage(t('playerSelected', { jersey: playerMeta(tappedId).jersey }), 'info')
     return
   }
   if (tappedId === selectedPlayerId) {

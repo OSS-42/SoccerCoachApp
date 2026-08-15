@@ -73,6 +73,18 @@ function renderGoalsCards(game: Game, players: Player[]): string {
           <div class="item-time">${event.minute}'</div>
         </div>`
       }
+      if (event.type === 'substitution') {
+        return `<div class="goals-cards-item substitution-item" style="justify-content:flex-start;">
+          <div class="item-icon">🔄</div>
+          <div class="item-details"><div class="item-player">${escapeHtml(
+            t('subOnFor', {
+              on: event.playerName,
+              off: event.relatedName || t('unknownPlayer'),
+            }),
+          )}</div></div>
+          <div class="item-time">${event.minute}'</div>
+        </div>`
+      }
       const icon = event.type === 'yellow' ? '🟨' : event.type === 'red' ? '🟥' : '🏥'
       return `<div class="goals-cards-item ${event.type}-item" style="justify-content:flex-start;">
         <div class="item-icon">${icon}</div>

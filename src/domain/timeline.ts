@@ -34,9 +34,10 @@ export function buildShotTimeline(game: Game): {
 export type ReportEvent = {
   second: number
   minute: number
-  type: 'goal' | 'goalAllowed' | 'yellow' | 'red' | 'injury'
+  type: 'goal' | 'goalAllowed' | 'yellow' | 'red' | 'injury' | 'substitution'
   playerName: string
   assistName: string | null
+  relatedName: string | null
   scoreIndex: number | null
   isOpponent: boolean
 }
@@ -73,6 +74,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
             ? t('opponentOg')
             : playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: assistId ? playerName(players, assistId) : null,
+        relatedName: null,
         scoreIndex: homeGoals,
         isOpponent: false,
       })
@@ -84,6 +86,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         type: 'goalAllowed',
         playerName: t('opponent'),
         assistName: null,
+        relatedName: null,
         scoreIndex: awayGoals,
         isOpponent: true,
       })
@@ -94,6 +97,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         type: 'yellow',
         playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
+        relatedName: null,
         scoreIndex: null,
         isOpponent: false,
       })
@@ -104,6 +108,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         type: 'red',
         playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
+        relatedName: null,
         scoreIndex: null,
         isOpponent: false,
       })
@@ -114,6 +119,18 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         type: 'injury',
         playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
+        relatedName: null,
+        scoreIndex: null,
+        isOpponent: false,
+      })
+    } else if (action.actionType === 'substitution') {
+      events.push({
+        second: action.gameSecond,
+        minute,
+        type: 'substitution',
+        playerName: playerName(players, action.playerId) || t('unknownPlayer'),
+        assistName: null,
+        relatedName: playerName(players, action.relatedPlayerId ?? null) || t('unknownPlayer'),
         scoreIndex: null,
         isOpponent: false,
       })

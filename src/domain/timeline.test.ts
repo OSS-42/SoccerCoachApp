@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildShotTimeline } from './timeline'
+import { buildGoalsCardsEvents, buildShotTimeline } from './timeline'
 import type { Game } from './types'
 
 function game(actions: Game['actions']): Game {
@@ -43,5 +43,31 @@ describe('shot timeline', () => {
     expect(chart.user[2]).toEqual({ shots: 1, goals: 1 })
     expect(chart.opponent[4]).toEqual({ saves: 1, goalsAllowed: 1 })
     expect(chart.user[6].goals).toBe(1)
+  })
+
+  it('lists substitutions in the report event feed', () => {
+    const events = buildGoalsCardsEvents(
+      game([
+        {
+          id: 's1',
+          actionType: 'substitution',
+          playerId: 'p2',
+          relatedPlayerId: 'p1',
+          gameSecond: 600,
+          timestamp: '',
+        },
+      ]),
+      [
+        { id: 'p1', name: 'MARC', jerseyNumber: 4, position: 'CB' },
+        { id: 'p2', name: 'LEO', jerseyNumber: 8, position: 'CM' },
+      ],
+    )
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({
+      type: 'substitution',
+      playerName: 'LEO',
+      relatedName: 'MARC',
+      minute: 10,
+    })
   })
 })

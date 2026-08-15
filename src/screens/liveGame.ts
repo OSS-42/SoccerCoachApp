@@ -35,10 +35,15 @@ import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 
 let pendingPlayer: Player | null = null
-let pendingOffId: string | null = null
+let pendingSubId: string | null = null
+let pendingRole: 'field' | 'bench' | null = null
+let lastTapId: string | null = null
+let lastTapAt = 0
 let goalScorerId: string | null = null
 let assisterId: string | null = null
 let periodAction: 'finish' | 'end' = 'finish'
+
+const DOUBLE_TAP_MS = 320
 
 const LIVE_ACTIONS: { type: ActionType; emoji: string }[] = [
   { type: 'goal', emoji: '⚽' },
@@ -163,10 +168,10 @@ function paintSubBar(): void {
   const elapsed = liveElapsedSeconds()
   const used = substitutionCount(game)
   const cap = substitutionCap(game, elapsed)
-  const pending = team.players.find((p) => p.id === pendingOffId)
+  const pending = team.players.find((p) => p.id === pendingSubId)
   bar.classList.toggle('pending', Boolean(pending))
   if (pending) {
-    bar.innerHTML = `<span>${escapeHtml(t('subBarPending', { jersey: pending.jerseyNumber }))}</span><button type="button" class="live-sub-cancel" id="cancel-pending-sub">${escapeHtml(t('subBarCancel'))}</button>`
+    bar.textContent = t('subBarPending', { jersey: pending.jerseyNumber })
     return
   }
   bar.textContent =
@@ -200,76 +205,91 @@ function liveTile(player: Player, role: 'field' | 'bench', usedOff: boolean): HT
   item.className = `player-grid-item ${role === 'field' ? 'starter' : 'substitute'}`
   item.dataset.playerId = player.id
   item.dataset.role = role
+  item.title = t('doubleTapForActions')
   if (stats?.injured) item.classList.add('injured')
   else if (stats && stats.redCards > 0) item.classList.add('red-card')
   else if (stats && stats.yellowCards > 0) item.classList.add('yellow-card')
   if (usedOff) item.classList.add('used-off')
-  if (pendingOffId === player.id) item.classList.add('sub-selected')
-  if (pendingOffId && role === 'bench' && !usedOff && !(stats && playerIsUnavailable(stats))) {
-    item.classList.add('sub-target')
-  }
+  if (pendingSubId === player.id) item.classList.add('sub-selected')
+  const canComeOn = !usedOff && !(stats && playerIsUnavailable(stats))
+  const canGoOff = !(stats && stats.redCards > 0)
+  if (pendingRole === 'field' && role === 'bench' && canComeOn) item.classList.add('sub-target')
+  if (pendingRole === 'bench' && role === 'field' && canGoOff) item.classList.add('sub-target')
   item.innerHTML = `
-    <button type="button" class="live-tile-act" aria-label="${escapeHtml(t('recordActionFor'))}">⋯</button>
     <span class="live-tile-num">${player.jerseyNumber}</span>
     <span class="live-tile-name">${escapeHtml(player.name)}</span>
     ${usedOff ? `<span class="live-tile-used">${escapeHtml(t('usedOff'))}</span>` : ''}
   `
-  item.querySelector('.live-tile-act')?.addEventListener('click', (event) => {
-    event.stopPropagation()
+  item.addEventListener('click', () => onTileClick(player, role))
+  return item
+}
+
+function onTileClick(player: Player, role: 'field' | 'bench'): void {
+  const now = Date.now()
+  if (lastTapId === player.id && now - lastTapAt <= DOUBLE_TAP_MS) {
+    lastTapId = null
+    lastTapAt = 0
     clearPendingSub()
     paintSubBar()
     paintLiveRosters()
     openActions(player, role)
-  })
-  item.addEventListener('click', () => handleLiveTile(player, role))
-  return item
+    return
+  }
+  lastTapId = player.id
+  lastTapAt = now
+  handleLiveTile(player, role)
 }
 
 function clearPendingSub(): void {
-  pendingOffId = null
+  pendingSubId = null
+  pendingRole = null
 }
 
 function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
   const game = getCurrentGame()
   if (!game) return
-  const red = playerHasRed(game, player.id)
-
-  if (role === 'field') {
-    if (red) {
-      showMessage(t('subSentOff'), 'error')
-      return
-    }
-    if (pendingOffId === player.id) {
-      clearPendingSub()
-      paintSubBar()
-      paintLiveRosters()
-      openActions(player, 'field')
-      return
-    }
-    pendingOffId = player.id
-    paintSubBar()
-    paintLiveRosters()
+  if (role === 'field' && playerHasRed(game, player.id)) {
+    showMessage(t('subSentOff'), 'error')
+    return
+  }
+  if (role === 'bench' && usedOffPlayerIds(game).has(player.id) && pendingRole !== 'field') {
     return
   }
 
-  if (pendingOffId) {
-    const offId = pendingOffId
-    const offJersey = getCurrentTeam()?.players.find((p) => p.id === offId)?.jerseyNumber ?? ''
+  if (pendingSubId && pendingRole && pendingRole !== role) {
+    const fromId = pendingSubId
+    const fromRole = pendingRole
+    const offId = fromRole === 'field' ? fromId : player.id
+    const onId = fromRole === 'bench' ? fromId : player.id
+    const team = getCurrentTeam()
+    const offJersey = team?.players.find((p) => p.id === offId)?.jerseyNumber ?? ''
+    const onJersey = team?.players.find((p) => p.id === onId)?.jerseyNumber ?? ''
     clearPendingSub()
-    const result = substituteLivePlayers(offId, player.id)
+    const result = substituteLivePlayers(offId, onId)
     if (!result.ok) {
-      pendingOffId = offId
+      pendingSubId = fromId
+      pendingRole = fromRole
       showMessage(subFailMessage(result.reason), 'error')
       paintSubBar()
       paintLiveRosters()
       return
     }
     renderLiveGame()
-    showMessage(t('subDone', { off: offJersey, on: player.jerseyNumber }), 'success')
+    showMessage(t('subDone', { off: offJersey, on: onJersey }), 'success')
     return
   }
 
-  openActions(player, 'bench')
+  if (pendingSubId === player.id) {
+    clearPendingSub()
+    paintSubBar()
+    paintLiveRosters()
+    return
+  }
+
+  pendingSubId = player.id
+  pendingRole = role
+  paintSubBar()
+  paintLiveRosters()
 }
 
 function subFailMessage(reason?: string): string {
@@ -344,12 +364,6 @@ export function bindLiveGame(): void {
       showScreen('reports')
       window.dispatchEvent(new CustomEvent('sca:view-report', { detail: result.gameId }))
     }
-  })
-  document.getElementById('live-sub-bar')?.addEventListener('click', (event) => {
-    if (!(event.target as HTMLElement).closest('#cancel-pending-sub')) return
-    clearPendingSub()
-    paintSubBar()
-    paintLiveRosters()
   })
   document.getElementById('stop-period')?.addEventListener('click', () => {
     const game = getCurrentGame()
