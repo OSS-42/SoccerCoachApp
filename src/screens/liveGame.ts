@@ -151,31 +151,22 @@ export function renderLiveGame(): void {
     subWrap.classList.toggle('timer-alert', clock.subRemaining === 0)
   }
 
-  paintSubBar()
+  paintSubCount()
   paintLiveRosters()
 }
 
-function paintSubBar(): void {
-  const bar = document.getElementById('live-sub-bar')
-  if (!bar) return
+function paintSubCount(): void {
+  const wrap = document.getElementById('live-sub-count')
+  const value = document.getElementById('live-sub-count-value')
   const game = getCurrentGame()
-  const team = getCurrentTeam()
-  if (!game || !team) {
-    bar.hidden = true
+  if (!wrap || !value || !game) return
+  const cap = substitutionCap(game, liveElapsedSeconds())
+  if (cap == null) {
+    wrap.hidden = true
     return
   }
-  bar.hidden = false
-  const elapsed = liveElapsedSeconds()
-  const used = substitutionCount(game)
-  const cap = substitutionCap(game, elapsed)
-  const pending = team.players.find((p) => p.id === pendingSubId)
-  bar.classList.toggle('pending', Boolean(pending))
-  if (pending) {
-    bar.textContent = t('subBarPending', { jersey: pending.jerseyNumber })
-    return
-  }
-  bar.textContent =
-    cap == null ? t('subBarRolling') : t('subBarOfficial', { used, cap })
+  wrap.hidden = false
+  value.textContent = `${substitutionCount(game)}/${cap}`
 }
 
 function paintLiveRosters(): void {
@@ -205,7 +196,6 @@ function liveTile(player: Player, role: 'field' | 'bench', usedOff: boolean): HT
   item.className = `player-grid-item ${role === 'field' ? 'starter' : 'substitute'}`
   item.dataset.playerId = player.id
   item.dataset.role = role
-  item.title = t('doubleTapForActions')
   if (stats?.injured) item.classList.add('injured')
   else if (stats && stats.redCards > 0) item.classList.add('red-card')
   else if (stats && stats.yellowCards > 0) item.classList.add('yellow-card')
@@ -230,7 +220,6 @@ function onTileClick(player: Player, role: 'field' | 'bench'): void {
     lastTapId = null
     lastTapAt = 0
     clearPendingSub()
-    paintSubBar()
     paintLiveRosters()
     openActions(player, role)
     return
@@ -270,7 +259,6 @@ function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
       pendingSubId = fromId
       pendingRole = fromRole
       showMessage(subFailMessage(result.reason), 'error')
-      paintSubBar()
       paintLiveRosters()
       return
     }
@@ -281,14 +269,12 @@ function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
 
   if (pendingSubId === player.id) {
     clearPendingSub()
-    paintSubBar()
     paintLiveRosters()
     return
   }
 
   pendingSubId = player.id
   pendingRole = role
-  paintSubBar()
   paintLiveRosters()
 }
 

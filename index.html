@@ -45,9 +45,14 @@
               <span id="game-report-counter">0</span></span
             >
           </div>
-          <button class="menu-btn" data-go="settings">
-            <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
-          </button>
+          <div class="menu-row">
+            <button class="menu-btn" data-go="settings">
+              <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
+            </button>
+            <button class="menu-btn" id="open-tips">
+              <span class="material-icons">help_outline</span> <span data-i18n="tips">Tips</span>
+            </button>
+          </div>
         </nav>
       </main>
 
@@ -251,6 +256,10 @@
                 <span class="timer-label" data-i18n="sub">Sub</span>
                 <span class="timer-value">6:00</span>
               </div>
+              <div class="live-sub-count" id="live-sub-count" hidden>
+                <span class="live-meta-label" data-i18n="sub">Sub</span>
+                <span id="live-sub-count-value">0/5</span>
+              </div>
             </div>
           </div>
         </div>
@@ -278,7 +287,6 @@
           </div>
         </div>
         <div class="live-rosters" id="live-rosters">
-          <div class="live-sub-bar" id="live-sub-bar"></div>
           <section class="live-roster-section">
             <h3 data-i18n="onField">On field</h3>
             <div class="player-grid" id="on-field-grid"></div>
@@ -355,7 +363,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.1.3</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.1.4</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -478,6 +486,22 @@
         </div>
       </div>
 
+      <div id="tips-dialog" class="dialog">
+        <div class="dialog-content">
+          <h2 data-i18n="tipsTitle">How to use</h2>
+          <ul class="tips-list">
+            <li data-i18n="tipLiveChange">Tap one player, then a player on the other side, to make a substitution. Either order works.</li>
+            <li data-i18n="tipLiveActions">Double-tap a tile for actions. On the field you get the full list. On the bench, only yellow and red cards.</li>
+            <li data-i18n="tipLiveCancel">Tap the same player again to cancel a selection.</li>
+            <li data-i18n="tipOfficial">In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.</li>
+            <li data-i18n="tipFormation">On the formation screen, tap a player then tap a slot to place them.</li>
+          </ul>
+          <div class="dialog-buttons">
+            <button class="primary-btn" id="close-tips" data-i18n="close">Close</button>
+          </div>
+        </div>
+      </div>
+
       <div id="end-game-dialog" class="dialog">
         <div class="dialog-content">
           <h2 data-i18n="endGameTitle">End Game</h2>
@@ -515,7 +539,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.1.3</div>
+      <div id="version-footer" class="version-footer">v2.1.4</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

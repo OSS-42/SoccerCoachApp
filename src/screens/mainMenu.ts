@@ -1,5 +1,6 @@
 import { t } from '@/i18n'
 import { getCurrentGame, hasInProgressGame } from '@/state/store'
+import { toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { fillTeamSelectors } from './shared'
@@ -25,5 +26,11 @@ export function bindMainMenu(): void {
       return
     }
     showScreen('game-setup')
+  })
+  document.getElementById('open-tips')?.addEventListener('click', () => {
+    toggleDialog('tips-dialog', true)
+  })
+  document.getElementById('close-tips')?.addEventListener('click', () => {
+    toggleDialog('tips-dialog', false)
   })
 }

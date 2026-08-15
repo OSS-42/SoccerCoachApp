@@ -4168,36 +4168,33 @@ button.no-assist-btn {
     box-sizing: border-box;
 }
 
-#game-tracking .live-sub-bar {
-    margin: 8px 12px 10px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    background: #eceff1;
-    color: #263238;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.35;
+#game-tracking .live-sub-count {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-#game-tracking .live-sub-bar.pending {
-    background: #fff8e1;
-    border: 1px solid #ffb300;
-}
-
-#game-tracking .live-sub-cancel {
+    align-items: baseline;
+    gap: 6px;
     flex: 0 0 auto;
-    border: 0;
-    border-radius: 6px;
-    padding: 6px 10px;
-    background: #455a64;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
+    white-space: nowrap;
+}
+
+#game-tracking .live-sub-count[hidden] {
+    display: none;
+}
+
+#game-tracking #live-sub-count-value {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.tips-list {
+    margin: 0 0 16px;
+    padding-left: 1.2em;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 15px;
+    line-height: 1.4;
+    color: #263238;
 }
 
 #game-tracking .live-roster-section h3 {

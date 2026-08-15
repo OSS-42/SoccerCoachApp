@@ -48,11 +48,16 @@ export const en = {
   regulationFriendlyHint: 'Players can come back on, like youth formats.',
   onField: 'On field',
   usedOff: 'Used',
-  subBarRolling: 'Tap two players to change, either way. Double-tap a tile for actions. Players can return.',
-  subBarOfficial: 'Changes {used}/{cap} · tap two players to change. Double-tap for actions. Once off, out.',
-  subBarPending: '#{jersey} selected — tap their replacement',
-  doubleTapForActions: 'Double-tap for actions',
-  subBarCancel: 'Cancel change',
+  tips: 'Tips',
+  tipsTitle: 'How to use',
+  tipLiveChange:
+    'Tap one player, then a player on the other side, to make a substitution. Either order works.',
+  tipLiveActions:
+    'Double-tap a tile for actions. On the field you get the full list. On the bench, only yellow and red cards.',
+  tipLiveCancel: 'Tap the same player again to cancel a selection.',
+  tipOfficial:
+    'In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.',
+  tipFormation: 'On the formation screen, tap a player then tap a slot to place them.',
   subDone: '#{off} off, #{on} on',
   subCannotReturn: 'That player cannot return in an official match.',
   subCapReached: 'No substitutions left ({cap} used).',

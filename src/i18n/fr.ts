@@ -50,11 +50,16 @@ export const fr: Record<keyof typeof en, string> = {
   regulationFriendlyHint: 'Les joueurs peuvent revenir, comme en jeunes.',
   onField: 'Sur le terrain',
   usedOff: 'Sorti',
-  subBarRolling: 'Touchez deux joueurs pour changer, dans les deux sens. Double-touchez une tuile pour une action. Les retours sont autorisés.',
-  subBarOfficial: 'Changements {used}/{cap} · touchez deux joueurs pour changer. Double-touchez pour une action. Une fois sorti, c’est fini.',
-  subBarPending: 'n°{jersey} sélectionné — touchez son remplaçant',
-  doubleTapForActions: 'Double-toucher pour une action',
-  subBarCancel: 'Annuler le changement',
+  tips: 'Astuces',
+  tipsTitle: 'Mode d’emploi',
+  tipLiveChange:
+    'Touchez un joueur, puis un joueur de l’autre côté, pour faire un changement. Les deux sens marchent.',
+  tipLiveActions:
+    'Double-touchez une tuile pour une action. Sur le terrain : liste complète. Sur le banc : jaunes et rouges seulement.',
+  tipLiveCancel: 'Retouchez le même joueur pour annuler la sélection.',
+  tipOfficial:
+    'En 11v11 officiel, un joueur sorti ne revient pas. 5 changements, plus 1 en prolongations.',
+  tipFormation: 'À la composition, touchez un joueur puis une place pour le poser.',
   subDone: 'n°{off} sort, n°{on} entre',
   subCannotReturn: 'Ce joueur ne peut pas revenir en match officiel.',
   subCapReached: 'Plus de changement disponible ({cap} utilisés).',
