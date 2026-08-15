@@ -193,6 +193,14 @@ body {
     gap: 8px;
   }
 
+  #team-setup .player-name {
+    font-size: 16px;
+  }
+
+  #team-setup .player-position {
+    font-size: 12px;
+  }
+
   .jersey-number {
     width: 36px;
     height: 36px;

@@ -2,7 +2,7 @@
 
 Sideline tracker for youth/amateur coaches: roster, formation, live actions, reports.
 
-**Version:** 2.1.4
+**Version:** 2.1.5
 
 ## Run
 

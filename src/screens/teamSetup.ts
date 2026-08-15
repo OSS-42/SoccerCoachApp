@@ -56,10 +56,8 @@ export function renderTeamSetup(): void {
     item.innerHTML = `
       <div class="jersey-number">${player.jerseyNumber}</div>
       <div class="player-info">
-        <div class="player-name">
-          <div>${escapeHtml(player.name)}</div>
-          <div style="font-size:0.75rem;color:#666;">(${escapeHtml(player.position)})</div>
-        </div>
+        <div class="player-name">${escapeHtml(player.name)}</div>
+        <div class="player-position">${escapeHtml(player.position)}</div>
       </div>
       <div class="player-actions">
         <button class="player-action-btn" data-edit="${player.id}">
