@@ -1,10 +1,18 @@
 import { actionLabel, t } from '@/i18n'
+import { askConfirm, askPrompt } from '@/ui/confirm'
 import {
   playerIsUnavailable,
   statsFromActions,
   teamCardCounts,
 } from '@/domain/actions'
 import { currentPeriod, formatClock, isLastPeriod } from '@/domain/clock'
+import {
+  extraTimeActive,
+  playerHasRed,
+  substitutionCap,
+  substitutionCount,
+  usedOffPlayerIds,
+} from '@/domain/substitutions'
 import type { ActionType, Player } from '@/domain/types'
 import {
   endCurrentGame,
@@ -18,6 +26,8 @@ import {
   playClock,
   recordLiveAction,
   resetSubTimer,
+  startExtraTime,
+  substituteLivePlayers,
   undoLiveAction,
 } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
@@ -25,6 +35,7 @@ import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 
 let pendingPlayer: Player | null = null
+let pendingOffId: string | null = null
 let goalScorerId: string | null = null
 let assisterId: string | null = null
 let periodAction: 'finish' | 'end' = 'finish'
@@ -130,29 +141,143 @@ export function renderLiveGame(): void {
     subWrap.classList.toggle('timer-alert', clock.subRemaining === 0)
   }
 
-  const grid = document.getElementById('player-grid')
-  if (!grid) return
-  grid.innerHTML = ''
-  const starters = new Set(game.formation.map((f) => f.playerId))
-  for (const player of [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)) {
-    if (game.unavailablePlayers.includes(player.id)) continue
-    const stats = statsFromActions(game.actions, player.id)
-    const item = document.createElement('div')
-    item.className = `player-grid-item ${starters.has(player.id) ? 'starter' : 'substitute'}`
-    item.dataset.playerId = player.id
-    if (stats.injured) item.classList.add('injured')
-    else if (stats.redCards > 0) item.classList.add('red-card')
-    else if (stats.yellowCards > 0) item.classList.add('yellow-card')
-    if (playerIsUnavailable(stats)) {
-      item.style.opacity = '0.6'
-    }
-    item.innerHTML = `
-      <span class="live-tile-num">${player.jerseyNumber}</span>
-      <span class="live-tile-name">${escapeHtml(player.name)}</span>
-    `
-    item.addEventListener('click', () => openActions(player))
-    grid.appendChild(item)
+  paintSubBar()
+  paintLiveRosters()
+}
+
+function paintSubBar(): void {
+  const bar = document.getElementById('live-sub-bar')
+  if (!bar) return
+  const game = getCurrentGame()
+  const team = getCurrentTeam()
+  if (!game || !team) {
+    bar.hidden = true
+    return
   }
+  bar.hidden = false
+  const elapsed = liveElapsedSeconds()
+  const used = substitutionCount(game)
+  const cap = substitutionCap(game, elapsed)
+  const pending = team.players.find((p) => p.id === pendingOffId)
+  bar.classList.toggle('pending', Boolean(pending))
+  if (pending) {
+    bar.innerHTML = `<span>${escapeHtml(t('subBarPending', { jersey: pending.jerseyNumber }))}</span><button type="button" class="live-sub-cancel" id="cancel-pending-sub">${escapeHtml(t('subBarCancel'))}</button>`
+    return
+  }
+  bar.textContent =
+    cap == null ? t('subBarRolling') : t('subBarOfficial', { used, cap })
+}
+
+function paintLiveRosters(): void {
+  const fieldGrid = document.getElementById('on-field-grid')
+  const benchGrid = document.getElementById('bench-grid')
+  const game = getCurrentGame()
+  const team = getCurrentTeam()
+  if (!fieldGrid || !benchGrid || !game || !team) return
+  fieldGrid.innerHTML = ''
+  benchGrid.innerHTML = ''
+  const onField = new Set(game.formation.map((f) => f.playerId))
+  const usedOff = usedOffPlayerIds(game)
+  const sorted = [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  for (const player of sorted) {
+    if (game.unavailablePlayers.includes(player.id)) continue
+    const role = onField.has(player.id) ? 'field' : 'bench'
+    const tile = liveTile(player, role, usedOff.has(player.id))
+    if (role === 'field') fieldGrid.appendChild(tile)
+    else benchGrid.appendChild(tile)
+  }
+}
+
+function liveTile(player: Player, role: 'field' | 'bench', usedOff: boolean): HTMLElement {
+  const game = getCurrentGame()
+  const item = document.createElement('div')
+  const stats = game ? statsFromActions(game.actions, player.id) : null
+  item.className = `player-grid-item ${role === 'field' ? 'starter' : 'substitute'}`
+  item.dataset.playerId = player.id
+  item.dataset.role = role
+  if (stats?.injured) item.classList.add('injured')
+  else if (stats && stats.redCards > 0) item.classList.add('red-card')
+  else if (stats && stats.yellowCards > 0) item.classList.add('yellow-card')
+  if (usedOff) item.classList.add('used-off')
+  if (pendingOffId === player.id) item.classList.add('sub-selected')
+  if (pendingOffId && role === 'bench' && !usedOff && !(stats && playerIsUnavailable(stats))) {
+    item.classList.add('sub-target')
+  }
+  item.innerHTML = `
+    <button type="button" class="live-tile-act" aria-label="${escapeHtml(t('recordActionFor'))}">⋯</button>
+    <span class="live-tile-num">${player.jerseyNumber}</span>
+    <span class="live-tile-name">${escapeHtml(player.name)}</span>
+    ${usedOff ? `<span class="live-tile-used">${escapeHtml(t('usedOff'))}</span>` : ''}
+  `
+  item.querySelector('.live-tile-act')?.addEventListener('click', (event) => {
+    event.stopPropagation()
+    clearPendingSub()
+    paintSubBar()
+    paintLiveRosters()
+    openActions(player)
+  })
+  item.addEventListener('click', () => handleLiveTile(player, role))
+  return item
+}
+
+function clearPendingSub(): void {
+  pendingOffId = null
+}
+
+function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
+  const game = getCurrentGame()
+  if (!game) return
+  const red = playerHasRed(game, player.id)
+
+  if (role === 'field') {
+    if (red) {
+      showMessage(t('subSentOff'), 'error')
+      return
+    }
+    if (pendingOffId === player.id) {
+      clearPendingSub()
+      paintSubBar()
+      paintLiveRosters()
+      openActions(player)
+      return
+    }
+    pendingOffId = player.id
+    paintSubBar()
+    paintLiveRosters()
+    return
+  }
+
+  if (pendingOffId) {
+    const offId = pendingOffId
+    const offJersey = getCurrentTeam()?.players.find((p) => p.id === offId)?.jerseyNumber ?? ''
+    clearPendingSub()
+    const result = substituteLivePlayers(offId, player.id)
+    if (!result.ok) {
+      pendingOffId = offId
+      showMessage(subFailMessage(result.reason), 'error')
+      paintSubBar()
+      paintLiveRosters()
+      return
+    }
+    renderLiveGame()
+    showMessage(t('subDone', { off: offJersey, on: player.jerseyNumber }), 'success')
+    return
+  }
+
+  openActions(player)
+}
+
+function subFailMessage(reason?: string): string {
+  const game = getCurrentGame()
+  const cap = game ? substitutionCap(game, liveElapsedSeconds()) : null
+  if (reason === 'cannot_return') return t('subCannotReturn')
+  if (reason === 'cap_reached') return t('subCapReached', { cap: cap ?? 0 })
+  if (reason === 'sent_off') return t('subSentOff')
+  if (reason === 'unavailable_on') return t('subUnavailableOn')
+  if (reason === 'not_on_field' || reason === 'not_on_bench' || reason === 'same_player') {
+    return t('subNeedFieldThenBench')
+  }
+  return t('noGame')
 }
 
 function openActions(player: Player): void {
@@ -212,6 +337,12 @@ export function bindLiveGame(): void {
       window.dispatchEvent(new CustomEvent('sca:view-report', { detail: result.gameId }))
     }
   })
+  document.getElementById('live-sub-bar')?.addEventListener('click', (event) => {
+    if (!(event.target as HTMLElement).closest('#cancel-pending-sub')) return
+    clearPendingSub()
+    paintSubBar()
+    paintLiveRosters()
+  })
   document.getElementById('stop-period')?.addEventListener('click', () => {
     const game = getCurrentGame()
     if (!game) return
@@ -220,11 +351,28 @@ export function bindLiveGame(): void {
     periodAction = last ? 'end' : 'finish'
     const title = document.getElementById('period-finish-title')
     const msg = document.getElementById('period-finish-message')
+    const extraBtn = document.getElementById('extra-time-period')
+    const offerExtra =
+      last &&
+      game.substitutionRegulation === 'official' &&
+      !extraTimeActive(game, liveElapsedSeconds())
     if (title) title.textContent = last ? t('endGameTitle') : t('finishPeriod')
     if (msg) {
       msg.textContent = last ? t('gameFinishedAsk') : t('periodFinishedAsk')
     }
+    if (extraBtn) extraBtn.hidden = !offerExtra
     toggleDialog('period-finish-dialog', true)
+  })
+  document.getElementById('extra-time-period')?.addEventListener('click', () => {
+    toggleDialog('period-finish-dialog', false)
+    const started = startExtraTime()
+    if (!started.ok) {
+      showMessage(started.message, 'error')
+      return
+    }
+    const finished = finishCurrentPeriod()
+    showMessage(started.message, finished.ok ? 'success' : 'error')
+    renderLiveGame()
   })
   document.getElementById('cancel-period')?.addEventListener('click', () => {
     toggleDialog('period-finish-dialog', false)
@@ -307,9 +455,15 @@ export function bindLiveGame(): void {
     const counter = document.getElementById('note-char-count')
     if (counter) counter.textContent = String((event.target as HTMLTextAreaElement).value.length)
   })
-  document.getElementById('open-game-note')?.addEventListener('click', () => {
-    const text = window.prompt(t('gameNotePrompt'))
-    if (text?.trim()) commit('game_note', null, text.trim())
+  document.getElementById('open-game-note')?.addEventListener('click', async () => {
+    const text = await askPrompt({
+      title: t('gameNoteTitle'),
+      message: t('gameNotePrompt'),
+      confirmLabel: t('save'),
+      cancelLabel: t('cancel'),
+      multiline: true,
+    })
+    if (text) commit('game_note', null, text)
   })
   document.getElementById('open-action-review')?.addEventListener('click', renderActionReview)
   document.getElementById('close-action-review')?.addEventListener('click', () => {
@@ -335,12 +489,26 @@ function renderActionReview(): void {
     const row = document.createElement('div')
     row.className = 'action-review-item'
     const minute = Math.floor(action.gameSecond / 60)
-    row.innerHTML = `<span class="action-review-text">${minute}' — ${escapeHtml(player?.name ?? t('gameEvent'))} : ${actionLabel(action.actionType)}</span>`
+    const off = team?.players.find((p) => p.id === action.relatedPlayerId)
+    const text =
+      action.actionType === 'substitution'
+        ? `${minute}' — ${t('subOnFor', {
+            on: player?.name ?? t('unknownPlayer'),
+            off: off?.name ?? t('unknownPlayer'),
+          })}`
+        : `${minute}' — ${player?.name ?? t('gameEvent')} : ${actionLabel(action.actionType)}`
+    row.innerHTML = `<span class="action-review-text">${escapeHtml(text)}</span>`
     const btn = document.createElement('button')
     btn.className = 'action-remove-btn'
     btn.textContent = '✕'
-    btn.addEventListener('click', () => {
-      if (!window.confirm(t('removeActionAsk'))) return
+    btn.addEventListener('click', async () => {
+      const ok = await askConfirm({
+        title: t('removeActionTitle'),
+        message: t('removeActionAsk'),
+        confirmLabel: t('confirmDelete'),
+        cancelLabel: t('cancel'),
+      })
+      if (!ok) return
       undoLiveAction(action.id)
       renderLiveGame()
       renderActionReview()

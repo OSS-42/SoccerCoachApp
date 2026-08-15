@@ -1,6 +1,6 @@
 import { t } from '@/i18n'
 import { calculateSeasonStats } from '@/domain/stats'
-import { askConfirm } from '@/ui/confirm'
+import { askConfirm, askPrompt } from '@/ui/confirm'
 import { PLAYER_POSITIONS, type PlayerPosition } from '@/domain/types'
 import {
   addPlayerToTeam,
@@ -27,6 +27,18 @@ function selectedPlayerIds(): string[] {
   )
 }
 
+function updateSelectBar(): void {
+  const bar = document.getElementById('player-select-bar')
+  const label = document.getElementById('player-select-count')
+  if (!bar || !label) return
+  const count = selectedPlayerIds().length
+  bar.hidden = count === 0
+  label.textContent = t('selectedCount', { count })
+  document.querySelectorAll<HTMLButtonElement>('.player-action-btn').forEach((btn) => {
+    btn.disabled = count > 0
+  })
+}
+
 export function renderTeamSetup(): void {
   fillTeamSelectors()
   const team = getCurrentTeam()
@@ -34,9 +46,9 @@ export function renderTeamSetup(): void {
   if (!list) return
   if (!team || team.players.length === 0) {
     list.innerHTML = `<div class="empty-state">${t('noPlayers')}</div>`
+    updateSelectBar()
     return
   }
-  const anyChecked = selectedPlayerIds().length > 0
   list.innerHTML = ''
   for (const player of [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)) {
     const item = document.createElement('div')
@@ -50,7 +62,7 @@ export function renderTeamSetup(): void {
         </div>
       </div>
       <div class="player-actions">
-        <button class="player-action-btn" data-edit="${player.id}" ${anyChecked ? 'disabled' : ''}>
+        <button class="player-action-btn" data-edit="${player.id}">
           <span class="material-icons">edit</span>
         </button>
         <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" />
@@ -58,6 +70,7 @@ export function renderTeamSetup(): void {
     `
     list.appendChild(item)
   }
+  updateSelectBar()
 }
 
 function renderStats(): void {
@@ -260,16 +273,27 @@ export function bindTeamSetup(): void {
     const result = renameTeam((document.getElementById('team-name-input') as HTMLInputElement).value)
     showMessage(result.message, result.ok ? 'success' : 'error')
   })
-  document.getElementById('add-team-btn')?.addEventListener('click', () => {
-    const name = window.prompt(t('newTeamPrompt'))
+  document.getElementById('add-team-btn')?.addEventListener('click', async () => {
+    const name = await askPrompt({
+      title: t('addTeamTitle'),
+      message: t('newTeamPrompt'),
+      confirmLabel: t('add'),
+      cancelLabel: t('cancel'),
+    })
     if (!name) return
     const result = addTeam(name)
     showMessage(result.message, result.ok ? 'success' : 'error')
   })
-  document.getElementById('delete-team-btn')?.addEventListener('click', () => {
+  document.getElementById('delete-team-btn')?.addEventListener('click', async () => {
     const team = getCurrentTeam()
     if (!team) return
-    if (!window.confirm(t('deleteTeamAsk', { name: team.name }))) return
+    const ok = await askConfirm({
+      title: t('deleteTeamTitle'),
+      message: t('deleteTeamAsk', { name: team.name }),
+      confirmLabel: t('confirmDelete'),
+      cancelLabel: t('cancel'),
+    })
+    if (!ok) return
     const result = deleteCurrentTeam()
     showMessage(result.message, result.ok ? 'success' : 'error')
   })
@@ -288,25 +312,28 @@ export function bindTeamSetup(): void {
     fillPositionSelect(document.getElementById('edit-position') as HTMLSelectElement, player.position)
     toggleDialog('edit-player-dialog', true)
   })
-  document.getElementById('players-list')?.addEventListener('change', async (event) => {
+  document.getElementById('players-list')?.addEventListener('change', (event) => {
     if (!(event.target as HTMLElement).classList.contains('player-checkbox')) return
+    updateSelectBar()
+  })
+  document.getElementById('player-select-cancel')?.addEventListener('click', () => {
+    document.querySelectorAll<HTMLInputElement>('.player-checkbox').forEach((box) => {
+      box.checked = false
+    })
+    updateSelectBar()
+  })
+  document.getElementById('player-select-delete')?.addEventListener('click', async () => {
     const ids = selectedPlayerIds()
-    if (!ids.length) {
-      renderTeamSetup()
-      return
-    }
+    if (!ids.length) return
     const ok = await askConfirm({
       title: t('confirmDeleteTitle'),
       message: t('deletePlayersAsk', { count: ids.length }),
       confirmLabel: t('confirmDelete'),
       cancelLabel: t('cancel'),
     })
-    if (ok) {
-      const result = deletePlayers(ids)
-      showMessage(result.message, result.ok ? 'success' : 'error')
-    } else {
-      renderTeamSetup()
-    }
+    if (!ok) return
+    const result = deletePlayers(ids)
+    showMessage(result.message, result.ok ? 'success' : 'error')
   })
   document.getElementById('cancel-edit-player')?.addEventListener('click', () => {
     toggleDialog('edit-player-dialog', false)

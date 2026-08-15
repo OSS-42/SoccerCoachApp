@@ -1,4 +1,5 @@
 import { newId } from './ids'
+import { regulationFor } from './substitutions'
 import type { FormationSpot, Game, MatchType, Team } from './types'
 
 export type NewGameInput = {
@@ -11,6 +12,7 @@ export type NewGameInput = {
   substitutionMinutes: number
   formation: FormationSpot[]
   unavailablePlayers: string[]
+  official11?: boolean
 }
 
 export function createGame(team: Team, input: NewGameInput): Game {
@@ -41,6 +43,8 @@ export function createGame(team: Team, input: NewGameInput): Game {
     periodScores: [],
     useSubstitutionTimer: input.useSubstitutionTimer,
     substitutionSeconds: Math.max(1, input.substitutionMinutes) * 60,
+    substitutionRegulation: regulationFor(input.matchType, Boolean(input.official11)),
+    extraTime: false,
   }
 }
 

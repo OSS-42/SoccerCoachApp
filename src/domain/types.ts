@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.0.1'
+export const APP_VERSION = '2.1.0'
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
@@ -74,6 +74,9 @@ export type ActionType =
   | 'late_to_game'
   | 'note'
   | 'game_note'
+  | 'substitution'
+
+export type SubstitutionRegulation = 'rolling' | 'official'
 
 export type GameAction = {
   id: string
@@ -82,6 +85,8 @@ export type GameAction = {
   gameSecond: number
   timestamp: string
   noteText?: string
+  /** Player leaving the field when actionType is substitution. */
+  relatedPlayerId?: string
 }
 
 export type Player = {
@@ -124,6 +129,9 @@ export type Game = {
   periodScores: PeriodScore[]
   useSubstitutionTimer: boolean
   substitutionSeconds: number
+  /** Youth + friendly 11v11 = rolling returns. Official 11v11 = one-way, capped. */
+  substitutionRegulation: SubstitutionRegulation
+  extraTime: boolean
 }
 
 export type ClockState = {

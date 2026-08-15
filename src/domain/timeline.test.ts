@@ -24,6 +24,8 @@ function game(actions: Game['actions']): Game {
     periodScores: [],
     useSubstitutionTimer: false,
     substitutionSeconds: 360,
+    substitutionRegulation: 'rolling',
+    extraTime: false,
   }
 }
 

@@ -21,6 +21,35 @@
   margin: 10px auto 0;
 }
 
+.player-select-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+  margin-top: 12px;
+  background: #1e2937;
+  color: #fff;
+  border-radius: 10px;
+}
+
+.player-select-bar[hidden] {
+  display: none !important;
+}
+
+.player-select-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.player-select-actions .secondary-btn,
+.player-select-actions .primary-btn {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
 html,
 body {
   max-width: 100%;

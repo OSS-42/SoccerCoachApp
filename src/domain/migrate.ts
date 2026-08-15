@@ -13,6 +13,7 @@ import {
   type GameAction,
   type MatchType,
   type Player,
+  type SubstitutionRegulation,
   type PlayerPosition,
   type Team,
 } from './types'
@@ -35,6 +36,7 @@ const ACTION_ALIASES: Record<string, ActionType> = {
   late_to_game: 'late_to_game',
   note: 'note',
   game_note: 'game_note',
+  substitution: 'substitution',
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -97,7 +99,12 @@ function migrateAction(raw: unknown, index: number): GameAction | null {
     gameSecond: second,
     timestamp: asString(rec.timestamp, new Date().toISOString()),
     noteText: rec.noteText ? asString(rec.noteText) : undefined,
+    relatedPlayerId: rec.relatedPlayerId ? asString(rec.relatedPlayerId) : undefined,
   }
+}
+
+function asRegulation(value: unknown): SubstitutionRegulation | null {
+  return value === 'official' || value === 'rolling' ? value : null
 }
 
 function migrateFormation(raw: unknown): FormationSpot[] {
@@ -154,6 +161,8 @@ function migrateGame(raw: unknown, index: number): Game | null {
       : [],
     useSubstitutionTimer: asBool(rec.useSubstitutionTimer, false),
     substitutionSeconds: asNumber(rec.substitutionSeconds, 6 * 60),
+    substitutionRegulation: asRegulation(rec.substitutionRegulation) ?? 'rolling',
+    extraTime: asBool(rec.extraTime, false),
   }
 }
 

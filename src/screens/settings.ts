@@ -20,6 +20,7 @@ async function hardRefresh(): Promise<void> {
 import { applyDomTranslations, getLocale, isLocale } from '@/i18n'
 import { t } from '@/i18n'
 import { getCurrentTeam, getSave, importIntoCurrentTeam, resetAllData, setDefaultSubstitution, setLanguage } from '@/state/store'
+import { askConfirm } from '@/ui/confirm'
 import { parseImportJson } from '@/lib/storage'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
@@ -81,13 +82,28 @@ export function bindSettings(): void {
       showMessage(parsed.error, 'error')
       return
     }
-    if (!window.confirm(t('importReplace'))) return
+    const ok = await askConfirm({
+      title: t('importTitle'),
+      message: t('importReplace'),
+      confirmLabel: t('confirm'),
+      cancelLabel: t('cancel'),
+    })
+    if (!ok) {
+      ;(event.target as HTMLInputElement).value = ''
+      return
+    }
     const result = importIntoCurrentTeam(parsed)
     showMessage(result.message, result.ok ? 'success' : 'error')
     ;(event.target as HTMLInputElement).value = ''
   })
-  document.getElementById('clear-all-data')?.addEventListener('click', () => {
-    if (!window.confirm(t('clearAllAsk'))) return
+  document.getElementById('clear-all-data')?.addEventListener('click', async () => {
+    const ok = await askConfirm({
+      title: t('clearAllTitle'),
+      message: t('clearAllAsk'),
+      confirmLabel: t('confirmDelete'),
+      cancelLabel: t('cancel'),
+    })
+    if (!ok) return
     resetAllData()
     applyDomTranslations()
     showMessage(t('dataCleared'), 'success')

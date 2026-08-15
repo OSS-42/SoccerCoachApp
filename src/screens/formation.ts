@@ -1,4 +1,5 @@
 import { t } from '@/i18n'
+import { askConfirm } from '@/ui/confirm'
 import { benchSlotCount, fieldSpotDefs, filterDefaultFormation, validateFormation } from '@/domain/formation'
 import type { FormationSpot } from '@/domain/types'
 import { getCurrentTeam, pauseClock, startPreparedGame } from '@/state/store'
@@ -200,11 +201,16 @@ export function bindFormation(): void {
       paintSlot(empty, playerId, meta.name, meta.jersey)
     }
   })
-  document.getElementById('back-from-formation')?.addEventListener('click', () => {
-    if (window.confirm(t('leaveFormation'))) {
-      clearGameDraft()
-      showScreen('game-setup')
-    }
+  document.getElementById('back-from-formation')?.addEventListener('click', async () => {
+    const ok = await askConfirm({
+      title: t('leaveFormationTitle'),
+      message: t('leaveFormation'),
+      confirmLabel: t('confirm'),
+      cancelLabel: t('cancel'),
+    })
+    if (!ok) return
+    clearGameDraft()
+    showScreen('game-setup')
   })
   document.getElementById('start-from-formation')?.addEventListener('click', () => {
     const draft = getGameDraft()

@@ -1,6 +1,7 @@
 import { applyAction, createAction, revertAction } from '@/domain/actions'
 import { commitWallClock, finishPeriodElapsed, wallElapsed, wallSubRemaining } from '@/domain/clock'
 import { createGame, completeGame, capturePeriodScore } from '@/domain/game'
+import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
 import { freshSave } from '@/domain/migrate'
 import {
@@ -248,6 +249,41 @@ export function undoLiveAction(actionId: string): { ok: boolean } {
   state = { ...state, currentGame: revertAction(state.currentGame, actionId) }
   persist()
   return { ok: true }
+}
+
+export function substituteLivePlayers(
+  offId: string,
+  onId: string,
+): { ok: boolean; reason?: string } {
+  if (!state.currentGame) return { ok: false, reason: 'no_game' }
+  const elapsed = wallElapsed(state.clock)
+  const result = applySubstitution(state.currentGame, offId, onId, elapsed)
+  if (!result.ok) return { ok: false, reason: result.reason }
+  const clock = commitWallClock(state.clock)
+  state = {
+    ...state,
+    currentGame: { ...result.game, elapsedSeconds: elapsed },
+    clock: {
+      ...clock,
+      subRemaining: clock.subDuration,
+      subRunning: clock.running && clock.useSubstitutionTimer,
+    },
+  }
+  persist()
+  return { ok: true }
+}
+
+export function startExtraTime(): { ok: boolean; message: string } {
+  const game = state.currentGame
+  if (!game) return { ok: false, message: t('noGame') }
+  if (game.substitutionRegulation !== 'official') {
+    return { ok: false, message: t('noGame') }
+  }
+  if (game.extraTime) return { ok: false, message: t('extraTimeAlready') }
+  const next = unlockExtraTime(game)
+  state = { ...state, currentGame: next }
+  persist()
+  return { ok: true, message: t('extraTimeStarted') }
 }
 
 export function liveElapsedSeconds(): number {

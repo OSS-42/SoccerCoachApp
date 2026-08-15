@@ -39,3 +39,70 @@ export function askConfirm(options: {
     dialog.addEventListener('click', onBackdrop)
   })
 }
+
+export function askPrompt(options: {
+  title: string
+  message?: string
+  placeholder?: string
+  confirmLabel: string
+  cancelLabel: string
+  multiline?: boolean
+}): Promise<string | null> {
+  const dialog = document.getElementById('app-prompt-dialog')
+  const title = document.getElementById('app-prompt-title')
+  const message = document.getElementById('app-prompt-message')
+  const input = document.getElementById('app-prompt-input') as HTMLInputElement | null
+  const area = document.getElementById('app-prompt-area') as HTMLTextAreaElement | null
+  const okBtn = document.getElementById('app-prompt-ok')
+  const cancelBtn = document.getElementById('app-prompt-cancel')
+  if (!dialog || !title || !okBtn || !cancelBtn || !input || !area) {
+    return Promise.resolve(window.prompt(options.message ?? options.title))
+  }
+
+  title.textContent = options.title
+  if (message) {
+    message.textContent = options.message ?? ''
+    message.hidden = !options.message
+  }
+  const field = options.multiline ? area : input
+  const hidden = options.multiline ? input : area
+  hidden.hidden = true
+  field.hidden = false
+  field.value = ''
+  field.placeholder = options.placeholder ?? ''
+  okBtn.textContent = options.confirmLabel
+  cancelBtn.textContent = options.cancelLabel
+  toggleDialog('app-prompt-dialog', true)
+  window.setTimeout(() => field.focus(), 50)
+
+  return new Promise((resolve) => {
+    const finish = (value: string | null) => {
+      okBtn.removeEventListener('click', onOk)
+      cancelBtn.removeEventListener('click', onCancel)
+      field.removeEventListener('keydown', onKey)
+      dialog.removeEventListener('click', onBackdrop)
+      toggleDialog('app-prompt-dialog', false)
+      resolve(value)
+    }
+    const onOk = () => {
+      const text = field.value.trim()
+      finish(text || null)
+    }
+    const onCancel = () => finish(null)
+    const onKey = (event: Event) => {
+      const key = (event as KeyboardEvent).key
+      if (key === 'Enter' && !options.multiline) {
+        event.preventDefault()
+        onOk()
+      }
+      if (key === 'Escape') onCancel()
+    }
+    const onBackdrop = (event: Event) => {
+      if (event.target === dialog) finish(null)
+    }
+    okBtn.addEventListener('click', onOk)
+    cancelBtn.addEventListener('click', onCancel)
+    field.addEventListener('keydown', onKey)
+    dialog.addEventListener('click', onBackdrop)
+  })
+}

@@ -36,6 +36,8 @@ describe('migrateUnknown', () => {
     expect(save.currentGame?.opponentName).toBe('FOXES')
     expect(save.currentGame?.formation).toHaveLength(1)
     expect(save.currentGame?.actions[0].actionType).toBe('goal')
+    expect(save.currentGame?.substitutionRegulation).toBe('rolling')
+    expect(save.currentGame?.extraTime).toBe(false)
     expect(save.clock.running).toBe(false)
     expect(save.teams[1].players[0].name).toBe('ALEX')
     expect(save.teams.some((t) => t.name === 'DEMO TEAM' && t.players.length === 23)).toBe(true)
@@ -63,5 +65,41 @@ describe('migrateUnknown', () => {
     })
     const types = save.teams[0].games[0].actions.map((a) => a.actionType)
     expect(types).toEqual(['fault', 'goal_allowed'])
+  })
+
+  it('keeps official substitution data on a saved game', () => {
+    const save = migrateUnknown({
+      teams: [
+        {
+          id: 't1',
+          name: 'A',
+          players: [],
+          games: [
+            {
+              id: 'g',
+              matchType: '11v11',
+              substitutionRegulation: 'official',
+              extraTime: true,
+              actions: [
+                {
+                  actionType: 'substitution',
+                  playerId: 'p2',
+                  relatedPlayerId: 'p1',
+                  gameSecond: 600,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    const game = save.teams[0].games[0]
+    expect(game.substitutionRegulation).toBe('official')
+    expect(game.extraTime).toBe(true)
+    expect(game.actions[0]).toMatchObject({
+      actionType: 'substitution',
+      playerId: 'p2',
+      relatedPlayerId: 'p1',
+    })
   })
 })

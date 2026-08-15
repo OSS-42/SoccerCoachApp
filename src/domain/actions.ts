@@ -1,4 +1,5 @@
 import { newId } from './ids'
+import { revertSubstitutionSwap } from './substitutions'
 import { emptyLiveStats, type ActionType, type Game, type GameAction, type LiveStats } from './types'
 
 export const ACTION_LABELS: Record<ActionType, string> = {
@@ -16,13 +17,14 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   late_to_game: 'Late to Game',
   note: 'Note',
   game_note: 'Game Note',
+  substitution: 'Substitution',
 }
 
 export function createAction(
   actionType: ActionType,
   playerId: string | null,
   gameSecond: number,
-  extra: { noteText?: string } = {},
+  extra: { noteText?: string; relatedPlayerId?: string } = {},
 ): GameAction {
   return {
     id: newId('act'),
@@ -134,12 +136,15 @@ export function applyAction(game: Game, action: GameAction): Game {
 }
 
 export function revertAction(game: Game, actionId: string): Game {
+  const removed = game.actions.find((a) => a.id === actionId)
   const actions = game.actions.filter((a) => a.id !== actionId)
   const score = scoreFromActions(actions)
-  return {
+  const next: Game = {
     ...game,
     actions,
     homeScore: score.home,
     awayScore: score.away,
   }
+  if (removed?.actionType === 'substitution') return revertSubstitutionSwap(next, removed)
+  return next
 }
