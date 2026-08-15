@@ -56,6 +56,11 @@ const LIVE_ACTIONS: { type: ActionType; emoji: string }[] = [
   { type: 'note', emoji: '📝' },
 ]
 
+const BENCH_ACTIONS: { type: ActionType; emoji: string }[] = [
+  { type: 'yellow_card', emoji: '🟨' },
+  { type: 'red_card', emoji: '🟥' },
+]
+
 function availablePlayers(excludeId?: string | null): Player[] {
   const team = getCurrentTeam()
   const game = getCurrentGame()
@@ -214,7 +219,7 @@ function liveTile(player: Player, role: 'field' | 'bench', usedOff: boolean): HT
     clearPendingSub()
     paintSubBar()
     paintLiveRosters()
-    openActions(player)
+    openActions(player, role)
   })
   item.addEventListener('click', () => handleLiveTile(player, role))
   return item
@@ -238,7 +243,7 @@ function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
       clearPendingSub()
       paintSubBar()
       paintLiveRosters()
-      openActions(player)
+      openActions(player, 'field')
       return
     }
     pendingOffId = player.id
@@ -264,7 +269,7 @@ function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
     return
   }
 
-  openActions(player)
+  openActions(player, 'bench')
 }
 
 function subFailMessage(reason?: string): string {
@@ -280,7 +285,7 @@ function subFailMessage(reason?: string): string {
   return t('noGame')
 }
 
-function openActions(player: Player): void {
+function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
   const game = getCurrentGame()
   if (!game) return
   const stats = statsFromActions(game.actions, player.id)
@@ -291,12 +296,15 @@ function openActions(player: Player): void {
   pendingPlayer = player
   const name = document.getElementById('action-player-name')
   if (name) name.textContent = player.name
+  const actions = role === 'bench' ? BENCH_ACTIONS : LIVE_ACTIONS
   const buttons = document.getElementById('action-buttons')
   if (buttons) {
-    buttons.innerHTML = LIVE_ACTIONS.map(
-      (action) =>
-        `<button class="action-btn" data-action="${action.type}"><span class="stat-emoji">${action.emoji}</span> ${actionLabel(action.type)}</button>`,
-    ).join('')
+    buttons.innerHTML = actions
+      .map(
+        (action) =>
+          `<button class="action-btn" data-action="${action.type}"><span class="stat-emoji">${action.emoji}</span> ${actionLabel(action.type)}</button>`,
+      )
+      .join('')
   }
   toggleDialog('player-action-dialog', true)
 }

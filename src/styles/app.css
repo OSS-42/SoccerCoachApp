@@ -181,13 +181,19 @@ body {
     width: 100%;
 }
 
+#formation-setup.screen.active {
+    overflow: hidden;
+}
+
 /* Specific to formation setup */
 #formation-setup .content {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
     max-width: none; /* Remove any width restrictions */
+    min-height: 0;
+    flex: 1;
 }
 
 /* Mobile screens (≤600px) */
@@ -1446,7 +1452,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 56px;
+    max-width: 100%;
     margin-top: 2px;
     pointer-events: none;
     display: block;
@@ -2540,6 +2546,7 @@ button.no-assist-btn {
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    min-width: 0;
     width: 100%;
     height: 100%;
     background: #ffffff;
@@ -2671,8 +2678,9 @@ button.no-assist-btn {
     /* BENCH PLAYERS - LEFT COLUMN ON MOBILE */
     .bench-players {
         order: 1;
-        width: 45px;
-        flex: 0 0 45px;
+        width: 56px;
+        flex: 0 0 56px;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
@@ -2700,8 +2708,10 @@ button.no-assist-btn {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        overflow-x: hidden;
         overflow-y: auto;
         flex: 1;
+        min-height: 0;
         -webkit-overflow-scrolling: touch;
     }
     
@@ -2715,8 +2725,8 @@ button.no-assist-btn {
     }
     
     .bench-slot {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         border: 2px dashed #4caf50;
         border-radius: 3px;
         display: flex;
@@ -2746,8 +2756,9 @@ button.no-assist-btn {
     /* UNAVAILABLE PLAYERS - RIGHT COLUMN ON MOBILE */
     .unavailable-players {
         order: 3;
-        width: 45px;
-        flex: 0 0 45px;
+        width: 56px;
+        flex: 0 0 56px;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
@@ -2775,8 +2786,10 @@ button.no-assist-btn {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        overflow-x: hidden;
         overflow-y: auto;
         flex: 1;
+        min-height: 0;
         -webkit-overflow-scrolling: touch;
     }
     
@@ -2790,8 +2803,8 @@ button.no-assist-btn {
     }
     
     .unavailable-slot {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
         border: 2px dashed #e53935;
         border-radius: 3px;
         display: flex;
@@ -2886,7 +2899,8 @@ button.no-assist-btn {
         border: 2px solid #81c784;
         flex: 0 0 auto;
         max-height: 120px;
-        overflow-y: auto;
+        min-width: 0;
+        overflow: hidden;
         -webkit-overflow-scrolling: touch;
         align-items: center;
     }
@@ -2911,7 +2925,10 @@ button.no-assist-btn {
         flex-wrap: wrap;
         overflow: auto;
         flex: 1;
-        align-content: center;
+        min-width: 0;
+        min-height: 0;
+        max-height: 96px;
+        align-content: flex-start;
         -webkit-overflow-scrolling: touch;
     }
     
@@ -2925,8 +2942,8 @@ button.no-assist-btn {
     }
     
     .bench-slot {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border: 2px dashed #4caf50;
         border-radius: 4px;
         display: flex;
@@ -2986,7 +3003,8 @@ button.no-assist-btn {
         border: 2px solid #ef9a9a;
         flex: 0 0 auto;
         max-height: 120px;
-        overflow-y: auto;
+        min-width: 0;
+        overflow: hidden;
         -webkit-overflow-scrolling: touch;
         align-items: center;
     }
@@ -3011,7 +3029,10 @@ button.no-assist-btn {
         flex-wrap: wrap;
         overflow: auto;
         flex: 1;
-        align-content: center;
+        min-width: 0;
+        min-height: 0;
+        max-height: 96px;
+        align-content: flex-start;
         -webkit-overflow-scrolling: touch;
     }
     
@@ -3025,8 +3046,8 @@ button.no-assist-btn {
     }
     
     .unavailable-slot {
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         border: 2px dashed #e53935;
         border-radius: 4px;
         display: flex;
@@ -3098,8 +3119,8 @@ button.no-assist-btn {
 /* Player slot on field - SINGLE SOURCE OF TRUTH */
 .player-slot {
     position: absolute;
-    width: 58px;
-    height: 64px;
+    width: 52px;
+    height: 52px;
     border-radius: 4px;
     cursor: pointer;
     user-select: none;
@@ -3174,10 +3195,10 @@ button.no-assist-btn {
 
 /* Player number placed on field */
 .player-number-placed {
-    width: 52px;
-    height: 58px;
-    max-width: 52px;
-    max-height: 58px;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     aspect-ratio: 1;
     text-align: center;
     background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
@@ -3297,6 +3318,20 @@ button.no-assist-btn {
     z-index: 1001;
     box-shadow: 0 0 16px rgba(76, 175, 80, 0.8) !important;
     background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+}
+
+.bench-slot .player-number,
+.unavailable-slot .player-number {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    box-sizing: border-box;
+}
+
+.bench-slot,
+.unavailable-slot {
+    box-sizing: border-box;
 }
 
 /* ============================================================================
