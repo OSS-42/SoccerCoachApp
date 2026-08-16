@@ -1,0 +1,381 @@
+/* Dark/light neumorphism. Highlight is never pure white in dark mode. */
+
+:root,
+html[data-theme='dark'] {
+  --neu-bg: #2a2d32;
+  --neu-bg-2: #32363c;
+  --neu-text: #e8eaed;
+  --neu-muted: #9aa3ad;
+  --neu-light: #34383e;
+  --neu-dark: #1c1e21;
+  --neu-accent: #6aa7ff;
+  --neu-accent-2: #4d8eef;
+  --neu-danger: #ef6b6b;
+  --neu-ok: #5dce8a;
+  --neu-radius: 16px;
+  --neu-raised: 6px 6px 14px var(--neu-dark), -6px -6px 14px var(--neu-light);
+  --neu-raised-sm: 4px 4px 8px var(--neu-dark), -4px -4px 8px var(--neu-light);
+  --neu-pressed: inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light);
+}
+
+html[data-theme='light'] {
+  --neu-bg: #e0e5ec;
+  --neu-bg-2: #e8edf3;
+  --neu-text: #2c3340;
+  --neu-muted: #5d6775;
+  --neu-light: #ffffff;
+  --neu-dark: #a3b1c6;
+  --neu-accent: #3b82f6;
+  --neu-accent-2: #2563eb;
+  --neu-danger: #dc4c4c;
+  --neu-ok: #2f9e5f;
+  --neu-raised: 7px 7px 14px var(--neu-dark), -7px -7px 14px var(--neu-light);
+  --neu-raised-sm: 4px 4px 8px var(--neu-dark), -4px -4px 8px var(--neu-light);
+  --neu-pressed: inset 4px 4px 10px var(--neu-dark), inset -4px -4px 10px var(--neu-light);
+}
+
+html[data-theme] body,
+html[data-theme] #app,
+html[data-theme] .screen {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+}
+
+html[data-theme] .app-header {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .app-header h1,
+html[data-theme] .back-btn,
+html[data-theme] .app-header .action-btn {
+  color: var(--neu-text);
+}
+
+html[data-theme] .app-header .action-btn.white-btn,
+html[data-theme] .app-header .action-btn.white-btn:hover,
+html[data-theme] .app-header .action-btn.white-btn:active {
+  background: var(--neu-bg);
+  background-image: none;
+  color: var(--neu-accent);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .app-header .action-btn.white-btn .material-icons {
+  color: var(--neu-accent);
+}
+
+html[data-theme] .team-name-banner {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  box-shadow: var(--neu-pressed);
+}
+
+html[data-theme] .team-name-banner h2,
+html[data-theme] .team-name-banner .team-selector select {
+  color: var(--neu-text);
+}
+
+html[data-theme] .team-name-banner .team-selector select,
+html[data-theme] .form-group input,
+html[data-theme] .form-group select,
+html[data-theme] .form-group textarea,
+html[data-theme] textarea,
+html[data-theme] select,
+html[data-theme] input[type='text'],
+html[data-theme] input[type='number'],
+html[data-theme] input[type='date'] {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  border: none;
+  border-radius: 12px;
+  box-shadow: var(--neu-pressed);
+}
+
+html[data-theme] .menu-btn,
+html[data-theme] .primary-btn,
+html[data-theme] .secondary-btn,
+html[data-theme] .control-btn {
+  background: var(--neu-bg);
+  background-image: none;
+  color: var(--neu-text);
+  border: none;
+  border-radius: var(--neu-radius);
+  box-shadow: var(--neu-raised);
+  text-transform: none;
+}
+
+html[data-theme] .menu-btn:hover,
+html[data-theme] .primary-btn:hover,
+html[data-theme] .secondary-btn:hover,
+html[data-theme] .control-btn:hover {
+  background: var(--neu-bg-2);
+  background-image: none;
+  transform: none;
+}
+
+html[data-theme] .menu-btn:active,
+html[data-theme] .primary-btn:active,
+html[data-theme] .secondary-btn:active,
+html[data-theme] .control-btn:active {
+  box-shadow: var(--neu-pressed);
+  transform: none;
+}
+
+html[data-theme] .primary-btn,
+html[data-theme] #start-new-game-btn,
+html[data-theme] #start-from-formation {
+  color: var(--neu-accent);
+}
+
+html[data-theme] .player-counter,
+html[data-theme] .game-report-counter,
+html[data-theme] .player-counter-team {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  border: none;
+  border-radius: 14px;
+  box-shadow: var(--neu-pressed);
+}
+
+html[data-theme] .player-item,
+html[data-theme] .report-item,
+html[data-theme] .settings-group,
+html[data-theme] .dialog-content,
+html[data-theme] .player-select-bar,
+html[data-theme] .tips-list {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  border: none;
+  border-radius: var(--neu-radius);
+  box-shadow: var(--neu-raised);
+}
+
+html[data-theme] .tips-list {
+  color: var(--neu-text);
+  box-shadow: none;
+}
+
+html[data-theme] #team-setup .player-name {
+  color: var(--neu-text);
+}
+
+html[data-theme] #team-setup .player-position {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .jersey-number {
+  background: var(--neu-bg);
+  color: var(--neu-accent);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .player-action-btn {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .form-group label,
+html[data-theme] .form-label,
+html[data-theme] .settings-group h2 {
+  color: var(--neu-text);
+}
+
+html[data-theme] .form-hint,
+html[data-theme] .settings-version,
+html[data-theme] .settings-reload-hint,
+html[data-theme] .version-footer {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .regulation-option {
+  background: var(--neu-bg);
+  border: none;
+  box-shadow: var(--neu-raised-sm);
+  color: var(--neu-text);
+}
+
+html[data-theme] .form-group .regulation-option:has(input:checked) {
+  background: var(--neu-bg);
+  box-shadow: var(--neu-pressed);
+  color: var(--neu-accent);
+}
+
+html[data-theme] .dialog {
+  background: rgba(16, 18, 20, 0.55);
+}
+
+html[data-theme] .empty-state,
+html[data-theme] .no-stats-message {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .live-scoreboard,
+html[data-theme] #game-tracking .game-header {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .live-team-name,
+html[data-theme] .live-score,
+html[data-theme] .live-score-sep,
+html[data-theme] #game-tracking .game-time,
+html[data-theme] #game-tracking .period-counter,
+html[data-theme] #game-tracking #live-sub-count-value {
+  color: var(--neu-text);
+}
+
+html[data-theme] .live-meta-label,
+html[data-theme] #game-tracking .timer-label {
+  color: var(--neu-muted);
+}
+
+html[data-theme] #game-tracking .player-grid-item {
+  background: var(--neu-bg);
+  border: none;
+  border-radius: 18px;
+  box-shadow: var(--neu-raised-sm);
+  color: var(--neu-text);
+}
+
+html[data-theme] #game-tracking .player-grid-item.starter {
+  background: var(--neu-bg);
+  border-left: 0;
+}
+
+html[data-theme] #game-tracking .player-grid-item.substitute {
+  background: var(--neu-bg);
+  border-left: 0;
+}
+
+html[data-theme] #game-tracking .player-grid-item.sub-selected {
+  box-shadow: var(--neu-pressed);
+}
+
+html[data-theme] #game-tracking .player-grid-item.sub-target {
+  box-shadow: var(--neu-raised), 0 0 0 1px var(--neu-accent);
+}
+
+html[data-theme] #game-tracking .live-tile-name,
+html[data-theme] #game-tracking .live-tile-num {
+  color: var(--neu-text);
+}
+
+html[data-theme] #game-tracking .player-grid-item.yellow-card {
+  background: #3d3820;
+}
+
+html[data-theme] #game-tracking .player-grid-item.red-card {
+  background: #3d2326;
+}
+
+html[data-theme] .live-roster-section h3 {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .bench-players,
+html[data-theme] .unavailable-players {
+  background: var(--neu-bg);
+  border: none;
+  box-shadow: var(--neu-pressed);
+}
+
+html[data-theme] .bench-players h4,
+html[data-theme] .unavailable-players h4 {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .bench-slot,
+html[data-theme] .unavailable-slot,
+html[data-theme] .player-slot:not(.occupied) {
+  background: var(--neu-bg);
+  box-shadow: var(--neu-pressed);
+}
+
+html[data-theme] .player-number,
+html[data-theme] .player-number-placed {
+  background: var(--neu-bg);
+  background-image: none;
+  color: var(--neu-text);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .formation-container,
+html[data-theme] .content.formation-content {
+  background: var(--neu-bg);
+}
+
+html[data-theme] .season-stats-table thead th,
+html[data-theme] .season-stats-table thead .stat-pin,
+html[data-theme] .season-stats-table thead .stat-name {
+  background: var(--neu-bg-2);
+  color: var(--neu-text);
+  border-color: var(--neu-dark);
+}
+
+html[data-theme] .season-stats-table tbody td,
+html[data-theme] .season-stats-table tfoot td {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  border-color: var(--neu-dark);
+}
+
+html[data-theme] .season-stats-table tbody tr:nth-child(even) td {
+  background: var(--neu-bg-2);
+}
+
+html[data-theme] .season-stats-table .stat-num {
+  color: var(--neu-text);
+}
+
+html[data-theme] .season-stats-table .stat-num.is-zero {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .season-stats-table .stat-jersey {
+  background: var(--neu-bg);
+  color: var(--neu-accent);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .goals-cards-item,
+html[data-theme] .report-header-score,
+html[data-theme] .report-table-container {
+  background: var(--neu-bg);
+  color: var(--neu-text);
+  box-shadow: var(--neu-raised-sm);
+  border-radius: 14px;
+}
+
+html[data-theme] .report-table {
+  color: var(--neu-text);
+}
+
+html[data-theme] .danger-btn {
+  color: var(--neu-danger);
+}
+
+html[data-theme] .message-ribbon.error {
+  background: #7a2d2d;
+}
+
+html[data-theme] .message-ribbon.success {
+  background: #245c3b;
+}
+
+html[data-theme] .setting-option {
+  color: var(--neu-text);
+}
+
+html[data-theme] .tab-btn,
+html[data-theme] .tabs button {
+  background: var(--neu-bg);
+  color: var(--neu-muted);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] .tab-btn.active {
+  color: var(--neu-accent);
+  box-shadow: var(--neu-pressed);
+}

@@ -19,7 +19,8 @@ async function hardRefresh(): Promise<void> {
 }
 import { applyDomTranslations, getLocale, isLocale } from '@/i18n'
 import { t } from '@/i18n'
-import { getCurrentTeam, getSave, importIntoCurrentTeam, resetAllData, setDefaultSubstitution, setLanguage } from '@/state/store'
+import { isTheme } from '@/lib/theme'
+import { getCurrentTeam, getSave, importIntoCurrentTeam, resetAllData, setDefaultSubstitution, setLanguage, setTheme } from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
 import { parseImportJson } from '@/lib/storage'
 import { showMessage } from '@/ui/message'
@@ -39,6 +40,10 @@ export function renderSettings(): void {
   document.querySelectorAll<HTMLInputElement>('input[name="language"]').forEach((radio) => {
     radio.checked = radio.value === current
   })
+  const theme = getSave().theme ?? 'dark'
+  document.querySelectorAll<HTMLInputElement>('input[name="theme"]').forEach((radio) => {
+    radio.checked = radio.value === theme
+  })
   const version = document.getElementById('settings-app-version')
   if (version) version.textContent = APP_VERSION
 }
@@ -49,6 +54,13 @@ export function bindSettings(): void {
       if (!isLocale(radio.value)) return
       setLanguage(radio.value)
       applyDomTranslations()
+      renderSettings()
+    })
+  })
+  document.querySelectorAll<HTMLInputElement>('input[name="theme"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      if (!isTheme(radio.value)) return
+      setTheme(radio.value)
       renderSettings()
     })
   })

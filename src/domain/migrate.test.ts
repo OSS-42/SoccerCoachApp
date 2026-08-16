@@ -8,6 +8,7 @@ describe('migrateUnknown', () => {
     expect(save.teams[0].players).toHaveLength(0)
     expect(save.teams[2].players).toHaveLength(23)
     expect(save.currentGame).toBeNull()
+    expect(save.theme).toBe('dark')
   })
 
   it('keeps the selected team and an in-progress game', () => {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -323,6 +323,21 @@
         </div>
         <div class="content">
           <div class="settings-group">
+            <h2 data-i18n="appearance">Appearance</h2>
+            <div class="setting-option">
+              <label>
+                <input type="radio" name="theme" value="dark" />
+                <span data-i18n="themeDark">Dark</span>
+              </label>
+            </div>
+            <div class="setting-option">
+              <label>
+                <input type="radio" name="theme" value="light" />
+                <span data-i18n="themeLight">Light</span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-group">
             <h2 data-i18n="language">Language</h2>
             <div class="setting-option">
               <label>
@@ -363,7 +378,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.1.6</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.2.0</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -539,7 +554,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.1.6</div>
+      <div id="version-footer" class="version-footer">v2.2.0</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

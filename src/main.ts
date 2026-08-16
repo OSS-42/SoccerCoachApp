@@ -1,5 +1,6 @@
 import './styles/app.css'
 import './styles/mobile.css'
+import './styles/theme.css'
 import { APP_VERSION } from '@/domain/types'
 import { applyDomTranslations } from '@/i18n'
 import { getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'

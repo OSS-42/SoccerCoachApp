@@ -18,6 +18,7 @@ import {
   SAVE_VERSION,
   type ActionType,
   type AppSave,
+  type AppTheme,
   type FormationSpot,
   type Game,
   type MatchType,
@@ -25,6 +26,7 @@ import {
   type Team,
 } from '@/domain/types'
 import { setLocale, t, type Locale, type MessageKey } from '@/i18n'
+import { applyTheme } from '@/lib/theme'
 import { clearSaves, loadSave, writeSave } from '@/lib/storage'
 
 type Listener = () => void
@@ -55,6 +57,7 @@ function updateCurrentTeam(mutator: (team: Team) => Team): void {
 export function hydrate(): void {
   state = loadSave()
   setLocale(state.language)
+  applyTheme(state.theme ?? 'dark')
   if (state.clock?.running && !state.clock.runningStartedAt) {
     state = {
       ...state,
@@ -67,6 +70,12 @@ export function hydrate(): void {
 export function setLanguage(language: Locale): void {
   setLocale(language)
   state = { ...state, language }
+  persist()
+}
+
+export function setTheme(theme: AppTheme): void {
+  applyTheme(theme)
+  state = { ...state, theme }
   persist()
 }
 
@@ -415,10 +424,12 @@ export function importIntoCurrentTeam(imported: AppSave): { ok: boolean; message
 
 export function resetAllData(): void {
   const language = state.language
+  const theme = state.theme
   clearSaves()
   const next = freshSave()
   setLocale(language)
-  state = { ...next, currentTeamId: DEMO_TEAM_ID, language }
+  applyTheme(theme)
+  state = { ...next, currentTeamId: DEMO_TEAM_ID, language, theme }
   persist()
 }
 
