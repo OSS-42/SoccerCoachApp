@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.2.0'
+export const APP_VERSION = '2.4.6'
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
@@ -122,6 +122,8 @@ export type Game = {
   endTime: string | null
   actions: GameAction[]
   formation: FormationSpot[]
+  /** Kickoff XI. `formation` is the live/final XI after substitutions. */
+  startingFormation: FormationSpot[]
   substitutes: string[]
   unavailablePlayers: string[]
   isCompleted: boolean

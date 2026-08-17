@@ -1,5 +1,6 @@
 import { t } from '@/i18n'
 import { statsFromActions } from '@/domain/actions'
+import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { formatClock } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
 import {
@@ -96,6 +97,30 @@ function renderGoalsCards(game: Game, players: Player[]): string {
   return `<div class="goals-cards-list">${items}</div>`
 }
 
+function renderNotes(game: Game, players: Player[]): string {
+  const notes = game.actions.filter(
+    (action) =>
+      (action.actionType === 'game_note' || action.actionType === 'note') && Boolean(action.noteText?.trim()),
+  )
+  if (!notes.length) return ''
+  const items = notes
+    .map((action) => {
+      const minute = Math.floor(action.gameSecond / 60)
+      const player = players.find((p) => p.id === action.playerId)
+      const who =
+        action.actionType === 'game_note' ? t('gameNote') : (player?.name ?? t('gameNote'))
+      return `<div class="report-note-item">
+        <span class="report-note-meta">${minute}' · ${escapeHtml(who)}</span>
+        <p class="report-note-text">${escapeHtml(action.noteText ?? '')}</p>
+      </div>`
+    })
+    .join('')
+  return `<div class="report-section report-notes">
+    <h3>${t('notes')}</h3>
+    ${items}
+  </div>`
+}
+
 export function renderReports(): void {
   fillTeamSelectors()
   const team = getCurrentTeam()
@@ -136,18 +161,54 @@ export function viewReport(gameId: string): void {
   const periodLines = periodGoalDeltas(game)
     .map((p, i) => `<div class="period-score-line">${t('periodLine', { n: i + 1, home: p.home, away: p.away })}</div>`)
     .join('')
+  const chip = (icon: string, value: number, label: string, kind = ''): string =>
+    `<div class="stat-chip ${kind} ${value === 0 ? 'is-zero' : ''}">
+      <span class="stat-chip-icon">${icon}</span>
+      <span class="stat-chip-value">${value === 0 ? '–' : value}</span>
+      <span class="stat-chip-label">${label}</span>
+    </div>`
+  const minutes = playedMinutesByPlayer(game)
   const rows = [...team.players]
     .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
     .map((player) => {
       const stats = statsFromActions(game.actions, player.id)
+      const played = minutes.get(player.id) ?? 0
       return `<tr>
         <td>${player.jerseyNumber}</td>
         <td>${escapeHtml(player.name)}</td>
+        <td>${played === 0 ? '–' : `${played}'`}</td>
         <td>${stats.goals}</td><td>${stats.assists}</td><td>${stats.saves}</td>
         <td>${stats.goalsAllowed}</td><td>${stats.shotOnGoal}</td><td>${stats.blockedShot}</td>
         <td>${stats.faults}</td><td>${stats.yellowCards}</td><td>${stats.redCards}</td>
         <td>${stats.ownGoals}</td>
       </tr>`
+    })
+    .join('')
+  const cards = [...team.players]
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+    .map((player) => {
+      const stats = statsFromActions(game.actions, player.id)
+      const played = minutes.get(player.id) ?? 0
+      return `<article class="report-stat-card">
+        <header>
+          <span class="stat-jersey">${player.jerseyNumber}</span>
+          <span class="stat-card-name">${escapeHtml(player.name)}</span>
+          <span class="stat-played">${played === 0 ? '–' : `${played}'`}</span>
+        </header>
+        <div class="stat-chip-grid">
+          ${chip('⏱', played, t('playedMinutes'))}
+          ${chip('⚽', stats.goals, t('action.goal'), 'stat-goal')}
+          ${chip('👟', stats.assists, t('action.assist'))}
+          ${chip('🧤', stats.saves, t('action.save'))}
+          ${chip('🔴', stats.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
+          ${chip('🎯', stats.shotOnGoal, t('action.shot_on_goal'))}
+          ${chip('🛡', stats.blockedShot, t('action.blocked_shot'))}
+          ${chip('🚩', stats.faults, t('action.fault'))}
+          ${chip('🟨', stats.yellowCards, t('action.yellow_card'), 'stat-yellow')}
+          ${chip('🟥', stats.redCards, t('action.red_card'), 'stat-red')}
+          ${chip('⚽', stats.ownGoals, t('ownGoalShort'))}
+        </div>
+      </article>`
     })
     .join('')
   dialog.innerHTML = `
@@ -172,12 +233,14 @@ export function viewReport(gameId: string): void {
     <div class="report-section goals-cards-section">
       ${renderGoalsCards(game, team.players)}
     </div>
+    ${renderNotes(game, team.players)}
     <h3>${t('playerStatistics')}</h3>
+    <div class="report-stat-cards">${cards}</div>
     <div class="report-table-container">
       <table class="report-table">
         <thead>
           <tr>
-            <th>#</th><th>${t('name')}</th><th>⚽</th><th>👟</th><th>🧤</th><th>GA</th>
+            <th>#</th><th>${t('name')}</th><th>${t('playedShort')}</th><th>⚽</th><th>👟</th><th>🧤</th><th>GA</th>
             <th>🎯</th><th>🛡</th><th>🚩</th><th>🟨</th><th>🟥</th><th>OG</th>
           </tr>
         </thead>
@@ -199,6 +262,11 @@ export function viewReport(gameId: string): void {
 function printReport(gameId: string): void {
   const content = document.getElementById('report-dialog-content')
   if (!content) return
+  const clone = content.cloneNode(true) as HTMLElement
+  clone.querySelector('.report-stat-cards')?.remove()
+  clone.querySelectorAll<HTMLElement>('.report-table-container').forEach((el) => {
+    el.style.display = 'block'
+  })
   const popup = window.open('', '_blank')
   if (!popup) {
     showMessage(t('popupBlocked'), 'error')
@@ -207,7 +275,7 @@ function printReport(gameId: string): void {
   popup.document.write(`<!DOCTYPE html><html><head><title>Game Report ${gameId}</title>
     <style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}
     th,td{border:1px solid #ddd;padding:6px;text-align:left}</style></head><body>
-    ${content.innerHTML}<script>window.onload=function(){window.print()}<\/script></body></html>`)
+    ${clone.innerHTML}<script>window.onload=function(){window.print()}<\/script></body></html>`)
   popup.document.close()
 }
 

@@ -103,4 +103,32 @@ describe('migrateUnknown', () => {
       relatedPlayerId: 'p1',
     })
   })
+
+  it('reconstructs the kickoff XI when startingFormation is missing', () => {
+    const save = migrateUnknown({
+      teams: [
+        {
+          id: 't1',
+          name: 'A',
+          players: [],
+          games: [
+            {
+              id: 'g',
+              elapsedSeconds: 2400,
+              formation: [{ playerId: 'p2', position: 'ST', x: 50, y: 10 }],
+              actions: [
+                {
+                  actionType: 'substitution',
+                  playerId: 'p2',
+                  relatedPlayerId: 'p1',
+                  gameSecond: 600,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    expect(save.teams[0].games[0].startingFormation.map((s) => s.playerId)).toEqual(['p1'])
+  })
 })

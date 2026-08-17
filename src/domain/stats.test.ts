@@ -22,6 +22,7 @@ function completed(partial: Partial<Game>): Game {
     endTime: '',
     actions: [],
     formation: [{ playerId: 'p1', position: 'ST-1', x: 50, y: 10 }],
+    startingFormation: [{ playerId: 'p1', position: 'ST-1', x: 50, y: 10 }],
     substitutes: ['p2'],
     unavailablePlayers: [],
     isCompleted: true,

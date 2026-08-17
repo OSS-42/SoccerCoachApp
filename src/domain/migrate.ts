@@ -1,4 +1,5 @@
 import { detectLocale, isLocale } from '@/i18n'
+import { reconstructStartingFormation } from './playingTime'
 import { createDefaultTeams, ensureDemoTeam, isPlayerPosition } from './teams'
 import {
   APP_VERSION,
@@ -134,6 +135,10 @@ function migrateGame(raw: unknown, index: number): Game | null {
   const substitutes = Array.isArray(rec.substitutes)
     ? rec.substitutes.map((id) => String(id))
     : []
+  const actions = Array.isArray(rec.actions)
+    ? rec.actions.map(migrateAction).filter((a): a is GameAction => Boolean(a))
+    : []
+  const startingSaved = migrateFormation(rec.startingFormation)
   return {
     id: asString(rec.id, `game_legacy_${index}`),
     date: asString(rec.date, new Date().toISOString().slice(0, 10)),
@@ -146,10 +151,11 @@ function migrateGame(raw: unknown, index: number): Game | null {
     awayScore: asNumber(rec.awayScore, 0),
     startTime: asString(rec.startTime, new Date().toISOString()),
     endTime: rec.endTime ? asString(rec.endTime) : null,
-    actions: Array.isArray(rec.actions)
-      ? rec.actions.map(migrateAction).filter((a): a is GameAction => Boolean(a))
-      : [],
+    actions,
     formation,
+    startingFormation: startingSaved.length
+      ? startingSaved
+      : reconstructStartingFormation(formation, actions),
     substitutes,
     unavailablePlayers: unavailable,
     isCompleted: asBool(rec.isCompleted, false),

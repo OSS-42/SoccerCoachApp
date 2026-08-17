@@ -17,6 +17,7 @@ function game(actions: Game['actions']): Game {
     endTime: '',
     actions,
     formation: [],
+    startingFormation: [],
     substitutes: [],
     unavailablePlayers: [],
     isCompleted: true,

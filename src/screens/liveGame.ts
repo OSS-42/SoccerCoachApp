@@ -70,8 +70,10 @@ function availablePlayers(excludeId?: string | null): Player[] {
   const team = getCurrentTeam()
   const game = getCurrentGame()
   if (!team || !game) return []
+  const onField = new Set(game.formation.map((spot) => spot.playerId))
   return team.players.filter((player) => {
     if (player.id === excludeId) return false
+    if (!onField.has(player.id)) return false
     if (game.unavailablePlayers.includes(player.id)) return false
     return !playerIsUnavailable(statsFromActions(game.actions, player.id))
   })
@@ -84,7 +86,7 @@ function fillPicker(containerId: string, players: Player[], onPick: (id: string)
   for (const player of players) {
     const item = document.createElement('div')
     item.className = 'player-select-item'
-    item.innerHTML = `<div class="player-select-number">${player.jerseyNumber}</div><div>${escapeHtml(player.name)}</div>`
+    item.innerHTML = `<div class="player-select-number">${player.jerseyNumber}</div><div class="player-select-name">${escapeHtml(player.name)}</div>`
     item.addEventListener('click', () => onPick(player.id))
     grid.appendChild(item)
   }
@@ -479,50 +481,70 @@ export function bindLiveGame(): void {
   })
 }
 
-function renderActionReview(): void {
+function actionReviewText(
+  action: { actionType: string; gameSecond: number; playerId: string | null; relatedPlayerId?: string; noteText?: string },
+  team: ReturnType<typeof getCurrentTeam>,
+): string {
+  const minute = Math.floor(action.gameSecond / 60)
+  const player = team?.players.find((p) => p.id === action.playerId)
+  const off = team?.players.find((p) => p.id === action.relatedPlayerId)
+  if (action.actionType === 'substitution') {
+    return `${minute}' — ${t('subOnFor', {
+      on: player?.name ?? t('unknownPlayer'),
+      off: off?.name ?? t('unknownPlayer'),
+    })}`
+  }
+  if (action.actionType === 'game_note' || action.actionType === 'note') {
+    const who = action.actionType === 'game_note' ? t('gameNote') : (player?.name ?? t('gameEvent'))
+    const note = action.noteText ? ` — ${action.noteText}` : ''
+    return `${minute}' — ${who}${note}`
+  }
+  return `${minute}' — ${player?.name ?? t('gameEvent')} : ${actionLabel(action.actionType)}`
+}
+
+function paintActionReviewList(): boolean {
   const game = getCurrentGame()
   const team = getCurrentTeam()
   const list = document.getElementById('action-review-list')
-  if (!game || !list) {
-    showMessage(t('noActionsYet'), 'error')
-    return
-  }
-  if (!game.actions.length) {
-    showMessage(t('noActionsYet'), 'error')
-    return
-  }
-  list.innerHTML = ''
-  ;[...game.actions].reverse().forEach((action) => {
-    const player = team?.players.find((p) => p.id === action.playerId)
+  if (!list) return false
+  list.replaceChildren()
+  if (!game?.actions.length) return false
+  for (const action of [...game.actions].reverse()) {
     const row = document.createElement('div')
     row.className = 'action-review-item'
-    const minute = Math.floor(action.gameSecond / 60)
-    const off = team?.players.find((p) => p.id === action.relatedPlayerId)
-    const text =
-      action.actionType === 'substitution'
-        ? `${minute}' — ${t('subOnFor', {
-            on: player?.name ?? t('unknownPlayer'),
-            off: off?.name ?? t('unknownPlayer'),
-          })}`
-        : `${minute}' — ${player?.name ?? t('gameEvent')} : ${actionLabel(action.actionType)}`
-    row.innerHTML = `<span class="action-review-text">${escapeHtml(text)}</span>`
+    row.innerHTML = `<span class="action-review-text">${escapeHtml(actionReviewText(action, team))}</span>`
     const btn = document.createElement('button')
     btn.className = 'action-remove-btn'
+    btn.type = 'button'
     btn.textContent = '✕'
-    btn.addEventListener('click', async () => {
-      const ok = await askConfirm({
-        title: t('removeActionTitle'),
-        message: t('removeActionAsk'),
-        confirmLabel: t('confirmDelete'),
-        cancelLabel: t('cancel'),
-      })
-      if (!ok) return
-      undoLiveAction(action.id)
-      renderLiveGame()
-      renderActionReview()
-    })
+    btn.addEventListener('click', () => void removeReviewedAction(action.id))
     row.appendChild(btn)
     list.appendChild(row)
+  }
+  return true
+}
+
+async function removeReviewedAction(actionId: string): Promise<void> {
+  const ok = await askConfirm({
+    title: t('removeActionTitle'),
+    message: t('removeActionAsk'),
+    confirmLabel: t('confirmDelete'),
+    cancelLabel: t('cancel'),
   })
+  if (!ok) return
+  undoLiveAction(actionId)
+  renderLiveGame()
+  if (!paintActionReviewList()) {
+    toggleDialog('action-review-dialog', false)
+    showMessage(t('noActionsYet'), 'error')
+  }
+}
+
+function renderActionReview(): void {
+  if (!paintActionReviewList()) {
+    showMessage(t('noActionsYet'), 'error')
+    toggleDialog('action-review-dialog', false)
+    return
+  }
   toggleDialog('action-review-dialog', true)
 }

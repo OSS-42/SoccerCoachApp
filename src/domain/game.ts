@@ -36,6 +36,7 @@ export function createGame(team: Team, input: NewGameInput): Game {
     endTime: null,
     actions: [],
     formation: input.formation,
+    startingFormation: input.formation.map((spot) => ({ ...spot })),
     substitutes,
     unavailablePlayers: [...unavailable],
     isCompleted: false,

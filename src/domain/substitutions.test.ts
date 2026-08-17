@@ -35,6 +35,7 @@ function game(partial: Partial<Game> = {}): Game {
     endTime: null,
     actions: [],
     formation: spots('p1', 'p2'),
+    startingFormation: spots('p1', 'p2'),
     substitutes: ['p3', 'p4'],
     unavailablePlayers: [],
     isCompleted: false,

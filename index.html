@@ -33,9 +33,6 @@
           <button class="menu-btn" id="resume-game-btn" hidden>
             <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
           </button>
-          <button class="menu-btn" id="start-new-game-btn">
-            <span class="material-icons">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
-          </button>
           <div class="menu-row">
             <button class="menu-btn" data-go="reports">
               <span class="material-icons">assessment</span> <span data-i18n="reports">Reports</span>
@@ -53,6 +50,10 @@
               <span class="material-icons">help_outline</span> <span data-i18n="tips">Tips</span>
             </button>
           </div>
+          <div class="menu-spacer" aria-hidden="true"></div>
+          <button class="menu-btn" id="start-new-game-btn">
+            <span class="material-icons">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
+          </button>
         </nav>
       </main>
 
@@ -378,7 +379,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.2.0</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.6</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -554,7 +555,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.2.0</div>
+      <div id="version-footer" class="version-footer">v2.4.6</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">
