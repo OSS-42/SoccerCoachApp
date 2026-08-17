@@ -136,11 +136,11 @@ export function renderReports(): void {
     const item = document.createElement('div')
     item.className = 'report-item'
     item.innerHTML = `
-      <div class="report-header">
+      <div class="report-meta">
         <span class="report-date">${escapeHtml(game.date)}</span>
         <span class="report-teams">${escapeHtml(team.name)} vs ${escapeHtml(game.opponentName)}</span>
-        <span class="report-score">${game.homeScore} - ${game.awayScore}</span>
       </div>
+      <span class="report-score">${game.homeScore}–${game.awayScore}</span>
       <div class="report-actions">
         <button class="secondary-btn" data-view="${game.id}">${t('viewReport')}</button>
         <button class="secondary-btn" data-print="${game.id}">${t('pdf')}</button>

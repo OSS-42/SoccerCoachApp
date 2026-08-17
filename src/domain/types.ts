@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.4.8'
+export const APP_VERSION = '2.4.9'
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
