@@ -1,7 +1,7 @@
 {
   "name": "soccer-coach-app",
   "private": true,
-  "version": "2.4.6",
+  "version": "2.4.8",
   "type": "module",
   "scripts": {
     "dev": "vite --open --host",

@@ -42,22 +42,23 @@ html[data-theme='dark'] {
 }
 
 html[data-theme='light'] {
-  --neu-bg: #f6f2ea;
-  --neu-bg-2: #ece7dd;
-  --neu-card: #fffdf8;
+  --neu-bg: #ffffff;
+  --neu-bg-2: #f3f3f3;
+  --neu-card: #ffffff;
   --neu-text: #111318;
-  --neu-muted: #6b665c;
+  --neu-muted: #5a5a5a;
   --neu-line: rgba(17, 19, 24, 0.08);
   --neu-accent: #1fa971;
   --neu-accent-2: #16875a;
   --neu-on-accent: #ffffff;
   --neu-danger: #e11d48;
   --neu-ok: #16a34a;
-  --neu-raised: 0 12px 32px rgba(40, 32, 20, 0.08);
-  --neu-raised-sm: 0 6px 16px rgba(40, 32, 20, 0.06);
-  --neu-pressed: inset 0 1px 2px rgba(40, 32, 20, 0.05), 0 0 0 1px var(--neu-line);
+  --neu-raised: 0 12px 32px rgba(17, 19, 24, 0.08);
+  --neu-raised-sm: 0 6px 16px rgba(17, 19, 24, 0.06);
+  --neu-pressed: inset 0 1px 2px rgba(17, 19, 24, 0.05), 0 0 0 1px var(--neu-line);
 }
 
+html[data-theme],
 html[data-theme] body,
 html[data-theme] #app,
 html[data-theme] .screen {
@@ -66,9 +67,26 @@ html[data-theme] .screen {
 }
 
 html[data-theme] .screen.active {
-  background:
-    radial-gradient(120% 70% at 50% -10%, var(--neu-glow), transparent 58%),
-    var(--neu-bg);
+  background: var(--neu-bg);
+}
+
+/* Same mint lamp as dark: a top light, not a green page fill. */
+html[data-theme] .screen.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(120% 70% at 50% -10%, var(--neu-glow), transparent 58%);
+}
+
+html[data-theme='light'] .screen.active::before {
+  background: radial-gradient(
+    90% 46% at 50% 0%,
+    rgba(61, 220, 151, 0.42),
+    rgba(61, 220, 151, 0.16) 38%,
+    transparent 72%
+  );
 }
 
 html[data-theme] .app-header {
@@ -110,14 +128,6 @@ html[data-theme] .team-name-banner {
   color: var(--neu-text);
   border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
-}
-
-html[data-theme] .team-name-banner h2,
-html[data-theme] .team-name-banner .team-selector select {
-  color: var(--neu-text);
-}
-
-html[data-theme] #main-screen .team-name-banner {
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -125,20 +135,31 @@ html[data-theme] #main-screen .team-name-banner {
   text-align: center;
 }
 
-html[data-theme] #main-screen .team-name-banner h2 {
+html[data-theme] .team-name-banner h2,
+html[data-theme] .team-name-banner .team-selector select {
+  color: var(--neu-text);
+}
+
+html[data-theme] .team-name-banner > div {
+  flex: 0 1 auto;
+  width: 100%;
+  justify-content: center;
+}
+
+html[data-theme] .team-name-banner h2 {
   flex: 0 0 auto;
   min-width: 0;
   width: 100%;
   text-align: center;
 }
 
-html[data-theme] #main-screen .team-name-banner .team-selector {
+html[data-theme] .team-name-banner .team-selector {
   margin: 0;
   width: 100%;
   justify-content: center;
 }
 
-html[data-theme] #main-screen .team-name-banner .team-selector select {
+html[data-theme] .team-name-banner .team-selector select {
   width: min(280px, 100%);
   text-align: center;
   text-align-last: center;
@@ -305,6 +326,9 @@ html[data-theme] #reports .content {
 }
 
 html[data-theme] #reports .report-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   background: transparent;
   color: var(--neu-text);
   border: none;
@@ -322,7 +346,9 @@ html[data-theme] #reports .report-item:last-child {
 html[data-theme] #reports .report-header {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
+  text-align: center;
 }
 
 html[data-theme] #reports .report-date,
@@ -340,12 +366,18 @@ html[data-theme] #reports .report-score {
 }
 
 html[data-theme] #reports .report-actions {
+  display: flex;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
   margin-top: 8px;
   gap: 8px;
-  justify-content: flex-end;
 }
 
 html[data-theme] #reports .report-actions button {
+  width: auto !important;
+  flex: 0 0 auto;
   min-width: 0;
   padding: 8px 12px;
 }
