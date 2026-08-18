@@ -335,7 +335,7 @@ html[data-theme] #reports .content {
 
 html[data-theme] #reports .report-item {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   column-gap: 10px;
   background: transparent;
@@ -408,6 +408,14 @@ html[data-theme] #reports .report-actions {
   align-self: center;
   margin: 0;
   gap: 6px;
+}
+
+html[data-theme] #reports .report-checkbox {
+  width: auto;
+  height: auto;
+  margin: 0;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 html[data-theme] #reports .report-actions button {

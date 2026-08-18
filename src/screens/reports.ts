@@ -9,10 +9,29 @@ import {
   scheduledMinutes,
 } from '@/domain/timeline'
 import type { Game, Player } from '@/domain/types'
-import { getCurrentTeam, selectTeam } from '@/state/store'
+import { askConfirm } from '@/ui/confirm'
+import { deleteCompletedGames, getCurrentTeam, selectTeam } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { fillTeamSelectors } from './shared'
+
+function selectedReportIds(): string[] {
+  return [...document.querySelectorAll<HTMLInputElement>('.report-checkbox:checked')]
+    .map((box) => box.dataset.gameId ?? '')
+    .filter(Boolean)
+}
+
+function updateReportSelectBar(): void {
+  const bar = document.getElementById('report-select-bar')
+  const label = document.getElementById('report-select-count')
+  if (!bar || !label) return
+  const count = selectedReportIds().length
+  bar.hidden = count === 0
+  label.textContent = t('selectedCount', { count })
+  document.querySelectorAll<HTMLButtonElement>('#reports-list [data-view], #reports-list [data-print]').forEach((btn) => {
+    btn.disabled = count > 0
+  })
+}
 
 function renderShotChart(game: Game): string {
   const duration = scheduledMinutes(game)
@@ -129,6 +148,7 @@ export function renderReports(): void {
   const games = team.games.filter((g) => g.isCompleted).sort((a, b) => b.date.localeCompare(a.date))
   if (!games.length) {
     list.innerHTML = `<div class="empty-state">${t('noReports')}</div>`
+    updateReportSelectBar()
     return
   }
   list.innerHTML = ''
@@ -151,9 +171,11 @@ export function renderReports(): void {
         <button class="secondary-btn" data-view="${game.id}">${t('viewReport')}</button>
         <button class="secondary-btn" data-print="${game.id}">${t('pdf')}</button>
       </div>
+      <input type="checkbox" class="report-checkbox" data-game-id="${game.id}" />
     `
     list.appendChild(item)
   }
+  updateReportSelectBar()
 }
 
 export function viewReport(gameId: string): void {
@@ -286,6 +308,7 @@ function printReport(gameId: string): void {
 export function bindReports(): void {
   document.getElementById('reports-list')?.addEventListener('click', (event) => {
     const target = event.target as HTMLElement
+    if (target.classList.contains('report-checkbox')) return
     const view = target.closest<HTMLElement>('[data-view]')?.dataset.view
     const print = target.closest<HTMLElement>('[data-print]')?.dataset.print
     if (view) viewReport(view)
@@ -293,6 +316,29 @@ export function bindReports(): void {
       viewReport(print)
       window.setTimeout(() => printReport(print), 50)
     }
+  })
+  document.getElementById('reports-list')?.addEventListener('change', (event) => {
+    if (!(event.target as HTMLElement).classList.contains('report-checkbox')) return
+    updateReportSelectBar()
+  })
+  document.getElementById('report-select-cancel')?.addEventListener('click', () => {
+    document.querySelectorAll<HTMLInputElement>('.report-checkbox').forEach((box) => {
+      box.checked = false
+    })
+    updateReportSelectBar()
+  })
+  document.getElementById('report-select-delete')?.addEventListener('click', async () => {
+    const ids = selectedReportIds()
+    if (!ids.length) return
+    const ok = await askConfirm({
+      title: t('deleteReportsTitle'),
+      message: t('deleteReportsAsk', { count: ids.length }),
+      confirmLabel: t('confirmDelete'),
+      cancelLabel: t('cancel'),
+    })
+    if (!ok) return
+    const result = deleteCompletedGames(ids)
+    showMessage(result.message, result.ok ? 'success' : 'error')
   })
   document.getElementById('reports-team-selector')?.addEventListener('change', (event) => {
     selectTeam((event.target as HTMLSelectElement).value)

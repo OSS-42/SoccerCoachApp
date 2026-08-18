@@ -308,7 +308,16 @@
             <select id="reports-team-selector"></select>
           </div>
         </div>
-        <div class="content" id="reports-list"></div>
+        <div class="content" id="reports-content">
+          <div id="reports-list"></div>
+          <div id="report-select-bar" class="player-select-bar" hidden>
+            <span id="report-select-count"></span>
+            <div class="player-select-actions">
+              <button class="secondary-btn" id="report-select-cancel" data-i18n="cancel">Cancel</button>
+              <button class="primary-btn delete-btn" id="report-select-delete" data-i18n="confirmDelete">Delete</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="settings" class="screen">
@@ -375,7 +384,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.36</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.38</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -551,7 +560,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.4.36</div>
+      <div id="version-footer" class="version-footer">v2.4.38</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

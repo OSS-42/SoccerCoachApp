@@ -174,6 +174,18 @@ export function editPlayerOnTeam(
   return { ok: true, message: t('playerUpdated', { name: name.trim().toUpperCase() }) }
 }
 
+export function deleteCompletedGames(gameIds: string[]): { ok: boolean; message: string } {
+  const team = getCurrentTeam()
+  if (!team) return { ok: false, message: t('noTeamSelected') }
+  const ids = new Set(gameIds)
+  updateCurrentTeam((current) => ({
+    ...current,
+    games: current.games.filter((game) => !ids.has(game.id)),
+  }))
+  persist()
+  return { ok: true, message: t('reportsRemoved', { count: gameIds.length }) }
+}
+
 export function deletePlayers(playerIds: string[]): { ok: boolean; message: string } {
   const team = getCurrentTeam()
   if (!team) return { ok: false, message: t('noTeamSelected') }
