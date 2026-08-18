@@ -165,7 +165,11 @@ function paintSlot(slot: HTMLElement, playerId: string | null, name = '', jersey
   const onField = slot.classList.contains('player-slot')
   slot.dataset.playerId = playerId
   slot.classList.add('occupied')
-  slot.innerHTML = `<span class="player-number ${onField ? 'player-number-placed' : ''}" data-player-id="${playerId}"><span class="jersey-num">${jersey}</span><span class="${onField ? 'player-name-field' : 'player-name-bench'}">${escapeHtml(name)}</span></span>`
+  const nameHtml = `<span class="${onField ? 'player-name-field' : 'player-name-bench'}">${escapeHtml(name)}</span>`
+  const numHtml = `<span class="jersey-num">${jersey}</span>`
+  slot.innerHTML = `<span class="player-number ${onField ? 'player-number-placed' : ''}" data-player-id="${playerId}">${
+    onField ? `${numHtml}${nameHtml}` : `${nameHtml}${numHtml}`
+  }</span>`
 }
 
 function playerMeta(playerId: string): { name: string; jersey: number } {

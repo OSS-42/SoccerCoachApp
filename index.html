@@ -233,33 +233,31 @@
       <div id="game-tracking" class="screen">
         <div class="game-header">
           <div class="live-scoreboard">
-            <div class="live-side live-home">
-              <div class="live-team-name" id="home-team-name">My Team</div>
-              <div class="card-counters">
-                <div class="card-counter yellow-card" id="yellow-card-count">0</div>
-                <div class="card-counter red-card" id="red-card-count">0</div>
+            <div class="live-header-left">
+              <div class="live-clock-block">
+                <div class="live-clock">
+                  <span class="live-meta-label" data-i18n="time">Time</span>
+                  <span class="game-time" id="game-time">0:00</span>
+                </div>
+                <div class="substitution-timer-small" id="substitution-timer">
+                  <span class="timer-label" data-i18n="sub">Sub</span>
+                  <span class="timer-value">6:00</span>
+                </div>
+                <div class="live-sub-count" id="live-sub-count" hidden>
+                  <span class="live-meta-label" data-i18n="sub">Sub</span>
+                  <span id="live-sub-count-value">0/5</span>
+                </div>
               </div>
+              <div class="live-team-name live-home-name" id="home-team-name">My Team</div>
+            </div>
+            <div class="live-score-center">
               <div class="live-score" id="home-score">0</div>
-            </div>
-            <div class="live-score-sep">–</div>
-            <div class="live-side live-away">
+              <div class="live-score-sep">–</div>
               <div class="live-score" id="away-score">0</div>
-              <div class="live-team-name" id="opponent-team-name">Opponent</div>
             </div>
-            <div class="live-meta">
-              <div class="live-clock">
-                <span class="live-meta-label" data-i18n="time">Time</span>
-                <span class="game-time" id="game-time">0:00</span>
-              </div>
+            <div class="live-header-right">
+              <div class="live-team-name live-away-name" id="opponent-team-name">Opponent</div>
               <div class="period-counter" id="period-counter">Period 1 of 4</div>
-              <div class="substitution-timer-small" id="substitution-timer">
-                <span class="timer-label" data-i18n="sub">Sub</span>
-                <span class="timer-value">6:00</span>
-              </div>
-              <div class="live-sub-count" id="live-sub-count" hidden>
-                <span class="live-meta-label" data-i18n="sub">Sub</span>
-                <span id="live-sub-count-value">0/5</span>
-              </div>
             </div>
           </div>
         </div>
@@ -377,7 +375,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.26</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.36</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -553,7 +551,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.4.26</div>
+      <div id="version-footer" class="version-footer">v2.4.36</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

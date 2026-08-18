@@ -1,10 +1,6 @@
 import { actionLabel, t } from '@/i18n'
 import { askConfirm, askPrompt } from '@/ui/confirm'
-import {
-  playerIsUnavailable,
-  statsFromActions,
-  teamCardCounts,
-} from '@/domain/actions'
+import { playerIsUnavailable, statsFromActions } from '@/domain/actions'
 import { currentPeriod, formatClock, isLastPeriod } from '@/domain/clock'
 import {
   extraTimeActive,
@@ -140,11 +136,6 @@ export function renderLiveGame(): void {
       total: game.numPeriods,
     })
   }
-  const cards = teamCardCounts(game.actions)
-  const yellow = document.getElementById('yellow-card-count')
-  const red = document.getElementById('red-card-count')
-  if (yellow) yellow.textContent = String(cards.yellow)
-  if (red) red.textContent = String(cards.red)
   const subWrap = document.getElementById('substitution-timer')
   if (subWrap) {
     subWrap.style.display = clock.useSubstitutionTimer ? '' : 'none'
@@ -215,8 +206,8 @@ function liveTile(
   if (pendingRole === 'field' && role === 'bench' && canComeOn) item.classList.add('sub-target')
   if (pendingRole === 'bench' && role === 'field' && canGoOff) item.classList.add('sub-target')
   item.innerHTML = `
-    <span class="live-tile-num">${player.jerseyNumber}</span>
     <span class="live-tile-name">${escapeHtml(player.name)}</span>
+    <span class="live-tile-num">${player.jerseyNumber}</span>
     ${usedOff ? `<span class="live-tile-used">${escapeHtml(t('usedOff'))}</span>` : ''}
   `
   item.addEventListener('click', () => onTileClick(player, role))

@@ -2141,10 +2141,9 @@ button.no-assist-btn {
         border-color: #000000 !important;
     }
     
-    /* Mobile layout: hide secondary buttons from main row */
     .game-controls .action-review-btn,
     .game-controls .note-btn {
-        display: none !important;
+        display: flex !important;
     }
     
     /* Show secondary buttons in separate row on mobile - clone first row style */
@@ -3344,13 +3343,13 @@ button.no-assist-btn {
     z-index: 1000;
 }
 
-/* Tap-to-select highlight */
+/* Tap-to-select highlight — fill stays with the slot; ring is shared. */
 .player-number.tap-selected,
 .player-number-placed.tap-selected {
-    outline: 3px solid #4caf50 !important;
+    outline: 3px solid #3ddc97;
+    outline-offset: 1px;
     z-index: 1001;
-    box-shadow: 0 0 16px rgba(76, 175, 80, 0.8) !important;
-    background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+    box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.45);
 }
 
 .bench-slot .player-number,
@@ -4080,40 +4079,69 @@ button.no-assist-btn {
 }
 
 .live-scoreboard {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    justify-content: center;
-    gap: 10px 16px;
+    column-gap: 10px;
     width: 100%;
     min-width: 0;
 }
 
-.live-side {
+.live-header-left,
+.live-header-right {
     display: flex;
     align-items: center;
     gap: 8px;
     min-width: 0;
-    flex: 1 1 180px;
 }
 
-.live-home {
-    justify-content: flex-end;
+.live-header-left,
+.live-header-right {
+    justify-content: stretch;
+    width: 100%;
 }
 
-.live-away {
-    justify-content: flex-start;
+.live-home-name,
+.live-away-name {
+    flex: 1 1 auto;
+    text-align: center;
+}
+
+.live-clock-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.live-side {
+    display: none;
 }
 
 .live-team-name {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.2px;
     text-transform: uppercase;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 220px;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.live-home-name,
+.live-away-name {
+    text-align: center;
+}
+
+.live-score-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .live-score {
@@ -4133,12 +4161,7 @@ button.no-assist-btn {
 }
 
 .live-meta {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px 18px;
-    flex: 1 1 100%;
-    min-width: 0;
+    display: none;
 }
 
 .live-clock,
@@ -4179,15 +4202,21 @@ button.no-assist-btn {
 }
 
 #game-tracking .game-controls {
-    flex-wrap: wrap;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
 }
 
 #game-tracking .control-btn {
-    flex: 1 1 110px;
-    min-width: 110px;
-    height: 38px;
+    flex: none;
+    min-width: 0;
+    width: 100%;
+    height: auto;
     border: 1px solid #000;
+}
+
+#game-tracking .note-btn {
+    grid-column: 1 / -1;
 }
 
 #game-tracking .live-rosters {
@@ -4257,12 +4286,13 @@ button.no-assist-btn {
     width: 100%;
     max-width: 140px;
     aspect-ratio: auto;
-    min-height: 76px;
+    min-height: 74px;
     height: auto;
     margin: 0 auto;
-    padding: 10px 8px;
+    padding: 8px 8px;
     justify-content: center;
-    gap: 6px;
+    align-items: center;
+    gap: 4px;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
@@ -4271,15 +4301,15 @@ button.no-assist-btn {
 
 
 #game-tracking .live-tile-num {
-    font-size: 26px;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 650;
     line-height: 1;
 }
 
 #game-tracking .live-tile-name {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
     text-align: center;
     text-transform: uppercase;
     max-width: 100%;
@@ -4329,13 +4359,21 @@ button.no-assist-btn {
 }
 
 @media screen and (max-width: 640px) {
-    .live-side {
-        flex: 1 1 40%;
+    .live-clock-block {
+        gap: 6px;
     }
 
     .live-team-name {
-        max-width: 96px;
         font-size: 12px;
+    }
+
+    #game-tracking .game-time {
+        font-size: 18px;
+    }
+
+    #game-tracking .period-counter {
+        font-size: 11px;
+        padding: 6px 8px;
     }
 
     .live-score {
@@ -4350,16 +4388,16 @@ button.no-assist-btn {
 
     #game-tracking .player-grid-item {
         max-width: none;
-        min-height: 68px;
-        padding: 8px 6px;
+        min-height: 66px;
+        padding: 7px 6px;
     }
 
     #game-tracking .live-tile-num {
-        font-size: 22px;
+        font-size: 12px;
     }
 
     #game-tracking .live-tile-name {
-        font-size: 11px;
+        font-size: 13px;
     }
 }
 

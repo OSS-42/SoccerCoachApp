@@ -6,6 +6,7 @@
   --pill-peach: #f5c6b3;
   --pill-yellow: #fde68a;
   --pill-sky: #bfdbfe;
+  --pill-gk: #f4b942;
   --pill-rose: #fecaca;
   --pill-used: #d1d5db;
   --pill-ink: #111318;
@@ -628,12 +629,20 @@ html[data-theme] .bench-slot {
   background: color-mix(in srgb, var(--neu-text) 6%, var(--neu-card));
   box-shadow: none;
   border: 1px dashed var(--neu-line);
+  border-radius: 4px;
 }
 
 html[data-theme] .unavailable-slot {
   background: color-mix(in srgb, var(--pill-rose) 40%, transparent);
   box-shadow: none;
   border: 1px dashed #e11d48;
+  border-radius: 4px;
+}
+
+html[data-theme] .player-slot {
+  width: 52px;
+  height: 52px;
+  border-radius: 4px;
 }
 
 html[data-theme] .player-slot:not(.occupied),
@@ -652,26 +661,104 @@ html[data-theme] .gk-slot:not(.occupied) {
 html[data-theme] .player-number,
 html[data-theme] .player-number-placed,
 html[data-theme] .player-slot .player-number {
-  background: #f4f1e8;
+  background: var(--pill-mint);
   background-image: none;
   color: var(--pill-ink);
   box-shadow: var(--neu-raised-sm);
+  border-radius: 4px;
 }
 
 html[data-theme] .gk-slot .player-number,
 html[data-theme] .gk-slot .player-number-placed {
   background: var(--pill-sky);
   color: var(--pill-ink);
+  border-radius: 4px;
+}
+
+html[data-theme] .bench-slot.occupied {
+  background: transparent;
+  border-color: transparent;
 }
 
 html[data-theme] .bench-slot .player-number {
-  background: var(--pill-lavender);
+  background: var(--neu-bg);
+  background-image: none;
+  color: var(--neu-text);
+  box-shadow: none;
+  border: 2px solid color-mix(in srgb, var(--neu-text) 42%, transparent);
+  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  gap: 1px;
+}
+
+html[data-theme] .bench-slot .player-name-bench {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--neu-text);
+  margin-top: 0;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+html[data-theme] .bench-slot .jersey-num {
+  font-size: 11px;
+  font-weight: 650;
+  height: auto;
+  opacity: 0.72;
+  color: var(--neu-text);
+}
+
+html[data-theme] .unavailable-slot.occupied {
+  background: transparent;
+  border-color: transparent;
 }
 
 html[data-theme] .unavailable-slot .player-number,
 html[data-theme] .unavailable-slot .player-number-placed {
   background: var(--pill-rose);
+  background-image: none;
   color: var(--pill-ink);
+  box-shadow: none;
+  border: 2px solid #e11d48;
+  border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  gap: 1px;
+}
+
+html[data-theme] .unavailable-slot .player-name-bench {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--pill-ink);
+  margin-top: 0;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+html[data-theme] .unavailable-slot .jersey-num {
+  font-size: 11px;
+  font-weight: 650;
+  height: auto;
+  opacity: 0.72;
+  color: var(--pill-ink);
+}
+
+html[data-theme] .player-number.tap-selected,
+html[data-theme] .player-number-placed.tap-selected {
+  outline: 3px solid var(--neu-accent);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--neu-accent) 45%, transparent);
+  background-image: none !important;
+  z-index: 5;
 }
 
 html[data-theme] .player-number .player-name-bench,
@@ -928,7 +1015,57 @@ html[data-theme] #game-tracking .controls-row {
 }
 
 html[data-theme] #game-tracking .live-scoreboard {
-  gap: 12px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+}
+
+html[data-theme] #game-tracking .live-header-left,
+html[data-theme] #game-tracking .live-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+html[data-theme] #game-tracking .live-header-left,
+html[data-theme] #game-tracking .live-header-right {
+  justify-content: stretch;
+  width: 100%;
+}
+
+html[data-theme] #game-tracking .live-team-name {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+html[data-theme] #game-tracking .live-home-name,
+html[data-theme] #game-tracking .live-away-name {
+  text-align: center;
+}
+
+html[data-theme] #game-tracking .game-time {
+  font-variant-numeric: tabular-nums;
+  min-width: 5.6ch;
+  display: inline-block;
+}
+
+html[data-theme] #game-tracking .live-score-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+html[data-theme] #game-tracking .live-clock-block {
+  flex: 0 0 auto;
+  align-items: center;
 }
 
 html[data-theme] #game-tracking .live-clock,
@@ -936,12 +1073,17 @@ html[data-theme] #game-tracking .live-sub-count,
 html[data-theme] #game-tracking .substitution-timer-small {
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 2px;
 }
 
-html[data-theme] #game-tracking .live-meta {
-  gap: 16px 24px;
-  align-items: flex-end;
+html[data-theme] #game-tracking .live-scoreboard {
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+html[data-theme] #game-tracking .period-counter {
+  justify-self: end;
 }
 
 html[data-theme] #game-tracking .game-time,
@@ -965,8 +1107,21 @@ html[data-theme] #game-tracking .period-counter {
 }
 
 html[data-theme] #game-tracking .game-controls {
-  gap: 10px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+html[data-theme] #game-tracking .control-btn {
+  flex: none;
+  min-width: 0;
+  width: 100%;
+}
+
+html[data-theme] #game-tracking .note-btn,
+html[data-theme] #game-tracking .game-controls .note-btn {
+  grid-column: 1 / -1;
+  display: flex !important;
 }
 
 html[data-theme] #game-tracking .control-btn,
@@ -1047,16 +1202,29 @@ html[data-theme] #game-tracking .player-grid-item.substitute {
   border: none;
   border-radius: var(--neu-radius);
   box-shadow: 0 8px 18px rgba(17, 19, 24, 0.1);
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
 }
 
 html[data-theme] #game-tracking .player-grid-item.substitute {
-  background: var(--pill-lavender);
+  background: var(--neu-bg);
+  box-shadow: none;
+  border: 2px solid color-mix(in srgb, var(--neu-text) 42%, transparent);
+  color: var(--neu-text);
+}
+
+html[data-theme] #game-tracking .player-grid-item.substitute .live-tile-name,
+html[data-theme] #game-tracking .player-grid-item.substitute .live-tile-num {
+  color: var(--neu-text);
 }
 
 html[data-theme] #game-tracking .player-grid-item.is-gk,
 html[data-theme] #game-tracking .player-grid-item.starter.is-gk {
   background: var(--pill-sky);
+  border: none;
 }
 
 html[data-theme] #game-tracking .player-grid-item.used-off {
@@ -1065,20 +1233,22 @@ html[data-theme] #game-tracking .player-grid-item.used-off {
   filter: none;
 }
 
-html[data-theme] #game-tracking .live-tile-num {
-  color: var(--pill-ink);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1;
-}
-
 html[data-theme] #game-tracking .live-tile-name {
   color: var(--pill-ink);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-top: 0;
+}
+
+html[data-theme] #game-tracking .live-tile-num {
+  color: var(--pill-ink);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+  opacity: 0.72;
 }
 
 html[data-theme] #game-tracking .player-grid-item.yellow-card {
