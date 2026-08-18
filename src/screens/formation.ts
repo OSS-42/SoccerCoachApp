@@ -10,8 +10,11 @@ import { clearGameDraft, getGameDraft } from './gameSetup'
 import { fillTeamSelectors } from './shared'
 
 type SlotKind = 'field' | 'bench' | 'unavailable'
+type PlacedPlayer = { id: string; name: string; jersey: number }
 
 let selectedPlayerId: string | null = null
+let formationResize: ResizeObserver | null = null
+let lastRailFits = { bench: 0, out: 0, total: 0 }
 
 function slotKind(el: Element): SlotKind | null {
   if (el.classList.contains('player-slot')) return 'field'
@@ -24,6 +27,128 @@ function allSlots(): HTMLElement[] {
   return [
     ...document.querySelectorAll<HTMLElement>('.player-slot, .bench-slot, .unavailable-slot'),
   ]
+}
+
+function isDesktopFormation(): boolean {
+  return window.matchMedia('(min-width: 769px)').matches
+}
+
+function makeSideSlot(kind: 'bench' | 'unavailable', index: number): HTMLElement {
+  const slot = document.createElement('div')
+  slot.className = kind === 'bench' ? 'bench-slot' : 'unavailable-slot'
+  slot.id = `${kind}-slot-${index}`
+  slot.style.touchAction = 'none'
+  slot.addEventListener('pointerdown', handleSlotPointer)
+  return slot
+}
+
+function fitSlotCount(column: HTMLElement, slotSize: number, gap: number): number {
+  const title = column.querySelector('h4')
+  const titleH = title?.getBoundingClientRect().height ?? 20
+  const styles = getComputedStyle(column)
+  const pad = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom)
+  const usable = column.clientHeight - titleH - pad - 4
+  return Math.max(1, Math.floor((usable + gap) / (slotSize + gap)))
+}
+
+function collectPlaced(root: ParentNode, selector: string): PlacedPlayer[] {
+  return [...root.querySelectorAll<HTMLElement>(selector)].flatMap((slot) => {
+    const id = slot.dataset.playerId
+    if (!id) return []
+    const meta = playerMeta(id)
+    return [{ id, name: meta.name, jersey: meta.jersey }]
+  })
+}
+
+function paintInto(
+  container: HTMLElement,
+  kind: 'bench' | 'unavailable',
+  count: number,
+  startIndex: number,
+  people: PlacedPlayer[],
+): PlacedPlayer[] {
+  container.replaceChildren()
+  const leftover = [...people]
+  for (let i = 0; i < count; i += 1) {
+    const slot = makeSideSlot(kind, startIndex + i)
+    container.appendChild(slot)
+    const next = leftover.shift()
+    if (next) paintSlot(slot, next.id, next.name, next.jersey)
+  }
+  return leftover
+}
+
+function layoutFormationRails(): void {
+  if (isDesktopFormation()) return
+  const benchCol = document.getElementById('bench-players')
+  const outCol = document.getElementById('unavailable-players')
+  const bench = document.getElementById('bench-slots')
+  const overflow = document.getElementById('bench-overflow')
+  const out = document.getElementById('unavailable-slots')
+  const team = getCurrentTeam()
+  const draft = getGameDraft()
+  if (!benchCol || !outCol || !bench || !overflow || !out || !team || !draft) return
+
+  const gap = 4
+  const benchTotal = benchSlotCount(draft.matchType, team.players.length)
+  const overflowWidth = overflow.clientWidth || overflow.parentElement?.clientWidth || benchCol.parentElement?.clientWidth || 0
+  const titleH = (benchCol.querySelector('h4')?.getBoundingClientRect().height ?? 20) + 4
+  const railH = Math.max(0, benchCol.clientHeight - titleH)
+  let tile = 44
+  let benchFit = 1
+  for (const size of [48, 44, 40, 36, 32]) {
+    const rail = Math.max(1, Math.floor((railH + gap) / (size + gap)))
+    const perRow = Math.max(1, Math.floor((overflowWidth + gap) / (size + gap)))
+    tile = size
+    benchFit = rail
+    if (rail + perRow * 2 >= benchTotal) break
+  }
+  const outFit = fitSlotCount(outCol, tile, gap)
+  const perRow = Math.max(1, Math.floor((overflowWidth + gap) / (tile + gap)))
+  let overflowCount = Math.min(benchTotal, perRow * 2)
+  overflowCount -= overflowCount % 2
+  let railCount = benchTotal - overflowCount
+  if (railCount > benchFit) {
+    overflowCount = Math.min(perRow * 2, benchTotal - (benchTotal - benchFit) % 2)
+    overflowCount -= overflowCount % 2
+    railCount = benchTotal - overflowCount
+  }
+  if (railCount < 0) {
+    overflowCount = benchTotal - (benchTotal % 2)
+    railCount = benchTotal - overflowCount
+  }
+  const container = document.querySelector<HTMLElement>('#formation-setup .formation-container')
+  if (container) container.style.setProperty('--bench-tile', `${tile}px`)
+  if (
+    lastRailFits.bench === railCount &&
+    lastRailFits.out === outFit &&
+    lastRailFits.total === benchTotal &&
+    bench.childElementCount + overflow.childElementCount === benchTotal
+  ) {
+    return
+  }
+  lastRailFits = { bench: railCount, out: outFit, total: benchTotal }
+
+  const benchPeople = [
+    ...collectPlaced(bench, '.bench-slot'),
+    ...collectPlaced(overflow, '.bench-slot'),
+  ]
+  const outPeople = collectPlaced(out, '.unavailable-slot')
+  paintInto(bench, 'bench', railCount, 1, benchPeople)
+  const leftover = paintInto(
+    overflow,
+    'bench',
+    overflowCount,
+    railCount + 1,
+    benchPeople.slice(railCount),
+  )
+  leftover.forEach((player) => {
+    const slot = makeSideSlot('bench', overflow.childElementCount + railCount + 1)
+    overflow.appendChild(slot)
+    paintSlot(slot, player.id, player.name, player.jersey)
+  })
+  overflow.hidden = overflow.childElementCount === 0
+  paintInto(out, 'unavailable', Math.max(outFit, outPeople.length), 1, outPeople)
 }
 
 function slotByPlayer(playerId: string): HTMLElement | null {
@@ -124,12 +249,16 @@ export function renderFormation(): void {
   field.innerHTML = ''
   bench.innerHTML = ''
   unavailable.innerHTML = ''
+  document.getElementById('bench-overflow')?.replaceChildren()
+  const overflow = document.getElementById('bench-overflow')
+  if (overflow) overflow.hidden = true
   if (sidebar) sidebar.innerHTML = ''
+  lastRailFits = { bench: 0, out: 0, total: 0 }
 
   const surface = document.createElement('div')
   surface.className = 'formation-field-surface'
   field.appendChild(surface)
-  const desktop = window.matchMedia('(min-width: 769px)').matches
+  const desktop = isDesktopFormation()
   for (const spot of fieldSpotDefs(desktop)) {
     const slot = document.createElement('div')
     slot.className = `player-slot${spot.position === 'GK' ? ' gk-slot' : spot.position === 'SW' ? ' sw-slot' : ''}`
@@ -138,20 +267,6 @@ export function renderFormation(): void {
     slot.style.left = `${spot.x}%`
     slot.style.top = `${spot.y}%`
     surface.appendChild(slot)
-  }
-
-  const sideSlotCount = benchSlotCount(draft.matchType, team.players.length)
-  for (let i = 0; i < sideSlotCount; i++) {
-    const slot = document.createElement('div')
-    slot.className = 'bench-slot'
-    slot.id = `bench-slot-${i + 1}`
-    bench.appendChild(slot)
-  }
-  for (let i = 0; i < sideSlotCount; i++) {
-    const slot = document.createElement('div')
-    slot.className = 'unavailable-slot'
-    slot.id = `unavailable-slot-${i + 1}`
-    unavailable.appendChild(slot)
   }
 
   const living = new Set(team.players.map((p) => p.id))
@@ -166,12 +281,54 @@ export function renderFormation(): void {
   const remaining = team.players
     .filter((p) => !used.has(p.id))
     .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-  remaining.forEach((player, index) => {
-    const slot = bench.children[index] as HTMLElement | undefined
-    if (slot) paintSlot(slot, player.id, player.name, player.jerseyNumber)
-  })
 
-  allSlots().forEach((slot) => {
+  const sideSlotCount = benchSlotCount(draft.matchType, team.players.length)
+  if (desktop) {
+    for (let i = 0; i < sideSlotCount; i++) {
+      bench.appendChild(makeSideSlot('bench', i + 1))
+      unavailable.appendChild(makeSideSlot('unavailable', i + 1))
+    }
+    remaining.forEach((player, index) => {
+      const slot = bench.children[index] as HTMLElement | undefined
+      if (slot) paintSlot(slot, player.id, player.name, player.jerseyNumber)
+    })
+  } else {
+    surface.querySelectorAll<HTMLElement>('.player-slot').forEach((slot) => {
+      slot.style.touchAction = 'none'
+      slot.addEventListener('pointerdown', handleSlotPointer)
+    })
+    const seatOnBench = (player: { id: string; name: string; jerseyNumber: number }): void => {
+      if (slotByPlayer(player.id)) return
+      const empty = [...document.querySelectorAll<HTMLElement>('.bench-slot')].find(
+        (slot) => !slot.dataset.playerId,
+      )
+      if (empty) {
+        paintSlot(empty, player.id, player.name, player.jerseyNumber)
+        return
+      }
+      const extra = document.getElementById('bench-overflow')
+      if (!extra) return
+      extra.hidden = false
+      const slot = makeSideSlot('bench', extra.childElementCount + 100)
+      extra.appendChild(slot)
+      paintSlot(slot, player.id, player.name, player.jerseyNumber)
+    }
+    const applyRails = () => {
+      layoutFormationRails()
+      remaining.forEach(seatOnBench)
+    }
+    window.requestAnimationFrame(applyRails)
+    formationResize?.disconnect()
+    const row = document.querySelector('.formation-pitch-row')
+    if (row) {
+      formationResize = new ResizeObserver(() => layoutFormationRails())
+      formationResize.observe(row)
+    }
+    clearSelection()
+    return
+  }
+
+  surface.querySelectorAll<HTMLElement>('.player-slot').forEach((slot) => {
     slot.style.touchAction = 'none'
     slot.addEventListener('pointerdown', handleSlotPointer)
   })

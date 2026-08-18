@@ -1,5 +1,6 @@
 import { t } from '@/i18n'
 import { getCurrentGame, hasInProgressGame } from '@/state/store'
+import { askConfirm } from '@/ui/confirm'
 import { toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
@@ -20,10 +21,15 @@ export function bindMainMenu(): void {
     }
     showScreen('game-tracking')
   })
-  document.getElementById('start-new-game-btn')?.addEventListener('click', () => {
+  document.getElementById('start-new-game-btn')?.addEventListener('click', async () => {
     if (hasInProgressGame()) {
-      showMessage(t('alreadyInProgress'), 'error')
-      return
+      const ok = await askConfirm({
+        title: t('overwriteGameTitle'),
+        message: t('overwriteGameAsk'),
+        confirmLabel: t('overwriteGameConfirm'),
+        cancelLabel: t('cancel'),
+      })
+      if (!ok) return
     }
     showScreen('game-setup')
   })

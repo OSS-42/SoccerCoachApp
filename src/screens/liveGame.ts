@@ -180,24 +180,31 @@ function paintLiveRosters(): void {
   fieldGrid.innerHTML = ''
   benchGrid.innerHTML = ''
   const onField = new Set(game.formation.map((f) => f.playerId))
+  const gkId = game.formation.find((spot) => spot.position === 'GK')?.playerId
   const usedOff = usedOffPlayerIds(game)
   const sorted = [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
   for (const player of sorted) {
     if (game.unavailablePlayers.includes(player.id)) continue
     const role = onField.has(player.id) ? 'field' : 'bench'
-    const tile = liveTile(player, role, usedOff.has(player.id))
+    const tile = liveTile(player, role, usedOff.has(player.id), player.id === gkId)
     if (role === 'field') fieldGrid.appendChild(tile)
     else benchGrid.appendChild(tile)
   }
 }
 
-function liveTile(player: Player, role: 'field' | 'bench', usedOff: boolean): HTMLElement {
+function liveTile(
+  player: Player,
+  role: 'field' | 'bench',
+  usedOff: boolean,
+  isGk = false,
+): HTMLElement {
   const game = getCurrentGame()
   const item = document.createElement('div')
   const stats = game ? statsFromActions(game.actions, player.id) : null
   item.className = `player-grid-item ${role === 'field' ? 'starter' : 'substitute'}`
   item.dataset.playerId = player.id
   item.dataset.role = role
+  if (isGk) item.classList.add('is-gk')
   if (stats?.injured) item.classList.add('injured')
   else if (stats && stats.redCards > 0) item.classList.add('red-card')
   else if (stats && stats.yellowCards > 0) item.classList.add('yellow-card')

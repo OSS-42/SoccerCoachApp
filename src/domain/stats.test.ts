@@ -62,4 +62,13 @@ describe('season stats', () => {
     expect(rows.find((r) => r.playerId === 'p1')?.goals).toBe(1)
     expect(rows.find((r) => r.playerId === 'p2')?.goals).toBe(0)
   })
+
+  it('sums on-field minutes across completed games', () => {
+    const rows = calculateSeasonStats(players, [
+      completed({ id: 'g1', elapsedSeconds: 600 }),
+      completed({ id: 'g2', elapsedSeconds: 300 }),
+    ])
+    expect(rows.find((r) => r.playerId === 'p1')?.minutesPlayed).toBe(15)
+    expect(rows.find((r) => r.playerId === 'p2')?.minutesPlayed).toBe(0)
+  })
 })

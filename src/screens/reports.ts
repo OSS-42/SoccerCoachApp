@@ -136,11 +136,17 @@ export function renderReports(): void {
     const item = document.createElement('div')
     item.className = 'report-item'
     item.innerHTML = `
-      <div class="report-meta">
-        <span class="report-date">${escapeHtml(game.date)}</span>
-        <span class="report-teams">${escapeHtml(team.name)} vs ${escapeHtml(game.opponentName)}</span>
+      <span class="report-date">${escapeHtml(game.date)}</span>
+      <div class="report-sides">
+        <div class="report-side">
+          <span class="report-team">${escapeHtml(team.name)}</span>
+          <span class="report-score">${game.homeScore}</span>
+        </div>
+        <div class="report-side">
+          <span class="report-team">${escapeHtml(game.opponentName)}</span>
+          <span class="report-score">${game.awayScore}</span>
+        </div>
       </div>
-      <span class="report-score">${game.homeScore}–${game.awayScore}</span>
       <div class="report-actions">
         <button class="secondary-btn" data-view="${game.id}">${t('viewReport')}</button>
         <button class="secondary-btn" data-print="${game.id}">${t('pdf')}</button>
@@ -161,11 +167,10 @@ export function viewReport(gameId: string): void {
   const periodLines = periodGoalDeltas(game)
     .map((p, i) => `<div class="period-score-line">${t('periodLine', { n: i + 1, home: p.home, away: p.away })}</div>`)
     .join('')
-  const chip = (icon: string, value: number, label: string, kind = ''): string =>
-    `<div class="stat-chip ${kind} ${value === 0 ? 'is-zero' : ''}">
-      <span class="stat-chip-icon">${icon}</span>
-      <span class="stat-chip-value">${value === 0 ? '–' : value}</span>
-      <span class="stat-chip-label">${label}</span>
+  const metric = (value: number, label: string, kind = ''): string =>
+    `<div class="stat-metric ${kind} ${value === 0 ? 'is-zero' : ''}">
+      <span class="stat-metric-value">${value === 0 ? '–' : value}</span>
+      <span class="stat-metric-label">${escapeHtml(label)}</span>
     </div>`
   const minutes = playedMinutesByPlayer(game)
   const rows = [...team.players]
@@ -195,18 +200,17 @@ export function viewReport(gameId: string): void {
           <span class="stat-card-name">${escapeHtml(player.name)}</span>
           <span class="stat-played">${played === 0 ? '–' : `${played}'`}</span>
         </header>
-        <div class="stat-chip-grid">
-          ${chip('⏱', played, t('playedMinutes'))}
-          ${chip('⚽', stats.goals, t('action.goal'), 'stat-goal')}
-          ${chip('👟', stats.assists, t('action.assist'))}
-          ${chip('🧤', stats.saves, t('action.save'))}
-          ${chip('🔴', stats.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
-          ${chip('🎯', stats.shotOnGoal, t('action.shot_on_goal'))}
-          ${chip('🛡', stats.blockedShot, t('action.blocked_shot'))}
-          ${chip('🚩', stats.faults, t('action.fault'))}
-          ${chip('🟨', stats.yellowCards, t('action.yellow_card'), 'stat-yellow')}
-          ${chip('🟥', stats.redCards, t('action.red_card'), 'stat-red')}
-          ${chip('⚽', stats.ownGoals, t('ownGoalShort'))}
+        <div class="report-stat-grid">
+          ${metric(stats.goals, t('statShortGoal'), 'stat-goal')}
+          ${metric(stats.assists, t('statShortAssist'))}
+          ${metric(stats.shotOnGoal, t('statShortShot'))}
+          ${metric(stats.saves, t('statShortSave'))}
+          ${metric(stats.blockedShot, t('statShortBlock'))}
+          ${metric(stats.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
+          ${metric(stats.faults, t('statShortFoul'))}
+          ${metric(stats.yellowCards, t('statShortYellow'), 'stat-yellow')}
+          ${metric(stats.redCards, t('statShortRed'), 'stat-red')}
+          ${metric(stats.ownGoals, t('ownGoalShort'))}
         </div>
       </article>`
     })

@@ -192,9 +192,7 @@ export function startPreparedGame(
 ): { ok: boolean; message: string } {
   const team = getCurrentTeam()
   if (!team) return { ok: false, message: t('noTeamSelected') }
-  if (hasInProgressGame()) {
-    return { ok: false, message: t('finishOrResume') }
-  }
+  if (hasInProgressGame()) discardCurrentGame()
   const game = createGame(team, input)
   if (saveDefault) {
     updateCurrentTeam((t) => ({
@@ -374,6 +372,16 @@ export function finishCurrentPeriod(): { ok: boolean; message: string; ended?: b
   }
   persist()
   return { ok: true, message: t('periodFinished') }
+}
+
+export function discardCurrentGame(): void {
+  if (!state.currentGame) return
+  state = {
+    ...state,
+    currentGame: null,
+    clock: { ...DEFAULT_CLOCK },
+  }
+  persist()
 }
 
 export function endCurrentGame(): { ok: boolean; message: string; ended: boolean; gameId?: string } {

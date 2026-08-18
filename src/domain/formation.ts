@@ -1,9 +1,4 @@
-import {
-  BENCH_SLOT_COUNT,
-  ON_FIELD_COUNT,
-  type FormationSpot,
-  type MatchType,
-} from './types'
+import { ON_FIELD_COUNT, type FormationSpot, type MatchType } from './types'
 
 export type FieldSpotDef = {
   position: string
@@ -29,8 +24,8 @@ export function fieldSpotDefs(desktop: boolean): FieldSpotDef[] {
   ]
 }
 
-export function benchSlotCount(matchType: MatchType, rosterSize: number): number {
-  return Math.max(BENCH_SLOT_COUNT[matchType], rosterSize)
+export function benchSlotCount(_matchType?: MatchType, _rosterSize?: number): number {
+  return 26
 }
 
 export function validateFormation(

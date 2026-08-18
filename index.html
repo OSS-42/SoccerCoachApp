@@ -16,7 +16,6 @@
           <h1 data-i18n="appTitle">Football Live Action Tracker</h1>
         </div>
         <div class="team-name-banner">
-          <h2 data-team-name>Team Name</h2>
           <div class="team-selector">
             <select id="main-team-selector"></select>
           </div>
@@ -30,9 +29,6 @@
               ><span class="material-icons">person</span> <span id="player-counter">0</span></span
             >
           </div>
-          <button class="menu-btn" id="resume-game-btn" hidden>
-            <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
-          </button>
           <div class="menu-row">
             <button class="menu-btn" data-go="reports">
               <span class="material-icons">assessment</span> <span data-i18n="reports">Reports</span>
@@ -54,6 +50,9 @@
           <button class="menu-btn" id="start-new-game-btn">
             <span class="material-icons">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
           </button>
+          <button class="menu-btn" id="resume-game-btn" hidden>
+            <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
+          </button>
         </nav>
       </main>
 
@@ -63,17 +62,11 @@
             <span class="material-icons">arrow_back</span>
           </button>
           <h1 data-i18n="teamSetup">Team Setup</h1>
-          <button class="action-btn white-btn" id="open-add-player">
-            <span class="material-icons">person_add</span>
-          </button>
         </div>
         <div class="team-name-banner">
-          <div style="display: flex; align-items: center; gap: 15px; flex: 1">
-            <h2 data-team-name>Team Name</h2>
-            <div class="team-name-edit">
-              <input type="text" id="team-name-input" data-i18n-placeholder="teamNamePlaceholder" placeholder="Enter team name" />
-              <button class="secondary-btn" id="save-team-name" data-i18n="save">Save</button>
-            </div>
+          <div class="team-name-edit">
+            <input type="text" id="team-name-input" data-i18n-placeholder="teamNamePlaceholder" placeholder="Enter team name" />
+            <button class="secondary-btn" id="save-team-name" data-i18n="save">Save</button>
           </div>
           <div class="team-selector">
             <select id="team-selector"></select>
@@ -93,10 +86,15 @@
           <section id="players-tab-content" class="tab-content active">
             <div class="players-header">
               <h2 data-i18n="players">Players</h2>
-              <span class="player-counter-team">
-                <span class="material-icons">person</span>
-                <span id="team-player-counter">0</span>
-              </span>
+              <div class="players-header-tools">
+                <span class="player-counter-team">
+                  <span class="material-icons">person</span>
+                  <span id="team-player-counter">0</span>
+                </span>
+                <button class="action-btn white-btn" id="open-add-player">
+                  <span class="material-icons">person_add</span>
+                </button>
+              </div>
             </div>
             <div id="players-list" class="players-list"></div>
             <div id="player-select-bar" class="player-select-bar" hidden>
@@ -205,17 +203,18 @@
         <div class="content formation-content">
           <div class="formation-container">
             <div class="player-list" id="player-list"></div>
-            <div class="formation-field" id="formation-field"></div>
-            <div class="formation-right-column">
+            <div class="formation-pitch-row">
               <div class="bench-players" id="bench-players">
                 <h4 data-i18n="bench">Bench</h4>
                 <div class="bench-slots" id="bench-slots"></div>
               </div>
+              <div class="formation-field" id="formation-field"></div>
               <div class="unavailable-players" id="unavailable-players">
-                <h4 data-i18n="unavailable">Unavailable</h4>
+                <h4 data-i18n="unavailable">Out</h4>
                 <div class="unavailable-slots" id="unavailable-slots"></div>
               </div>
             </div>
+            <div class="bench-overflow" id="bench-overflow" hidden></div>
           </div>
           <div class="formation-options">
             <label class="checkbox-container">
@@ -307,7 +306,6 @@
           <h1 data-i18n="gameReports">Game Reports</h1>
         </div>
         <div class="team-name-banner">
-          <h2 data-team-name>Team Name</h2>
           <div class="team-selector">
             <select id="reports-team-selector"></select>
           </div>
@@ -379,7 +377,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.9</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.26</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -555,7 +553,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.4.9</div>
+      <div id="version-footer" class="version-footer">v2.4.26</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

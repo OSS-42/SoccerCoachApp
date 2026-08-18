@@ -88,13 +88,12 @@ function renderStats(): void {
   }
   const cell = (value: number, kind = ''): string =>
     `<td class="stat-num ${kind} ${value === 0 ? 'is-zero' : ''}">${value === 0 ? '–' : value}</td>`
-  const chip = (icon: string, value: number, label: string, kind = ''): string =>
-    `<div class="stat-chip ${kind} ${value === 0 ? 'is-zero' : ''}">
-      <span class="stat-chip-icon">${icon}</span>
-      <span class="stat-chip-value">${value === 0 ? '–' : value}</span>
-      <span class="stat-chip-label">${label}</span>
+  const metric = (value: number, label: string, kind = ''): string =>
+    `<div class="stat-metric ${kind} ${value === 0 ? 'is-zero' : ''}">
+      <span class="stat-metric-value">${value === 0 ? '–' : value}</span>
+      <span class="stat-metric-label">${escapeHtml(label)}</span>
     </div>`
-  const cardChips = (row: {
+  const cardMetrics = (row: {
     gamesPlayed: number
     goals: number
     assists: number
@@ -108,25 +107,26 @@ function renderStats(): void {
     ownGoals: number
     missedGames: number
     lateToGame: number
+    minutesPlayed?: number
   }): string =>
-    `<div class="stat-chip-grid">
-      ${chip('📅', row.gamesPlayed, t('games'))}
-      ${chip('⚽', row.goals, t('action.goal'), 'stat-goal')}
-      ${chip('👟', row.assists, t('action.assist'))}
-      ${chip('🧤', row.saves, t('action.save'))}
-      ${chip('🔴', row.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
-      ${chip('🎯', row.shots, t('action.shot_on_goal'))}
-      ${chip('🛡', row.blocks, t('action.blocked_shot'))}
-      ${chip('🚩', row.fouls, t('action.fault'))}
-      ${chip('🟨', row.yellowCards, t('action.yellow_card'), 'stat-yellow')}
-      ${chip('🟥', row.redCards, t('action.red_card'), 'stat-red')}
-      ${chip('⚽', row.ownGoals, t('ownGoalShort'))}
-      ${chip('🚫', row.missedGames, t('missedGames'))}
-      ${chip('🕐', row.lateToGame, t('lateToGame'))}
+    `<div class="report-stat-grid">
+      ${metric(row.gamesPlayed, t('games'))}
+      ${metric(row.goals, t('statShortGoal'), 'stat-goal')}
+      ${metric(row.assists, t('statShortAssist'))}
+      ${metric(row.shots, t('statShortShot'))}
+      ${metric(row.saves, t('statShortSave'))}
+      ${metric(row.blocks, t('statShortBlock'))}
+      ${metric(row.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
+      ${metric(row.fouls, t('statShortFoul'))}
+      ${metric(row.yellowCards, t('statShortYellow'), 'stat-yellow')}
+      ${metric(row.redCards, t('statShortRed'), 'stat-red')}
+      ${metric(row.ownGoals, t('ownGoalShort'))}
+      ${metric(row.missedGames, t('missedGames'))}
+      ${metric(row.lateToGame, t('lateToGame'))}
     </div>`
   const totals = rows.reduce(
     (sum, row) => ({
-      gamesPlayed: sum.gamesPlayed + row.gamesPlayed,
+      gamesPlayed: Math.max(sum.gamesPlayed, row.gamesPlayed),
       goals: sum.goals + row.goals,
       assists: sum.assists + row.assists,
       saves: sum.saves + row.saves,
@@ -139,6 +139,7 @@ function renderStats(): void {
       ownGoals: sum.ownGoals + row.ownGoals,
       missedGames: sum.missedGames + row.missedGames,
       lateToGame: sum.lateToGame + row.lateToGame,
+      minutesPlayed: sum.minutesPlayed + row.minutesPlayed,
     }),
     {
       gamesPlayed: 0,
@@ -154,6 +155,7 @@ function renderStats(): void {
       ownGoals: 0,
       missedGames: 0,
       lateToGame: 0,
+      minutesPlayed: 0,
     },
   )
   container.innerHTML = `
@@ -161,8 +163,9 @@ function renderStats(): void {
       <article class="season-stat-card is-totals">
         <header>
           <span class="stat-card-name">${t('totals')}</span>
+          <span class="stat-played">${totals.minutesPlayed === 0 ? '–' : `${totals.minutesPlayed}'`}</span>
         </header>
-        ${cardChips(totals)}
+        ${cardMetrics(totals)}
       </article>
       ${rows
         .map(
@@ -170,8 +173,9 @@ function renderStats(): void {
             <header>
               <span class="stat-jersey">${row.jerseyNumber}</span>
               <span class="stat-card-name">${escapeHtml(row.name)}</span>
+              <span class="stat-played">${row.minutesPlayed === 0 ? '–' : `${row.minutesPlayed}'`}</span>
             </header>
-            ${cardChips(row)}
+            ${cardMetrics(row)}
           </article>`,
         )
         .join('')}

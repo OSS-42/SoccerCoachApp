@@ -18,9 +18,9 @@
   --live-review: #7dd3fc;
   --live-note: #f5c6b3;
 
-  --neu-radius: 24px;
-  --neu-radius-sm: 16px;
-  --neu-radius-pill: 999px;
+  --neu-radius: 12px;
+  --neu-radius-sm: 12px;
+  --neu-radius-pill: 12px;
   --neu-glow: rgba(61, 220, 151, 0.24);
 }
 
@@ -153,6 +153,12 @@ html[data-theme] .team-name-banner h2 {
   text-align: center;
 }
 
+html[data-theme] .team-name-banner .team-name-edit {
+  margin-top: 0;
+  width: 100%;
+  justify-content: center;
+}
+
 html[data-theme] .team-name-banner .team-selector {
   margin: 0;
   width: 100%;
@@ -197,7 +203,8 @@ html[data-theme] .menu-spacer {
   flex: 0 0 var(--menu-row-h);
 }
 
-html[data-theme] #start-new-game-btn {
+html[data-theme] #start-new-game-btn,
+html[data-theme] #resume-game-btn {
   min-height: var(--menu-row-h);
   height: var(--menu-row-h);
   padding-top: 0;
@@ -262,7 +269,7 @@ html[data-theme] .player-counter-team {
   background: var(--neu-card);
   color: var(--neu-text);
   border: none;
-  border-radius: 18px;
+  border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
   flex: 0 0 var(--menu-count-w, 64px);
   width: var(--menu-count-w, 64px);
@@ -327,47 +334,56 @@ html[data-theme] #reports .content {
 
 html[data-theme] #reports .report-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 10px;
   background: transparent;
   color: var(--neu-text);
   border: none;
   border-bottom: 1px solid var(--neu-line);
   border-radius: 0;
   box-shadow: none;
-  padding: 8px 0;
+  padding: 10px 0;
 }
 
 html[data-theme] #reports .report-item:last-child {
   border-bottom: none;
 }
 
-html[data-theme] #reports .report-meta {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
-  min-width: 0;
-  text-align: left;
-}
-
 html[data-theme] #reports .report-date {
   color: var(--neu-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   line-height: 1.2;
+  white-space: nowrap;
+  align-self: center;
 }
 
-html[data-theme] #reports .report-teams {
+html[data-theme] #reports .report-sides {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+html[data-theme] #reports .report-side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+html[data-theme] #reports .report-team {
   color: var(--neu-text);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 html[data-theme] #reports .report-score {
@@ -376,7 +392,9 @@ html[data-theme] #reports .report-score {
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0;
-  justify-self: center;
+  flex: 0 0 auto;
+  min-width: 1.4em;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -386,7 +404,7 @@ html[data-theme] #reports .report-actions {
   flex-wrap: nowrap;
   justify-content: flex-end;
   align-items: center;
-  justify-self: end;
+  align-self: center;
   margin: 0;
   gap: 6px;
 }
@@ -538,7 +556,7 @@ html[data-theme] #game-tracking .timer-label {
 html[data-theme] #game-tracking .player-grid-item {
   background: var(--pill-mint);
   border: none;
-  border-radius: 22px;
+  border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
   color: var(--pill-ink);
 }
@@ -574,31 +592,61 @@ html[data-theme] .live-roster-section h3 {
   color: var(--neu-muted);
 }
 
-html[data-theme] .bench-players,
-html[data-theme] .unavailable-players {
+html[data-theme] .bench-players {
   background: var(--neu-card);
   border: none;
-  box-shadow: var(--neu-raised-sm);
+  box-shadow: none;
+  padding: 3px 2px;
+}
+
+html[data-theme] .unavailable-players {
+  background: color-mix(in srgb, var(--pill-rose) 72%, var(--neu-card));
+  border: 1px solid color-mix(in srgb, var(--pill-rose) 70%, #e11d48);
+  box-shadow: none;
+  padding: 3px 2px;
 }
 
 html[data-theme] .bench-players h4,
 html[data-theme] .unavailable-players h4 {
   color: var(--neu-muted);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.15;
+  letter-spacing: 0;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
-html[data-theme] .bench-slot,
-html[data-theme] .unavailable-slot {
+html[data-theme] .unavailable-players h4 {
+  color: #9b1c1c;
+  text-transform: uppercase;
+}
+
+html[data-theme] .bench-slot {
   background: color-mix(in srgb, var(--neu-text) 6%, var(--neu-card));
   box-shadow: none;
   border: 1px dashed var(--neu-line);
 }
 
+html[data-theme] .unavailable-slot {
+  background: color-mix(in srgb, var(--pill-rose) 40%, transparent);
+  box-shadow: none;
+  border: 1px dashed #e11d48;
+}
+
 html[data-theme] .player-slot:not(.occupied),
-html[data-theme] .gk-slot:not(.occupied),
 html[data-theme] .sw-slot:not(.occupied) {
   background: rgba(255, 255, 255, 0.16);
   box-shadow: none;
   border: 2px dashed rgba(255, 255, 255, 0.88);
+}
+
+html[data-theme] .gk-slot:not(.occupied) {
+  background: color-mix(in srgb, var(--pill-sky) 45%, transparent);
+  box-shadow: none;
+  border: 2px dashed #60a5fa;
 }
 
 html[data-theme] .player-number,
@@ -610,12 +658,131 @@ html[data-theme] .player-slot .player-number {
   box-shadow: var(--neu-raised-sm);
 }
 
+html[data-theme] .gk-slot .player-number,
+html[data-theme] .gk-slot .player-number-placed {
+  background: var(--pill-sky);
+  color: var(--pill-ink);
+}
+
 html[data-theme] .bench-slot .player-number {
   background: var(--pill-lavender);
 }
 
-html[data-theme] .unavailable-slot .player-number {
-  background: var(--pill-used);
+html[data-theme] .unavailable-slot .player-number,
+html[data-theme] .unavailable-slot .player-number-placed {
+  background: var(--pill-rose);
+  color: var(--pill-ink);
+}
+
+html[data-theme] .player-number .player-name-bench,
+html[data-theme] .player-number .player-name-field {
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: clip;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.05;
+  height: auto;
+  max-width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  html[data-theme] #formation-setup .formation-container {
+    flex-direction: column;
+    overflow: hidden;
+    gap: 6px;
+    padding: 6px 8px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  html[data-theme] .formation-pitch-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
+    min-height: 0;
+    flex: 1 1 auto;
+    container-type: size;
+  }
+
+  html[data-theme] #formation-setup .formation-field {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    width: min(100%, calc(100cqh * 1224 / 1974));
+    aspect-ratio: 1224 / 1974;
+    margin-inline: auto;
+    overflow: hidden;
+  }
+
+  html[data-theme] #formation-setup .formation-field-surface {
+    inset: 0;
+    background-size: 100% 100%;
+  }
+
+  html[data-theme] .bench-players,
+  html[data-theme] .unavailable-players {
+    width: 78px;
+    flex: 0 0 78px;
+    overflow: hidden;
+    max-height: none;
+    padding: 2px;
+    gap: 3px;
+  }
+
+  html[data-theme] .bench-slots,
+  html[data-theme] .unavailable-slots {
+    overflow: hidden;
+    gap: 4px;
+  }
+
+  html[data-theme] .bench-slot,
+  html[data-theme] .unavailable-slot {
+    width: var(--bench-tile, 44px);
+    height: var(--bench-tile, 44px);
+    margin: 0 auto;
+    border-width: 1px;
+  }
+
+  html[data-theme] .bench-overflow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 2px 0 0;
+    align-items: flex-start;
+    align-content: flex-start;
+    flex: 0 0 auto;
+    max-height: calc(var(--bench-tile, 44px) * 2 + 4px);
+    overflow: hidden;
+  }
+
+  html[data-theme] .bench-overflow .bench-slot {
+    width: var(--bench-tile, 44px);
+    height: var(--bench-tile, 44px);
+    margin: 0;
+  }
+
+  html[data-theme] .bench-overflow[hidden] {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 769px) {
+  html[data-theme] .formation-pitch-row {
+    display: contents;
+  }
+
+  html[data-theme] .bench-overflow {
+    display: none !important;
+  }
 }
 
 html[data-theme] .formation-container,
@@ -713,11 +880,11 @@ html[data-theme] .content {
 }
 
 html[data-theme] .players-list {
-  gap: 12px;
+  gap: 8px;
 }
 
 html[data-theme] .player-item {
-  padding: 14px 16px;
+  padding: 8px 12px;
 }
 
 html[data-theme] .menu-btn[data-go='team-setup'] {
@@ -878,13 +1045,18 @@ html[data-theme] #game-tracking .player-grid-item.substitute {
   background: var(--pill-mint);
   color: var(--pill-ink);
   border: none;
-  border-radius: 22px;
+  border-radius: var(--neu-radius);
   box-shadow: 0 8px 18px rgba(17, 19, 24, 0.1);
   gap: 8px;
 }
 
 html[data-theme] #game-tracking .player-grid-item.substitute {
   background: var(--pill-lavender);
+}
+
+html[data-theme] #game-tracking .player-grid-item.is-gk,
+html[data-theme] #game-tracking .player-grid-item.starter.is-gk {
+  background: var(--pill-sky);
 }
 
 html[data-theme] #game-tracking .player-grid-item.used-off {
@@ -993,7 +1165,7 @@ html[data-theme] .dialog {
 html[data-theme] .dialog-content {
   background: var(--neu-card);
   color: var(--neu-text);
-  border-radius: 28px;
+  border-radius: var(--neu-radius);
   padding: 22px 20px;
   box-shadow: var(--neu-raised);
   max-width: 440px;
@@ -1024,12 +1196,12 @@ html[data-theme] .action-buttons {
   gap: 10px;
 }
 
-html[data-theme] .action-btn {
+html[data-theme] #action-buttons .action-btn {
   background: var(--pill-mint);
   background-image: none;
   color: var(--pill-ink);
   border: none;
-  border-radius: 20px;
+  border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
   text-transform: none;
   letter-spacing: 0;
@@ -1039,25 +1211,25 @@ html[data-theme] .action-btn {
   gap: 8px;
 }
 
-html[data-theme] .action-btn:hover,
-html[data-theme] .action-btn:active {
+html[data-theme] #action-buttons .action-btn:hover,
+html[data-theme] #action-buttons .action-btn:active {
   background-image: none;
   transform: scale(0.98);
 }
 
-html[data-theme] .action-btn[data-action='goal'] { background: var(--pill-mint); }
-html[data-theme] .action-btn[data-action='assist'] { background: var(--pill-lavender); }
-html[data-theme] .action-btn[data-action='save'] { background: var(--pill-sky); }
-html[data-theme] .action-btn[data-action='shot_on_goal'] { background: var(--pill-sky); }
-html[data-theme] .action-btn[data-action='goal_allowed'] { background: var(--pill-rose); }
-html[data-theme] .action-btn[data-action='blocked_shot'] { background: var(--pill-used); }
-html[data-theme] .action-btn[data-action='fault'] { background: var(--pill-peach); }
-html[data-theme] .action-btn[data-action='yellow_card'] { background: var(--pill-yellow); }
-html[data-theme] .action-btn[data-action='red_card'] { background: var(--pill-rose); }
-html[data-theme] .action-btn[data-action='own_goal'] { background: var(--pill-peach); }
-html[data-theme] .action-btn[data-action='injury'] { background: var(--pill-used); }
-html[data-theme] .action-btn[data-action='late_to_game'] { background: var(--pill-yellow); }
-html[data-theme] .action-btn[data-action='note'] { background: var(--pill-peach); }
+html[data-theme] #action-buttons .action-btn[data-action='goal'] { background: var(--pill-mint); }
+html[data-theme] #action-buttons .action-btn[data-action='assist'] { background: var(--pill-lavender); }
+html[data-theme] #action-buttons .action-btn[data-action='save'] { background: var(--pill-sky); }
+html[data-theme] #action-buttons .action-btn[data-action='shot_on_goal'] { background: var(--pill-sky); }
+html[data-theme] #action-buttons .action-btn[data-action='goal_allowed'] { background: var(--pill-rose); }
+html[data-theme] #action-buttons .action-btn[data-action='blocked_shot'] { background: var(--pill-used); }
+html[data-theme] #action-buttons .action-btn[data-action='fault'] { background: var(--pill-peach); }
+html[data-theme] #action-buttons .action-btn[data-action='yellow_card'] { background: var(--pill-yellow); }
+html[data-theme] #action-buttons .action-btn[data-action='red_card'] { background: var(--pill-rose); }
+html[data-theme] #action-buttons .action-btn[data-action='own_goal'] { background: var(--pill-peach); }
+html[data-theme] #action-buttons .action-btn[data-action='injury'] { background: var(--pill-used); }
+html[data-theme] #action-buttons .action-btn[data-action='late_to_game'] { background: var(--pill-yellow); }
+html[data-theme] #action-buttons .action-btn[data-action='note'] { background: var(--pill-peach); }
 
 html[data-theme] .action-btn .stat-emoji {
   font-size: 22px;
@@ -1078,7 +1250,7 @@ html[data-theme] .player-select-item {
   padding: 12px 8px;
   background: var(--pill-mint);
   color: var(--pill-ink);
-  border-radius: 20px;
+  border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
   text-transform: none;
 }
@@ -1136,7 +1308,7 @@ html[data-theme] .action-review-list {
 html[data-theme] .action-review-item {
   background: var(--neu-bg);
   border: none;
-  border-radius: 16px;
+  border-radius: var(--neu-radius);
   padding: 12px 14px;
   color: var(--neu-text);
 }
@@ -1169,7 +1341,7 @@ html[data-theme] .report-stat-card {
   background: var(--neu-card) !important;
   color: var(--neu-text) !important;
   border: none !important;
-  border-radius: 18px;
+  border-radius: var(--neu-radius);
   padding: 10px 12px;
   box-shadow: var(--neu-raised-sm);
 }
@@ -1191,6 +1363,48 @@ html[data-theme] .report-stat-card .stat-card-name {
   flex: 1;
 }
 
+html[data-theme] #team-setup .players-header {
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+html[data-theme] .players-header-tools {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+html[data-theme] #team-setup .player-counter-team,
+html[data-theme] #team-setup .players-header #open-add-player {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+html[data-theme] #team-setup .players-header #open-add-player {
+  flex-direction: row;
+  background: var(--neu-card);
+  color: var(--neu-accent);
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] #team-setup .players-header #open-add-player .material-icons {
+  color: var(--neu-accent);
+  font-size: 22px;
+}
+
+html[data-theme] .season-stat-card .stat-played,
 html[data-theme] .report-stat-card .stat-played {
   margin-left: auto;
   font-size: 16px;
@@ -1200,16 +1414,8 @@ html[data-theme] .report-stat-card .stat-played {
 }
 
 html[data-theme] .season-stat-card.is-totals {
-  background: var(--pill-mint) !important;
-  color: var(--pill-ink) !important;
-}
-
-html[data-theme] .season-stat-card.is-totals .stat-card-name,
-html[data-theme] .season-stat-card.is-totals .stat-chip,
-html[data-theme] .season-stat-card.is-totals .stat-chip-icon,
-html[data-theme] .season-stat-card.is-totals .stat-chip-label,
-html[data-theme] .season-stat-card.is-totals .stat-chip-value {
-  color: var(--pill-ink) !important;
+  background: var(--neu-card) !important;
+  color: var(--neu-text) !important;
 }
 
 html[data-theme] .stat-chip-grid {
@@ -1218,26 +1424,83 @@ html[data-theme] .stat-chip-grid {
   gap: 6px;
 }
 
+html[data-theme] .report-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+html[data-theme] .stat-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 7px 2px 6px;
+  border-radius: var(--neu-radius);
+  background: transparent;
+  color: var(--neu-text);
+}
+
+html[data-theme] .stat-metric-value {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+html[data-theme] .stat-metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--neu-muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-theme] .stat-metric.is-zero .stat-metric-value,
+html[data-theme] .stat-metric.is-zero .stat-metric-label {
+  color: var(--neu-muted);
+  opacity: 0.55;
+}
+
+html[data-theme] .stat-metric:not(.is-zero) {
+  background: var(--pill-mint);
+}
+
+html[data-theme] .stat-metric:not(.is-zero) .stat-metric-value,
+html[data-theme] .stat-metric:not(.is-zero) .stat-metric-label {
+  color: var(--pill-ink);
+  opacity: 1;
+}
+
+html[data-theme] .stat-metric.stat-against:not(.is-zero) {
+  background: var(--pill-rose);
+}
+
+html[data-theme] .stat-metric.stat-yellow:not(.is-zero) {
+  background: var(--pill-yellow);
+}
+
+html[data-theme] .stat-metric.stat-red:not(.is-zero) {
+  background: var(--pill-rose);
+}
+
 html[data-theme] .stat-chip {
   background: var(--neu-bg);
   color: var(--neu-text);
-  border-radius: 999px;
+  border-radius: var(--neu-radius);
   padding: 4px 8px;
   gap: 5px;
   display: inline-flex;
   flex-direction: row;
   align-items: center;
   min-width: 0;
-}
-
-html[data-theme] .season-stat-card.is-totals .stat-chip {
-  background: color-mix(in srgb, var(--pill-ink) 10%, var(--pill-mint));
-}
-
-html[data-theme] .season-stat-card.is-totals .stat-chip.is-zero,
-html[data-theme] .season-stat-card.is-totals .stat-chip.is-zero .stat-chip-value,
-html[data-theme] .season-stat-card.is-totals .stat-chip.is-zero .stat-chip-label {
-  color: color-mix(in srgb, var(--pill-ink) 55%, var(--pill-mint)) !important;
 }
 
 html[data-theme] .stat-chip-icon {
@@ -1270,26 +1533,48 @@ html[data-theme] .stat-chip.is-zero .stat-chip-label {
   opacity: 0.55;
 }
 
+html[data-theme] .report-stat-card .stat-chip:not(.is-zero),
+html[data-theme] .season-stat-card:not(.is-totals) .stat-chip:not(.is-zero),
 html[data-theme] .stat-chip.stat-goal:not(.is-zero) {
   background: var(--pill-mint);
+  color: var(--pill-ink);
 }
 
 html[data-theme] .stat-chip.stat-against:not(.is-zero) {
   background: var(--pill-rose);
+  color: var(--pill-ink);
 }
 
 html[data-theme] .stat-chip.stat-yellow:not(.is-zero) {
   background: var(--pill-yellow);
+  color: var(--pill-ink);
 }
 
 html[data-theme] .stat-chip.stat-red:not(.is-zero) {
   background: var(--pill-rose);
+  color: var(--pill-ink);
+}
+
+html[data-theme] .report-stat-card .stat-chip:not(.is-zero) .stat-chip-value,
+html[data-theme] .report-stat-card .stat-chip:not(.is-zero) .stat-chip-label,
+html[data-theme] .season-stat-card:not(.is-totals) .stat-chip:not(.is-zero) .stat-chip-value,
+html[data-theme] .season-stat-card:not(.is-totals) .stat-chip:not(.is-zero) .stat-chip-label,
+html[data-theme] .stat-chip.stat-goal:not(.is-zero) .stat-chip-value,
+html[data-theme] .stat-chip.stat-goal:not(.is-zero) .stat-chip-label,
+html[data-theme] .stat-chip.stat-against:not(.is-zero) .stat-chip-value,
+html[data-theme] .stat-chip.stat-against:not(.is-zero) .stat-chip-label,
+html[data-theme] .stat-chip.stat-yellow:not(.is-zero) .stat-chip-value,
+html[data-theme] .stat-chip.stat-yellow:not(.is-zero) .stat-chip-label,
+html[data-theme] .stat-chip.stat-red:not(.is-zero) .stat-chip-value,
+html[data-theme] .stat-chip.stat-red:not(.is-zero) .stat-chip-label {
+  color: var(--pill-ink);
+  opacity: 1;
 }
 
 html[data-theme] .report-header-score {
   background: var(--pill-mint);
   color: var(--pill-ink);
-  border-radius: 20px;
+  border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
   padding: 12px 14px;
   gap: 12px;
@@ -1319,7 +1604,7 @@ html[data-theme] .report-header-info {
 
 html[data-theme] .timeline-bars-wrapper {
   background: var(--neu-bg);
-  border-radius: 16px;
+  border-radius: var(--neu-radius);
 }
 
 html[data-theme] .goals-cards-list {
@@ -1329,7 +1614,7 @@ html[data-theme] .goals-cards-list {
 html[data-theme] .goals-cards-item {
   background: var(--neu-card);
   border: none;
-  border-radius: 14px;
+  border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
   color: var(--neu-text);
   padding: 8px 10px;
@@ -1402,7 +1687,7 @@ html[data-theme] .report-notes {
 html[data-theme] .report-note-item {
   background: var(--pill-peach);
   color: var(--pill-ink);
-  border-radius: 16px;
+  border-radius: var(--neu-radius);
   padding: 8px 12px;
 }
 
