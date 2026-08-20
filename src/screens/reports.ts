@@ -195,22 +195,6 @@ export function viewReport(gameId: string): void {
       <span class="stat-metric-label">${escapeHtml(label)}</span>
     </div>`
   const minutes = playedMinutesByPlayer(game)
-  const rows = [...team.players]
-    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-    .map((player) => {
-      const stats = statsFromActions(game.actions, player.id)
-      const played = minutes.get(player.id) ?? 0
-      return `<tr>
-        <td>${player.jerseyNumber}</td>
-        <td>${escapeHtml(player.name)}</td>
-        <td>${played === 0 ? '–' : `${played}'`}</td>
-        <td>${stats.goals}</td><td>${stats.assists}</td><td>${stats.saves}</td>
-        <td>${stats.goalsAllowed}</td><td>${stats.shotOnGoal}</td><td>${stats.blockedShot}</td>
-        <td>${stats.faults}</td><td>${stats.yellowCards}</td><td>${stats.redCards}</td>
-        <td>${stats.ownGoals}</td>
-      </tr>`
-    })
-    .join('')
   const cards = [...team.players]
     .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
     .map((player) => {
@@ -262,17 +246,6 @@ export function viewReport(gameId: string): void {
     ${renderNotes(game, team.players)}
     <h3>${t('playerStatistics')}</h3>
     <div class="report-stat-cards">${cards}</div>
-    <div class="report-table-container">
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>#</th><th>${t('name')}</th><th>${t('playedShort')}</th><th>⚽</th><th>👟</th><th>🧤</th><th>GA</th>
-            <th>🎯</th><th>🛡</th><th>🚩</th><th>🟨</th><th>🟥</th><th>OG</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
     <div class="report-actions">
       <button class="secondary-btn" id="print-open-report">${t('exportPdf')}</button>
       <button class="primary-btn" id="close-open-report">${t('close')}</button>
@@ -285,23 +258,42 @@ export function viewReport(gameId: string): void {
   toggleDialog('report-dialog', true)
 }
 
+function printStyles(): string {
+  const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')]
+    .map((link) => `<link rel="stylesheet" href="${link.href}">`)
+    .join('')
+  const inline = [...document.querySelectorAll('style')].map((node) => node.outerHTML).join('')
+  return `${links}${inline}`
+}
+
 function printReport(gameId: string): void {
   const content = document.getElementById('report-dialog-content')
   if (!content) return
   const clone = content.cloneNode(true) as HTMLElement
-  clone.querySelector('.report-stat-cards')?.remove()
-  clone.querySelectorAll<HTMLElement>('.report-table-container').forEach((el) => {
-    el.style.display = 'block'
-  })
+  clone.querySelector('.report-actions')?.remove()
+  clone.querySelector('.report-table-container')?.remove()
   const popup = window.open('', '_blank')
   if (!popup) {
     showMessage(t('popupBlocked'), 'error')
     return
   }
-  popup.document.write(`<!DOCTYPE html><html><head><title>Game Report ${gameId}</title>
-    <style>body{font-family:Arial,sans-serif;padding:20px}table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid #ddd;padding:6px;text-align:left}</style></head><body>
-    ${clone.innerHTML}<script>window.onload=function(){window.print()}<\/script></body></html>`)
+  const theme = document.documentElement.getAttribute('data-theme') ?? 'dark'
+  const lang = document.documentElement.lang || 'en'
+  popup.document.write(`<!DOCTYPE html><html lang="${lang}" data-theme="${theme}"><head>
+    <meta charset="UTF-8" />
+    <title>Game Report ${escapeHtml(gameId)}</title>
+    ${printStyles()}
+    <style>
+      @page { margin: 12mm; }
+      html, body, .report-print { background: var(--neu-bg); color: var(--neu-text); }
+      body { margin: 0; padding: 16px; }
+      .report-print { max-width: none; box-shadow: none; border-radius: 0; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    </style>
+  </head><body>
+    <div class="dialog-content report-dialog report-print">${clone.innerHTML}</div>
+    <script>window.onload=function(){window.focus();window.print()}<\/script>
+  </body></html>`)
   popup.document.close()
 }
 
