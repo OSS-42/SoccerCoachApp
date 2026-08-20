@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.4.43'
+export const APP_VERSION = '2.4.46'
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
@@ -70,6 +70,8 @@ export type ActionType =
   | 'yellow_card'
   | 'red_card'
   | 'own_goal'
+  | 'opp_yellow'
+  | 'opp_red'
   | 'injury'
   | 'late_to_game'
   | 'note'

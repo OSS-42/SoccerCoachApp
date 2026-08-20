@@ -30,7 +30,7 @@ export const FIELD_SPOTS: FieldSpotDef[] = [
   { position: 'RM', label: 'RM', x: 87, y: 45 },
   { position: 'CAM', label: 'CAM', x: 50, y: 35 },
   { position: 'LW', label: 'LW', x: 13, y: 24 },
-  { position: 'SS', label: 'SS', x: 32, y: 22 },
+  { position: 'SS', label: 'SS', x: 50, y: 24 },
   { position: 'RW', label: 'RW', x: 87, y: 24 },
   { position: 'CF', label: 'CF', x: 50, y: 18 },
   { position: 'ST-L', label: 'ST', x: 35, y: 9 },
@@ -48,6 +48,15 @@ export function spotLabel(position: string): string {
   if (found) return found.label
   if (/^ST/i.test(position)) return 'ST'
   return position
+}
+
+/** Smaller y is further forward. Unknown spots sort just ahead of GK. */
+export function fieldSpotDepth(position: string | undefined): number {
+  if (!position) return 80
+  const found = FIELD_SPOTS.find((s) => s.position === position)
+  if (found) return found.y
+  if (/^ST/i.test(position)) return 9
+  return 80
 }
 
 export function benchSlotCount(_matchType?: MatchType, _rosterSize?: number): number {

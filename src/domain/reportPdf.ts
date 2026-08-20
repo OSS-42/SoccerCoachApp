@@ -4,7 +4,7 @@ import { statsFromActions } from './actions'
 import { formatClock } from './clock'
 import { periodGoalDeltas } from './game'
 import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from './playingTime'
-import { buildShotTimeline, scheduledMinutes } from './timeline'
+import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from './timeline'
 import type { Game, LiveStats, Player, Team } from './types'
 
 type MetricKey = {
@@ -204,6 +204,109 @@ function drawTimeline(doc: Doc, game: Game): void {
   doc.y += chartH + scaleH + 4
 }
 
+function eventLine(event: ReturnType<typeof buildGoalsCardsEvents>[number], score: string): string[] {
+  if (event.type === 'substitution') {
+    const pos = event.position ? ` (${event.position})` : ''
+    return [`> ${event.playerName}${pos}`, `< ${event.relatedName ?? ''}`]
+  }
+  if (event.type === 'ownGoal') return [`OG ${event.playerName} ${score}`]
+  if (event.type === 'goal' || event.type === 'goalAllowed') {
+    const assist = event.assistName ? [`Assist: ${event.assistName}`] : []
+    return [`Goal ${event.playerName} ${score}`, ...assist]
+  }
+  if (event.type === 'yellow') return [`Y  ${event.playerName}`]
+  if (event.type === 'red') return [`R  ${event.playerName}`]
+  return [event.playerName]
+}
+
+function drawPeriodRingPdf(
+  pdf: jsPDF,
+  cx: number,
+  cy: number,
+  r: number,
+  total: number,
+  filled: number,
+): void {
+  const n = Math.max(1, total)
+  const sweep = (2 * Math.PI) / n
+  const gap = Math.min(0.28, sweep * 0.18)
+  pdf.setLineWidth(0.7)
+  pdf.setLineCap('round')
+  for (let i = 0; i < n; i += 1) {
+    const a0 = -Math.PI / 2 + i * sweep + gap / 2
+    const a1 = -Math.PI / 2 + (i + 1) * sweep - gap / 2
+    pdf.setDrawColor(...(i < filled ? INK : LINE))
+    const steps = 10
+    for (let s = 0; s < steps; s += 1) {
+      const t0 = a0 + ((a1 - a0) * s) / steps
+      const t1 = a0 + ((a1 - a0) * (s + 1)) / steps
+      pdf.line(cx + r * Math.cos(t0), cy + r * Math.sin(t0), cx + r * Math.cos(t1), cy + r * Math.sin(t1))
+    }
+  }
+}
+
+function drawPeriodMarkPdf(doc: Doc, total: number, filled: number, home: number, away: number): void {
+  ensure(doc, 16)
+  const cx = PAGE_W / 2
+  const cy = doc.y + 8
+  drawPeriodRingPdf(doc.pdf, cx, cy, 6.2, total, filled)
+  doc.pdf.setFont('helvetica', 'bold')
+  doc.pdf.setFontSize(8)
+  setText(doc.pdf, INK)
+  doc.pdf.text(`${home}-${away}`, cx, cy + 1.1, { align: 'center' })
+  doc.y += 16
+}
+
+function drawMatchLog(doc: Doc, game: Game, players: Player[]): void {
+  const events = buildGoalsCardsEvents(game, players)
+  if (!events.length) return
+  heading(doc, t('matchLog'))
+  const pdf = doc.pdf
+  const minX = MARGIN
+  const homeX = MARGIN + 12
+  const awayX = PAGE_W - MARGIN
+  const colW = (CONTENT_W - 16) / 2
+  const breaks: number[] = []
+  for (let i = 1; i < game.numPeriods; i += 1) breaks.push(i * game.periodDuration)
+  let bi = 0
+  let home = 0
+  let away = 0
+  for (const event of events) {
+    while (bi < breaks.length && event.minute > breaks[bi]) {
+      drawPeriodMarkPdf(doc, game.numPeriods, bi + 1, home, away)
+      bi += 1
+    }
+    if (event.type === 'goal' || (event.type === 'ownGoal' && !event.isOpponent)) home += 1
+    if (event.type === 'goalAllowed' || (event.type === 'ownGoal' && event.isOpponent)) away += 1
+    const score =
+      event.type === 'goal' || event.type === 'ownGoal' || event.type === 'goalAllowed'
+        ? `(${home}-${away})`
+        : ''
+    const lines = eventLine(event, score).map(pdfSafe)
+    const h = Math.max(6, lines.length * 4.2 + 2)
+    ensure(doc, h)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(8)
+    setText(pdf, MUTED)
+    pdf.text(`${event.minute}'`, minX, doc.y + 4)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(9)
+    setText(pdf, event.isOpponent ? RED : INK)
+    let ty = doc.y + 4
+    for (const line of lines) {
+      if (event.isOpponent) pdf.text(fit(pdf, line, colW), awayX, ty, { align: 'right' })
+      else pdf.text(fit(pdf, line, colW), homeX, ty)
+      ty += 4.2
+    }
+    doc.y += h
+  }
+  while (bi < breaks.length) {
+    drawPeriodMarkPdf(doc, game.numPeriods, bi + 1, home, away)
+    bi += 1
+  }
+  drawPeriodMarkPdf(doc, game.numPeriods, game.numPeriods, game.homeScore, game.awayScore)
+}
+
 function drawNotes(doc: Doc, game: Game, players: Player[]): void {
   const notes = reportNotes(game, players)
   if (!notes.length) return
@@ -240,7 +343,6 @@ function metricFill(kind: string, value: number): RGB | null {
 }
 
 function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
-  heading(doc, t('playerStatistics'))
   const pdf = doc.pdf
   const minutes = playedMinutesByPlayer(game)
   const minutesByPos = playedMinutesByPlayerPosition(game)
@@ -264,7 +366,10 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
   const cardH = 6 + headerH + cellH * 2 + gap + 4
 
   const roster = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-  for (const player of roster) {
+  const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)
+  const dnpRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) === 0)
+  if (playedRoster.length) heading(doc, t('playerStatistics'))
+  for (const player of playedRoster) {
     ensure(doc, cardH)
     const stats = statsFromActions(game.actions, player.id)
     const played = minutes.get(player.id) ?? 0
@@ -313,6 +418,18 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
     }
     doc.y += cardH + 2.2
   }
+  if (!dnpRoster.length) return
+  heading(doc, t('didNotPlay'))
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(9)
+  setText(pdf, MUTED)
+  const names = dnpRoster.map((player) => `#${player.jerseyNumber} ${player.name}`).join('   ')
+  const wrap = pdf.splitTextToSize(pdfSafe(names), CONTENT_W) as string[]
+  for (const line of wrap) {
+    ensure(doc, 5)
+    pdf.text(line, MARGIN, doc.y + 4)
+    doc.y += 5
+  }
 }
 
 export function buildGameReportPdf(game: Game, team: Team): jsPDF {
@@ -320,6 +437,7 @@ export function buildGameReportPdf(game: Game, team: Team): jsPDF {
   const doc: Doc = { pdf, y: MARGIN }
   drawScoreHeader(doc, game, team.name)
   drawTimeline(doc, game)
+  drawMatchLog(doc, game, team.players)
   drawNotes(doc, game, team.players)
   drawPlayers(doc, game, team.players)
   return pdf

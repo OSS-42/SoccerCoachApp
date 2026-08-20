@@ -16,7 +16,7 @@ export function buildShotTimeline(game: Game): {
   const opponent: Record<number, { saves: number; goalsAllowed: number }> = {}
   for (const action of game.actions) {
     const minute = gameMinute(action.gameSecond)
-    if (action.actionType === 'goal' || action.actionType === 'own_goal') {
+    if (action.actionType === 'goal' || (action.actionType === 'own_goal' && !action.playerId)) {
       user[minute] ??= { shots: 0, goals: 0 }
       user[minute].goals += 1
     } else if (action.actionType === 'shot_on_goal') {
@@ -25,7 +25,7 @@ export function buildShotTimeline(game: Game): {
     } else if (action.actionType === 'save') {
       opponent[minute] ??= { saves: 0, goalsAllowed: 0 }
       opponent[minute].saves += 1
-    } else if (action.actionType === 'goal_allowed') {
+    } else if (action.actionType === 'goal_allowed' || (action.actionType === 'own_goal' && action.playerId)) {
       opponent[minute] ??= { saves: 0, goalsAllowed: 0 }
       opponent[minute].goalsAllowed += 1
     }
@@ -36,7 +36,7 @@ export function buildShotTimeline(game: Game): {
 export type ReportEvent = {
   second: number
   minute: number
-  type: 'goal' | 'goalAllowed' | 'yellow' | 'red' | 'injury' | 'substitution'
+  type: 'goal' | 'goalAllowed' | 'ownGoal' | 'yellow' | 'red' | 'injury' | 'substitution'
   playerName: string
   assistName: string | null
   relatedName: string | null
@@ -101,21 +101,35 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
   let spots = liveSpots(game)
   game.actions.forEach((action, index) => {
     const minute = gameMinute(action.gameSecond)
-    if (action.actionType === 'goal' || action.actionType === 'own_goal') {
+    if (action.actionType === 'goal') {
       homeGoals += 1
-      const assistId = action.actionType === 'goal' ? assistForGoal(game.actions, index) : null
+      const assistId = assistForGoal(game.actions, index)
       events.push({
         second: action.gameSecond,
         minute,
         type: 'goal',
-        playerName:
-          action.actionType === 'own_goal'
-            ? t('opponentOg')
-            : playerName(players, action.playerId) || t('unknownPlayer'),
+        playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: assistId ? playerName(players, assistId) : null,
         relatedName: null,
         scoreIndex: homeGoals,
         isOpponent: false,
+        position: null,
+      })
+    } else if (action.actionType === 'own_goal') {
+      const ours = Boolean(action.playerId)
+      if (ours) awayGoals += 1
+      else homeGoals += 1
+      events.push({
+        second: action.gameSecond,
+        minute,
+        type: 'ownGoal',
+        playerName: ours
+          ? playerName(players, action.playerId) || t('unknownPlayer')
+          : t('opponentOg'),
+        assistName: null,
+        relatedName: null,
+        scoreIndex: ours ? awayGoals : homeGoals,
+        isOpponent: ours,
         position: null,
       })
     } else if (action.actionType === 'goal_allowed') {
@@ -131,28 +145,34 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         isOpponent: true,
         position: null,
       })
-    } else if (action.actionType === 'yellow_card') {
+    } else if (action.actionType === 'yellow_card' || action.actionType === 'opp_yellow') {
       events.push({
         second: action.gameSecond,
         minute,
         type: 'yellow',
-        playerName: playerName(players, action.playerId) || t('unknownPlayer'),
+        playerName:
+          action.actionType === 'opp_yellow'
+            ? t('opponent')
+            : playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
         relatedName: null,
         scoreIndex: null,
-        isOpponent: false,
+        isOpponent: action.actionType === 'opp_yellow',
         position: null,
       })
-    } else if (action.actionType === 'red_card') {
+    } else if (action.actionType === 'red_card' || action.actionType === 'opp_red') {
       events.push({
         second: action.gameSecond,
         minute,
         type: 'red',
-        playerName: playerName(players, action.playerId) || t('unknownPlayer'),
+        playerName:
+          action.actionType === 'opp_red'
+            ? t('opponent')
+            : playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
         relatedName: null,
         scoreIndex: null,
-        isOpponent: false,
+        isOpponent: action.actionType === 'opp_red',
         position: null,
       })
     } else if (action.actionType === 'injury') {

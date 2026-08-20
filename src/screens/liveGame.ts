@@ -1,7 +1,8 @@
 import { actionLabel, t } from '@/i18n'
 import { askConfirm, askPrompt } from '@/ui/confirm'
 import { playerIsUnavailable, statsFromActions } from '@/domain/actions'
-import { spotLabel } from '@/domain/formation'
+import { fieldSpotDepth, spotLabel } from '@/domain/formation'
+import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { currentPeriod, formatClock, isLastPeriod } from '@/domain/clock'
 import {
   extraTimeActive,
@@ -48,12 +49,11 @@ const LIVE_ACTIONS: { type: ActionType; emoji: string }[] = [
   { type: 'assist', emoji: '👟' },
   { type: 'save', emoji: '🧤' },
   { type: 'shot_on_goal', emoji: '🎯' },
-  { type: 'goal_allowed', emoji: '🔴' },
+  { type: 'own_goal', emoji: '🔴' },
   { type: 'blocked_shot', emoji: '❌' },
   { type: 'fault', emoji: '⚠️' },
   { type: 'yellow_card', emoji: '🟨' },
   { type: 'red_card', emoji: '🟥' },
-  { type: 'own_goal', emoji: '⚽' },
   { type: 'injury', emoji: '🏥' },
   { type: 'late_to_game', emoji: '🕒' },
   { type: 'note', emoji: '📝' },
@@ -81,9 +81,16 @@ function fillPicker(containerId: string, players: Player[], onPick: (id: string)
   const grid = document.getElementById(containerId)
   if (!grid) return
   grid.innerHTML = ''
-  for (const player of players) {
+  const gkId = getCurrentGame()?.formation.find((spot) => spot.position === 'GK')?.playerId
+  const ordered = [...players].sort((a, b) => {
+    const aGk = a.id === gkId ? 1 : 0
+    const bGk = b.id === gkId ? 1 : 0
+    if (aGk !== bGk) return aGk - bGk
+    return a.jerseyNumber - b.jerseyNumber
+  })
+  for (const player of ordered) {
     const item = document.createElement('div')
-    item.className = 'player-select-item'
+    item.className = `player-select-item${player.id === gkId ? ' is-gk' : ''}`
     item.innerHTML = `<div class="player-select-number">${player.jerseyNumber}</div><div class="player-select-name">${escapeHtml(player.name)}</div>`
     item.addEventListener('click', () => onPick(player.id))
     grid.appendChild(item)
@@ -175,25 +182,34 @@ function paintLiveRosters(): void {
   const onField = new Map(game.formation.map((f) => [f.playerId, f.position]))
   const gkId = game.formation.find((spot) => spot.position === 'GK')?.playerId
   const usedOff = usedOffPlayerIds(game)
-  const roster = [...team.players]
-    .filter((player) => !game.unavailablePlayers.includes(player.id))
-    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  const minutes = playedMinutesByPlayer({ ...game, elapsedSeconds: liveElapsedSeconds() })
+  const roster = [...team.players].filter((player) => !game.unavailablePlayers.includes(player.id))
   const fieldPlayers = roster
     .filter((player) => onField.has(player.id))
     .sort((a, b) => {
-      const aGk = a.id === gkId ? 1 : 0
-      const bGk = b.id === gkId ? 1 : 0
-      if (aGk !== bGk) return aGk - bGk
+      const depth = fieldSpotDepth(onField.get(a.id)) - fieldSpotDepth(onField.get(b.id))
+      if (depth !== 0) return depth
       return a.jerseyNumber - b.jerseyNumber
     })
-  const benchPlayers = roster.filter((player) => !onField.has(player.id))
+  const benchPlayers = roster
+    .filter((player) => !onField.has(player.id))
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
   for (const player of fieldPlayers) {
     fieldGrid.appendChild(
-      liveTile(player, 'field', usedOff.has(player.id), player.id === gkId, onField.get(player.id)),
+      liveTile(
+        player,
+        'field',
+        usedOff.has(player.id),
+        player.id === gkId,
+        onField.get(player.id),
+        minutes.get(player.id) ?? 0,
+      ),
     )
   }
   for (const player of benchPlayers) {
-    benchGrid.appendChild(liveTile(player, 'bench', usedOff.has(player.id), false))
+    benchGrid.appendChild(
+      liveTile(player, 'bench', usedOff.has(player.id), false, undefined, minutes.get(player.id) ?? 0),
+    )
   }
 }
 
@@ -203,6 +219,7 @@ function liveTile(
   usedOff: boolean,
   isGk = false,
   fieldPosition?: string,
+  playedMinutes = 0,
 ): HTMLElement {
   const game = getCurrentGame()
   const item = document.createElement('div')
@@ -226,6 +243,7 @@ function liveTile(
     <span class="live-tile-num">${player.jerseyNumber}</span>
     ${pos ? `<span class="live-tile-pos">${escapeHtml(pos)}</span>` : ''}
     ${usedOff ? `<span class="live-tile-used">${escapeHtml(t('usedOff'))}</span>` : ''}
+    <span class="live-tile-mins">${playedMinutes}'</span>
   `
   item.addEventListener('click', () => onTileClick(player, role))
   return item
@@ -335,6 +353,34 @@ function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
 function closeActionDialog(): void {
   toggleDialog('player-action-dialog', false)
   pendingPlayer = null
+}
+
+function currentGkId(): string | null {
+  return getCurrentGame()?.formation.find((spot) => spot.position === 'GK')?.playerId ?? null
+}
+
+function openOpponentActions(): void {
+  const buttons = document.getElementById('opponent-action-buttons')
+  if (!buttons) return
+  const items: { type: ActionType; emoji: string; label: string }[] = [
+    { type: 'goal_allowed', emoji: '⚽', label: t('oppGoal') },
+    { type: 'own_goal', emoji: '🔴', label: t('oppOwnGoal') },
+    { type: 'opp_yellow', emoji: '🟨', label: t('statShortYellow') },
+    { type: 'opp_red', emoji: '🟥', label: t('statShortRed') },
+  ]
+  buttons.innerHTML = items
+    .map(
+      (action) =>
+        `<button class="action-btn" data-opp-action="${action.type}"><span class="stat-emoji">${action.emoji}</span> ${escapeHtml(action.label)}</button>`,
+    )
+    .join('')
+  toggleDialog('opponent-action-dialog', true)
+}
+
+function commitOpponent(type: ActionType): void {
+  const playerId = type === 'goal_allowed' ? currentGkId() : null
+  commit(type, playerId)
+  toggleDialog('opponent-action-dialog', false)
 }
 
 function commit(type: ActionType, playerId: string | null, note?: string): void {
@@ -480,6 +526,15 @@ export function bindLiveGame(): void {
     const counter = document.getElementById('note-char-count')
     if (counter) counter.textContent = String((event.target as HTMLTextAreaElement).value.length)
   })
+  document.getElementById('open-opponent-action')?.addEventListener('click', openOpponentActions)
+  document.getElementById('cancel-opponent-action')?.addEventListener('click', () => {
+    toggleDialog('opponent-action-dialog', false)
+  })
+  document.getElementById('opponent-action-buttons')?.addEventListener('click', (event) => {
+    const btn = (event.target as HTMLElement).closest<HTMLElement>('[data-opp-action]')
+    if (!btn?.dataset.oppAction) return
+    commitOpponent(btn.dataset.oppAction as ActionType)
+  })
   document.getElementById('open-game-note')?.addEventListener('click', async () => {
     const text = await askPrompt({
       title: t('gameNoteTitle'),
@@ -518,6 +573,15 @@ function actionReviewText(
       off?.name ?? t('unknownPlayer'),
       pos,
     )}`
+  }
+  if (action.actionType === 'goal_allowed' && !action.playerId) {
+    return `${minute}' — ${t('opponent')} : ${actionLabel('goal_allowed')}`
+  }
+  if (action.actionType === 'own_goal' && !action.playerId) {
+    return `${minute}' — ${t('opponentOg')}`
+  }
+  if (action.actionType === 'opp_yellow' || action.actionType === 'opp_red') {
+    return `${minute}' — ${t('opponent')} : ${actionLabel(action.actionType)}`
   }
   if (action.actionType === 'game_note' || action.actionType === 'note') {
     const who = action.actionType === 'game_note' ? t('gameNote') : (player?.name ?? t('gameEvent'))

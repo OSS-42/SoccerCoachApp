@@ -812,8 +812,8 @@ html[data-theme] .player-number .player-name-field {
   html[data-theme] #formation-setup .formation-container {
     flex-direction: column;
     overflow: hidden;
-    gap: 6px;
-    padding: 6px 8px;
+    gap: 4px;
+    padding: 4px 4px;
     flex: 1;
     min-height: 0;
   }
@@ -822,7 +822,7 @@ html[data-theme] .player-number .player-name-field {
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    gap: 8px;
+    gap: 2px;
     min-height: 0;
     flex: 1 1 auto;
     container-type: size;
@@ -834,9 +834,9 @@ html[data-theme] .player-number .player-name-field {
     min-height: 0;
     height: 100%;
     max-height: 100%;
-    width: min(100%, calc(100cqh * 1224 / 1974));
-    aspect-ratio: 1224 / 1974;
-    margin-inline: auto;
+    width: auto;
+    max-width: none;
+    margin-inline: 0;
     overflow: hidden;
   }
 
@@ -847,11 +847,11 @@ html[data-theme] .player-number .player-name-field {
 
   html[data-theme] .bench-players,
   html[data-theme] .unavailable-players {
-    width: 78px;
-    flex: 0 0 78px;
+    width: calc(var(--bench-tile, 48px) + 4px);
+    flex: 0 0 calc(var(--bench-tile, 48px) + 4px);
     overflow: hidden;
     max-height: none;
-    padding: 2px;
+    padding: 1px 0;
     gap: 3px;
   }
 
@@ -863,8 +863,8 @@ html[data-theme] .player-number .player-name-field {
 
   html[data-theme] .bench-slot,
   html[data-theme] .unavailable-slot {
-    width: var(--bench-tile, 44px);
-    height: var(--bench-tile, 44px);
+    width: var(--bench-tile, 48px);
+    height: var(--bench-tile, 48px);
     margin: 0 auto;
     border-width: 1px;
   }
@@ -878,13 +878,13 @@ html[data-theme] .player-number .player-name-field {
     align-items: flex-start;
     align-content: flex-start;
     flex: 0 0 auto;
-    max-height: calc(var(--bench-tile, 44px) * 2 + 4px);
+    max-height: calc(var(--bench-tile, 48px) * 2 + 4px);
     overflow: hidden;
   }
 
   html[data-theme] .bench-overflow .bench-slot {
-    width: var(--bench-tile, 44px);
-    height: var(--bench-tile, 44px);
+    width: var(--bench-tile, 48px);
+    height: var(--bench-tile, 48px);
     margin: 0;
   }
 
@@ -1139,7 +1139,7 @@ html[data-theme] #game-tracking .period-counter {
 
 html[data-theme] #game-tracking .game-controls {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1147,11 +1147,13 @@ html[data-theme] #game-tracking .control-btn {
   flex: none;
   min-width: 0;
   width: 100%;
+  grid-column: span 2;
 }
 
+html[data-theme] #game-tracking .opponent-btn,
 html[data-theme] #game-tracking .note-btn,
 html[data-theme] #game-tracking .game-controls .note-btn {
-  grid-column: 1 / -1;
+  grid-column: span 3;
   display: flex !important;
 }
 
@@ -1216,7 +1218,15 @@ html[data-theme] #game-tracking .note-btn:hover {
   display: flex !important;
 }
 
+html[data-theme] #game-tracking .opponent-btn,
+html[data-theme] #game-tracking .opponent-btn:hover {
+  background: var(--pill-rose) !important;
+  color: var(--pill-ink) !important;
+  display: flex !important;
+}
+
 html[data-theme] #game-tracking .game-controls .action-review-btn,
+html[data-theme] #game-tracking .game-controls .opponent-btn,
 html[data-theme] #game-tracking .game-controls .note-btn {
   display: flex !important;
 }
@@ -1248,7 +1258,8 @@ html[data-theme] #game-tracking .player-grid-item.substitute {
 }
 
 html[data-theme] #game-tracking .player-grid-item.substitute .live-tile-name,
-html[data-theme] #game-tracking .player-grid-item.substitute .live-tile-num {
+html[data-theme] #game-tracking .player-grid-item.substitute .live-tile-num,
+html[data-theme] #game-tracking .player-grid-item.substitute .live-tile-mins {
   color: var(--neu-text);
 }
 
@@ -1282,16 +1293,36 @@ html[data-theme] #game-tracking .live-tile-num {
   opacity: 0.72;
 }
 
-html[data-theme] #game-tracking .live-tile-pos {
+html[data-theme] #game-tracking .live-tile-pos,
+html[data-theme] #game-tracking .live-tile-mins {
   color: var(--pill-ink);
 }
 
 html[data-theme] #game-tracking .player-grid-item.yellow-card {
   background: var(--pill-yellow);
+  color: var(--pill-ink);
 }
 
 html[data-theme] #game-tracking .player-grid-item.red-card {
   background: var(--pill-rose);
+  color: var(--pill-ink);
+}
+
+html[data-theme] #game-tracking .player-grid-item.yellow-card .live-tile-name,
+html[data-theme] #game-tracking .player-grid-item.yellow-card .live-tile-num,
+html[data-theme] #game-tracking .player-grid-item.yellow-card .live-tile-pos,
+html[data-theme] #game-tracking .player-grid-item.yellow-card .live-tile-mins,
+html[data-theme] #game-tracking .player-grid-item.yellow-card .live-tile-used,
+html[data-theme] #game-tracking .player-grid-item.substitute.yellow-card .live-tile-name,
+html[data-theme] #game-tracking .player-grid-item.substitute.yellow-card .live-tile-num,
+html[data-theme] #game-tracking .player-grid-item.red-card .live-tile-name,
+html[data-theme] #game-tracking .player-grid-item.red-card .live-tile-num,
+html[data-theme] #game-tracking .player-grid-item.red-card .live-tile-pos,
+html[data-theme] #game-tracking .player-grid-item.red-card .live-tile-mins,
+html[data-theme] #game-tracking .player-grid-item.red-card .live-tile-used,
+html[data-theme] #game-tracking .player-grid-item.substitute.red-card .live-tile-name,
+html[data-theme] #game-tracking .player-grid-item.substitute.red-card .live-tile-num {
+  color: var(--pill-ink) !important;
 }
 
 html[data-theme] #game-tracking .player-grid-item.injured {
@@ -1401,13 +1432,14 @@ html[data-theme] .action-buttons {
   gap: 10px;
 }
 
-html[data-theme] #action-buttons .action-btn {
-  background: var(--pill-mint);
+html[data-theme] #action-buttons .action-btn,
+html[data-theme] #opponent-action-buttons .action-btn {
+  background: transparent;
   background-image: none;
-  color: var(--pill-ink);
-  border: none;
+  color: var(--neu-text);
+  border: 1.5px solid var(--neu-line);
   border-radius: var(--neu-radius);
-  box-shadow: var(--neu-raised-sm);
+  box-shadow: none;
   text-transform: none;
   letter-spacing: 0;
   font-weight: 750;
@@ -1417,24 +1449,13 @@ html[data-theme] #action-buttons .action-btn {
 }
 
 html[data-theme] #action-buttons .action-btn:hover,
-html[data-theme] #action-buttons .action-btn:active {
+html[data-theme] #action-buttons .action-btn:active,
+html[data-theme] #opponent-action-buttons .action-btn:hover,
+html[data-theme] #opponent-action-buttons .action-btn:active {
+  background: transparent;
   background-image: none;
   transform: scale(0.98);
 }
-
-html[data-theme] #action-buttons .action-btn[data-action='goal'] { background: var(--pill-mint); }
-html[data-theme] #action-buttons .action-btn[data-action='assist'] { background: var(--pill-lavender); }
-html[data-theme] #action-buttons .action-btn[data-action='save'] { background: var(--pill-sky); }
-html[data-theme] #action-buttons .action-btn[data-action='shot_on_goal'] { background: var(--pill-sky); }
-html[data-theme] #action-buttons .action-btn[data-action='goal_allowed'] { background: var(--pill-rose); }
-html[data-theme] #action-buttons .action-btn[data-action='blocked_shot'] { background: var(--pill-used); }
-html[data-theme] #action-buttons .action-btn[data-action='fault'] { background: var(--pill-peach); }
-html[data-theme] #action-buttons .action-btn[data-action='yellow_card'] { background: var(--pill-yellow); }
-html[data-theme] #action-buttons .action-btn[data-action='red_card'] { background: var(--pill-rose); }
-html[data-theme] #action-buttons .action-btn[data-action='own_goal'] { background: var(--pill-peach); }
-html[data-theme] #action-buttons .action-btn[data-action='injury'] { background: var(--pill-used); }
-html[data-theme] #action-buttons .action-btn[data-action='late_to_game'] { background: var(--pill-yellow); }
-html[data-theme] #action-buttons .action-btn[data-action='note'] { background: var(--pill-peach); }
 
 html[data-theme] .action-btn .stat-emoji {
   font-size: 22px;
@@ -1463,6 +1484,10 @@ html[data-theme] .player-select-item {
 html[data-theme] .player-select-item:hover {
   background: var(--pill-mint);
   transform: translateY(-1px);
+}
+
+html[data-theme] .player-select-item.is-gk {
+  background: var(--pill-sky);
 }
 
 html[data-theme] .player-select-number {
@@ -1924,6 +1949,43 @@ html[data-theme] .report-note-text {
   line-height: 1.35;
   color: var(--pill-ink);
   white-space: pre-wrap;
+}
+
+html[data-theme] .report-scorers {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .match-log-min,
+html[data-theme] .match-log-break {
+  color: var(--neu-muted);
+}
+
+html[data-theme] .log-sub-in,
+html[data-theme] .log-goal,
+html[data-theme] .log-card-row,
+html[data-theme] .log-injury {
+  color: var(--neu-text);
+}
+
+html[data-theme] .log-sub-out {
+  color: var(--neu-danger);
+}
+
+html[data-theme] .log-sub-in::before {
+  border-left-color: var(--neu-ok);
+}
+
+html[data-theme] .log-sub-out::before {
+  border-right-color: var(--neu-danger);
+}
+
+html[data-theme] .period-mark,
+html[data-theme] .period-mark-score {
+  color: var(--neu-text);
+}
+
+html[data-theme] .report-dnp-chip {
+  color: var(--neu-muted);
 }
 
 html[data-theme] .report-header-info {

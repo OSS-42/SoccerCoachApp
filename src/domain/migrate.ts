@@ -34,6 +34,8 @@ const ACTION_ALIASES: Record<string, ActionType> = {
   yellow_card: 'yellow_card',
   red_card: 'red_card',
   own_goal: 'own_goal',
+  opp_yellow: 'opp_yellow',
+  opp_red: 'opp_red',
   injury: 'injury',
   late_to_game: 'late_to_game',
   note: 'note',

@@ -8,6 +8,11 @@ describe('formation', () => {
     expect(FIELD_SPOTS.filter((s) => s.label === 'ST')).toHaveLength(2)
     expect(spotLabel('ST-L')).toBe('ST')
     expect(spotLabel('ST-R')).toBe('ST')
+    const lw = FIELD_SPOTS.find((s) => s.position === 'LW')
+    const rw = FIELD_SPOTS.find((s) => s.position === 'RW')
+    const ss = FIELD_SPOTS.find((s) => s.position === 'SS')
+    expect(ss?.x).toBe(((lw?.x ?? 0) + (rw?.x ?? 0)) / 2)
+    expect(ss?.y).toBe(lw?.y)
   })
 
   it('requires exact on-field count and a GK for 7v7', () => {

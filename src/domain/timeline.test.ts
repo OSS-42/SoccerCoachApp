@@ -116,4 +116,23 @@ describe('shot timeline', () => {
       'NOAH on for JAMES (CDM)',
     ])
   })
+
+  it('puts opponent cards and our own goals on the away side', () => {
+    setLocale('en')
+    const match = game([
+      {
+        id: 'og',
+        actionType: 'own_goal',
+        playerId: 'p1',
+        gameSecond: 30,
+        timestamp: '',
+      },
+      { id: 'y', actionType: 'opp_yellow', playerId: null, gameSecond: 80, timestamp: '' },
+    ])
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'p1', name: 'ADA', jerseyNumber: 9, position: 'ST' },
+    ])
+    expect(events[0]).toMatchObject({ type: 'ownGoal', isOpponent: true, playerName: 'ADA' })
+    expect(events[1]).toMatchObject({ type: 'yellow', isOpponent: true, playerName: 'Opponent' })
+  })
 })

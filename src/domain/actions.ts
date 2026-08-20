@@ -12,7 +12,9 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   fault: 'Foul',
   yellow_card: 'Yellow Card',
   red_card: 'Red Card',
-  own_goal: 'Opponent Own Goal',
+  own_goal: 'Own Goal',
+  opp_yellow: 'Opponent Yellow',
+  opp_red: 'Opponent Red',
   injury: 'Injury',
   late_to_game: 'Late to Game',
   note: 'Note',
@@ -91,8 +93,12 @@ export function scoreFromActions(actions: GameAction[]): { home: number; away: n
   let home = 0
   let away = 0
   for (const action of actions) {
-    if (action.actionType === 'goal' || action.actionType === 'own_goal') home += 1
-    if (action.actionType === 'goal_allowed') away += 1
+    if (action.actionType === 'goal') home += 1
+    else if (action.actionType === 'goal_allowed') away += 1
+    else if (action.actionType === 'own_goal') {
+      if (action.playerId) away += 1
+      else home += 1
+    }
   }
   return { home, away }
 }

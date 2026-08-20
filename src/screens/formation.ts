@@ -100,9 +100,9 @@ function layoutFormationRails(): void {
   const overflowWidth = overflow.clientWidth || overflow.parentElement?.clientWidth || benchCol.parentElement?.clientWidth || 0
   const titleH = (benchCol.querySelector('h4')?.getBoundingClientRect().height ?? 20) + 4
   const railH = Math.max(0, benchCol.clientHeight - titleH)
-  let tile = 44
+  let tile = 48
   let benchFit = 1
-  for (const size of [48, 44, 40, 36, 32]) {
+  for (const size of [52, 48, 44, 40, 36]) {
     const rail = Math.max(1, Math.floor((railH + gap) / (size + gap)))
     const perRow = Math.max(1, Math.floor((overflowWidth + gap) / (size + gap)))
     tile = size

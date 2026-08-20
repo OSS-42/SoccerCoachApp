@@ -109,10 +109,33 @@ describe('report PDF', () => {
     expect(text).not.toContain('Notes')
   })
 
-  it('adds pages when the roster is long', () => {
+  it('adds pages when many players have minutes', () => {
     const players = Array.from({ length: 22 }, (_, i) => player(`p${i}`, `Player ${i}`, i + 1))
-    const match = game()
+    const formation = players.map((p, i) => ({
+      playerId: p.id,
+      position: i === 0 ? 'GK' : 'CM',
+      x: 50,
+      y: 50,
+    }))
+    const match = game({
+      formation,
+      startingFormation: formation,
+      elapsedSeconds: 48 * 60,
+    })
     const pdf = buildGameReportPdf(match, team(players, match))
     expect(pdf.getNumberOfPages()).toBeGreaterThan(1)
+  })
+
+  it('lists players who did not play without a stats card', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1), player('p2', 'Bea', 9)]
+    const match = game({
+      formation: [{ playerId: 'p1', position: 'GK', x: 50, y: 91 }],
+      startingFormation: [{ playerId: 'p1', position: 'GK', x: 50, y: 91 }],
+      elapsedSeconds: 40 * 60,
+    })
+    const text = pdfText(buildGameReportPdf(match, team(players, match)))
+    expect(text).toContain('Have not played')
+    expect(text).toContain('Bea')
   })
 })

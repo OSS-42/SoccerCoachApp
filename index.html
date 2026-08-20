@@ -283,6 +283,9 @@
             <button class="control-btn action-review-btn" id="open-action-review">
               <span class="material-icons">rule</span> <span data-i18n="actionReview">Action Review</span>
             </button>
+            <button class="control-btn opponent-btn" id="open-opponent-action">
+              <span class="material-icons">sports_soccer</span> <span data-i18n="opponentAction">Opponent</span>
+            </button>
             <button class="control-btn note-btn" id="open-game-note">
               <span class="material-icons">note_add</span> <span data-i18n="gameNote">Game Note</span>
             </button>
@@ -388,7 +391,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.43</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.46</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -435,6 +438,16 @@
           <div class="dialog-buttons">
             <button class="secondary-btn" id="cancel-edit-player" data-i18n="cancel">Cancel</button>
             <button class="primary-btn" id="confirm-edit-player" data-i18n="save">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="opponent-action-dialog" class="dialog">
+        <div class="dialog-content">
+          <h2 data-i18n="opponentActions">Opponent</h2>
+          <div class="action-buttons" id="opponent-action-buttons"></div>
+          <div class="dialog-buttons">
+            <button class="secondary-btn" id="cancel-opponent-action" data-i18n="cancel">Cancel</button>
           </div>
         </div>
       </div>
@@ -564,7 +577,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.4.43</div>
+      <div id="version-footer" class="version-footer">v2.4.46</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">
