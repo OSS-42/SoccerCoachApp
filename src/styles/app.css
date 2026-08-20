@@ -550,6 +550,25 @@ body {
     flex: 0 0 auto;
 }
 
+.timing-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.timing-presets .secondary-btn {
+    min-height: 40px;
+    width: 100%;
+}
+
+.timing-presets .secondary-btn.is-active {
+    background: #c8efd4;
+    color: #111318;
+    border-color: transparent;
+    font-weight: 800;
+}
+
 /* Updated primary button */
 .primary-btn {
     background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
@@ -3168,18 +3187,45 @@ button.no-assist-btn {
     padding: 0;
 }
 
-/* Empty slot styling */
+/* Empty slot — hollow named spots on the pitch */
 .player-slot:not(.occupied) {
+    width: 40px;
+    height: 40px;
     background: transparent;
-    border: 2px dashed rgba(255, 255, 255, 0.8);
+    border: 2px dashed rgba(255, 255, 255, 0.88);
     opacity: 1;
 }
 
 .player-slot:not(.occupied):hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.14);
     border-color: #ffffff;
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
-    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+    transform: translate(-50%, -50%) scale(1.12);
+}
+
+.player-slot .spot-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    line-height: 1;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.player-number-placed .spot-pos {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.72;
+    text-align: center;
 }
 
 /* Occupied slot */
@@ -3188,30 +3234,18 @@ button.no-assist-btn {
     border: none;
 }
 
-/* Goalkeeper slot - empty state */
-.gk-slot:not(.occupied) {
-    background: rgba(76, 175, 80, 0.08);
-    border: 2px solid #66bb6a;
-}
-
-.gk-slot:not(.occupied):hover {
-    background: rgba(76, 175, 80, 0.3);
-    border-color: #43a047;
-    box-shadow: 0 0 16px rgba(76, 175, 80, 0.5);
-    transform: translate(-50%, -50%) scale(1.15);
-}
-
-/* Sweeper slot - empty state */
+.gk-slot:not(.occupied),
 .sw-slot:not(.occupied) {
-    background: rgba(255, 193, 7, 0.08);
-    border: 2px solid #ffb300;
+    background: transparent;
+    border: 2px dashed rgba(255, 255, 255, 0.88);
 }
 
+.gk-slot:not(.occupied):hover,
 .sw-slot:not(.occupied):hover {
-    background: rgba(255, 193, 7, 0.2);
-    border-color: #ffa000;
-    box-shadow: 0 0 16px rgba(255, 193, 7, 0.45);
-    transform: translate(-50%, -50%) scale(1.15);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+    transform: translate(-50%, -50%) scale(1.12);
 }
 
 /* Keep player squares readable on desktop while the field surface is rotated. */
@@ -3245,10 +3279,11 @@ button.no-assist-btn {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 0;
+    padding: 10px 0 0;
     cursor: pointer;
     flex-shrink: 0;
     overflow: hidden;
+    position: relative;
 }
 
 /* Game report field with image */
@@ -3350,6 +3385,20 @@ button.no-assist-btn {
     outline-offset: 1px;
     z-index: 1001;
     box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.45);
+}
+
+.player-slot.tap-selected {
+    z-index: 40;
+    transform: translate(-50%, -50%) scale(1.12);
+    box-shadow: 0 0 0 3px #3ddc97, 0 0 14px rgba(61, 220, 151, 0.65);
+}
+
+.bench-slot.tap-selected,
+.unavailable-slot.tap-selected {
+    z-index: 40;
+    outline: 3px solid #3ddc97;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(61, 220, 151, 0.45), 0 0 12px rgba(61, 220, 151, 0.55);
 }
 
 .bench-slot .player-number,
@@ -4330,6 +4379,15 @@ button.no-assist-btn {
 #game-tracking .player-grid-item.used-off {
     opacity: 0.48;
     filter: grayscale(0.35);
+}
+
+#game-tracking .live-tile-pos {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-transform: uppercase;
+    opacity: 0.78;
 }
 
 #game-tracking .live-tile-used {

@@ -1,6 +1,7 @@
 import { actionLabel, t } from '@/i18n'
 import { askConfirm, askPrompt } from '@/ui/confirm'
 import { playerIsUnavailable, statsFromActions } from '@/domain/actions'
+import { spotLabel } from '@/domain/formation'
 import { currentPeriod, formatClock, isLastPeriod } from '@/domain/clock'
 import {
   extraTimeActive,
@@ -9,6 +10,7 @@ import {
   substitutionCount,
   usedOffPlayerIds,
 } from '@/domain/substitutions'
+import { substitutionLine, substitutionSpotLabel } from '@/domain/timeline'
 import type { ActionType, Player } from '@/domain/types'
 import {
   endCurrentGame,
@@ -170,16 +172,28 @@ function paintLiveRosters(): void {
   if (!fieldGrid || !benchGrid || !game || !team) return
   fieldGrid.innerHTML = ''
   benchGrid.innerHTML = ''
-  const onField = new Set(game.formation.map((f) => f.playerId))
+  const onField = new Map(game.formation.map((f) => [f.playerId, f.position]))
   const gkId = game.formation.find((spot) => spot.position === 'GK')?.playerId
   const usedOff = usedOffPlayerIds(game)
-  const sorted = [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-  for (const player of sorted) {
-    if (game.unavailablePlayers.includes(player.id)) continue
-    const role = onField.has(player.id) ? 'field' : 'bench'
-    const tile = liveTile(player, role, usedOff.has(player.id), player.id === gkId)
-    if (role === 'field') fieldGrid.appendChild(tile)
-    else benchGrid.appendChild(tile)
+  const roster = [...team.players]
+    .filter((player) => !game.unavailablePlayers.includes(player.id))
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  const fieldPlayers = roster
+    .filter((player) => onField.has(player.id))
+    .sort((a, b) => {
+      const aGk = a.id === gkId ? 1 : 0
+      const bGk = b.id === gkId ? 1 : 0
+      if (aGk !== bGk) return aGk - bGk
+      return a.jerseyNumber - b.jerseyNumber
+    })
+  const benchPlayers = roster.filter((player) => !onField.has(player.id))
+  for (const player of fieldPlayers) {
+    fieldGrid.appendChild(
+      liveTile(player, 'field', usedOff.has(player.id), player.id === gkId, onField.get(player.id)),
+    )
+  }
+  for (const player of benchPlayers) {
+    benchGrid.appendChild(liveTile(player, 'bench', usedOff.has(player.id), false))
   }
 }
 
@@ -188,6 +202,7 @@ function liveTile(
   role: 'field' | 'bench',
   usedOff: boolean,
   isGk = false,
+  fieldPosition?: string,
 ): HTMLElement {
   const game = getCurrentGame()
   const item = document.createElement('div')
@@ -205,9 +220,11 @@ function liveTile(
   const canGoOff = !(stats && stats.redCards > 0)
   if (pendingRole === 'field' && role === 'bench' && canComeOn) item.classList.add('sub-target')
   if (pendingRole === 'bench' && role === 'field' && canGoOff) item.classList.add('sub-target')
+  const pos = role === 'field' && fieldPosition ? spotLabel(fieldPosition) : ''
   item.innerHTML = `
     <span class="live-tile-name">${escapeHtml(player.name)}</span>
     <span class="live-tile-num">${player.jerseyNumber}</span>
+    ${pos ? `<span class="live-tile-pos">${escapeHtml(pos)}</span>` : ''}
     ${usedOff ? `<span class="live-tile-used">${escapeHtml(t('usedOff'))}</span>` : ''}
   `
   item.addEventListener('click', () => onTileClick(player, role))
@@ -480,17 +497,27 @@ export function bindLiveGame(): void {
 }
 
 function actionReviewText(
-  action: { actionType: string; gameSecond: number; playerId: string | null; relatedPlayerId?: string; noteText?: string },
+  action: {
+    id: string
+    actionType: string
+    gameSecond: number
+    playerId: string | null
+    relatedPlayerId?: string
+    noteText?: string
+  },
   team: ReturnType<typeof getCurrentTeam>,
 ): string {
   const minute = Math.floor(action.gameSecond / 60)
   const player = team?.players.find((p) => p.id === action.playerId)
   const off = team?.players.find((p) => p.id === action.relatedPlayerId)
   if (action.actionType === 'substitution') {
-    return `${minute}' — ${t('subOnFor', {
-      on: player?.name ?? t('unknownPlayer'),
-      off: off?.name ?? t('unknownPlayer'),
-    })}`
+    const game = getCurrentGame()
+    const pos = game ? substitutionSpotLabel(game, action.id) : null
+    return `${minute}' — ${substitutionLine(
+      player?.name ?? t('unknownPlayer'),
+      off?.name ?? t('unknownPlayer'),
+      pos,
+    )}`
   }
   if (action.actionType === 'game_note' || action.actionType === 'note') {
     const who = action.actionType === 'game_note' ? t('gameNote') : (player?.name ?? t('gameEvent'))

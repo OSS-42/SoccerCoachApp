@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applySubstitution } from './substitutions'
-import { playedMinutes, playingSecondsByPlayer, reconstructStartingFormation } from './playingTime'
+import {
+  formatPlayedDistribution,
+  playedMinutes,
+  playedMinutesByPlayerPosition,
+  playingSecondsByPlayer,
+  reconstructStartingFormation,
+} from './playingTime'
+import { setLocale } from '@/i18n'
 import type { FormationSpot, Game, GameAction } from './types'
 
 function spots(...ids: string[]): FormationSpot[] {
@@ -122,5 +129,55 @@ describe('playing time', () => {
     expect(playedMinutes(20)).toBe(1)
     expect(playedMinutes(0)).toBe(0)
     expect(playedMinutes(90)).toBe(2)
+  })
+
+  it('splits minutes by the pitch spot a player is tagged with', () => {
+    setLocale('en')
+    const kickoff = [
+      { playerId: 'p1', position: 'GK', x: 50, y: 91 },
+      { playerId: 'p2', position: 'RW', x: 87, y: 24 },
+    ]
+    let match = game({
+      formation: kickoff,
+      startingFormation: kickoff,
+      substitutes: ['p3'],
+      elapsedSeconds: 60 * 60,
+    })
+    const first = applySubstitution(match, 'p1', 'p3', 40 * 60)
+    if (!first.ok) throw new Error(first.reason)
+    const second = applySubstitution(first.game, 'p2', 'p1', 50 * 60)
+    if (!second.ok) throw new Error(second.reason)
+    match = { ...second.game, elapsedSeconds: 60 * 60 }
+    const byPos = playedMinutesByPlayerPosition(match)
+    expect(byPos.get('p1')?.get('GK')).toBe(40)
+    expect(byPos.get('p1')?.get('RW')).toBe(10)
+    expect(byPos.get('p3')?.get('GK')).toBe(20)
+    expect(byPos.get('p2')?.get('RW')).toBe(50)
+    expect(formatPlayedDistribution(byPos.get('p1'), 50)).toBe("GK - 40' RW - 10' - Total: 50'")
+  })
+
+  it('does not keep a returning player tagged with their old spot', () => {
+    setLocale('en')
+    const kickoff = [
+      { playerId: 'noah', position: 'GK', x: 50, y: 91 },
+      { playerId: 'james', position: 'CDM', x: 50, y: 55 },
+      { playerId: 'mason', position: 'LCB', x: 32, y: 71 },
+    ]
+    let match = game({
+      formation: kickoff,
+      startingFormation: kickoff.map((spot) => ({ ...spot })),
+      substitutes: ['will'],
+      elapsedSeconds: 4 * 60,
+    })
+    const first = applySubstitution(match, 'noah', 'will', 60)
+    if (!first.ok) throw new Error(first.reason)
+    const second = applySubstitution(first.game, 'james', 'noah', 60)
+    if (!second.ok) throw new Error(second.reason)
+    match = { ...second.game, elapsedSeconds: 4 * 60 }
+    const byPos = playedMinutesByPlayerPosition(match)
+    expect(byPos.get('noah')?.get('GK')).toBe(1)
+    expect(byPos.get('noah')?.get('CDM')).toBe(3)
+    expect(byPos.get('noah')?.get('LCB')).toBeUndefined()
+    expect(formatPlayedDistribution(byPos.get('noah'), 4)).toBe("GK - 1' CDM - 3' - Total: 4'")
   })
 })

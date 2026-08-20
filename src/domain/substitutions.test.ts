@@ -60,7 +60,16 @@ describe('substitutions', () => {
       actionType: 'substitution',
       playerId: 'p3',
       relatedPlayerId: 'p1',
+      position: 'GK',
     })
+  })
+
+  it('tags the incoming player with the outgoing player\'s pitch spot', () => {
+    const result = applySubstitution(game(), 'p1', 'p3', 90)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const incoming = result.game.formation.find((s) => s.playerId === 'p3')
+    expect(incoming?.position).toBe('GK')
   })
 
   it('lets a youth player return after going off', () => {

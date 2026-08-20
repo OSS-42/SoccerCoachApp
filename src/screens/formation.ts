@@ -1,6 +1,12 @@
 import { t } from '@/i18n'
 import { askConfirm } from '@/ui/confirm'
-import { benchSlotCount, fieldSpotDefs, filterDefaultFormation, validateFormation } from '@/domain/formation'
+import {
+  benchSlotCount,
+  fieldSpotDefs,
+  filterDefaultFormation,
+  spotLabel,
+  validateFormation,
+} from '@/domain/formation'
 import type { FormationSpot } from '@/domain/types'
 import { getCurrentTeam, pauseClock, startPreparedGame } from '@/state/store'
 import { escapeHtml } from '@/ui/dom'
@@ -156,19 +162,22 @@ function slotByPlayer(playerId: string): HTMLElement | null {
 }
 
 function paintSlot(slot: HTMLElement, playerId: string | null, name = '', jersey = 0): void {
+  const onField = slot.classList.contains('player-slot')
+  const pos = slot.dataset.position ?? ''
+  const posText = pos ? spotLabel(pos) : ''
   if (!playerId) {
-    slot.innerHTML = ''
     delete slot.dataset.playerId
     slot.classList.remove('occupied')
+    slot.innerHTML = onField && posText ? `<span class="spot-label">${escapeHtml(posText)}</span>` : ''
     return
   }
-  const onField = slot.classList.contains('player-slot')
   slot.dataset.playerId = playerId
   slot.classList.add('occupied')
   const nameHtml = `<span class="${onField ? 'player-name-field' : 'player-name-bench'}">${escapeHtml(name)}</span>`
   const numHtml = `<span class="jersey-num">${jersey}</span>`
+  const posHtml = onField && posText ? `<span class="spot-pos">${escapeHtml(posText)}</span>` : ''
   slot.innerHTML = `<span class="player-number ${onField ? 'player-number-placed' : ''}" data-player-id="${playerId}">${
-    onField ? `${numHtml}${nameHtml}` : `${nameHtml}${numHtml}`
+    onField ? `${posHtml}${numHtml}${nameHtml}` : `${nameHtml}${numHtml}`
   }</span>`
 }
 
@@ -226,6 +235,7 @@ function handleSlotPointer(event: PointerEvent): void {
   if (!selectedPlayerId) {
     if (!tappedId) return
     selectedPlayerId = tappedId
+    slot.classList.add('tap-selected')
     slot.querySelector('.player-number')?.classList.add('tap-selected')
     return
   }
@@ -270,6 +280,7 @@ export function renderFormation(): void {
     slot.style.position = 'absolute'
     slot.style.left = `${spot.x}%`
     slot.style.top = `${spot.y}%`
+    paintSlot(slot, null)
     surface.appendChild(slot)
   }
 

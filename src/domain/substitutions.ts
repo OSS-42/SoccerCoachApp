@@ -101,6 +101,7 @@ export function applySubstitution(
 ): { ok: true; game: Game } | { ok: false; reason: SubFail } {
   const allowed = canSubstitute(game, offId, onId, gameSecond)
   if (!allowed.ok) return allowed
+  const offSpot = game.formation.find((spot) => spot.playerId === offId)
   const formation = game.formation.map((spot) =>
     spot.playerId === offId ? { ...spot, playerId: onId } : spot,
   )
@@ -112,6 +113,7 @@ export function applySubstitution(
     relatedPlayerId: offId,
     gameSecond,
     timestamp: new Date().toISOString(),
+    position: offSpot?.position,
   }
   return {
     ok: true,

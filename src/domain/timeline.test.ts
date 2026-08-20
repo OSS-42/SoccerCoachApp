@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { buildGoalsCardsEvents, buildShotTimeline } from './timeline'
+import { setLocale } from '@/i18n'
+import { buildGoalsCardsEvents, buildShotTimeline, substitutionLine } from './timeline'
 import type { Game } from './types'
 
 function game(actions: Game['actions']): Game {
@@ -47,28 +48,72 @@ describe('shot timeline', () => {
   })
 
   it('lists substitutions in the report event feed', () => {
-    const events = buildGoalsCardsEvents(
-      game([
-        {
-          id: 's1',
-          actionType: 'substitution',
-          playerId: 'p2',
-          relatedPlayerId: 'p1',
-          gameSecond: 600,
-          timestamp: '',
-        },
-      ]),
-      [
-        { id: 'p1', name: 'MARC', jerseyNumber: 4, position: 'CB' },
-        { id: 'p2', name: 'LEO', jerseyNumber: 8, position: 'CM' },
-      ],
-    )
+    const match = game([
+      {
+        id: 's1',
+        actionType: 'substitution',
+        playerId: 'p2',
+        relatedPlayerId: 'p1',
+        gameSecond: 600,
+        timestamp: '',
+      },
+    ])
+    match.startingFormation = [{ playerId: 'p1', position: 'ST', x: 50, y: 10 }]
+    match.formation = [{ playerId: 'p2', position: 'ST', x: 50, y: 10 }]
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'p1', name: 'MARC', jerseyNumber: 4, position: 'CB' },
+      { id: 'p2', name: 'LEO', jerseyNumber: 8, position: 'CM' },
+    ])
     expect(events).toHaveLength(1)
     expect(events[0]).toMatchObject({
       type: 'substitution',
       playerName: 'LEO',
       relatedName: 'MARC',
       minute: 10,
+      position: 'ST',
     })
+    setLocale('en')
+    expect(substitutionLine('LEO', 'MARC', 'ST')).toBe('LEO on for MARC (ST)')
+  })
+
+  it('labels a returning player with the spot they actually take', () => {
+    setLocale('en')
+    const match = game([
+      {
+        id: 's1',
+        actionType: 'substitution',
+        playerId: 'will',
+        relatedPlayerId: 'noah',
+        gameSecond: 10,
+        timestamp: '',
+        position: 'GK',
+      },
+      {
+        id: 's2',
+        actionType: 'substitution',
+        playerId: 'noah',
+        relatedPlayerId: 'james',
+        gameSecond: 20,
+        timestamp: '',
+        position: 'CDM',
+      },
+    ])
+    match.startingFormation = [
+      { playerId: 'noah', position: 'GK', x: 50, y: 91 },
+      { playerId: 'james', position: 'CDM', x: 50, y: 55 },
+    ]
+    match.formation = [
+      { playerId: 'will', position: 'GK', x: 50, y: 91 },
+      { playerId: 'noah', position: 'CDM', x: 50, y: 55 },
+    ]
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'noah', name: 'NOAH', jerseyNumber: 1, position: 'GK' },
+      { id: 'james', name: 'JAMES', jerseyNumber: 7, position: 'CDM' },
+      { id: 'will', name: 'WILL', jerseyNumber: 11, position: 'ST' },
+    ])
+    expect(events.map((event) => substitutionLine(event.playerName, event.relatedName ?? '', event.position))).toEqual([
+      'WILL on for NOAH (GK)',
+      'NOAH on for JAMES (CDM)',
+    ])
   })
 })

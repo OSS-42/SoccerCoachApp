@@ -1,4 +1,5 @@
 import { t } from '@/i18n'
+import { formatPlayedDistribution } from '@/domain/playingTime'
 import { calculateSeasonStats } from '@/domain/stats'
 import { askConfirm, askPrompt } from '@/ui/confirm'
 import { PLAYER_POSITIONS, type PlayerPosition } from '@/domain/types'
@@ -173,8 +174,12 @@ function renderStats(): void {
             <header>
               <span class="stat-jersey">${row.jerseyNumber}</span>
               <span class="stat-card-name">${escapeHtml(row.name)}</span>
-              <span class="stat-played">${row.minutesPlayed === 0 ? '–' : `${row.minutesPlayed}'`}</span>
             </header>
+            <p class="stat-played-line">${
+              row.minutesPlayed === 0
+                ? '–'
+                : escapeHtml(formatPlayedDistribution(row.minutesByPosition, row.minutesPlayed))
+            }</p>
             ${cardMetrics(row)}
           </article>`,
         )

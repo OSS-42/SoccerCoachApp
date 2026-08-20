@@ -173,6 +173,10 @@
           <div class="form-group">
             <label for="period-duration" data-i18n="periodDuration">Time per Period (minutes):</label>
             <input type="number" id="period-duration" value="12" min="1" max="45" />
+            <div class="timing-presets" id="eleven-timing-presets" hidden>
+              <button type="button" class="secondary-btn" data-eleven-timing="40">2 × 40</button>
+              <button type="button" class="secondary-btn" data-eleven-timing="45">2 × 45</button>
+            </div>
           </div>
           <div class="form-group substitution-timer-group">
             <label for="substitution-time" data-i18n="subTimer">Substitution Timer (minutes):</label>
@@ -384,7 +388,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.39</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.43</span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -560,7 +564,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.4.39</div>
+      <div id="version-footer" class="version-footer">v2.4.43</div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

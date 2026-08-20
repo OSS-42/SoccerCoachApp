@@ -1,6 +1,8 @@
 import { t } from '@/i18n'
 import { gameMinute } from './clock'
-import type { Game, GameAction, Player } from './types'
+import { spotLabel } from './formation'
+import { reconstructStartingFormation } from './playingTime'
+import type { FormationSpot, Game, GameAction, Player } from './types'
 
 export function scheduledMinutes(game: Game): number {
   return Math.max(1, game.numPeriods * game.periodDuration)
@@ -40,6 +42,7 @@ export type ReportEvent = {
   relatedName: string | null
   scoreIndex: number | null
   isOpponent: boolean
+  position: string | null
 }
 
 function playerName(players: Player[], playerId: string | null): string {
@@ -56,10 +59,46 @@ function assistForGoal(actions: GameAction[], index: number): string | null {
   return null
 }
 
+function liveSpots(game: Game): FormationSpot[] {
+  const saved = game.startingFormation.map((spot) => ({ ...spot }))
+  if (saved.length) return saved
+  return reconstructStartingFormation(game.formation, game.actions)
+}
+
+function takeSpot(
+  spots: FormationSpot[],
+  offId: string,
+  onId: string,
+): { spots: FormationSpot[]; position: string | undefined } {
+  const offSpot = spots.find((spot) => spot.playerId === offId)
+  return {
+    position: offSpot?.position,
+    spots: spots.map((spot) => (spot.playerId === offId ? { ...spot, playerId: onId } : spot)),
+  }
+}
+
+export function substitutionLine(on: string, off: string, position?: string | null): string {
+  if (position) return t('subOnForPos', { on, off, pos: position })
+  return t('subOnFor', { on, off })
+}
+
+export function substitutionSpotLabel(game: Game, actionId: string): string | null {
+  let spots = liveSpots(game)
+  for (const action of game.actions) {
+    if (action.actionType !== 'substitution' || !action.playerId || !action.relatedPlayerId) continue
+    const applied = takeSpot(spots, action.relatedPlayerId, action.playerId)
+    spots = applied.spots
+    const rawPos = action.position || applied.position
+    if (action.id === actionId) return rawPos ? spotLabel(rawPos) : null
+  }
+  return null
+}
+
 export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEvent[] {
   const events: ReportEvent[] = []
   let homeGoals = 0
   let awayGoals = 0
+  let spots = liveSpots(game)
   game.actions.forEach((action, index) => {
     const minute = gameMinute(action.gameSecond)
     if (action.actionType === 'goal' || action.actionType === 'own_goal') {
@@ -77,6 +116,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         relatedName: null,
         scoreIndex: homeGoals,
         isOpponent: false,
+        position: null,
       })
     } else if (action.actionType === 'goal_allowed') {
       awayGoals += 1
@@ -89,6 +129,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         relatedName: null,
         scoreIndex: awayGoals,
         isOpponent: true,
+        position: null,
       })
     } else if (action.actionType === 'yellow_card') {
       events.push({
@@ -100,6 +141,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         relatedName: null,
         scoreIndex: null,
         isOpponent: false,
+        position: null,
       })
     } else if (action.actionType === 'red_card') {
       events.push({
@@ -111,6 +153,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         relatedName: null,
         scoreIndex: null,
         isOpponent: false,
+        position: null,
       })
     } else if (action.actionType === 'injury') {
       events.push({
@@ -122,8 +165,14 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         relatedName: null,
         scoreIndex: null,
         isOpponent: false,
+        position: null,
       })
     } else if (action.actionType === 'substitution') {
+      const offId = action.relatedPlayerId ?? ''
+      const onId = action.playerId ?? ''
+      const applied = offId && onId ? takeSpot(spots, offId, onId) : { spots, position: undefined }
+      spots = applied.spots
+      const rawPos = action.position || applied.position
       events.push({
         second: action.gameSecond,
         minute,
@@ -133,8 +182,9 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         relatedName: playerName(players, action.relatedPlayerId ?? null) || t('unknownPlayer'),
         scoreIndex: null,
         isOpponent: false,
+        position: rawPos ? spotLabel(rawPos) : null,
       })
     }
   })
-  return events.sort((a, b) => b.second - a.second)
+  return events.sort((a, b) => a.second - b.second || a.minute - b.minute)
 }

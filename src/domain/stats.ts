@@ -1,5 +1,5 @@
 import { statsFromActions } from './actions'
-import { playedMinutesByPlayer } from './playingTime'
+import { playedMinutesByPlayer, playedMinutesByPlayerPosition } from './playingTime'
 import type { Game, Player } from './types'
 
 export type SeasonRow = {
@@ -20,6 +20,7 @@ export type SeasonRow = {
   redCards: number
   ownGoals: number
   minutesPlayed: number
+  minutesByPosition: Record<string, number>
 }
 
 export function gameInDateRange(game: Game, startDate: string | null, endDate: string | null): boolean {
@@ -57,6 +58,7 @@ export function calculateSeasonStats(
         redCards: 0,
         ownGoals: 0,
         minutesPlayed: 0,
+        minutesByPosition: {},
       }
       for (const game of completed) {
         const unavailable = game.unavailablePlayers.includes(player.id)
@@ -67,6 +69,12 @@ export function calculateSeasonStats(
 
         const minutes = playedMinutesByPlayer(game)
         row.minutesPlayed += minutes.get(player.id) ?? 0
+        const byPos = playedMinutesByPlayerPosition(game).get(player.id)
+        if (byPos) {
+          for (const [position, amount] of byPos) {
+            row.minutesByPosition[position] = (row.minutesByPosition[position] ?? 0) + amount
+          }
+        }
         const stats = statsFromActions(game.actions, player.id)
         row.goals += stats.goals
         row.assists += stats.assists

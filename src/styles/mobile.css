@@ -405,6 +405,16 @@ body {
     height: 44px;
   }
 
+  .player-slot:not(.occupied),
+  html[data-theme] .player-slot:not(.occupied) {
+    width: 32px;
+    height: 32px;
+  }
+
+  .player-slot .spot-label {
+    font-size: 8px;
+  }
+
   .player-number-placed {
     width: 100%;
     height: 100%;

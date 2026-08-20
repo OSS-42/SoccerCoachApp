@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.4.39'
+export const APP_VERSION = '2.4.43'
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
@@ -87,6 +87,8 @@ export type GameAction = {
   noteText?: string
   /** Player leaving the field when actionType is substitution. */
   relatedPlayerId?: string
+  /** Pitch spot the incoming player takes (copied from the player going off). */
+  position?: string
 }
 
 export type Player = {

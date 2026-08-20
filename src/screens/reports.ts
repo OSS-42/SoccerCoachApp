@@ -1,12 +1,14 @@
 import { t } from '@/i18n'
 import { statsFromActions } from '@/domain/actions'
-import { playedMinutesByPlayer } from '@/domain/playingTime'
+import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from '@/domain/playingTime'
 import { formatClock } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
+import { buildGameReportPdf, reportPdfFileName } from '@/domain/reportPdf'
 import {
   buildGoalsCardsEvents,
   buildShotTimeline,
   scheduledMinutes,
+  substitutionLine,
 } from '@/domain/timeline'
 import type { Game, Player } from '@/domain/types'
 import { askConfirm } from '@/ui/confirm'
@@ -97,10 +99,7 @@ function renderGoalsCards(game: Game, players: Player[]): string {
         return `<div class="goals-cards-item substitution-item" style="justify-content:flex-start;">
           <div class="item-icon">🔄</div>
           <div class="item-details"><div class="item-player">${escapeHtml(
-            t('subOnFor', {
-              on: event.playerName,
-              off: event.relatedName || t('unknownPlayer'),
-            }),
+            substitutionLine(event.playerName, event.relatedName || t('unknownPlayer'), event.position),
           )}</div></div>
           <div class="item-time">${event.minute}'</div>
         </div>`
@@ -195,17 +194,19 @@ export function viewReport(gameId: string): void {
       <span class="stat-metric-label">${escapeHtml(label)}</span>
     </div>`
   const minutes = playedMinutesByPlayer(game)
+  const minutesByPos = playedMinutesByPlayerPosition(game)
   const cards = [...team.players]
     .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
     .map((player) => {
       const stats = statsFromActions(game.actions, player.id)
       const played = minutes.get(player.id) ?? 0
+      const dist = formatPlayedDistribution(minutesByPos.get(player.id), played)
       return `<article class="report-stat-card">
         <header>
           <span class="stat-jersey">${player.jerseyNumber}</span>
           <span class="stat-card-name">${escapeHtml(player.name)}</span>
-          <span class="stat-played">${played === 0 ? '–' : `${played}'`}</span>
         </header>
+        <p class="stat-played-line">${played === 0 ? '–' : escapeHtml(dist)}</p>
         <div class="report-stat-grid">
           ${metric(stats.goals, t('statShortGoal'), 'stat-goal')}
           ${metric(stats.assists, t('statShortAssist'))}
@@ -254,47 +255,24 @@ export function viewReport(gameId: string): void {
   document.getElementById('close-open-report')?.addEventListener('click', () => {
     toggleDialog('report-dialog', false)
   })
-  document.getElementById('print-open-report')?.addEventListener('click', () => printReport(gameId))
+  document.getElementById('print-open-report')?.addEventListener('click', () => {
+    exportReportPdf(gameId)
+  })
   toggleDialog('report-dialog', true)
 }
 
-function printStyles(): string {
-  const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')]
-    .map((link) => `<link rel="stylesheet" href="${link.href}">`)
-    .join('')
-  const inline = [...document.querySelectorAll('style')].map((node) => node.outerHTML).join('')
-  return `${links}${inline}`
-}
-
-function printReport(gameId: string): void {
-  const content = document.getElementById('report-dialog-content')
-  if (!content) return
-  const clone = content.cloneNode(true) as HTMLElement
-  clone.querySelector('.report-actions')?.remove()
-  clone.querySelector('.report-table-container')?.remove()
-  const popup = window.open('', '_blank')
-  if (!popup) {
-    showMessage(t('popupBlocked'), 'error')
+function exportReportPdf(gameId: string): void {
+  const team = getCurrentTeam()
+  const game = team?.games.find((g) => g.id === gameId)
+  if (!team || !game) {
+    showMessage(t('reportMissing'), 'error')
     return
   }
-  const theme = document.documentElement.getAttribute('data-theme') ?? 'dark'
-  const lang = document.documentElement.lang || 'en'
-  popup.document.write(`<!DOCTYPE html><html lang="${lang}" data-theme="${theme}"><head>
-    <meta charset="UTF-8" />
-    <title>Game Report ${escapeHtml(gameId)}</title>
-    ${printStyles()}
-    <style>
-      @page { margin: 12mm; }
-      html, body, .report-print { background: var(--neu-bg); color: var(--neu-text); }
-      body { margin: 0; padding: 16px; }
-      .report-print { max-width: none; box-shadow: none; border-radius: 0; }
-      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    </style>
-  </head><body>
-    <div class="dialog-content report-dialog report-print">${clone.innerHTML}</div>
-    <script>window.onload=function(){window.focus();window.print()}<\/script>
-  </body></html>`)
-  popup.document.close()
+  try {
+    buildGameReportPdf(game, team).save(reportPdfFileName(game))
+  } catch {
+    showMessage(t('pdfExportFailed'), 'error')
+  }
 }
 
 export function bindReports(): void {
@@ -304,10 +282,7 @@ export function bindReports(): void {
     const view = target.closest<HTMLElement>('[data-view]')?.dataset.view
     const print = target.closest<HTMLElement>('[data-print]')?.dataset.print
     if (view) viewReport(view)
-    if (print) {
-      viewReport(print)
-      window.setTimeout(() => printReport(print), 50)
-    }
+    if (print) exportReportPdf(print)
   })
   document.getElementById('reports-list')?.addEventListener('change', (event) => {
     if (!(event.target as HTMLElement).classList.contains('report-checkbox')) return

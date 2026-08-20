@@ -1,27 +1,53 @@
 import { ON_FIELD_COUNT, type FormationSpot, type MatchType } from './types'
 
 export type FieldSpotDef = {
+  /** Unique slot id. Two strikers share the display label `ST`. */
   position: string
+  label: string
   x: number
   y: number
 }
 
-export function fieldSpotDefs(desktop: boolean): FieldSpotDef[] {
-  const rowY = desktop
-    ? { GK: 88, SW: 78, DEF: 68, DM: 56, MID: 44, OM: 32, FWD: 20, ST: 11 }
-    : { GK: 90, SW: 80, DEF: 70, DM: 58, MID: 46, OM: 33, FWD: 20, ST: 10 }
-  const lineX = [10, 30, 50, 70, 90]
-  const strikerLineX = [30, 50, 70]
-  return [
-    { position: 'GK', x: 50, y: rowY.GK },
-    { position: 'SW', x: 50, y: rowY.SW },
-    ...lineX.map((x, index) => ({ position: `DEF-${index + 1}`, x, y: rowY.DEF })),
-    ...lineX.map((x, index) => ({ position: `DM-${index + 1}`, x, y: rowY.DM })),
-    ...lineX.map((x, index) => ({ position: `MID-${index + 1}`, x, y: rowY.MID })),
-    ...lineX.map((x, index) => ({ position: `OM-${index + 1}`, x, y: rowY.OM })),
-    ...lineX.map((x, index) => ({ position: `FWD-${index + 1}`, x, y: rowY.FWD })),
-    ...strikerLineX.map((x, index) => ({ position: `ST-${index + 1}`, x, y: rowY.ST })),
-  ]
+/**
+ * Named pitch spots from the standard position chart, mapped onto a
+ * vertical field (own goal / GK at the bottom, attack at the top).
+ */
+export const FIELD_SPOTS: FieldSpotDef[] = [
+  { position: 'GK', label: 'GK', x: 50, y: 91 },
+  { position: 'SW', label: 'SW', x: 50, y: 81 },
+  { position: 'LB', label: 'LB', x: 13, y: 71 },
+  { position: 'LCB', label: 'LCB', x: 32, y: 71 },
+  { position: 'CB', label: 'CB', x: 50, y: 71 },
+  { position: 'RCB', label: 'RCB', x: 68, y: 71 },
+  { position: 'RB', label: 'RB', x: 87, y: 71 },
+  { position: 'LWB', label: 'LWB', x: 13, y: 60 },
+  { position: 'RWB', label: 'RWB', x: 87, y: 60 },
+  { position: 'CDM', label: 'CDM', x: 50, y: 55 },
+  { position: 'LM', label: 'LM', x: 13, y: 45 },
+  { position: 'LCM', label: 'LCM', x: 32, y: 45 },
+  { position: 'CM', label: 'CM', x: 50, y: 45 },
+  { position: 'RCM', label: 'RCM', x: 68, y: 45 },
+  { position: 'RM', label: 'RM', x: 87, y: 45 },
+  { position: 'CAM', label: 'CAM', x: 50, y: 35 },
+  { position: 'LW', label: 'LW', x: 13, y: 24 },
+  { position: 'SS', label: 'SS', x: 32, y: 22 },
+  { position: 'RW', label: 'RW', x: 87, y: 24 },
+  { position: 'CF', label: 'CF', x: 50, y: 18 },
+  { position: 'ST-L', label: 'ST', x: 35, y: 9 },
+  { position: 'ST-R', label: 'ST', x: 65, y: 9 },
+]
+
+export const POSITION_LABEL_ORDER: string[] = [...new Set(FIELD_SPOTS.map((s) => s.label))]
+
+export function fieldSpotDefs(_desktop?: boolean): FieldSpotDef[] {
+  return FIELD_SPOTS
+}
+
+export function spotLabel(position: string): string {
+  const found = FIELD_SPOTS.find((s) => s.position === position)
+  if (found) return found.label
+  if (/^ST/i.test(position)) return 'ST'
+  return position
 }
 
 export function benchSlotCount(_matchType?: MatchType, _rosterSize?: number): number {

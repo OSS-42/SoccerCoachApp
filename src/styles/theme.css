@@ -507,6 +507,12 @@ html[data-theme] .form-group .regulation-option:has(input:checked) {
   border-color: transparent;
 }
 
+html[data-theme] .timing-presets .secondary-btn.is-active {
+  background: var(--pill-mint);
+  color: var(--pill-ink);
+  box-shadow: var(--neu-raised-sm);
+}
+
 html[data-theme] .dialog {
   background: rgba(7, 17, 12, 0.62);
 }
@@ -653,17 +659,22 @@ html[data-theme] .player-slot {
   border-radius: 4px;
 }
 
+html[data-theme] .player-slot:not(.occupied) {
+  width: 40px;
+  height: 40px;
+}
+
 html[data-theme] .player-slot:not(.occupied),
-html[data-theme] .sw-slot:not(.occupied) {
-  background: rgba(255, 255, 255, 0.16);
+html[data-theme] .sw-slot:not(.occupied),
+html[data-theme] .gk-slot:not(.occupied) {
+  background: transparent;
   box-shadow: none;
   border: 2px dashed rgba(255, 255, 255, 0.88);
 }
 
-html[data-theme] .gk-slot:not(.occupied) {
-  background: color-mix(in srgb, var(--pill-sky) 45%, transparent);
-  box-shadow: none;
-  border: 2px dashed #60a5fa;
+html[data-theme] .player-slot .spot-label {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
 
 html[data-theme] .player-number,
@@ -767,6 +778,18 @@ html[data-theme] .player-number-placed.tap-selected {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--neu-accent) 45%, transparent);
   background-image: none !important;
   z-index: 5;
+}
+
+html[data-theme] .player-slot.tap-selected {
+  z-index: 40;
+  box-shadow: 0 0 0 3px var(--neu-accent), 0 0 14px color-mix(in srgb, var(--neu-accent) 55%, transparent);
+}
+
+html[data-theme] .bench-slot.tap-selected,
+html[data-theme] .unavailable-slot.tap-selected {
+  outline: 3px solid var(--neu-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--neu-accent) 45%, transparent);
 }
 
 html[data-theme] .player-number .player-name-bench,
@@ -1259,6 +1282,10 @@ html[data-theme] #game-tracking .live-tile-num {
   opacity: 0.72;
 }
 
+html[data-theme] #game-tracking .live-tile-pos {
+  color: var(--pill-ink);
+}
+
 html[data-theme] #game-tracking .player-grid-item.yellow-card {
   background: var(--pill-yellow);
 }
@@ -1527,7 +1554,7 @@ html[data-theme] .report-stat-card {
 html[data-theme] .season-stat-card header,
 html[data-theme] .report-stat-card header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
 }
@@ -1585,10 +1612,23 @@ html[data-theme] #team-setup .players-header #open-add-player .material-icons {
 html[data-theme] .season-stat-card .stat-played,
 html[data-theme] .report-stat-card .stat-played {
   margin-left: auto;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
   color: var(--neu-text);
+  text-align: right;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+html[data-theme] .stat-played-line {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--neu-text);
+  line-height: 1.35;
+  white-space: normal;
 }
 
 html[data-theme] .season-stat-card.is-totals {
