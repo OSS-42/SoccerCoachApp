@@ -209,7 +209,7 @@ function eventLine(event: ReturnType<typeof buildGoalsCardsEvents>[number], scor
     const pos = event.position ? ` (${event.position})` : ''
     return [`> ${event.playerName}${pos}`, `< ${event.relatedName ?? ''}`]
   }
-  if (event.type === 'ownGoal') return [`OG ${event.playerName} ${score}`]
+  if (event.type === 'ownGoal') return [`${event.playerName} OG ${score}`]
   if (event.type === 'goal' || event.type === 'goalAllowed') {
     const assist = event.assistName ? [`Assist: ${event.assistName}`] : []
     return [`Goal ${event.playerName} ${score}`, ...assist]

@@ -91,46 +91,47 @@ function layoutFormationRails(): void {
   const bench = document.getElementById('bench-slots')
   const overflow = document.getElementById('bench-overflow')
   const out = document.getElementById('unavailable-slots')
+  const field = document.getElementById('formation-field')
   const team = getCurrentTeam()
   const draft = getGameDraft()
   if (!benchCol || !outCol || !bench || !overflow || !out || !team || !draft) return
 
   const gap = 4
   const benchTotal = benchSlotCount(draft.matchType, team.players.length)
-  const overflowWidth = overflow.clientWidth || overflow.parentElement?.clientWidth || benchCol.parentElement?.clientWidth || 0
+  const wasHidden = overflow.hidden
+  overflow.hidden = false
+  const overflowWidth =
+    field?.clientWidth ||
+    overflow.clientWidth ||
+    Math.max(0, (overflow.parentElement?.clientWidth ?? 0) - benchCol.offsetWidth - outCol.offsetWidth)
   const titleH = (benchCol.querySelector('h4')?.getBoundingClientRect().height ?? 20) + 4
   const railH = Math.max(0, benchCol.clientHeight - titleH)
   let tile = 48
   let benchFit = 1
+  let perRow = 1
   for (const size of [52, 48, 44, 40, 36]) {
     const rail = Math.max(1, Math.floor((railH + gap) / (size + gap)))
-    const perRow = Math.max(1, Math.floor((overflowWidth + gap) / (size + gap)))
+    const row = Math.max(1, Math.floor((overflowWidth + gap) / (size + gap)))
     tile = size
     benchFit = rail
-    if (rail + perRow * 2 >= benchTotal) break
+    perRow = row
+    if (rail + row * 2 >= benchTotal) break
   }
   const outFit = fitSlotCount(outCol, tile, gap)
-  const perRow = Math.max(1, Math.floor((overflowWidth + gap) / (tile + gap)))
-  let overflowCount = Math.min(benchTotal, perRow * 2)
-  overflowCount -= overflowCount % 2
-  let railCount = benchTotal - overflowCount
-  if (railCount > benchFit) {
-    overflowCount = Math.min(perRow * 2, benchTotal - (benchTotal - benchFit) % 2)
-    overflowCount -= overflowCount % 2
-    railCount = benchTotal - overflowCount
-  }
-  if (railCount < 0) {
-    overflowCount = benchTotal - (benchTotal % 2)
-    railCount = benchTotal - overflowCount
-  }
+  const railCount = Math.min(benchFit, benchTotal)
+  let overflowCount = Math.max(0, benchTotal - railCount)
+  const overflowMax = Math.max(0, perRow * 2)
+  if (overflowMax > 0) overflowCount = Math.min(overflowCount, overflowMax)
   const container = document.querySelector<HTMLElement>('#formation-setup .formation-container')
   if (container) container.style.setProperty('--bench-tile', `${tile}px`)
   if (
     lastRailFits.bench === railCount &&
     lastRailFits.out === outFit &&
     lastRailFits.total === benchTotal &&
-    bench.childElementCount + overflow.childElementCount === benchTotal
+    bench.childElementCount + overflow.childElementCount >= railCount + overflowCount &&
+    !wasHidden
   ) {
+    overflow.hidden = overflow.childElementCount === 0
     return
   }
   lastRailFits = { bench: railCount, out: outFit, total: benchTotal }

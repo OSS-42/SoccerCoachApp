@@ -3784,6 +3784,13 @@ button.no-assist-btn {
     filter: grayscale(0);
 }
 
+.log-og {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #e11d48;
+}
+
 .log-score {
     font-weight: 650;
     opacity: 0.6;

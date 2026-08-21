@@ -878,8 +878,8 @@ html[data-theme] .player-number .player-name-field {
     align-items: flex-start;
     align-content: flex-start;
     flex: 0 0 auto;
-    max-height: calc(var(--bench-tile, 48px) * 2 + 4px);
-    overflow: hidden;
+    max-height: none;
+    overflow: visible;
   }
 
   html[data-theme] .bench-overflow .bench-slot {

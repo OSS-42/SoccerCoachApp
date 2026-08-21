@@ -75,7 +75,11 @@ function renderScorers(game: Game, players: Player[]): string {
     .map((event) => `${escapeHtml(event.playerName)} ${event.minute}'`)
   const theirs = events
     .filter((event) => event.type === 'goalAllowed' || (event.type === 'ownGoal' && event.isOpponent))
-    .map((event) => `${escapeHtml(event.playerName)} ${event.minute}'`)
+    .map((event) =>
+      event.type === 'ownGoal'
+        ? `${escapeHtml(event.playerName)} ${t('ownGoalShort')} ${event.minute}'`
+        : `${escapeHtml(event.playerName)} ${event.minute}'`,
+    )
   if (!ours.length && !theirs.length) return ''
   return `<div class="report-scorers">
     <div class="scorers-home">${ours.join('<br>') || '&nbsp;'}</div>
@@ -98,10 +102,11 @@ function renderLogEvent(
     </div>`
   } else if (event.type === 'goal' || event.type === 'ownGoal' || event.type === 'goalAllowed') {
     const ball = event.type === 'ownGoal' ? '<span class="log-ball is-og">⚽</span>' : '<span class="log-ball">⚽</span>'
+    const og = event.type === 'ownGoal' ? ` <span class="log-og">${t('ownGoalShort')}</span>` : ''
     const assist = event.assistName
       ? `<div class="log-assist">${escapeHtml(t('assistBy', { name: event.assistName }))}</div>`
       : ''
-    body = `<div class="log-goal">${ball} ${escapeHtml(event.playerName)} <span class="log-score">${escapeHtml(runningScore)}</span>${assist}</div>`
+    body = `<div class="log-goal">${ball} ${escapeHtml(event.playerName)}${og} <span class="log-score">${escapeHtml(runningScore)}</span>${assist}</div>`
   } else if (event.type === 'yellow' || event.type === 'red') {
     const card = event.type === 'yellow' ? '<span class="log-card is-yellow"></span>' : '<span class="log-card is-red"></span>'
     body = `<div class="log-card-row">${escapeHtml(event.playerName)} ${card}</div>`
