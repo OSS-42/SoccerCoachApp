@@ -13,6 +13,7 @@ import { bindMainMenu, renderMainMenu } from '@/screens/mainMenu'
 import { bindReports, renderReports } from '@/screens/reports'
 import { bindSettings, renderSettings } from '@/screens/settings'
 import { bindTeamSetup, renderTeamSetup } from '@/screens/teamSetup'
+import { bindIntro } from '@/screens/intro'
 import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
 
 function blockEdgeSwipeBack(event: TouchEvent): void {
@@ -28,6 +29,8 @@ function blockEdgeSwipeBack(event: TouchEvent): void {
 function renderActive(): void {
   fillTeamSelectors()
   switch (activeScreenId()) {
+    case 'intro-screen':
+      break
     case 'main-screen':
       renderMainMenu()
       break
@@ -91,13 +94,14 @@ onShow('game-tracking', renderLiveGame)
 onShow('reports', renderReports)
 onShow('settings', renderSettings)
 
-history.replaceState({ screen: 'main-screen' }, '')
+history.replaceState({ screen: 'intro-screen' }, '')
 bindHistoryNavigation((from) => {
   if (from === 'game-tracking' && hasInProgressGame()) return true
   return false
 })
 document.addEventListener('touchstart', blockEdgeSwipeBack, { passive: false })
 bindNavigation()
+bindIntro()
 bindTeamSelectors()
 bindMainMenu()
 bindTeamSetup()
@@ -112,4 +116,4 @@ startClockLoop()
 const footer = document.getElementById('version-footer')
 if (footer) footer.textContent = `v${APP_VERSION}`
 
-showScreen('main-screen', { history: 'replace' })
+showScreen('intro-screen', { history: 'replace' })

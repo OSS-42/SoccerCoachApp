@@ -5,6 +5,7 @@ import {
   DEFAULT_SUB_MINUTES,
   ELEVEN_V11_FRIENDLY_MINUTES,
   ELEVEN_V11_OFFICIAL_MINUTES,
+  INTRO_MS,
   JERSEY_MAX,
   JERSEY_MIN,
   LEGACY_SAVE_KEY,
@@ -31,5 +32,6 @@ describe('config', () => {
     expect(YELLOWS_FOR_RED).toBe(2)
     expect(ELEVEN_V11_FRIENDLY_MINUTES).toBe(40)
     expect(ELEVEN_V11_OFFICIAL_MINUTES).toBe(45)
+    expect(INTRO_MS).toBe(6000)
   })
 })

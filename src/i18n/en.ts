@@ -34,6 +34,7 @@ export const en = {
   gameNoteTitle: 'Game note',
   notes: 'Notes',
   close: 'Close',
+  continue: 'Continue',
   newGame: 'New Game',
   opponentName: 'Opponent Team Name:',
   opponentPlaceholder: 'Enter opponent team name',

@@ -36,6 +36,7 @@ export const fr: Record<keyof typeof en, string> = {
   gameNoteTitle: 'Note de match',
   notes: 'Notes',
   close: 'Fermer',
+  continue: 'Continuer',
   newGame: 'Nouveau match',
   opponentName: 'Nom de l’adversaire :',
   opponentPlaceholder: 'Saisir le nom de l’adversaire',

@@ -10,5 +10,6 @@ describe('i18n', () => {
     setLocale('en')
     expect(t('startNewGame')).toBe('Start New Game')
     expect(t('appTitle')).toBe('ActionPitch')
+    expect(t('continue')).toBe('Continue')
   })
 })

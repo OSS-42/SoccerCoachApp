@@ -39,3 +39,6 @@ export const TIMELINE_MARK_EVERY_MINUTES = 15
 
 export const VIEW_REPORT_EVENT = 'actionpitch:view-report'
 export const BACKUP_FILE_PREFIX = 'actionpitch-backup'
+
+export const INTRO_MS = 6000
+export const INTRO_BUTTON_DELAY_MS = 700

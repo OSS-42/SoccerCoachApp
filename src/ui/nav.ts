@@ -1,4 +1,5 @@
 export type ScreenId =
+  | 'intro-screen'
   | 'main-screen'
   | 'team-setup'
   | 'game-setup'
