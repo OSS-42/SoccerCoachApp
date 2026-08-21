@@ -1,26 +1,47 @@
+import { YELLOWS_FOR_RED } from './config'
 import { newId } from './ids'
 import { revertSubstitutionSwap } from './substitutions'
 import { emptyLiveStats, type ActionType, type Game, type GameAction, type LiveStats } from './types'
 
-export const ACTION_LABELS: Record<ActionType, string> = {
-  goal: 'Goal',
-  assist: 'Assist',
-  save: 'Save',
-  goal_allowed: 'Goal Allowed',
-  shot_on_goal: 'Shot on Goal',
-  blocked_shot: 'Blocked Shot',
-  fault: 'Foul',
-  yellow_card: 'Yellow Card',
-  red_card: 'Red Card',
-  own_goal: 'Own Goal',
-  opp_yellow: 'Opponent Yellow',
-  opp_red: 'Opponent Red',
-  injury: 'Injury',
-  late_to_game: 'Late to Game',
-  note: 'Note',
-  game_note: 'Game Note',
-  substitution: 'Substitution',
+/** Emoji used on live action buttons. Labels come from i18n (`action.*`). */
+export const ACTION_EMOJI: Record<ActionType, string> = {
+  goal: '⚽',
+  assist: '👟',
+  save: '🧤',
+  goal_allowed: '⚽',
+  shot_on_goal: '🎯',
+  blocked_shot: '❌',
+  fault: '⚠️',
+  yellow_card: '🟨',
+  red_card: '🟥',
+  own_goal: '🔴',
+  opp_yellow: '🟨',
+  opp_red: '🟥',
+  injury: '🏥',
+  late_to_game: '🕒',
+  note: '📝',
+  game_note: '📝',
+  substitution: '🔄',
 }
+
+export const FIELD_PLAYER_ACTIONS: ActionType[] = [
+  'goal',
+  'assist',
+  'save',
+  'shot_on_goal',
+  'own_goal',
+  'blocked_shot',
+  'fault',
+  'yellow_card',
+  'red_card',
+  'injury',
+  'late_to_game',
+  'note',
+]
+
+export const BENCH_PLAYER_ACTIONS: ActionType[] = ['yellow_card', 'red_card']
+
+export const OPPONENT_ACTIONS: ActionType[] = ['goal_allowed', 'own_goal', 'opp_yellow', 'opp_red']
 
 export function createAction(
   actionType: ActionType,
@@ -83,7 +104,7 @@ export function statsFromActions(actions: GameAction[], playerId: string): LiveS
         break
     }
   }
-  if (stats.yellowCards >= 2 && stats.redCards === 0) {
+  if (stats.yellowCards >= YELLOWS_FOR_RED && stats.redCards === 0) {
     stats.redCards = 1
   }
   return stats
@@ -121,7 +142,7 @@ export function teamCardCounts(actions: GameAction[]): { yellow: number; red: nu
     }
   }
   for (const [playerId, count] of yellowsByPlayer) {
-    if (count >= 2 && !directRed.has(playerId)) red += 1
+    if (count >= YELLOWS_FOR_RED && !directRed.has(playerId)) red += 1
   }
   return { yellow, red }
 }

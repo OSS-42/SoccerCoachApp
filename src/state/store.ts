@@ -1,4 +1,5 @@
 import { applyAction, createAction, revertAction } from '@/domain/actions'
+import { MAX_TEAMS, YELLOWS_FOR_RED } from '@/domain/config'
 import {
   commitWallClock,
   currentPeriod,
@@ -124,7 +125,7 @@ export function addTeam(name: string): { ok: boolean; message: string } {
   if (!canAddTeam(state.teams)) {
     return {
       ok: false,
-      message: t('maxTeams', { max: 2 }),
+      message: t('maxTeams', { max: MAX_TEAMS }),
     }
   }
   const team = createTeam(name)
@@ -265,7 +266,7 @@ export function recordLiveAction(
   persist()
   return {
     ok: true,
-    convertedToRed: actionType === 'yellow_card' && beforeYellows + 1 >= 2,
+    convertedToRed: actionType === 'yellow_card' && beforeYellows + 1 >= YELLOWS_FOR_RED,
   }
 }
 

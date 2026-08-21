@@ -1,3 +1,4 @@
+import { ELEVEN_V11_PERIODS, EXTRA_TIME_PERIODS, YELLOWS_FOR_RED } from './config'
 import { currentPeriod } from './clock'
 import { newId } from './ids'
 import {
@@ -30,7 +31,7 @@ export function regulationFor(
 export function extraTimeActive(game: Game, elapsedSeconds: number): boolean {
   if (game.substitutionRegulation !== 'official') return false
   if (game.extraTime) return true
-  return currentPeriod(elapsedSeconds, game.periodDuration, game.numPeriods) > 2
+  return currentPeriod(elapsedSeconds, game.periodDuration, game.numPeriods) > ELEVEN_V11_PERIODS
 }
 
 export function substitutionCap(game: Game, elapsedSeconds: number): number | null {
@@ -63,7 +64,7 @@ export function playerHasRed(game: Game, playerId: string): boolean {
     if (action.actionType === 'yellow_card') yellows += 1
     if (action.actionType === 'red_card') reds += 1
   }
-  return reds > 0 || yellows >= 2
+  return reds > 0 || yellows >= YELLOWS_FOR_RED
 }
 
 export function playerIsInjured(game: Game, playerId: string): boolean {
@@ -147,6 +148,6 @@ export function beginExtraTime(game: Game): Game {
   return {
     ...game,
     extraTime: true,
-    numPeriods: game.numPeriods + 2,
+    numPeriods: game.numPeriods + EXTRA_TIME_PERIODS,
   }
 }

@@ -1,6 +1,14 @@
 import { actionLabel, t } from '@/i18n'
 import { askConfirm, askPrompt } from '@/ui/confirm'
-import { playerIsUnavailable, statsFromActions } from '@/domain/actions'
+import {
+  ACTION_EMOJI,
+  BENCH_PLAYER_ACTIONS,
+  FIELD_PLAYER_ACTIONS,
+  OPPONENT_ACTIONS,
+  playerIsUnavailable,
+  statsFromActions,
+} from '@/domain/actions'
+import { DOUBLE_TAP_MS, NOTE_MAX_LENGTH, VIEW_REPORT_EVENT } from '@/domain/config'
 import { fieldSpotDepth, spotLabel } from '@/domain/formation'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { currentPeriod, formatClock, isLastPeriod, parseClockInput } from '@/domain/clock'
@@ -43,27 +51,13 @@ let goalScorerId: string | null = null
 let assisterId: string | null = null
 let periodAction: 'finish' | 'end' = 'finish'
 
-const DOUBLE_TAP_MS = 320
-
-const LIVE_ACTIONS: { type: ActionType; emoji: string }[] = [
-  { type: 'goal', emoji: '⚽' },
-  { type: 'assist', emoji: '👟' },
-  { type: 'save', emoji: '🧤' },
-  { type: 'shot_on_goal', emoji: '🎯' },
-  { type: 'own_goal', emoji: '🔴' },
-  { type: 'blocked_shot', emoji: '❌' },
-  { type: 'fault', emoji: '⚠️' },
-  { type: 'yellow_card', emoji: '🟨' },
-  { type: 'red_card', emoji: '🟥' },
-  { type: 'injury', emoji: '🏥' },
-  { type: 'late_to_game', emoji: '🕒' },
-  { type: 'note', emoji: '📝' },
-]
-
-const BENCH_ACTIONS: { type: ActionType; emoji: string }[] = [
-  { type: 'yellow_card', emoji: '🟨' },
-  { type: 'red_card', emoji: '🟥' },
-]
+function opponentActionLabel(type: ActionType): string {
+  if (type === 'goal_allowed') return t('oppGoal')
+  if (type === 'own_goal') return t('oppOwnGoal')
+  if (type === 'opp_yellow') return t('statShortYellow')
+  if (type === 'opp_red') return t('statShortRed')
+  return actionLabel(type)
+}
 
 function availablePlayers(excludeId?: string | null): Player[] {
   const team = getCurrentTeam()
@@ -136,23 +130,9 @@ export function renderLiveGame(): void {
   const awayScore = document.getElementById('away-score')
   if (homeScore) homeScore.textContent = String(game.homeScore)
   if (awayScore) awayScore.textContent = String(game.awayScore)
-  const elapsed = liveElapsedSeconds()
-  const time = document.getElementById('game-time')
-  if (time) time.textContent = formatClock(elapsed)
-  const period = document.getElementById('period-counter')
-  if (period) {
-    period.textContent = t('periodOf', {
-      current: currentPeriod(elapsed, game.periodDuration, game.numPeriods),
-      total: game.numPeriods,
-    })
-  }
   const subWrap = document.getElementById('substitution-timer')
-  if (subWrap) {
-    subWrap.style.display = clock.useSubstitutionTimer ? '' : 'none'
-    const value = subWrap.querySelector('.timer-value')
-    if (value) value.textContent = formatClock(liveSubRemaining())
-    subWrap.classList.toggle('timer-alert', clock.subRemaining === 0)
-  }
+  if (subWrap) subWrap.style.display = clock.useSubstitutionTimer ? '' : 'none'
+  updateClockLabels()
 
   paintSubCount()
   paintLiveRosters()
@@ -338,13 +318,13 @@ function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
   pendingPlayer = player
   const name = document.getElementById('action-player-name')
   if (name) name.textContent = player.name
-  const actions = role === 'bench' ? BENCH_ACTIONS : LIVE_ACTIONS
+  const actions = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
   const buttons = document.getElementById('action-buttons')
   if (buttons) {
     buttons.innerHTML = actions
       .map(
-        (action) =>
-          `<button class="action-btn" data-action="${action.type}"><span class="stat-emoji">${action.emoji}</span> ${actionLabel(action.type)}</button>`,
+        (type) =>
+          `<button class="action-btn" data-action="${type}"><span class="stat-emoji">${ACTION_EMOJI[type]}</span> ${actionLabel(type)}</button>`,
       )
       .join('')
   }
@@ -363,18 +343,10 @@ function currentGkId(): string | null {
 function openOpponentActions(): void {
   const buttons = document.getElementById('opponent-action-buttons')
   if (!buttons) return
-  const items: { type: ActionType; emoji: string; label: string }[] = [
-    { type: 'goal_allowed', emoji: '⚽', label: t('oppGoal') },
-    { type: 'own_goal', emoji: '🔴', label: t('oppOwnGoal') },
-    { type: 'opp_yellow', emoji: '🟨', label: t('statShortYellow') },
-    { type: 'opp_red', emoji: '🟥', label: t('statShortRed') },
-  ]
-  buttons.innerHTML = items
-    .map(
-      (action) =>
-        `<button class="action-btn" data-opp-action="${action.type}"><span class="stat-emoji">${action.emoji}</span> ${escapeHtml(action.label)}</button>`,
-    )
-    .join('')
+  buttons.innerHTML = OPPONENT_ACTIONS.map(
+    (type) =>
+      `<button class="action-btn" data-opp-action="${type}"><span class="stat-emoji">${ACTION_EMOJI[type]}</span> ${escapeHtml(opponentActionLabel(type))}</button>`,
+  ).join('')
   toggleDialog('opponent-action-dialog', true)
 }
 
@@ -431,7 +403,7 @@ export function bindLiveGame(): void {
     toggleDialog('end-game-dialog', false)
     if (result.ok && result.gameId) {
       showScreen('reports')
-      window.dispatchEvent(new CustomEvent('sca:view-report', { detail: result.gameId }))
+      window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
     }
   })
   document.getElementById('stop-period')?.addEventListener('click', () => {
@@ -474,7 +446,7 @@ export function bindLiveGame(): void {
       const result = endCurrentGame()
       if (result.ok && result.gameId) {
         showScreen('reports')
-        window.dispatchEvent(new CustomEvent('sca:view-report', { detail: result.gameId }))
+        window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
       }
     } else {
       const result = finishCurrentPeriod()
@@ -542,7 +514,13 @@ export function bindLiveGame(): void {
     toggleDialog('note-dialog', false)
     closeActionDialog()
   })
-  document.getElementById('note-text')?.addEventListener('input', (event) => {
+  const noteText = document.getElementById('note-text') as HTMLTextAreaElement | null
+  if (noteText) noteText.maxLength = NOTE_MAX_LENGTH
+  const noteLimit = document.querySelector('#note-dialog .char-count')
+  if (noteLimit) {
+    noteLimit.innerHTML = `<span id="note-char-count">0</span>/${NOTE_MAX_LENGTH}`
+  }
+  noteText?.addEventListener('input', (event) => {
     const counter = document.getElementById('note-char-count')
     if (counter) counter.textContent = String((event.target as HTMLTextAreaElement).value.length)
   })

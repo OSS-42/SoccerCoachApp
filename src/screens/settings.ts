@@ -1,4 +1,21 @@
-import { APP_VERSION } from '@/domain/types'
+import { APP_VERSION, BACKUP_FILE_PREFIX } from '@/domain/config'
+import { applyDomTranslations, getLocale, isLocale, t } from '@/i18n'
+import { isTheme } from '@/lib/theme'
+import { parseImportJson } from '@/lib/storage'
+import {
+  exportBackupJson,
+  getCurrentTeam,
+  getSave,
+  importBackup,
+  resetAllData,
+  setDefaultSubstitution,
+  setLanguage,
+  setTheme,
+} from '@/state/store'
+import { askConfirm } from '@/ui/confirm'
+import { showMessage } from '@/ui/message'
+import { showScreen } from '@/ui/nav'
+import { fillTeamSelectors } from './shared'
 
 async function hardRefresh(): Promise<void> {
   try {
@@ -17,24 +34,6 @@ async function hardRefresh(): Promise<void> {
   url.searchParams.set('v', String(Date.now()))
   window.location.replace(url.toString())
 }
-import { applyDomTranslations, getLocale, isLocale } from '@/i18n'
-import { t } from '@/i18n'
-import { isTheme } from '@/lib/theme'
-import {
-  exportBackupJson,
-  getCurrentTeam,
-  getSave,
-  importBackup,
-  resetAllData,
-  setDefaultSubstitution,
-  setLanguage,
-  setTheme,
-} from '@/state/store'
-import { askConfirm } from '@/ui/confirm'
-import { parseImportJson } from '@/lib/storage'
-import { showMessage } from '@/ui/message'
-import { showScreen } from '@/ui/nav'
-import { fillTeamSelectors } from './shared'
 
 export function renderSettings(): void {
   fillTeamSelectors()
@@ -86,7 +85,7 @@ export function bindSettings(): void {
     const link = document.createElement('a')
     link.href = url
     const day = new Date().toISOString().slice(0, 10)
-    link.download = `soccercoach-backup-${day}.json`
+    link.download = `${BACKUP_FILE_PREFIX}-${day}.json`
     link.click()
     URL.revokeObjectURL(url)
     showMessage(t('backupSaved'), 'success')

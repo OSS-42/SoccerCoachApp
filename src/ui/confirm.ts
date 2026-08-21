@@ -1,3 +1,4 @@
+import { NOTE_MAX_LENGTH } from '@/domain/config'
 import { toggleDialog } from './dom'
 
 export function askConfirm(options: {
@@ -71,6 +72,7 @@ export function askPrompt(options: {
   field.hidden = false
   field.value = options.value ?? ''
   field.placeholder = options.placeholder ?? ''
+  if (options.multiline) area.maxLength = NOTE_MAX_LENGTH
   okBtn.textContent = options.confirmLabel
   cancelBtn.textContent = options.cancelLabel
   toggleDialog('app-prompt-dialog', true)

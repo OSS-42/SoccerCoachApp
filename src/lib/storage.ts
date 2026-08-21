@@ -50,7 +50,7 @@ export type ImportPayload = { save: AppSave; kind: 'full' | 'team' }
 export function parseImportJson(text: string): ImportPayload | { error: string } {
   try {
     const parsed = JSON.parse(text) as unknown
-    if (!parsed || typeof parsed !== 'object') return { error: 'Invalid data format' }
+    if (!parsed || typeof parsed !== 'object') return { error: t('invalidImport') }
     const rec = parsed as Record<string, unknown>
     if (!rec.teamName && !rec.name && !Array.isArray(rec.players) && !Array.isArray(rec.teams)) {
       return { error: t('invalidImport') }

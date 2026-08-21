@@ -1,5 +1,5 @@
 export const en = {
-  appTitle: 'Football Live Action Tracker',
+  appTitle: 'ActionPitch',
   teamName: 'Team Name',
   teamSetup: 'Team Setup',
   resumeGame: 'Resume Game',
@@ -103,8 +103,8 @@ export const en = {
   substitutionDefault: 'Substitution default',
   defaultSubMinutes: 'Default substitution timer (minutes)',
   dataManagement: 'Data Management',
-  exportJson: 'Export Team Data (JSON)',
-  importJson: 'Import Team Data',
+  exportJson: 'Export backup (JSON)',
+  importJson: 'Import backup',
   clearAllData: 'Clear All Data',
   saveSettings: 'Save Settings',
   addPlayer: 'Add Player',

@@ -1,14 +1,30 @@
-export const APP_VERSION = '2.4.48'
-export const SAVE_VERSION = 2
-export const MAX_TEAMS = 2
-export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
-export const LEGACY_SAVE_KEY_V1 = 'soccerCoachApp'
-export const SAVE_KEY = 'soccerCoachApp.v2'
-export const SAVE_BACKUP_KEY = 'soccerCoachApp.v2.bak'
+import {
+  DEFAULT_SUB_MINUTES,
+  ELEVEN_V11_OFFICIAL_MINUTES,
+  ELEVEN_V11_PERIODS,
+  SAVE_VERSION,
+} from './config'
+
+export {
+  APP_NAME,
+  APP_VERSION,
+  SAVE_VERSION,
+  MAX_TEAMS,
+  LEGACY_SAVE_KEY,
+  LEGACY_SAVE_KEY_V1,
+  SAVE_KEY,
+  SAVE_BACKUP_KEY,
+  DEMO_TEAM_ID,
+  DEFAULT_SUB_MINUTES,
+} from './config'
 
 export type MatchType = '5v5' | '7v7' | '9v9' | '11v11'
 
 export const MATCH_TYPES: MatchType[] = ['5v5', '7v7', '9v9', '11v11']
+
+export function isMatchType(value: string): value is MatchType {
+  return (MATCH_TYPES as readonly string[]).includes(value)
+}
 
 export const ON_FIELD_COUNT: Record<MatchType, number> = {
   '5v5': 5,
@@ -22,17 +38,8 @@ export const MATCH_PERIOD_DEFAULTS: Record<MatchType, { numPeriods: number; peri
   '5v5': { numPeriods: 4, periodDuration: 10 },
   '7v7': { numPeriods: 4, periodDuration: 12 },
   '9v9': { numPeriods: 3, periodDuration: 20 },
-  '11v11': { numPeriods: 2, periodDuration: 45 },
+  '11v11': { numPeriods: ELEVEN_V11_PERIODS, periodDuration: ELEVEN_V11_OFFICIAL_MINUTES },
 }
-
-export const BENCH_SLOT_COUNT: Record<MatchType, number> = {
-  '5v5': 10,
-  '7v7': 12,
-  '9v9': 15,
-  '11v11': 18,
-}
-
-export const DEMO_TEAM_ID = 't-demo'
 
 export const PLAYER_POSITIONS = [
   'GK',
@@ -184,8 +191,8 @@ export const DEFAULT_CLOCK: ClockState = {
   elapsedSeconds: 0,
   running: false,
   runningStartedAt: null,
-  subRemaining: 6 * 60,
-  subDuration: 6 * 60,
+  subRemaining: DEFAULT_SUB_MINUTES * 60,
+  subDuration: DEFAULT_SUB_MINUTES * 60,
   subRunning: false,
   useSubstitutionTimer: false,
 }

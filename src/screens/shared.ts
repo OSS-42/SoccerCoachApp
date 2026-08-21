@@ -1,3 +1,4 @@
+import { t } from '@/i18n'
 import { getCurrentTeam, getSave, selectTeam } from '@/state/store'
 import { el } from '@/ui/dom'
 
@@ -18,7 +19,7 @@ export function fillTeamSelectors(): void {
   }
   const team = getCurrentTeam()
   document.querySelectorAll('[data-team-name]').forEach((node) => {
-    node.textContent = team?.name ?? 'Team Name'
+    node.textContent = team?.name ?? t('teamName')
   })
   const nameInput = document.getElementById('team-name-input') as HTMLInputElement | null
   if (nameInput && team) nameInput.value = team.name

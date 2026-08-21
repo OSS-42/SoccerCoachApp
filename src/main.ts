@@ -1,11 +1,11 @@
 import './styles/app.css'
 import './styles/mobile.css'
 import './styles/theme.css'
-import { APP_VERSION } from '@/domain/types'
+import { APP_VERSION, CLOCK_PERSIST_EVERY_TICKS, CLOCK_TICK_MS, EDGE_SWIPE_PX } from '@/domain/config'
 import { applyDomTranslations } from '@/i18n'
 import { getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
 import { hideMessage } from '@/ui/message'
-import { bindHistoryNavigation, onShow, showScreen, type ScreenId } from '@/ui/nav'
+import { activeScreenId, bindHistoryNavigation, onShow, showScreen, type ScreenId } from '@/ui/nav'
 import { bindFormation, renderFormation } from '@/screens/formation'
 import { bindGameSetup, renderGameSetup } from '@/screens/gameSetup'
 import { bindLiveGame, renderLiveGame, updateClockLabels } from '@/screens/liveGame'
@@ -15,14 +15,9 @@ import { bindSettings, renderSettings } from '@/screens/settings'
 import { bindTeamSetup, renderTeamSetup } from '@/screens/teamSetup'
 import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
 
-function activeScreenId(): ScreenId {
-  return (document.querySelector('.screen.active')?.id as ScreenId) ?? 'main-screen'
-}
-
 function blockEdgeSwipeBack(event: TouchEvent): void {
   const x = event.touches[0]?.clientX ?? 0
-  const edge = 18
-  if (x > edge && x < window.innerWidth - edge) return
+  if (x > EDGE_SWIPE_PX && x < window.innerWidth - EDGE_SWIPE_PX) return
   const target = event.target as Element | null
   if (target?.closest('.bench-slot, .unavailable-slot, .player-slot, button, input, select, textarea, a')) {
     return
@@ -74,8 +69,8 @@ function startClockLoop(): void {
     if (!clock.running && !clock.subRunning) return
     updateClockLabels()
     ticks += 1
-    if (ticks % 10 === 0) persistClock()
-  }, 1000)
+    if (ticks % CLOCK_PERSIST_EVERY_TICKS === 0) persistClock()
+  }, CLOCK_TICK_MS)
 
   const catchUp = () => {
     if (getSave().clock.running) persistClock()

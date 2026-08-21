@@ -4,6 +4,7 @@ import { createDefaultTeams, ensureDemoTeam, isPlayerPosition } from './teams'
 import {
   APP_VERSION,
   DEFAULT_CLOCK,
+  DEFAULT_SUB_MINUTES,
   MATCH_TYPES,
   SAVE_VERSION,
   type ActionType,
@@ -169,7 +170,7 @@ function migrateGame(raw: unknown, index: number): Game | null {
         })
       : [],
     useSubstitutionTimer: asBool(rec.useSubstitutionTimer, false),
-    substitutionSeconds: asNumber(rec.substitutionSeconds, 6 * 60),
+    substitutionSeconds: asNumber(rec.substitutionSeconds, DEFAULT_SUB_MINUTES * 60),
     substitutionRegulation: asRegulation(rec.substitutionRegulation) ?? 'rolling',
     extraTime: asBool(rec.extraTime, false),
   }

@@ -1,12 +1,6 @@
+import { DEMO_TEAM_ID, JERSEY_MAX, JERSEY_MIN, MAX_TEAMS } from './config'
 import { newId } from './ids'
-import {
-  DEMO_TEAM_ID,
-  MAX_TEAMS,
-  PLAYER_POSITIONS,
-  type Player,
-  type PlayerPosition,
-  type Team,
-} from './types'
+import { PLAYER_POSITIONS, type Player, type PlayerPosition, type Team } from './types'
 
 const DEMO_ROSTER: { name: string; jerseyNumber: number; position: PlayerPosition }[] = [
   { name: 'NOAH', jerseyNumber: 1, position: 'GK' },
@@ -90,7 +84,7 @@ export function createPlayer(
 ): { ok: true; player: Player } | { ok: false; message: string } {
   const cleanName = normalizeName(name)
   if (!cleanName) return { ok: false, message: 'playerNameRequired' }
-  if (!Number.isInteger(jerseyNumber) || jerseyNumber < 0 || jerseyNumber > 99) {
+  if (!Number.isInteger(jerseyNumber) || jerseyNumber < JERSEY_MIN || jerseyNumber > JERSEY_MAX) {
     return { ok: false, message: 'jerseyRange' }
   }
   if (existing.some((p) => p.jerseyNumber === jerseyNumber)) {
@@ -116,7 +110,7 @@ export function updatePlayer(
 ): { ok: true; players: Player[] } | { ok: false; message: string } {
   const cleanName = normalizeName(name)
   if (!cleanName) return { ok: false, message: 'playerNameRequired' }
-  if (!Number.isInteger(jerseyNumber) || jerseyNumber < 0 || jerseyNumber > 99) {
+  if (!Number.isInteger(jerseyNumber) || jerseyNumber < JERSEY_MIN || jerseyNumber > JERSEY_MAX) {
     return { ok: false, message: 'jerseyRange' }
   }
   if (existing.some((p) => p.id !== playerId && p.jerseyNumber === jerseyNumber)) {

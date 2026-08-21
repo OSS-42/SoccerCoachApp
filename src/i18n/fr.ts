@@ -1,7 +1,7 @@
 import type { en } from './en'
 
 export const fr: Record<keyof typeof en, string> = {
-  appTitle: 'Suivi de match en direct',
+  appTitle: 'ActionPitch',
   teamName: "Nom de l'équipe",
   teamSetup: 'Effectif',
   resumeGame: 'Reprendre le match',
@@ -105,8 +105,8 @@ export const fr: Record<keyof typeof en, string> = {
   substitutionDefault: 'Relève par défaut',
   defaultSubMinutes: 'Minuteur de relèves par défaut (minutes)',
   dataManagement: 'Données',
-  exportJson: 'Exporter l’équipe (JSON)',
-  importJson: 'Importer une équipe',
+  exportJson: 'Exporter une sauvegarde (JSON)',
+  importJson: 'Importer une sauvegarde',
   clearAllData: 'Tout effacer',
   saveSettings: 'Enregistrer les réglages',
   addPlayer: 'Ajouter un joueur',

@@ -3624,12 +3624,14 @@ button.no-assist-btn {
     bottom: 50%;
     transform: translateX(-50%);
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: linear-gradient(to top, #4CAF50, #8BC34A);
 }
 
 .timeline-bar.opponent {
     top: 50%;
     transform: translateX(-50%);
     border-top: 1px solid rgba(0, 0, 0, 0.1);
+    background: linear-gradient(to top, #FF5252, #2196F3);
 }
 
 .timeline-bar:hover {
@@ -3639,7 +3641,10 @@ button.no-assist-btn {
 }
 
 .timeline-scale {
-    display: none;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
 }
 
 .timeline-scale-label {

@@ -1,4 +1,10 @@
-import { MATCH_PERIOD_DEFAULTS, MATCH_TYPES, ON_FIELD_COUNT, type MatchType } from '@/domain/types'
+import {
+  DEFAULT_SUB_MINUTES,
+  ELEVEN_V11_FRIENDLY_MINUTES,
+  ELEVEN_V11_OFFICIAL_MINUTES,
+  ELEVEN_V11_PERIODS,
+} from '@/domain/config'
+import { isMatchType, MATCH_PERIOD_DEFAULTS, ON_FIELD_COUNT, type MatchType } from '@/domain/types'
 import { t } from '@/i18n'
 import { getCurrentTeam, setDefaultSubstitution } from '@/state/store'
 import { showMessage } from '@/ui/message'
@@ -38,10 +44,6 @@ export function renderGameSetup(): void {
   syncRegulationUi(isMatchType(matchType) ? matchType : '')
 }
 
-function isMatchType(value: string): value is MatchType {
-  return (MATCH_TYPES as readonly string[]).includes(value)
-}
-
 function official11Selected(): boolean {
   const checked = document.querySelector<HTMLInputElement>(
     'input[name="match-regulation"]:checked',
@@ -50,7 +52,7 @@ function official11Selected(): boolean {
 }
 
 function elevenDuration(): number {
-  return official11Selected() ? 45 : 40
+  return official11Selected() ? ELEVEN_V11_OFFICIAL_MINUTES : ELEVEN_V11_FRIENDLY_MINUTES
 }
 
 function syncElevenTimingPresets(): void {
@@ -87,7 +89,7 @@ function applyMatchTypeDefaults(matchType: MatchType): void {
   const periods = document.getElementById('num-periods') as HTMLInputElement | null
   const duration = document.getElementById('period-duration') as HTMLInputElement | null
   if (matchType === '11v11') {
-    if (periods) periods.value = '2'
+    if (periods) periods.value = String(ELEVEN_V11_PERIODS)
     if (duration) duration.value = String(elevenDuration())
   } else {
     if (periods) periods.value = String(defaults.numPeriods)
@@ -99,7 +101,7 @@ function applyMatchTypeDefaults(matchType: MatchType): void {
 function applyElevenTiming(minutes: number): void {
   const periods = document.getElementById('num-periods') as HTMLInputElement | null
   const duration = document.getElementById('period-duration') as HTMLInputElement | null
-  if (periods) periods.value = '2'
+  if (periods) periods.value = String(ELEVEN_V11_PERIODS)
   if (duration) duration.value = String(minutes)
   syncElevenTimingPresets()
 }
@@ -113,7 +115,12 @@ export function bindGameSetup(): void {
   document.getElementById('match-regulation-group')?.addEventListener('change', () => {
     const value = (document.getElementById('match-type') as HTMLSelectElement).value
     const duration = document.getElementById('period-duration') as HTMLInputElement | null
-    if (value === '11v11' && duration && (duration.value === '40' || duration.value === '45')) {
+    if (
+      value === '11v11' &&
+      duration &&
+      (duration.value === String(ELEVEN_V11_FRIENDLY_MINUTES) ||
+        duration.value === String(ELEVEN_V11_OFFICIAL_MINUTES))
+    ) {
       duration.value = String(elevenDuration())
     }
     syncRegulationUi(isMatchType(value) ? value : '')
@@ -121,7 +128,9 @@ export function bindGameSetup(): void {
   document.getElementById('eleven-timing-presets')?.addEventListener('click', (event) => {
     const btn = (event.target as HTMLElement).closest<HTMLElement>('[data-eleven-timing]')
     const minutes = Number(btn?.dataset.elevenTiming)
-    if (minutes === 40 || minutes === 45) applyElevenTiming(minutes)
+    if (minutes === ELEVEN_V11_FRIENDLY_MINUTES || minutes === ELEVEN_V11_OFFICIAL_MINUTES) {
+      applyElevenTiming(minutes)
+    }
   })
   document.getElementById('num-periods')?.addEventListener('input', syncElevenTimingPresets)
   document.getElementById('period-duration')?.addEventListener('input', syncElevenTimingPresets)
@@ -163,7 +172,7 @@ export function bindGameSetup(): void {
       numPeriods,
       periodDuration,
       useSubstitutionTimer: !timerNotNeeded,
-      substitutionMinutes: substitutionMinutes || 6,
+      substitutionMinutes: substitutionMinutes || DEFAULT_SUB_MINUTES,
       official11: matchType === '11v11' && official11Selected(),
     }
     showScreen('formation-setup')

@@ -6,14 +6,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <title>Football Live Action Tracker</title>
+    <title>ActionPitch</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   </head>
   <body>
     <div id="app">
       <main id="main-screen" class="screen active">
         <div class="app-header">
-          <h1 data-i18n="appTitle">Football Live Action Tracker</h1>
+          <h1 data-i18n="appTitle">ActionPitch</h1>
         </div>
         <div class="team-name-banner">
           <div class="team-selector">
@@ -391,7 +391,7 @@
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
-          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version">2.4.48</span></p>
+          <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version"></span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
@@ -507,19 +507,19 @@
             <textarea id="app-prompt-area" rows="3" maxlength="200" hidden></textarea>
           </div>
           <div class="dialog-buttons">
-            <button class="secondary-btn" id="app-prompt-cancel">Cancel</button>
-            <button class="primary-btn" id="app-prompt-ok">Save</button>
+            <button class="secondary-btn" id="app-prompt-cancel" data-i18n="cancel">Cancel</button>
+            <button class="primary-btn" id="app-prompt-ok" data-i18n="save">Save</button>
           </div>
         </div>
       </div>
 
       <div id="app-confirm-dialog" class="dialog">
         <div class="dialog-content">
-          <h2 id="app-confirm-title">Confirm</h2>
+          <h2 id="app-confirm-title" data-i18n="confirm">Confirm</h2>
           <p id="app-confirm-message"></p>
           <div class="dialog-buttons">
-            <button class="secondary-btn" id="app-confirm-cancel">Cancel</button>
-            <button class="primary-btn delete-btn" id="app-confirm-ok">Delete</button>
+            <button class="secondary-btn" id="app-confirm-cancel" data-i18n="cancel">Cancel</button>
+            <button class="primary-btn delete-btn" id="app-confirm-ok" data-i18n="confirmDelete">Delete</button>
           </div>
         </div>
       </div>
@@ -577,7 +577,7 @@
         <div class="dialog-content report-dialog" id="report-dialog-content"></div>
       </div>
 
-      <div id="version-footer" class="version-footer">v2.4.48</div>
+      <div id="version-footer" class="version-footer"></div>
     </div>
 
     <div id="message-ribbon" class="message-ribbon hidden">

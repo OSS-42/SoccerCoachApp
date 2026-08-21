@@ -1,3 +1,4 @@
+import { MESSAGE_ERROR_MS, MESSAGE_OK_MS } from '@/domain/config'
 import { el } from './dom'
 
 let hideTimer: number | null = null
@@ -10,7 +11,7 @@ export function showMessage(message: string, type: 'error' | 'success' | 'warnin
   ribbon.classList.remove('hidden')
   ribbon.style.display = 'flex'
   if (hideTimer) window.clearTimeout(hideTimer)
-  hideTimer = window.setTimeout(() => hideMessage(), type === 'error' ? 7000 : 5000)
+  hideTimer = window.setTimeout(() => hideMessage(), type === 'error' ? MESSAGE_ERROR_MS : MESSAGE_OK_MS)
 }
 
 export function hideMessage(): void {

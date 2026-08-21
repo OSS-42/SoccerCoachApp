@@ -1,8 +1,8 @@
-# Football Live Action Tracker
+# ActionPitch
 
 Sideline tracker for youth/amateur coaches: roster, formation, live actions, reports.
 
-**Version:** 2.4.48
+**Version:** 2.4.49
 
 ## Run
 
@@ -13,7 +13,7 @@ npm test
 npm run build    # writes dist/ (CI deploys this)
 ```
 
-Data stays in the browser (`soccerCoachApp.v2`). Older saves (`soccerCoachApp2`) migrate on first load.
+Data stays in the browser (`soccerCoachApp.v2`). Older saves (`soccerCoachApp2`) migrate on first load. Those storage keys are unchanged so existing browsers keep their teams and games after the ActionPitch rename.
 
 Push to `main` deploys the Vite build to the existing DOragoug host.
 
