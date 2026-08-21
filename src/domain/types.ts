@@ -1,9 +1,10 @@
-export const APP_VERSION = '2.4.47'
+export const APP_VERSION = '2.4.48'
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
 export const LEGACY_SAVE_KEY_V1 = 'soccerCoachApp'
 export const SAVE_KEY = 'soccerCoachApp.v2'
+export const SAVE_BACKUP_KEY = 'soccerCoachApp.v2.bak'
 
 export type MatchType = '5v5' | '7v7' | '9v9' | '11v11'
 

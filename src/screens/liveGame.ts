@@ -3,7 +3,7 @@ import { askConfirm, askPrompt } from '@/ui/confirm'
 import { playerIsUnavailable, statsFromActions } from '@/domain/actions'
 import { fieldSpotDepth, spotLabel } from '@/domain/formation'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
-import { currentPeriod, formatClock, isLastPeriod } from '@/domain/clock'
+import { currentPeriod, formatClock, isLastPeriod, parseClockInput } from '@/domain/clock'
 import {
   extraTimeActive,
   playerHasRed,
@@ -25,6 +25,7 @@ import {
   playClock,
   recordLiveAction,
   resetSubTimer,
+  setLiveElapsed,
   startExtraTime,
   substituteLivePlayers,
   undoLiveAction,
@@ -397,6 +398,25 @@ function commit(type: ActionType, playerId: string | null, note?: string): void 
 }
 
 export function bindLiveGame(): void {
+  document.getElementById('game-time')?.addEventListener('click', async () => {
+    if (!getCurrentGame()) return
+    const raw = await askPrompt({
+      title: t('editTimeTitle'),
+      message: t('editTimeAsk'),
+      value: formatClock(liveElapsedSeconds()),
+      confirmLabel: t('save'),
+      cancelLabel: t('cancel'),
+    })
+    if (raw == null) return
+    const seconds = parseClockInput(raw)
+    if (seconds == null) {
+      showMessage(t('invalidTime'), 'error')
+      return
+    }
+    const result = setLiveElapsed(seconds)
+    showMessage(result.message, result.ok ? 'success' : 'error')
+    renderLiveGame()
+  })
   document.getElementById('play-clock')?.addEventListener('click', () => playClock())
   document.getElementById('pause-clock')?.addEventListener('click', () => pauseClock())
   document.getElementById('reset-sub')?.addEventListener('click', () => resetSubTimer())

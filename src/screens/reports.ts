@@ -1,7 +1,7 @@
 import { t } from '@/i18n'
 import { statsFromActions } from '@/domain/actions'
 import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from '@/domain/playingTime'
-import { formatClock } from '@/domain/clock'
+import { formatClock, parseClockInput } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
 import { buildGameReportPdf, reportPdfFileName } from '@/domain/reportPdf'
 import {
@@ -10,8 +10,8 @@ import {
   scheduledMinutes,
 } from '@/domain/timeline'
 import type { Game, Player } from '@/domain/types'
-import { askConfirm } from '@/ui/confirm'
-import { deleteCompletedGames, getCurrentTeam, selectTeam } from '@/state/store'
+import { askConfirm, askPrompt } from '@/ui/confirm'
+import { deleteCompletedGames, getCurrentTeam, selectTeam, setCompletedGameElapsed } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { fillTeamSelectors } from './shared'
@@ -326,7 +326,7 @@ export function viewReport(gameId: string): void {
         <div class="team-score">${game.awayScore}</div>
       </div>
     </div>
-    <div class="report-header-info">
+    <div class="report-header-info" id="report-header-info">
       <div>${escapeHtml(game.date)} · ${game.matchType} · ${formatClock(game.elapsedSeconds)}</div>
     </div>
     ${renderScorers(game, team.players)}
@@ -350,12 +350,30 @@ export function viewReport(gameId: string): void {
   document.getElementById('close-open-report')?.addEventListener('click', closeReport)
   document.getElementById('close-open-report-top')?.addEventListener('click', closeReport)
   document.getElementById('print-open-report')?.addEventListener('click', () => {
-    exportReportPdf(gameId)
+    void exportReportPdf(gameId)
+  })
+  document.getElementById('report-header-info')?.addEventListener('click', async () => {
+    const raw = await askPrompt({
+      title: t('editTimeTitle'),
+      message: t('editTimeAsk'),
+      value: formatClock(game.elapsedSeconds),
+      confirmLabel: t('save'),
+      cancelLabel: t('cancel'),
+    })
+    if (raw == null) return
+    const seconds = parseClockInput(raw)
+    if (seconds == null) {
+      showMessage(t('invalidTime'), 'error')
+      return
+    }
+    const result = setCompletedGameElapsed(gameId, seconds)
+    showMessage(result.message, result.ok ? 'success' : 'error')
+    if (result.ok) viewReport(gameId)
   })
   toggleDialog('report-dialog', true)
 }
 
-function exportReportPdf(gameId: string): void {
+async function exportReportPdf(gameId: string): Promise<void> {
   const team = getCurrentTeam()
   const game = team?.games.find((g) => g.id === gameId)
   if (!team || !game) {
@@ -363,7 +381,19 @@ function exportReportPdf(gameId: string): void {
     return
   }
   try {
-    buildGameReportPdf(game, team).save(reportPdfFileName(game))
+    const pdf = buildGameReportPdf(game, team)
+    const name = reportPdfFileName(game)
+    const blob = pdf.output('blob')
+    const file = new File([blob], name, { type: 'application/pdf' })
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: name })
+        return
+      } catch (err) {
+        if ((err as DOMException).name === 'AbortError') return
+      }
+    }
+    pdf.save(name)
   } catch {
     showMessage(t('pdfExportFailed'), 'error')
   }
@@ -376,7 +406,7 @@ export function bindReports(): void {
     const view = target.closest<HTMLElement>('[data-view]')?.dataset.view
     const print = target.closest<HTMLElement>('[data-print]')?.dataset.print
     if (view) viewReport(view)
-    if (print) exportReportPdf(print)
+    if (print) void exportReportPdf(print)
   })
   document.getElementById('reports-list')?.addEventListener('change', (event) => {
     if (!(event.target as HTMLElement).classList.contains('report-checkbox')) return

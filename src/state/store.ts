@@ -1,5 +1,11 @@
 import { applyAction, createAction, revertAction } from '@/domain/actions'
-import { commitWallClock, finishPeriodElapsed, wallElapsed, wallSubRemaining } from '@/domain/clock'
+import {
+  commitWallClock,
+  currentPeriod,
+  finishPeriodElapsed,
+  wallElapsed,
+  wallSubRemaining,
+} from '@/domain/clock'
 import { createGame, completeGame, capturePeriodScore } from '@/domain/game'
 import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
@@ -410,24 +416,41 @@ export function endCurrentGame(): { ok: boolean; message: string; ended: boolean
   return { ok: true, message: t('gameEnded'), ended: true, gameId: finished.id }
 }
 
-export function exportCurrentTeamJson(): string {
-  const team = getCurrentTeam()
+export function exportBackupJson(): string {
+  persistClock()
   return JSON.stringify(
     {
-      exportDate: new Date().toISOString(),
+      ...state,
       appVersion: APP_VERSION,
-      teamName: team?.name ?? 'TEAM',
-      players: team?.players ?? [],
-      games: team?.games ?? [],
-      settings: team?.settings ?? {},
-      defaultFormations: team?.defaultFormations ?? {},
+      saveVersion: SAVE_VERSION,
+      updatedAt: new Date().toISOString(),
     },
     null,
     2,
   )
 }
 
-export function importIntoCurrentTeam(imported: AppSave): { ok: boolean; message: string } {
+/** @deprecated team-only export kept for older callers; prefer exportBackupJson */
+export function exportCurrentTeamJson(): string {
+  return exportBackupJson()
+}
+
+export function importBackup(
+  imported: AppSave,
+  kind: 'full' | 'team',
+): { ok: boolean; message: string } {
+  if (kind === 'full') {
+    state = {
+      ...imported,
+      appVersion: APP_VERSION,
+      saveVersion: SAVE_VERSION,
+      updatedAt: new Date().toISOString(),
+    }
+    setLocale(state.language)
+    applyTheme(state.theme ?? 'dark')
+    persist()
+    return { ok: true, message: t('importOk') }
+  }
   const source = imported.teams[0]
   if (!source) return { ok: false, message: t('invalidImport') }
   updateCurrentTeam((t) => ({
@@ -440,6 +463,55 @@ export function importIntoCurrentTeam(imported: AppSave): { ok: boolean; message
   }))
   persist()
   return { ok: true, message: t('importOk') }
+}
+
+export function importIntoCurrentTeam(imported: AppSave): { ok: boolean; message: string } {
+  return importBackup(imported, 'team')
+}
+
+function trimPeriodScores(game: Game, elapsedSeconds: number): Game {
+  const period = currentPeriod(elapsedSeconds, game.periodDuration, game.numPeriods)
+  return {
+    ...game,
+    elapsedSeconds,
+    periodScores: game.periodScores.slice(0, Math.max(0, period - 1)),
+  }
+}
+
+export function setLiveElapsed(seconds: number): { ok: boolean; message: string } {
+  const game = state.currentGame
+  if (!game) return { ok: false, message: t('noGame') }
+  const safe = Math.max(0, Math.floor(seconds))
+  const clock = commitWallClock(state.clock)
+  const next = trimPeriodScores(game, safe)
+  state = {
+    ...state,
+    currentGame: next,
+    clock: {
+      ...clock,
+      elapsedSeconds: safe,
+      runningStartedAt: clock.running ? Date.now() : null,
+    },
+  }
+  persist()
+  return { ok: true, message: t('timeUpdated') }
+}
+
+export function setCompletedGameElapsed(
+  gameId: string,
+  seconds: number,
+): { ok: boolean; message: string } {
+  const team = getCurrentTeam()
+  const game = team?.games.find((g) => g.id === gameId)
+  if (!game) return { ok: false, message: t('reportMissing') }
+  const safe = Math.max(0, Math.floor(seconds))
+  const next = trimPeriodScores(game, safe)
+  updateCurrentTeam((current) => ({
+    ...current,
+    games: current.games.map((g) => (g.id === gameId ? next : g)),
+  }))
+  persist()
+  return { ok: true, message: t('timeUpdated') }
 }
 
 export function resetAllData(): void {

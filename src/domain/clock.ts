@@ -1,5 +1,17 @@
 import type { ClockState } from './types'
 
+export function parseClockInput(raw: string): number | null {
+  const text = raw.trim().replace(',', ':').replace(/m/i, ':')
+  if (!text) return null
+  if (/^\d+$/.test(text)) return Number(text) * 60
+  const match = text.match(/^(\d+)\s*:\s*(\d{1,2})$/)
+  if (!match) return null
+  const minutes = Number(match[1])
+  const seconds = Number(match[2])
+  if (seconds > 59) return null
+  return minutes * 60 + seconds
+}
+
 export function formatClock(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds))
   const minutes = Math.floor(safe / 60)

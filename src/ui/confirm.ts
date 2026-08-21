@@ -44,6 +44,7 @@ export function askPrompt(options: {
   title: string
   message?: string
   placeholder?: string
+  value?: string
   confirmLabel: string
   cancelLabel: string
   multiline?: boolean
@@ -68,7 +69,7 @@ export function askPrompt(options: {
   const hidden = options.multiline ? input : area
   hidden.hidden = true
   field.hidden = false
-  field.value = ''
+  field.value = options.value ?? ''
   field.placeholder = options.placeholder ?? ''
   okBtn.textContent = options.confirmLabel
   cancelBtn.textContent = options.cancelLabel

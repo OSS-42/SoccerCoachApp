@@ -168,6 +168,12 @@ export const en = {
   deleteTeamAsk: 'Delete team "{name}"? All players and games will be erased.',
   newTeamPrompt: 'Enter new team name:',
   importReplace: 'This will replace your current team data. Continue?',
+  restoreAsk: 'Replace all teams, games, and the live match with this backup?',
+  backupSaved: 'Backup saved',
+  timeUpdated: 'Time updated',
+  editTimeTitle: 'Match time',
+  editTimeAsk: 'Enter time as minutes or m:ss',
+  invalidTime: 'Invalid time',
   clearAllAsk:
     'Clear all teams, players, and games? DEMO TEAM will be kept. This cannot be undone.',
   gameNotePrompt: 'Enter game note:',

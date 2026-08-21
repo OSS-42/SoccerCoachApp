@@ -6,6 +6,7 @@ import {
   formatClock,
   gameMinute,
   isLastPeriod,
+  parseClockInput,
   wallElapsed,
   wallSubRemaining,
 } from './clock'
@@ -16,6 +17,13 @@ describe('clock', () => {
     expect(formatClock(0)).toBe('0:00')
     expect(formatClock(75)).toBe('1:15')
     expect(formatClock(720)).toBe('12:00')
+  })
+
+  it('parses minutes or m:ss', () => {
+    expect(parseClockInput('12')).toBe(12 * 60)
+    expect(parseClockInput('12:05')).toBe(12 * 60 + 5)
+    expect(parseClockInput('1:70')).toBeNull()
+    expect(parseClockInput('nope')).toBeNull()
   })
 
   it('maps elapsed time onto 12-minute periods', () => {

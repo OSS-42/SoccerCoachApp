@@ -170,6 +170,12 @@ export const fr: Record<keyof typeof en, string> = {
   deleteTeamAsk: 'Supprimer l’équipe « {name} » ? Joueurs et matchs seront effacés.',
   newTeamPrompt: 'Nom de la nouvelle équipe :',
   importReplace: 'Cela remplacera les données de l’équipe actuelle. Continuer ?',
+  restoreAsk: 'Remplacer toutes les équipes, les matchs et le match en cours par cette sauvegarde ?',
+  backupSaved: 'Sauvegarde enregistrée',
+  timeUpdated: 'Temps mis à jour',
+  editTimeTitle: 'Temps de jeu',
+  editTimeAsk: 'Saisir le temps en minutes ou m:ss',
+  invalidTime: 'Temps invalide',
   clearAllAsk:
     'Effacer toutes les équipes, joueurs et matchs ? L’ÉQUIPE DÉMO sera conservée. Irréversible.',
   gameNotePrompt: 'Saisir une note de match :',

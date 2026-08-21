@@ -20,12 +20,20 @@ async function hardRefresh(): Promise<void> {
 import { applyDomTranslations, getLocale, isLocale } from '@/i18n'
 import { t } from '@/i18n'
 import { isTheme } from '@/lib/theme'
-import { getCurrentTeam, getSave, importIntoCurrentTeam, resetAllData, setDefaultSubstitution, setLanguage, setTheme } from '@/state/store'
+import {
+  exportBackupJson,
+  getCurrentTeam,
+  getSave,
+  importBackup,
+  resetAllData,
+  setDefaultSubstitution,
+  setLanguage,
+  setTheme,
+} from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
 import { parseImportJson } from '@/lib/storage'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
-import { exportCurrentTeamJson } from '@/state/store'
 import { fillTeamSelectors } from './shared'
 
 export function renderSettings(): void {
@@ -73,14 +81,15 @@ export function bindSettings(): void {
     showMessage(t('settingsSaved'), 'success')
   })
   document.getElementById('export-json')?.addEventListener('click', () => {
-    const team = getCurrentTeam()
-    const blob = new Blob([exportCurrentTeamJson()], { type: 'application/json' })
+    const blob = new Blob([exportBackupJson()], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${(team?.name ?? 'team').replace(/\s+/g, '_')}_data.json`
+    const day = new Date().toISOString().slice(0, 10)
+    link.download = `soccercoach-backup-${day}.json`
     link.click()
     URL.revokeObjectURL(url)
+    showMessage(t('backupSaved'), 'success')
   })
   document.getElementById('import-json')?.addEventListener('click', () => {
     document.getElementById('import-file')?.click()
@@ -96,7 +105,7 @@ export function bindSettings(): void {
     }
     const ok = await askConfirm({
       title: t('importTitle'),
-      message: t('importReplace'),
+      message: parsed.kind === 'full' ? t('restoreAsk') : t('importReplace'),
       confirmLabel: t('confirm'),
       cancelLabel: t('cancel'),
     })
@@ -104,7 +113,7 @@ export function bindSettings(): void {
       ;(event.target as HTMLInputElement).value = ''
       return
     }
-    const result = importIntoCurrentTeam(parsed)
+    const result = importBackup(parsed.save, parsed.kind)
     showMessage(result.message, result.ok ? 'success' : 'error')
     ;(event.target as HTMLInputElement).value = ''
   })
