@@ -42,3 +42,6 @@ export const BACKUP_FILE_PREFIX = 'actionpitch-backup'
 
 export const INTRO_MS = 6000
 export const INTRO_BUTTON_DELAY_MS = 700
+/** Pause after the OTA result so the user can read it, then continue. */
+export const OTA_AFTER_CONFIRM_MS = 2500
+export const OTA_BOOT_TIMEOUT_MS = 90_000

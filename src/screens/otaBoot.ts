@@ -1,11 +1,8 @@
 import { Capacitor } from '@capacitor/core'
-import { APP_NAME } from '@/domain/config'
+import { APP_NAME, OTA_AFTER_CONFIRM_MS, OTA_BOOT_TIMEOUT_MS } from '@/domain/config'
 import { runOtaIfNeeded, type OtaProgress } from '@/ota/runOta'
 import { showScreen } from '@/ui/nav'
 import { startIntro } from './intro'
-
-const OTA_MIN_SCREEN_MS = 10_000
-const OTA_BOOT_TIMEOUT_MS = 90_000
 
 function paint(progress: OtaProgress): void {
   const message = document.getElementById('ota-message')
@@ -39,7 +36,6 @@ export async function bootWithOta(): Promise<void> {
   showScreen('ota-screen', { history: 'replace' })
   paint({ phase: 'check', percent: 0, message: 'Starting…' })
 
-  const startedAt = Date.now()
   try {
     await Promise.race([
       runOtaIfNeeded(paint),
@@ -63,8 +59,7 @@ export async function bootWithOta(): Promise<void> {
     })
   }
 
-  const remaining = Math.max(0, OTA_MIN_SCREEN_MS - (Date.now() - startedAt))
-  if (remaining > 0) await sleep(remaining)
+  await sleep(OTA_AFTER_CONFIRM_MS)
 
   showScreen('intro-screen', { history: 'replace' })
   startIntro()

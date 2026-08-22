@@ -6,6 +6,7 @@ import {
   ELEVEN_V11_FRIENDLY_MINUTES,
   ELEVEN_V11_OFFICIAL_MINUTES,
   INTRO_MS,
+  OTA_AFTER_CONFIRM_MS,
   JERSEY_MAX,
   JERSEY_MIN,
   LEGACY_SAVE_KEY,
@@ -33,5 +34,6 @@ describe('config', () => {
     expect(ELEVEN_V11_FRIENDLY_MINUTES).toBe(40)
     expect(ELEVEN_V11_OFFICIAL_MINUTES).toBe(45)
     expect(INTRO_MS).toBe(6000)
+    expect(OTA_AFTER_CONFIRM_MS).toBe(2500)
   })
 })

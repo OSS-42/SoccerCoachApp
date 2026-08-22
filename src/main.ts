@@ -1,7 +1,12 @@
 import './styles/app.css'
 import './styles/mobile.css'
 import './styles/theme.css'
+import { Capacitor } from '@capacitor/core'
 import { APP_VERSION, CLOCK_PERSIST_EVERY_TICKS, CLOCK_TICK_MS, EDGE_SWIPE_PX } from '@/domain/config'
+
+if (Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add('is-native')
+}
 import { applyDomTranslations } from '@/i18n'
 import { getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
 import { hideMessage } from '@/ui/message'

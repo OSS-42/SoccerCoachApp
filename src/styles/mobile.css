@@ -69,11 +69,11 @@ body {
 }
 
 .app-header {
-  padding-top: max(12px, env(safe-area-inset-top));
+  padding-top: calc(12px + var(--safe-top));
 }
 
 #game-tracking .game-header {
-  padding-top: max(10px, env(safe-area-inset-top));
+  padding-top: calc(10px + var(--safe-top));
 }
 
 .version-footer {
@@ -95,7 +95,7 @@ body {
 
 @media screen and (max-width: 768px) {
   .app-header {
-    padding: max(10px, env(safe-area-inset-top)) 10px 10px;
+    padding: calc(10px + var(--safe-top)) 10px 10px;
     flex-shrink: 0;
   }
 
