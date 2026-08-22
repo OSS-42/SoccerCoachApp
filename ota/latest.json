@@ -1,6 +1,6 @@
 {
-  "version": "2.4.50",
+  "version": "2.4.51",
   "minAppVersion": "2.4.50",
-  "notes": "OTA channel bootstrap v2.4.50",
+  "notes": "First ActionPitch OTA channel on cdn-studiophoenix.net/sca.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
