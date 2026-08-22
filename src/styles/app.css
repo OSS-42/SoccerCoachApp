@@ -72,8 +72,69 @@
   transform: none;
   pointer-events: auto;
 }
-body:has(#intro-screen.active) .version-footer {
+body:has(#intro-screen.active) .version-footer,
+body:has(#ota-screen.active) .version-footer {
   display: none;
+}
+
+#ota-screen {
+  background: #07110c !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  align-items: center;
+  justify-content: center;
+}
+#ota-screen.screen.active {
+  z-index: 45;
+}
+.ota-card {
+  width: min(420px, calc(100% - 48px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 8px;
+}
+.ota-brand {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #3ddc97;
+  font-weight: 700;
+}
+.ota-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: center;
+  color: #f3f7f4;
+}
+.ota-msg {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  color: #8fa398;
+  min-height: 1.3em;
+}
+.ota-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.ota-bar {
+  height: 100%;
+  width: 0%;
+  background: #3ddc97;
+  transition: width 0.2s ease;
+}
+.ota-percent {
+  margin: 0;
+  font-size: 12px;
+  color: #8fa398;
 }
 
 /* General Styles */

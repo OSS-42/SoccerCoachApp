@@ -11,6 +11,16 @@
   </head>
   <body>
     <div id="app">
+      <section id="ota-screen" class="screen">
+        <div class="ota-card">
+          <p id="ota-brand" class="ota-brand">ActionPitch</p>
+          <h1 class="ota-title">Checking for updates</h1>
+          <p id="ota-message" class="ota-msg">Starting…</p>
+          <div class="ota-track"><div id="ota-bar" class="ota-bar"></div></div>
+          <p id="ota-percent" class="ota-percent">0%</p>
+        </div>
+      </section>
+
       <section id="intro-screen" class="screen active">
         <video id="intro-video" muted playsinline webkit-playsinline preload="auto"></video>
         <div id="intro-overlay" class="intro-overlay">

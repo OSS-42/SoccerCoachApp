@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-ssr
 release
 .env.ota.local
 .DS_Store
@@ -7,5 +8,15 @@ release
 .vite
 coverage
 *.tsbuildinfo
-android/app/build
+*.local
+
 android/.gradle
+android/app/build
+android/build
+android/local.properties
+android/captures
+android/.idea
+*.apk
+*.aab
+*.ap_
+*.dex

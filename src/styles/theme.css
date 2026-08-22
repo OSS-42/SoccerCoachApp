@@ -81,7 +81,8 @@ html[data-theme] .screen.active::before {
   background: radial-gradient(120% 70% at 50% -10%, var(--neu-glow), transparent 58%);
 }
 
-html[data-theme] #intro-screen.screen.active::before {
+html[data-theme] #intro-screen.screen.active::before,
+html[data-theme] #ota-screen.screen.active::before {
   content: none;
   display: none;
 }

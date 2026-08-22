@@ -1,4 +1,5 @@
 export type ScreenId =
+  | 'ota-screen'
   | 'intro-screen'
   | 'main-screen'
   | 'team-setup'

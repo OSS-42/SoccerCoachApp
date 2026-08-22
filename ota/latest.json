@@ -1,0 +1,6 @@
+{
+  "version": "2.4.50",
+  "minAppVersion": "2.4.50",
+  "notes": "OTA channel bootstrap v2.4.50",
+  "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
+}

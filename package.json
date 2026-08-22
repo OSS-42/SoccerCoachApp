@@ -8,9 +8,18 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "ota:bundle": "node scripts/ota-bundle.mjs",
+    "ota:release": "npm run build && npm run ota:bundle",
+    "ota:publish": "node scripts/ota-publish.mjs",
+    "cap:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:apk": "npm run cap:sync && node scripts/android-gradle.mjs assembleDebug",
+    "android:apk:release": "npm run cap:sync && node scripts/android-gradle.mjs assembleRelease"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
     "@types/node": "^24.13.2",
     "jsdom": "^26.1.0",
     "typescript": "~5.9.3",
@@ -18,6 +27,10 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/network": "^8.0.1",
+    "@capgo/capacitor-updater": "^8.51.14",
     "jspdf": "^4.2.1"
   }
 }

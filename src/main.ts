@@ -14,6 +14,7 @@ import { bindReports, renderReports } from '@/screens/reports'
 import { bindSettings, renderSettings } from '@/screens/settings'
 import { bindTeamSetup, renderTeamSetup } from '@/screens/teamSetup'
 import { bindIntro } from '@/screens/intro'
+import { bootWithOta } from '@/screens/otaBoot'
 import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
 
 function blockEdgeSwipeBack(event: TouchEvent): void {
@@ -29,6 +30,7 @@ function blockEdgeSwipeBack(event: TouchEvent): void {
 function renderActive(): void {
   fillTeamSelectors()
   switch (activeScreenId()) {
+    case 'ota-screen':
     case 'intro-screen':
       break
     case 'main-screen':
@@ -94,7 +96,7 @@ onShow('game-tracking', renderLiveGame)
 onShow('reports', renderReports)
 onShow('settings', renderSettings)
 
-history.replaceState({ screen: 'intro-screen' }, '')
+history.replaceState({ screen: 'ota-screen' }, '')
 bindHistoryNavigation((from) => {
   if (from === 'game-tracking' && hasInProgressGame()) return true
   return false
@@ -116,4 +118,4 @@ startClockLoop()
 const footer = document.getElementById('version-footer')
 if (footer) footer.textContent = `v${APP_VERSION}`
 
-showScreen('intro-screen', { history: 'replace' })
+void bootWithOta()
