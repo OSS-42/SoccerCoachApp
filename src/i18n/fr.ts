@@ -58,10 +58,10 @@ export const fr: Record<keyof typeof en, string> = {
   tips: 'Astuces',
   tipsTitle: 'Mode d’emploi',
   tipLiveChange:
-    'Touchez un joueur, puis un joueur de l’autre côté, pour faire un changement. Les deux sens marchent.',
+    'Double-touchez un joueur, puis double-touchez un joueur de l’autre côté, pour faire un changement. Les deux sens marchent.',
   tipLiveActions:
-    'Double-touchez une tuile pour une action. Sur le terrain : liste complète. Sur le banc : jaunes et rouges seulement.',
-  tipLiveCancel: 'Retouchez le même joueur pour annuler la sélection.',
+    'Touchez une tuile pour une action. Sur le terrain : liste complète. Sur le banc : jaunes et rouges seulement.',
+  tipLiveCancel: 'Double-touchez le même joueur pour annuler la sélection.',
   tipOfficial:
     'En 11v11 officiel, un joueur sorti ne revient pas. 5 changements, plus 1 en prolongations.',
   tipFormation: 'À la composition, touchez un joueur puis une place pour le poser.',
@@ -70,7 +70,7 @@ export const fr: Record<keyof typeof en, string> = {
   subCapReached: 'Plus de changement disponible ({cap} utilisés).',
   subSentOff: 'Un joueur expulsé ne peut pas être remplacé.',
   subUnavailableOn: 'Ce joueur ne peut pas entrer.',
-  subNeedFieldThenBench: 'Touchez d’abord un joueur sur le terrain, puis un remplaçant.',
+  subNeedFieldThenBench: 'Double-touchez un joueur sur le terrain, puis un remplaçant.',
   extraTime: 'Prolongations',
   extraTimeAsk: 'Lancer les prolongations ? Vous avez droit à un changement de plus.',
   extraTimeStarted: 'Prolongations. Un changement supplémentaire est disponible.',

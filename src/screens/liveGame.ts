@@ -47,6 +47,7 @@ let pendingSubId: string | null = null
 let pendingRole: 'field' | 'bench' | null = null
 let lastTapId: string | null = null
 let lastTapAt = 0
+let actionTapTimer: number | null = null
 let goalScorerId: string | null = null
 let assisterId: string | null = null
 let periodAction: 'finish' | 'end' = 'finish'
@@ -236,17 +237,23 @@ function liveTile(
 
 function onTileClick(player: Player, role: 'field' | 'bench'): void {
   const now = Date.now()
+  if (actionTapTimer != null) {
+    window.clearTimeout(actionTapTimer)
+    actionTapTimer = null
+  }
   if (lastTapId === player.id && now - lastTapAt <= DOUBLE_TAP_MS) {
     lastTapId = null
     lastTapAt = 0
-    clearPendingSub()
-    paintLiveRosters()
-    openActions(player, role)
+    handleLiveTile(player, role)
     return
   }
   lastTapId = player.id
   lastTapAt = now
-  handleLiveTile(player, role)
+  actionTapTimer = window.setTimeout(() => {
+    actionTapTimer = null
+    lastTapId = null
+    openActions(player, role)
+  }, DOUBLE_TAP_MS)
 }
 
 function clearPendingSub(): void {
