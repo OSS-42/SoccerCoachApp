@@ -1,6 +1,6 @@
 {
-  "version": "2.4.53",
+  "version": "2.4.54",
   "minAppVersion": "2.4.50",
-  "notes": "Live substitution timer from settings/setup; remove Lite/Pro blocks; native PDF share.",
+  "notes": "Live: tap for actions, double-tap for substitutions.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
