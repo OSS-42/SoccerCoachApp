@@ -1,4 +1,6 @@
 import { APP_VERSION, BACKUP_FILE_PREFIX } from '@/domain/config'
+import { recentChangelog } from '@/domain/changelog'
+import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { applyDomTranslations, getLocale, isLocale, t } from '@/i18n'
 import { isTheme } from '@/lib/theme'
 import { parseImportJson } from '@/lib/storage'
@@ -70,6 +72,27 @@ export function bindSettings(): void {
       setTheme(radio.value)
       renderSettings()
     })
+  })
+  document.getElementById('open-changelog')?.addEventListener('click', () => {
+    const list = document.getElementById('changelog-list')
+    if (list) {
+      const locale = getLocale()
+      list.innerHTML = recentChangelog(2)
+        .map((entry) => {
+          const items = (entry.items[locale] ?? entry.items.en)
+            .map((item) => `<li>${escapeHtml(item)}</li>`)
+            .join('')
+          return `<section class="changelog-entry">
+            <h3>v${escapeHtml(entry.version)}</h3>
+            <ul>${items}</ul>
+          </section>`
+        })
+        .join('')
+    }
+    toggleDialog('changelog-dialog', true)
+  })
+  document.getElementById('close-changelog')?.addEventListener('click', () => {
+    toggleDialog('changelog-dialog', false)
   })
   document.getElementById('reload-latest')?.addEventListener('click', () => {
     void hardRefresh()

@@ -65,7 +65,7 @@
               <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
             </button>
             <button class="menu-btn" id="open-tips">
-              <span class="material-icons">help_outline</span> <span data-i18n="tips">Tips</span>
+              <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
             </button>
           </div>
           <div class="menu-spacer" aria-hidden="true"></div>
@@ -415,6 +415,7 @@
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
           <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version"></span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
+          <button class="secondary-btn" id="open-changelog" data-i18n="changelog">Change log</button>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
       </div>
@@ -549,15 +550,33 @@
       <div id="tips-dialog" class="dialog">
         <div class="dialog-content">
           <h2 data-i18n="tipsTitle">How to use</h2>
-          <ul class="tips-list">
-            <li data-i18n="tipLiveChange">Tap one player, then a player on the other side, to make a substitution. Either order works.</li>
-            <li data-i18n="tipLiveActions">Double-tap a tile for actions. On the field you get the full list. On the bench, only yellow and red cards.</li>
-            <li data-i18n="tipLiveCancel">Tap the same player again to cancel a selection.</li>
-            <li data-i18n="tipOfficial">In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.</li>
-            <li data-i18n="tipFormation">On the formation screen, tap a player then tap a slot to place them.</li>
-          </ul>
+          <section class="tips-block">
+            <h3 class="tips-screen" data-i18n="tipScreenLive">On the Live game screen</h3>
+            <ul class="tips-list">
+              <li data-i18n="tipLiveChange">Double-tap one player, then double-tap a player on the other side, to make a substitution. Either order works.</li>
+              <li data-i18n="tipLiveActions">Tap a tile for actions. On the field you get the full list. On the bench, only yellow and red cards.</li>
+              <li data-i18n="tipLiveCancel">Double-tap the same player again to cancel a selection.</li>
+              <li data-i18n="tipOfficial">In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.</li>
+            </ul>
+          </section>
+          <section class="tips-block">
+            <h3 class="tips-screen" data-i18n="tipScreenFormation">On the Formation Setup screen</h3>
+            <ul class="tips-list">
+              <li data-i18n="tipFormation">Tap a player, then tap a pitch slot to place them.</li>
+            </ul>
+          </section>
           <div class="dialog-buttons">
             <button class="primary-btn" id="close-tips" data-i18n="close">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="changelog-dialog" class="dialog">
+        <div class="dialog-content">
+          <h2 data-i18n="changelogTitle">What's new</h2>
+          <div id="changelog-list" class="changelog-list"></div>
+          <div class="dialog-buttons">
+            <button class="primary-btn" id="close-changelog" data-i18n="close">Close</button>
           </div>
         </div>
       </div>

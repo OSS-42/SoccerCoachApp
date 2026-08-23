@@ -53,8 +53,12 @@ export const en = {
   regulationFriendlyHint: 'Players can come back on, like youth formats.',
   onField: 'On field',
   usedOff: 'Used',
-  tips: 'Tips',
+  tips: 'How to use',
   tipsTitle: 'How to use',
+  tipScreenLive: 'On the Live game screen',
+  tipScreenFormation: 'On the Formation Setup screen',
+  changelog: 'Change log',
+  changelogTitle: "What's new",
   tipLiveChange:
     'Double-tap one player, then double-tap a player on the other side, to make a substitution. Either order works.',
   tipLiveActions:
@@ -62,7 +66,7 @@ export const en = {
   tipLiveCancel: 'Double-tap the same player again to cancel a selection.',
   tipOfficial:
     'In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.',
-  tipFormation: 'On the formation screen, tap a player then tap a slot to place them.',
+  tipFormation: 'Tap a player, then tap a pitch slot to place them.',
   subDone: '#{off} off, #{on} on',
   subCannotReturn: 'That player cannot return in an official match.',
   subCapReached: 'No substitutions left ({cap} used).',

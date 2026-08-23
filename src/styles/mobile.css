@@ -14,6 +14,7 @@
   color: #94a3b8;
 }
 
+#open-changelog,
 #reload-latest {
   display: block;
   width: calc(100% - 32px);

@@ -466,10 +466,24 @@ html[data-theme] .settings-group h2 {
   margin-bottom: 8px;
 }
 
-html[data-theme] .tips-list {
+html[data-theme] .tips-list,
+html[data-theme] .changelog-entry ul {
   color: var(--neu-text);
   box-shadow: none;
   background: transparent;
+}
+
+html[data-theme] .tips-block {
+  border-color: var(--neu-line);
+  background: var(--neu-bg-2);
+}
+
+html[data-theme] .tips-screen {
+  color: var(--neu-accent);
+}
+
+html[data-theme] .changelog-entry h3 {
+  color: var(--neu-muted);
 }
 
 html[data-theme] #team-setup .player-name {

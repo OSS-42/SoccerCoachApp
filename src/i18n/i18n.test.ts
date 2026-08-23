@@ -11,5 +11,12 @@ describe('i18n', () => {
     expect(t('startNewGame')).toBe('Start New Game')
     expect(t('appTitle')).toBe('ActionPitch')
     expect(t('continue')).toBe('Continue')
+    expect(t('tipScreenLive')).toBe('On the Live game screen')
+    expect(t('tipScreenFormation')).toBe('On the Formation Setup screen')
+    expect(t('changelog')).toBe('Change log')
+    setLocale('fr')
+    expect(t('tipScreenLive')).toBe('Sur l’écran Match en direct')
+    expect(t('tipScreenFormation')).toBe('Sur l’écran Composition')
   })
 })
+

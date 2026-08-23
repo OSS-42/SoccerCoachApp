@@ -55,8 +55,12 @@ export const fr: Record<keyof typeof en, string> = {
   regulationFriendlyHint: 'Les joueurs peuvent revenir, comme en jeunes.',
   onField: 'Sur le terrain',
   usedOff: 'Sorti',
-  tips: 'Astuces',
+  tips: 'Mode d’emploi',
   tipsTitle: 'Mode d’emploi',
+  tipScreenLive: 'Sur l’écran Match en direct',
+  tipScreenFormation: 'Sur l’écran Composition',
+  changelog: 'Journal des versions',
+  changelogTitle: 'Nouveautés',
   tipLiveChange:
     'Double-touchez un joueur, puis double-touchez un joueur de l’autre côté, pour faire un changement. Les deux sens marchent.',
   tipLiveActions:
@@ -64,7 +68,7 @@ export const fr: Record<keyof typeof en, string> = {
   tipLiveCancel: 'Double-touchez le même joueur pour annuler la sélection.',
   tipOfficial:
     'En 11v11 officiel, un joueur sorti ne revient pas. 5 changements, plus 1 en prolongations.',
-  tipFormation: 'À la composition, touchez un joueur puis une place pour le poser.',
+  tipFormation: 'Touchez un joueur, puis une place sur le terrain pour le poser.',
   subDone: 'n°{off} sort, n°{on} entre',
   subCannotReturn: 'Ce joueur ne peut pas revenir en match officiel.',
   subCapReached: 'Plus de changement disponible ({cap} utilisés).',
