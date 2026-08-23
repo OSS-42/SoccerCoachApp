@@ -1,6 +1,6 @@
 {
-  "version": "2.4.52",
+  "version": "2.4.53",
   "minAppVersion": "2.4.50",
-  "notes": "Launcher icon, 2.5s OTA confirm wait, header clears pinhole/island.",
+  "notes": "Live substitution timer from settings/setup; remove Lite/Pro blocks; native PDF share.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
