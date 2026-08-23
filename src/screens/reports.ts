@@ -3,9 +3,10 @@ import { VIEW_REPORT_EVENT } from '@/domain/config'
 import { formatClock, parseClockInput } from '@/domain/clock'
 import { buildGameReportPdf, reportPdfFileName } from '@/domain/reportPdf'
 import { askConfirm, askPrompt } from '@/ui/confirm'
-import { deleteCompletedGames, getCurrentTeam, selectTeam, setCompletedGameElapsed } from '@/state/store'
+import { deleteCompletedGames, getCurrentTeam, setCompletedGameElapsed } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
+import { saveOrSharePdf } from '@/lib/shareFile'
 import { fillTeamSelectors } from './shared'
 import { buildReportDialogHtml } from './reportView'
 
@@ -117,17 +118,7 @@ async function exportReportPdf(gameId: string): Promise<void> {
   try {
     const pdf = buildGameReportPdf(game, team)
     const name = reportPdfFileName(game)
-    const blob = pdf.output('blob')
-    const file = new File([blob], name, { type: 'application/pdf' })
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: name })
-        return
-      } catch (err) {
-        if ((err as DOMException).name === 'AbortError') return
-      }
-    }
-    pdf.save(name)
+    await saveOrSharePdf(pdf.output('blob'), name)
   } catch {
     showMessage(t('pdfExportFailed'), 'error')
   }
@@ -164,9 +155,6 @@ export function bindReports(): void {
     if (!ok) return
     const result = deleteCompletedGames(ids)
     showMessage(result.message, result.ok ? 'success' : 'error')
-  })
-  document.getElementById('reports-team-selector')?.addEventListener('change', (event) => {
-    selectTeam((event.target as HTMLSelectElement).value)
   })
   window.addEventListener(VIEW_REPORT_EVENT, (event) => {
     viewReport((event as CustomEvent<string>).detail)

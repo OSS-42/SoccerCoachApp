@@ -4655,8 +4655,9 @@ button.no-assist-btn {
     white-space: nowrap;
 }
 
-#game-tracking .live-sub-count[hidden] {
-    display: none;
+#game-tracking .live-sub-count[hidden],
+#game-tracking .substitution-timer-small[hidden] {
+    display: none !important;
 }
 
 #game-tracking #live-sub-count-value {

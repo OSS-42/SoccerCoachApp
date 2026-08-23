@@ -174,6 +174,7 @@ export type Team = {
 
 export type AppLanguage = 'en' | 'fr'
 export type AppTheme = 'dark' | 'light'
+export type AppEntitlement = 'lite' | 'pro'
 
 export type AppSave = {
   saveVersion: typeof SAVE_VERSION
@@ -181,6 +182,7 @@ export type AppSave = {
   updatedAt: string
   language: AppLanguage
   theme: AppTheme
+  entitlement: AppEntitlement
   teams: Team[]
   currentTeamId: string
   currentGame: Game | null

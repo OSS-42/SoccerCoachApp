@@ -16,6 +16,9 @@ android/build
 android/local.properties
 android/captures
 android/.idea
+src/assets/Proxy/
+src/assets/right+left.mp4
+
 *.apk
 *.aab
 *.ap_

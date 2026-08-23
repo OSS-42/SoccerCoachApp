@@ -32,6 +32,14 @@ export function clearGameDraft(): void {
   draft = null
 }
 
+function syncSubTimerNeeded(): void {
+  const notNeeded = document.getElementById('timer-not-needed') as HTMLInputElement | null
+  const subInput = document.getElementById('substitution-time') as HTMLInputElement | null
+  if (!notNeeded || !subInput) return
+  const minutes = Number(subInput.value)
+  if (minutes > 0) notNeeded.checked = false
+}
+
 export function renderGameSetup(): void {
   fillTeamSelectors()
   const date = document.getElementById('game-date') as HTMLInputElement
@@ -39,7 +47,11 @@ export function renderGameSetup(): void {
   const team = getCurrentTeam()
   const subDefault = team?.settings.defaultSubstitutionSeconds
   const subInput = document.getElementById('substitution-time') as HTMLInputElement
-  if (subInput && subDefault) subInput.value = String(Math.round(subDefault / 60))
+  const notNeeded = document.getElementById('timer-not-needed') as HTMLInputElement | null
+  if (subInput && subDefault) {
+    subInput.value = String(Math.round(subDefault / 60))
+    if (notNeeded) notNeeded.checked = false
+  }
   const matchType = (document.getElementById('match-type') as HTMLSelectElement | null)?.value ?? ''
   syncRegulationUi(isMatchType(matchType) ? matchType : '')
 }
@@ -134,6 +146,7 @@ export function bindGameSetup(): void {
   })
   document.getElementById('num-periods')?.addEventListener('input', syncElevenTimingPresets)
   document.getElementById('period-duration')?.addEventListener('input', syncElevenTimingPresets)
+  document.getElementById('substitution-time')?.addEventListener('input', syncSubTimerNeeded)
   document.getElementById('go-formation')?.addEventListener('click', () => {
     const team = getCurrentTeam()
     const opponent = (document.getElementById('opponent-name') as HTMLInputElement).value.trim()

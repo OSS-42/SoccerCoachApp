@@ -10,6 +10,14 @@ export const APP_VERSION: string = __APP_VERSION__
 
 export const SAVE_VERSION = 2
 export const MAX_TEAMS = 2
+/** Lite may use this many custom teams (plus the read-only demo). */
+export const LITE_USER_TEAMS = 1
+export const LITE_REPORT_CAP = 5
+/**
+ * OTA global switch: true makes every install Pro.
+ * Per-buyer unlock is Google Play Billing (`actionpitch_pro`), not OTA.
+ */
+export const FORCE_PRO = false
 
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
 export const LEGACY_SAVE_KEY_V1 = 'soccerCoachApp'

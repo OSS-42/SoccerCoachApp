@@ -11,13 +11,7 @@ import { createGame, completeGame, capturePeriodScore } from '@/domain/game'
 import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
 import { freshSave } from '@/domain/migrate'
-import {
-  canAddTeam,
-  createPlayer,
-  createTeam,
-  findTeam,
-  updatePlayer,
-} from '@/domain/teams'
+import { canAddTeam, createPlayer, createTeam, findTeam, updatePlayer } from '@/domain/teams'
 import {
   APP_VERSION,
   DEFAULT_CLOCK,

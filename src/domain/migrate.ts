@@ -15,6 +15,7 @@ import {
   type GameAction,
   type MatchType,
   type Player,
+  type AppEntitlement,
   type AppTheme,
   type SubstitutionRegulation,
   type PlayerPosition,
@@ -244,6 +245,12 @@ function migrateTheme(raw: unknown): AppTheme {
   return value === 'light' || value === 'dark' ? value : 'dark'
 }
 
+function migrateEntitlement(raw: unknown): AppEntitlement {
+  const rec = asRecord(raw)
+  const value = rec ? asString(rec.entitlement) : ''
+  return value === 'pro' ? 'pro' : 'lite'
+}
+
 export function freshSave(): AppSave {
   const teams = createDefaultTeams()
   return {
@@ -252,6 +259,7 @@ export function freshSave(): AppSave {
     updatedAt: new Date().toISOString(),
     language: detectLocale(),
     theme: 'dark',
+    entitlement: 'lite',
     teams,
     currentTeamId: teams[0].id,
     currentGame: null,
@@ -276,6 +284,7 @@ export function migrateUnknown(raw: unknown): AppSave {
       updatedAt: new Date().toISOString(),
       language: migrateLanguage(rec),
       theme: migrateTheme(rec),
+      entitlement: migrateEntitlement(rec),
       teams: safeTeams,
       currentTeamId: safeTeams.some((t) => t.id === currentTeamId) ? currentTeamId : safeTeams[0].id,
       currentGame: inProgress,
@@ -307,6 +316,7 @@ export function migrateUnknown(raw: unknown): AppSave {
     updatedAt: new Date().toISOString(),
     language: migrateLanguage(rec),
     theme: migrateTheme(rec),
+    entitlement: migrateEntitlement(rec),
     teams,
     currentTeamId: teams[0].id,
     currentGame: null,

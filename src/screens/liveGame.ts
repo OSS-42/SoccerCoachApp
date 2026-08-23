@@ -131,7 +131,11 @@ export function renderLiveGame(): void {
   if (homeScore) homeScore.textContent = String(game.homeScore)
   if (awayScore) awayScore.textContent = String(game.awayScore)
   const subWrap = document.getElementById('substitution-timer')
-  if (subWrap) subWrap.style.display = clock.useSubstitutionTimer ? '' : 'none'
+  if (subWrap) {
+    const showTimer = clock.useSubstitutionTimer || game.useSubstitutionTimer
+    subWrap.hidden = !showTimer
+    subWrap.style.display = showTimer ? '' : 'none'
+  }
   updateClockLabels()
 
   paintSubCount()
@@ -369,6 +373,14 @@ function commit(type: ActionType, playerId: string | null, note?: string): void 
   renderLiveGame()
 }
 
+function finishMatchToReport(): void {
+  const result = endCurrentGame()
+  if (result.ok && result.gameId) {
+    showScreen('reports')
+    window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
+  }
+}
+
 export function bindLiveGame(): void {
   document.getElementById('game-time')?.addEventListener('click', async () => {
     if (!getCurrentGame()) return
@@ -399,12 +411,8 @@ export function bindLiveGame(): void {
     toggleDialog('end-game-dialog', false)
   })
   document.getElementById('confirm-end-game')?.addEventListener('click', () => {
-    const result = endCurrentGame()
     toggleDialog('end-game-dialog', false)
-    if (result.ok && result.gameId) {
-      showScreen('reports')
-      window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
-    }
+    finishMatchToReport()
   })
   document.getElementById('stop-period')?.addEventListener('click', () => {
     const game = getCurrentGame()
@@ -443,11 +451,7 @@ export function bindLiveGame(): void {
   document.getElementById('confirm-period')?.addEventListener('click', () => {
     toggleDialog('period-finish-dialog', false)
     if (periodAction === 'end') {
-      const result = endCurrentGame()
-      if (result.ok && result.gameId) {
-        showScreen('reports')
-        window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
-      }
+      finishMatchToReport()
     } else {
       const result = finishCurrentPeriod()
       showMessage(result.message, result.ok ? 'success' : 'error')
