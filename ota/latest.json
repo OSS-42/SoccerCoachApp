@@ -1,6 +1,6 @@
 {
-  "version": "2.4.57",
+  "version": "2.4.58",
   "minAppVersion": "2.4.50",
-  "notes": "Parent mode: follow one kid with a pitch of empty slots, tap for actions, double-tap to move. Coach path unchanged.",
+  "notes": "Parent home always shows the kid stats card, smaller starter checkbox, swap arrows on Coach/Parent switch.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
