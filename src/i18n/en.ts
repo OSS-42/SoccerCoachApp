@@ -48,7 +48,7 @@ export const en = {
   homeTeam: 'Home',
   kidName: 'Kid name',
   kidNamePlaceholder: "Enter your kid's name",
-  startsOnField: 'Starts on the field',
+  startsOnField: 'Kid Starting',
   saveKid: 'Save kid',
   parentNewGame: 'New game',
   kidLastPassTitle: 'Last pass',

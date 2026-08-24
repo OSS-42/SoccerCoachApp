@@ -99,6 +99,8 @@
           <button class="menu-btn" id="resume-game-btn" hidden>
             <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
           </button>
+        </nav>
+        <div class="home-switch-bar">
           <button class="menu-btn role-switch-btn" id="coach-switch-parent">
             <span class="role-swap-icon" aria-hidden="true">
               <span class="material-icons">arrow_back</span>
@@ -106,7 +108,7 @@
             </span>
             <span data-i18n="switchToParent">Switch to parent</span>
           </button>
-        </nav>
+        </div>
       </main>
 
       <section id="parent-home" class="screen">
@@ -115,7 +117,6 @@
         </div>
         <div class="content parent-home-content">
           <div class="settings-group">
-            <h2 data-i18n="roleParent">Parent</h2>
             <div class="form-group">
               <label for="parent-kid-name" data-i18n="kidName">Kid name</label>
               <input type="text" id="parent-kid-name" data-i18n-placeholder="kidNamePlaceholder" placeholder="Enter your kid's name" />
@@ -139,14 +140,14 @@
               <label for="parent-opponent" data-i18n="opponentName">Opponent Team Name:</label>
               <input type="text" id="parent-opponent" data-i18n-placeholder="opponentPlaceholder" placeholder="Enter opponent team name" />
             </div>
-            <div class="form-group">
-              <label for="parent-game-date" data-i18n="gameDate">Game Date:</label>
-              <input type="date" id="parent-game-date" />
-            </div>
-            <div class="form-group">
-              <label class="checkbox-label">
+            <div class="form-group parent-date-row">
+              <div class="parent-date-field">
+                <label for="parent-game-date" data-i18n="gameDate">Game Date:</label>
+                <input type="date" id="parent-game-date" />
+              </div>
+              <label class="checkbox-label parent-starting-check">
                 <input type="checkbox" id="parent-starts-on" checked />
-                <span data-i18n="startsOnField">Starts on the field</span>
+                <span data-i18n="startsOnField">Kid Starting</span>
               </label>
             </div>
             <div class="form-group">
@@ -171,14 +172,16 @@
                 <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
               </button>
             </div>
-            <button class="menu-btn role-switch-btn" id="parent-switch-coach">
-              <span class="role-swap-icon" aria-hidden="true">
-                <span class="material-icons">arrow_back</span>
-                <span class="material-icons">arrow_forward</span>
-              </span>
-              <span data-i18n="switchToCoach">Switch to coach</span>
-            </button>
           </div>
+        </div>
+        <div class="home-switch-bar">
+          <button class="menu-btn role-switch-btn" id="parent-switch-coach">
+            <span class="role-swap-icon" aria-hidden="true">
+              <span class="material-icons">arrow_back</span>
+              <span class="material-icons">arrow_forward</span>
+            </span>
+            <span data-i18n="switchToCoach">Switch to coach</span>
+          </button>
         </div>
       </section>
 

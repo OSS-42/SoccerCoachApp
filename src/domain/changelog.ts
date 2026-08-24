@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.59',
+    items: {
+      en: [
+        'Coach and Parent homes share the same bottom Switch button. Parent home: no extra title; date sits beside “Kid Starting”.',
+      ],
+      fr: [
+        'Les accueil Coach et Parent ont le bouton d’échange en bas. Accueil parent : plus de titre ; la date est à côté de « Enfant titulaire ».',
+      ],
+    },
+  },
+  {
     version: '2.4.58',
     items: {
       en: [

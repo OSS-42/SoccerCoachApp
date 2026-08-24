@@ -50,7 +50,7 @@ export const fr: Record<keyof typeof en, string> = {
   homeTeam: 'Domicile',
   kidName: 'Prénom de l’enfant',
   kidNamePlaceholder: 'Saisir le prénom de l’enfant',
-  startsOnField: 'Titulaire',
+  startsOnField: 'Enfant titulaire',
   saveKid: 'Enregistrer l’enfant',
   parentNewGame: 'Nouveau match',
   kidLastPassTitle: 'Dernière passe',
