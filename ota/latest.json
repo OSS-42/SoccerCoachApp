@@ -1,6 +1,6 @@
 {
-  "version": "2.4.58",
+  "version": "2.4.59",
   "minAppVersion": "2.4.50",
-  "notes": "Parent home always shows the kid stats card, smaller starter checkbox, swap arrows on Coach/Parent switch.",
+  "notes": "Parent/coach switch pinned to the same bottom bar. Parent home: no title; date row with Kid Starting.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
