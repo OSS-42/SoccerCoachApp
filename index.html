@@ -99,7 +99,13 @@
           <button class="menu-btn" id="resume-game-btn" hidden>
             <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
           </button>
-          <button class="menu-btn" id="coach-switch-parent" data-i18n="switchToParent">Switch to parent</button>
+          <button class="menu-btn role-switch-btn" id="coach-switch-parent">
+            <span class="role-swap-icon" aria-hidden="true">
+              <span class="material-icons">arrow_back</span>
+              <span class="material-icons">arrow_forward</span>
+            </span>
+            <span data-i18n="switchToParent">Switch to parent</span>
+          </button>
         </nav>
       </main>
 
@@ -165,7 +171,13 @@
                 <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
               </button>
             </div>
-            <button class="menu-btn" id="parent-switch-coach" data-i18n="switchToCoach">Switch to coach</button>
+            <button class="menu-btn role-switch-btn" id="parent-switch-coach">
+              <span class="role-swap-icon" aria-hidden="true">
+                <span class="material-icons">arrow_back</span>
+                <span class="material-icons">arrow_forward</span>
+              </span>
+              <span data-i18n="switchToCoach">Switch to coach</span>
+            </button>
           </div>
         </div>
       </section>
@@ -515,7 +527,13 @@
             </div>
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
-          <button class="secondary-btn" id="settings-switch-role" data-i18n="switchToParent">Switch to parent</button>
+          <button class="secondary-btn role-switch-btn" id="settings-switch-role">
+            <span class="role-swap-icon" aria-hidden="true">
+              <span class="material-icons">arrow_back</span>
+              <span class="material-icons">arrow_forward</span>
+            </span>
+            <span id="settings-switch-role-label" data-i18n="switchToParent">Switch to parent</span>
+          </button>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
           <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version"></span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>

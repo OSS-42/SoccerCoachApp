@@ -26,16 +26,10 @@ function renderKidCard(): void {
   const host = document.getElementById('parent-kid-stats')
   const profile = getParentProfile()
   if (!host) return
-  if (!profile.kid.name) {
-    host.innerHTML = `<div class="empty-state">${t('noPlayersStats')}</div>`
-    return
-  }
-  const rows = calculateSeasonStats([profile.kid], profile.games)
-  const row = rows[0]
-  if (!row) {
-    host.innerHTML = `<div class="empty-state">${t('noGamesStats')}</div>`
-    return
-  }
+  const kid = profile.kid
+  const row = calculateSeasonStats([kid], profile.games)[0]
+  const name = (row?.name || kid.name || '—').trim() || '—'
+  const jersey = row?.jerseyNumber ?? kid.jerseyNumber
   const metric = (value: number, label: string, kind = ''): string =>
     `<div class="stat-metric ${kind} ${value === 0 ? 'is-zero' : ''}">
       <span class="stat-metric-value">${value === 0 ? '–' : value}</span>
@@ -43,22 +37,22 @@ function renderKidCard(): void {
     </div>`
   host.innerHTML = `<div class="report-stat-card parent-stat-card">
     <div class="stat-card-head">
-      <span class="jersey-chip">${row.jerseyNumber}</span>
-      <strong>${row.name}</strong>
+      <span class="jersey-chip">${jersey}</span>
+      <strong>${name}</strong>
     </div>
     <div class="report-stat-grid">
-      ${metric(row.gamesPlayed, t('games'))}
-      ${metric(row.goals, t('statShortGoal'), 'stat-goal')}
-      ${metric(row.assists, t('statShortAssist'))}
-      ${metric(row.shots, t('statShortShot'))}
-      ${metric(row.saves, t('statShortSave'))}
-      ${metric(row.blocks, t('statShortBlock'))}
-      ${metric(row.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
-      ${metric(row.fouls, t('statShortFoul'))}
-      ${metric(row.yellowCards, t('statShortYellow'), 'stat-yellow')}
-      ${metric(row.redCards, t('statShortRed'), 'stat-red')}
-      ${metric(row.ownGoals, t('ownGoalShort'))}
-      ${metric(row.minutesPlayed, t('playedShort'))}
+      ${metric(row?.gamesPlayed ?? 0, t('games'))}
+      ${metric(row?.goals ?? 0, t('statShortGoal'), 'stat-goal')}
+      ${metric(row?.assists ?? 0, t('statShortAssist'))}
+      ${metric(row?.shots ?? 0, t('statShortShot'))}
+      ${metric(row?.saves ?? 0, t('statShortSave'))}
+      ${metric(row?.blocks ?? 0, t('statShortBlock'))}
+      ${metric(row?.goalsAllowed ?? 0, t('goalsAllowedShort'), 'stat-against')}
+      ${metric(row?.fouls ?? 0, t('statShortFoul'))}
+      ${metric(row?.yellowCards ?? 0, t('statShortYellow'), 'stat-yellow')}
+      ${metric(row?.redCards ?? 0, t('statShortRed'), 'stat-red')}
+      ${metric(row?.ownGoals ?? 0, t('ownGoalShort'))}
+      ${metric(row?.minutesPlayed ?? 0, t('playedShort'))}
     </div>
   </div>`
 }

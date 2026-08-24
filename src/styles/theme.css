@@ -313,6 +313,16 @@ html[data-theme] .game-report-counter span:last-child {
   line-height: 1;
 }
 
+html[data-theme] .form-group input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
 html[data-theme] .team-name-banner .team-selector select,
 html[data-theme] .form-group input,
 html[data-theme] .form-group select,

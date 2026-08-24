@@ -4753,6 +4753,45 @@ button.no-assist-btn {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
+#parent-home .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+#parent-home .checkbox-label input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 auto;
+    box-shadow: none;
+    appearance: auto;
+}
+.role-switch-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.role-swap-icon {
+    display: inline-flex;
+    flex-direction: column;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.role-swap-icon .material-icons {
+    font-size: 14px;
+    height: 11px;
+    line-height: 11px;
+    width: auto;
+    margin: 0;
+}
+.role-swap-icon .material-icons:last-child {
+    margin-left: 10px;
+}
 .parent-home-footer {
     margin-top: auto;
     padding-top: 24px;

@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.58',
+    items: {
+      en: [
+        'Parent home always shows the kid stats card. Smaller “starts on the field” checkbox. Swap arrows on Coach/Parent switch.',
+      ],
+      fr: [
+        'L’écran parent affiche toujours la carte de stats. Case « titulaire » plus petite. Flèches d’échange sur le bouton Coach/Parent.',
+      ],
+    },
+  },
+  {
     version: '2.4.57',
     items: {
       en: [

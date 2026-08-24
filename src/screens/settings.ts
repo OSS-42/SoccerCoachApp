@@ -63,8 +63,8 @@ export function renderSettings(): void {
   if (back) back.dataset.go = parent ? 'parent-home' : 'main-screen'
   const subGroup = document.getElementById('settings-sub-group')
   if (subGroup) subGroup.hidden = parent
-  const switchBtn = document.getElementById('settings-switch-role')
-  if (switchBtn) switchBtn.textContent = parent ? t('switchToCoach') : t('switchToParent')
+  const switchLabel = document.getElementById('settings-switch-role-label')
+  if (switchLabel) switchLabel.textContent = parent ? t('switchToCoach') : t('switchToParent')
 }
 
 export function bindSettings(): void {
