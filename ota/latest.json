@@ -1,6 +1,6 @@
 {
-  "version": "2.4.56",
+  "version": "2.4.57",
   "minAppVersion": "2.4.50",
-  "notes": "Android PDF export opens the share sheet so reports can be saved or sent.",
+  "notes": "Parent mode: follow one kid with a pitch of empty slots, tap for actions, double-tap to move. Coach path unchanged.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
