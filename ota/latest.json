@@ -1,6 +1,6 @@
 {
-  "version": "2.4.55",
+  "version": "2.4.56",
   "minAppVersion": "2.4.50",
-  "notes": "Settings changelog of the last two versions. How to use tips now say which screen they apply to.",
+  "notes": "Android PDF export opens the share sheet so reports can be saved or sent.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }

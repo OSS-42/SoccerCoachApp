@@ -29,7 +29,7 @@ export const OTA_MANIFEST_FALLBACK_URLS: readonly string[] = [
 ]
 
 /** Bundled app version (bumped in package.json / ota channel). */
-export const APP_BUNDLE_VERSION = '2.4.55'
+export const APP_BUNDLE_VERSION = '2.4.56'
 
 export type OtaManifest = {
   version: string
