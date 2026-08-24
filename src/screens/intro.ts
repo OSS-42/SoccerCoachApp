@@ -1,6 +1,6 @@
 import introVideo from '@/assets/intro_ActionPitch.mp4'
 import { APP_VERSION, INTRO_BUTTON_DELAY_MS, INTRO_MS } from '@/domain/config'
-import { showScreen } from '@/ui/nav'
+import { goAfterIntro } from './roleSelect'
 
 let introStarted = false
 
@@ -13,7 +13,7 @@ export function bindIntro(): void {
     } catch {
       /* ignore */
     }
-    showScreen('main-screen', { history: 'replace' })
+    goAfterIntro()
   })
 }
 

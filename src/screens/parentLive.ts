@@ -1,0 +1,248 @@
+import { FIELD_PLAYER_ACTIONS, BENCH_PLAYER_ACTIONS, ACTION_EMOJI, statsFromActions, playerIsUnavailable } from '@/domain/actions'
+import { DOUBLE_TAP_MS } from '@/domain/config'
+import { fieldSpotDefs, spotLabel } from '@/domain/formation'
+import { currentPeriod, formatClock } from '@/domain/clock'
+import { kidOnField } from '@/domain/parent'
+import { actionLabel, t } from '@/i18n'
+import type { Player } from '@/domain/types'
+import {
+  getCurrentGame,
+  getParentProfile,
+  isParentLive,
+  liveElapsedSeconds,
+  moveParentKidLive,
+  recordLiveAction,
+} from '@/state/store'
+import { askConfirm } from '@/ui/confirm'
+import { escapeHtml, toggleDialog } from '@/ui/dom'
+import { showMessage } from '@/ui/message'
+
+let moveArmed = false
+let lastTapAt = 0
+let tapTimer: number | null = null
+
+function kid(): Player {
+  return getParentProfile().kid
+}
+
+function paintSlot(slot: HTMLElement, player: Player | null, positionLabel: string): void {
+  slot.classList.toggle('occupied', Boolean(player))
+  slot.classList.toggle('sub-selected', Boolean(player) && moveArmed)
+  slot.classList.toggle('sub-target', !player && moveArmed)
+  if (!player) {
+    delete slot.dataset.playerId
+    slot.innerHTML = `<span class="spot-label">${escapeHtml(positionLabel)}</span>`
+    return
+  }
+  slot.dataset.playerId = player.id
+  slot.innerHTML = `<span class="player-number player-number-placed">
+    <span class="spot-pos">${escapeHtml(positionLabel)}</span>
+    <span class="jersey-num">${player.jerseyNumber}</span>
+    <span class="player-name-field">${escapeHtml(player.name)}</span>
+  </span>`
+}
+
+function openKidActions(role: 'field' | 'bench'): void {
+  const game = getCurrentGame()
+  const player = kid()
+  if (!game) return
+  const stats = statsFromActions(game.actions, player.id)
+  if (playerIsUnavailable(stats)) {
+    showMessage(t('cannotAct'), 'error')
+    return
+  }
+  const name = document.getElementById('action-player-name')
+  if (name) name.textContent = player.name
+  const actions = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
+  const buttons = document.getElementById('action-buttons')
+  if (buttons) {
+    buttons.innerHTML = actions
+      .map(
+        (type) =>
+          `<button class="action-btn" data-action="${type}"><span class="stat-emoji">${ACTION_EMOJI[type]}</span> ${actionLabel(type)}</button>`,
+      )
+      .join('')
+  }
+  toggleDialog('player-action-dialog', true)
+}
+
+function clearMove(): void {
+  moveArmed = false
+  renderParentLive()
+}
+
+function onKidTap(role: 'field' | 'bench'): void {
+  if (moveArmed) {
+    clearMove()
+    return
+  }
+  const now = Date.now()
+  if (tapTimer != null) {
+    window.clearTimeout(tapTimer)
+    tapTimer = null
+  }
+  if (now - lastTapAt <= DOUBLE_TAP_MS) {
+    lastTapAt = 0
+    moveArmed = true
+    renderParentLive()
+    return
+  }
+  lastTapAt = now
+  tapTimer = window.setTimeout(() => {
+    tapTimer = null
+    lastTapAt = 0
+    openKidActions(role)
+  }, DOUBLE_TAP_MS)
+}
+
+function onDestTap(dest: string | null): void {
+  if (!moveArmed) return
+  const result = moveParentKidLive(dest)
+  moveArmed = false
+  if (!result.ok) showMessage(result.message ?? t('noGame'), 'error')
+  renderParentLive()
+}
+
+export function renderParentLive(): void {
+  const game = getCurrentGame()
+  const player = kid()
+  const board = document.getElementById('parent-live-board')
+  const rosters = document.getElementById('live-rosters')
+  const tracking = document.getElementById('game-tracking')
+  if (!game || !isParentLive()) return
+  tracking?.classList.add('is-parent')
+  if (rosters) rosters.hidden = true
+  if (board) board.hidden = false
+  document.getElementById('parent-home-plus')?.removeAttribute('hidden')
+  document.getElementById('parent-away-plus')?.removeAttribute('hidden')
+  const subWrap = document.getElementById('substitution-timer')
+  if (subWrap) {
+    subWrap.hidden = true
+    subWrap.style.display = 'none'
+  }
+  const subCount = document.getElementById('live-sub-count')
+  if (subCount) subCount.hidden = true
+  document.getElementById('reset-sub')?.setAttribute('hidden', '')
+  document.getElementById('open-opponent-action')?.setAttribute('hidden', '')
+
+  const home = document.getElementById('home-team-name')
+  const away = document.getElementById('opponent-team-name')
+  if (home) home.textContent = t('homeTeam')
+  if (away) away.textContent = game.opponentName
+  const homeScore = document.getElementById('home-score')
+  const awayScore = document.getElementById('away-score')
+  if (homeScore) homeScore.textContent = String(game.homeScore)
+  if (awayScore) awayScore.textContent = String(game.awayScore)
+  const time = document.getElementById('game-time')
+  if (time) time.textContent = formatClock(liveElapsedSeconds())
+  const period = document.getElementById('period-counter')
+  if (period) {
+    period.textContent = t('periodOf', {
+      current: currentPeriod(liveElapsedSeconds(), game.periodDuration, game.numPeriods),
+      total: game.numPeriods,
+    })
+  }
+
+  const pitch = document.getElementById('parent-pitch')
+  if (pitch && !pitch.querySelector('.formation-field-surface')) {
+    pitch.innerHTML = ''
+    const surface = document.createElement('div')
+    surface.className = 'formation-field-surface'
+    for (const spot of fieldSpotDefs()) {
+      const slot = document.createElement('div')
+      slot.className = `player-slot${spot.position === 'GK' ? ' gk-slot' : spot.position === 'SW' ? ' sw-slot' : ''}`
+      slot.dataset.position = spot.position
+      slot.style.position = 'absolute'
+      slot.style.left = `${spot.x}%`
+      slot.style.top = `${spot.y}%`
+      slot.addEventListener('click', () => {
+        const live = getCurrentGame()
+        if (!live) return
+        const on = kidOnField(live, kid().id)
+        if (on?.position === spot.position) onKidTap('field')
+        else onDestTap(spot.position)
+      })
+      surface.appendChild(slot)
+    }
+    pitch.appendChild(surface)
+  }
+
+  const on = kidOnField(game, player.id)
+  pitch?.querySelectorAll<HTMLElement>('.player-slot').forEach((slot) => {
+    const pos = slot.dataset.position ?? ''
+    const here = on?.position === pos
+    paintSlot(slot, here ? player : null, spotLabel(pos))
+  })
+
+  const bench = document.getElementById('parent-bench-slot')
+  if (bench) {
+    bench.classList.toggle('occupied', !on)
+    bench.classList.toggle('sub-selected', !on && moveArmed)
+    bench.classList.toggle('sub-target', Boolean(on) && moveArmed)
+    if (on) {
+      delete bench.dataset.playerId
+      bench.innerHTML = ''
+    } else {
+      bench.dataset.playerId = player.id
+      bench.innerHTML = `<span class="player-number">
+        <span class="player-name-bench">${escapeHtml(player.name)}</span>
+        <span class="jersey-num">${player.jerseyNumber}</span>
+      </span>`
+    }
+  }
+}
+
+export function resetParentLiveUi(): void {
+  moveArmed = false
+  const tracking = document.getElementById('game-tracking')
+  tracking?.classList.remove('is-parent')
+  const board = document.getElementById('parent-live-board')
+  const rosters = document.getElementById('live-rosters')
+  if (board) board.hidden = true
+  if (rosters) rosters.hidden = false
+  document.getElementById('parent-home-plus')?.setAttribute('hidden', '')
+  document.getElementById('parent-away-plus')?.setAttribute('hidden', '')
+  document.getElementById('reset-sub')?.removeAttribute('hidden')
+  document.getElementById('open-opponent-action')?.removeAttribute('hidden')
+}
+
+export async function parentTeamGoal(): Promise<void> {
+  const assisted = await askConfirm({
+    title: t('kidLastPassTitle'),
+    message: t('kidLastPassAsk'),
+    confirmLabel: t('yes'),
+    cancelLabel: t('no'),
+  })
+  const goal = recordLiveAction('goal', null)
+  if (!goal.ok) {
+    showMessage(goal.message ?? t('noGame'), 'error')
+    return
+  }
+  if (assisted) recordLiveAction('assist', kid().id)
+  renderParentLive()
+}
+
+export function parentOpponentGoal(): void {
+  const result = recordLiveAction('goal_allowed', null)
+  if (!result.ok) {
+    showMessage(result.message ?? t('noGame'), 'error')
+    return
+  }
+  renderParentLive()
+}
+
+export function bindParentLive(): void {
+  document.getElementById('parent-bench-slot')?.addEventListener('click', () => {
+    const game = getCurrentGame()
+    if (!game) return
+    if (kidOnField(game, kid().id)) onDestTap(null)
+    else onKidTap('bench')
+  })
+  document.getElementById('parent-home-plus')?.addEventListener('click', () => {
+    void parentTeamGoal()
+  })
+  document.getElementById('parent-away-plus')?.addEventListener('click', () => {
+    parentOpponentGoal()
+  })
+}
+

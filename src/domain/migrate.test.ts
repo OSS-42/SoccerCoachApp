@@ -9,6 +9,9 @@ describe('migrateUnknown', () => {
     expect(save.teams[2].players).toHaveLength(23)
     expect(save.currentGame).toBeNull()
     expect(save.theme).toBe('dark')
+    expect(save.roleChosen).toBe(false)
+    expect(save.role).toBe('coach')
+    expect(save.parent.kid.id).toBe('parent-kid')
   })
 
   it('keeps the selected team and an in-progress game', () => {

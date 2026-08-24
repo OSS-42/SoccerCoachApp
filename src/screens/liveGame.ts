@@ -26,9 +26,12 @@ import {
   finishCurrentPeriod,
   getCurrentGame,
   getCurrentTeam,
+  getParentProfile,
   getSave,
+  isParentLive,
   liveElapsedSeconds,
   liveSubRemaining,
+  parentRosterTeam,
   pauseClock,
   playClock,
   recordLiveAction,
@@ -41,6 +44,8 @@ import {
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
+import { renderParentLive, resetParentLiveUi } from './parentLive'
+import { homeForRole } from './roleSelect'
 
 let pendingPlayer: Player | null = null
 let pendingSubId: string | null = null
@@ -117,10 +122,20 @@ export function updateClockLabels(): void {
 
 export function renderLiveGame(): void {
   const game = getCurrentGame()
+  if (!game) {
+    resetParentLiveUi()
+    showScreen(homeForRole())
+    return
+  }
+  if (isParentLive()) {
+    renderParentLive()
+    return
+  }
+  resetParentLiveUi()
   const team = getCurrentTeam()
   const { clock } = getSave()
-  if (!game || !team) {
-    showScreen('main-screen')
+  if (!team) {
+    showScreen(homeForRole())
     return
   }
   const home = document.getElementById('home-team-name')
@@ -347,6 +362,12 @@ function closeActionDialog(): void {
   pendingPlayer = null
 }
 
+function liveActor(): Player | null {
+  if (pendingPlayer) return pendingPlayer
+  if (isParentLive()) return getParentProfile().kid
+  return null
+}
+
 function currentGkId(): string | null {
   return getCurrentGame()?.formation.find((spot) => spot.position === 'GK')?.playerId ?? null
 }
@@ -374,16 +395,18 @@ function commit(type: ActionType, playerId: string | null, note?: string): void 
     return
   }
   if (result.convertedToRed) {
-    const player = getCurrentTeam()?.players.find((p) => p.id === playerId)
+    const roster = isParentLive() ? parentRosterTeam() : getCurrentTeam()
+    const player = roster?.players.find((p) => p.id === playerId)
     showMessage(t('yellowSendOff', { name: player?.name ?? t('unknownPlayer') }), 'warning')
   }
   renderLiveGame()
 }
 
 function finishMatchToReport(): void {
+  const parent = isParentLive()
   const result = endCurrentGame()
   if (result.ok && result.gameId) {
-    showScreen('reports')
+    showScreen(parent ? 'parent-home' : 'reports')
     window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
   }
 }
@@ -467,10 +490,16 @@ export function bindLiveGame(): void {
 
   document.getElementById('action-buttons')?.addEventListener('click', (event) => {
     const btn = (event.target as HTMLElement).closest<HTMLElement>('[data-action]')
-    if (!btn || !pendingPlayer) return
+    const actor = liveActor()
+    if (!btn || !actor) return
     const type = btn.dataset.action as ActionType
     if (type === 'goal') {
-      goalScorerId = pendingPlayer.id
+      if (isParentLive()) {
+        commit('goal', actor.id)
+        closeActionDialog()
+        return
+      }
+      goalScorerId = actor.id
       closeActionDialog()
       fillPicker('assist-players-grid', availablePlayers(goalScorerId), (id) => {
         if (goalScorerId) commit('goal', goalScorerId)
@@ -482,7 +511,12 @@ export function bindLiveGame(): void {
       return
     }
     if (type === 'assist') {
-      assisterId = pendingPlayer.id
+      if (isParentLive()) {
+        commit('assist', actor.id)
+        closeActionDialog()
+        return
+      }
+      assisterId = actor.id
       closeActionDialog()
       fillPicker('scorer-players-grid', availablePlayers(assisterId), (id) => {
         if (assisterId) commit('assist', assisterId)
@@ -495,12 +529,12 @@ export function bindLiveGame(): void {
     }
     if (type === 'note') {
       const name = document.getElementById('note-player-name')
-      if (name) name.textContent = pendingPlayer.name
+      if (name) name.textContent = actor.name
       ;(document.getElementById('note-text') as HTMLTextAreaElement).value = ''
       toggleDialog('note-dialog', true)
       return
     }
-    commit(type, pendingPlayer.id)
+    commit(type, actor.id)
     closeActionDialog()
   })
   document.getElementById('cancel-player-action')?.addEventListener('click', closeActionDialog)
@@ -520,8 +554,9 @@ export function bindLiveGame(): void {
   document.getElementById('cancel-note')?.addEventListener('click', () => toggleDialog('note-dialog', false))
   document.getElementById('save-note')?.addEventListener('click', () => {
     const text = (document.getElementById('note-text') as HTMLTextAreaElement).value.trim()
-    if (!text || !pendingPlayer) return showMessage(t('enterNote'), 'error')
-    commit('note', pendingPlayer.id, text)
+    const actor = liveActor()
+    if (!text || !actor) return showMessage(t('enterNote'), 'error')
+    commit('note', actor.id, text)
     toggleDialog('note-dialog', false)
     closeActionDialog()
   })
@@ -602,7 +637,7 @@ function actionReviewText(
 
 function paintActionReviewList(): boolean {
   const game = getCurrentGame()
-  const team = getCurrentTeam()
+  const team = isParentLive() ? parentRosterTeam() : getCurrentTeam()
   const list = document.getElementById('action-review-list')
   if (!list) return false
   list.replaceChildren()

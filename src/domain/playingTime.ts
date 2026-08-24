@@ -86,6 +86,15 @@ export function playingSecondsByPlayerPosition(game: Game): Map<string, Map<stri
     if (action.actionType === 'substitution' && action.playerId && action.relatedPlayerId) {
       const offId = action.relatedPlayerId
       const onId = action.playerId
+      if (game.source === 'parent' && offId === onId) {
+        endStint(onId, at)
+        spots = spots.filter((spot) => spot.playerId !== onId)
+        if (action.position) {
+          spots = [{ playerId: onId, position: action.position, x: 50, y: 50 }]
+          onSince.set(onId, { from: at, position: action.position })
+        }
+        continue
+      }
       const applied = applySubToSpots(spots, offId, onId)
       spots = applied.spots
       const pos = action.position || applied.position

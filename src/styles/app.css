@@ -4715,6 +4715,118 @@ button.no-assist-btn {
     line-height: 1.4;
 }
 
+.role-pick {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px 16px 32px;
+}
+.role-pick h2 {
+    margin: 0;
+    font-size: 22px;
+}
+.role-pick-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    min-height: 72px;
+}
+.role-pick-btn span {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.role-pick-btn small {
+    font-weight: 500;
+    text-transform: none;
+    opacity: 0.75;
+}
+.parent-home-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 24px;
+}
+.parent-kid-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.parent-home-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.parent-stat-card {
+    margin: 0 0 16px;
+    padding: 12px;
+}
+.parent-stat-card .stat-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.parent-live-board {
+    flex: 1;
+    min-height: 0;
+    padding: 8px 10px 12px;
+}
+.parent-pitch-row {
+    display: flex;
+    gap: 8px;
+    height: 100%;
+    min-height: 280px;
+}
+.parent-bench-col {
+    width: 58px;
+    flex: 0 0 58px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+}
+.parent-bench-col h4 {
+    margin: 0;
+    font-size: 11px;
+    text-align: center;
+    text-transform: uppercase;
+}
+#parent-bench-slot {
+    min-height: 64px;
+    width: 100%;
+}
+#parent-pitch.formation-field {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    min-width: 0;
+}
+#game-tracking.is-parent .live-rosters,
+#game-tracking:not(.is-parent) .parent-live-board {
+    display: none !important;
+}
+.live-score-center {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.parent-score-btn {
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-radius: 8px;
+    cursor: pointer;
+}
+#parent-resume-game[hidden] {
+    display: none !important;
+}
+
 #game-tracking .live-roster-section h3 {
     margin: 0 12px 6px;
     font-size: 12px;

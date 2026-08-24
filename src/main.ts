@@ -8,7 +8,7 @@ if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('is-native')
 }
 import { applyDomTranslations } from '@/i18n'
-import { getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
+import { getRole, getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
 import { hideMessage } from '@/ui/message'
 import { activeScreenId, bindHistoryNavigation, onShow, showScreen, type ScreenId } from '@/ui/nav'
 import { bindFormation, renderFormation } from '@/screens/formation'
@@ -20,6 +20,9 @@ import { bindSettings, renderSettings } from '@/screens/settings'
 import { bindTeamSetup, renderTeamSetup } from '@/screens/teamSetup'
 import { bindIntro } from '@/screens/intro'
 import { bootWithOta } from '@/screens/otaBoot'
+import { bindParentHome, renderParentHome } from '@/screens/parentHome'
+import { bindParentLive } from '@/screens/parentLive'
+import { bindRoleSelect } from '@/screens/roleSelect'
 import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
 
 function blockEdgeSwipeBack(event: TouchEvent): void {
@@ -38,22 +41,51 @@ function renderActive(): void {
     case 'ota-screen':
     case 'intro-screen':
       break
+    case 'role-screen':
+      break
     case 'main-screen':
+      if (getRole() === 'parent') {
+        showScreen('parent-home', { history: 'replace' })
+        return
+      }
       renderMainMenu()
       break
+    case 'parent-home':
+      if (getRole() === 'coach') {
+        showScreen('main-screen', { history: 'replace' })
+        return
+      }
+      renderParentHome()
+      break
     case 'team-setup':
+      if (getRole() === 'parent') {
+        showScreen('parent-home', { history: 'replace' })
+        return
+      }
       renderTeamSetup()
       break
     case 'game-setup':
+      if (getRole() === 'parent') {
+        showScreen('parent-home', { history: 'replace' })
+        return
+      }
       renderGameSetup()
       break
     case 'formation-setup':
+      if (getRole() === 'parent') {
+        showScreen('parent-home', { history: 'replace' })
+        return
+      }
       // Keep the live tap board; do not rebuild spots on store ticks.
       break
     case 'game-tracking':
       renderLiveGame()
       break
     case 'reports':
+      if (getRole() === 'parent') {
+        showScreen('parent-home', { history: 'replace' })
+        return
+      }
       renderReports()
       break
     case 'settings':
@@ -94,6 +126,7 @@ function startClockLoop(): void {
 hydrate()
 applyDomTranslations()
 onShow('main-screen', renderMainMenu)
+onShow('parent-home', renderParentHome)
 onShow('team-setup', renderTeamSetup)
 onShow('game-setup', renderGameSetup)
 onShow('formation-setup', renderFormation)
@@ -109,8 +142,11 @@ bindHistoryNavigation((from) => {
 document.addEventListener('touchstart', blockEdgeSwipeBack, { passive: false })
 bindNavigation()
 bindIntro()
+bindRoleSelect()
 bindTeamSelectors()
 bindMainMenu()
+bindParentHome()
+bindParentLive()
 bindTeamSetup()
 bindGameSetup()
 bindFormation()

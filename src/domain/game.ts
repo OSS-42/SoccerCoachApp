@@ -46,6 +46,7 @@ export function createGame(team: Team, input: NewGameInput): Game {
     substitutionSeconds: Math.max(1, input.substitutionMinutes) * 60,
     substitutionRegulation: regulationFor(input.matchType, Boolean(input.official11)),
     extraTime: false,
+    source: 'coach',
   }
 }
 

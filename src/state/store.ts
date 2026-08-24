@@ -8,6 +8,14 @@ import {
   wallSubRemaining,
 } from '@/domain/clock'
 import { createGame, completeGame, capturePeriodScore } from '@/domain/game'
+import {
+  asParentTeam,
+  createParentGame,
+  emptyParentProfile,
+  isParentGame,
+  moveParentKid,
+  validateParentKid,
+} from '@/domain/parent'
 import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
 import { freshSave } from '@/domain/migrate'
@@ -18,6 +26,7 @@ import {
   DEMO_TEAM_ID,
   SAVE_VERSION,
   type ActionType,
+  type AppRole,
   type AppSave,
   type AppTheme,
   type FormationSpot,
@@ -99,6 +108,109 @@ export function getCurrentGame(): Game | null {
 
 export function hasInProgressGame(): boolean {
   return Boolean(state.currentGame && !state.currentGame.isCompleted)
+}
+
+export function getRole(): AppRole {
+  return state.role === 'parent' ? 'parent' : 'coach'
+}
+
+export function hasChosenRole(): boolean {
+  return Boolean(state.roleChosen)
+}
+
+export function setRole(role: AppRole): void {
+  state = { ...state, role, roleChosen: true }
+  persist()
+}
+
+export function getParentProfile() {
+  return state.parent ?? emptyParentProfile()
+}
+
+export function parentRosterTeam(): Team {
+  return asParentTeam(getParentProfile(), t('homeTeam'))
+}
+
+export function isParentLive(): boolean {
+  return isParentGame(state.currentGame)
+}
+
+export function hasInProgressGameFor(role: AppRole): boolean {
+  if (!hasInProgressGame() || !state.currentGame) return false
+  const source = state.currentGame.source ?? 'coach'
+  return source === role
+}
+
+export function saveParentKid(
+  name: string,
+  jerseyNumber: number,
+  position: PlayerPosition,
+): { ok: boolean; message: string } {
+  const result = validateParentKid(name, jerseyNumber, position)
+  if (!result.ok) return { ok: false, message: t(result.message) }
+  state = { ...state, parent: { ...getParentProfile(), kid: result.kid } }
+  persist()
+  return { ok: true, message: t('playerUpdated', { name: result.kid.name }) }
+}
+
+export function startParentGame(input: {
+  opponentName: string
+  date: string
+  numPeriods: number
+  periodDuration: number
+  startsOnField: boolean
+}): { ok: boolean; message: string } {
+  const kid = getParentProfile().kid
+  if (!kid.name) return { ok: false, message: t('playerNameRequired') }
+  if (!input.opponentName.trim()) return { ok: false, message: t('needOpponent') }
+  if (!input.date) return { ok: false, message: t('needDate') }
+  if (input.numPeriods < 1) return { ok: false, message: t('needPeriod') }
+  if (input.periodDuration < 1) return { ok: false, message: t('needPeriodTime') }
+  if (hasInProgressGame()) discardCurrentGame()
+  const game = createParentGame({
+    kid,
+    opponentName: input.opponentName,
+    date: input.date,
+    numPeriods: input.numPeriods,
+    periodDuration: input.periodDuration,
+    startsOnField: input.startsOnField,
+  })
+  state = {
+    ...state,
+    currentGame: game,
+    clock: {
+      elapsedSeconds: 0,
+      running: false,
+      runningStartedAt: null,
+      subDuration: game.substitutionSeconds,
+      subRemaining: game.substitutionSeconds,
+      subRunning: false,
+      useSubstitutionTimer: false,
+    },
+  }
+  persist()
+  return { ok: true, message: t('gameStarted') }
+}
+
+export function moveParentKidLive(dest: string | null): { ok: boolean; message?: string } {
+  const game = state.currentGame
+  const kid = getParentProfile().kid
+  if (!game || !isParentGame(game)) return { ok: false, message: t('noGame') }
+  const next = moveParentKid(game, kid.id, dest, wallElapsed(state.clock))
+  state = { ...state, currentGame: { ...next, elapsedSeconds: wallElapsed(state.clock) } }
+  persist()
+  return { ok: true }
+}
+
+export function findCompletedGame(gameId: string): { game: Game; team: Team } | null {
+  const parent = getParentProfile()
+  const parentGame = parent.games.find((g) => g.id === gameId)
+  if (parentGame) return { game: parentGame, team: parentRosterTeam() }
+  for (const team of state.teams) {
+    const game = team.games.find((g) => g.id === gameId)
+    if (game) return { game, team }
+  }
+  return null
 }
 
 export function selectTeam(teamId: string): void {
@@ -401,11 +513,21 @@ export function endCurrentGame(): { ok: boolean; message: string; ended: boolean
   const game = state.currentGame
   if (!game) return { ok: false, message: t('noGame'), ended: false }
   const finished = completeGame(capturePeriodScore(game), wallElapsed(state.clock))
-  updateCurrentTeam((t) => ({ ...t, games: [...t.games, finished] }))
-  state = {
-    ...state,
-    currentGame: null,
-    clock: { ...DEFAULT_CLOCK },
+  if (isParentGame(finished)) {
+    const parent = getParentProfile()
+    state = {
+      ...state,
+      parent: { ...parent, games: [...parent.games, finished] },
+      currentGame: null,
+      clock: { ...DEFAULT_CLOCK },
+    }
+  } else {
+    updateCurrentTeam((t) => ({ ...t, games: [...t.games, finished] }))
+    state = {
+      ...state,
+      currentGame: null,
+      clock: { ...DEFAULT_CLOCK },
+    }
   }
   persist()
   return { ok: true, message: t('gameEnded'), ended: true, gameId: finished.id }
@@ -496,15 +618,25 @@ export function setCompletedGameElapsed(
   gameId: string,
   seconds: number,
 ): { ok: boolean; message: string } {
-  const team = getCurrentTeam()
-  const game = team?.games.find((g) => g.id === gameId)
-  if (!game) return { ok: false, message: t('reportMissing') }
+  const found = findCompletedGame(gameId)
+  if (!found) return { ok: false, message: t('reportMissing') }
   const safe = Math.max(0, Math.floor(seconds))
-  const next = trimPeriodScores(game, safe)
-  updateCurrentTeam((current) => ({
-    ...current,
-    games: current.games.map((g) => (g.id === gameId ? next : g)),
-  }))
+  const next = trimPeriodScores(found.game, safe)
+  if (isParentGame(found.game)) {
+    const parent = getParentProfile()
+    state = {
+      ...state,
+      parent: {
+        ...parent,
+        games: parent.games.map((g) => (g.id === gameId ? next : g)),
+      },
+    }
+  } else {
+    updateCurrentTeam((current) => ({
+      ...current,
+      games: current.games.map((g) => (g.id === gameId ? next : g)),
+    }))
+  }
   persist()
   return { ok: true, message: t('timeUpdated') }
 }

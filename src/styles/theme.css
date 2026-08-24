@@ -482,6 +482,22 @@ html[data-theme] .tips-screen {
   color: var(--neu-accent);
 }
 
+html[data-theme] .parent-score-btn {
+  background: var(--neu-bg-2);
+  color: var(--neu-text);
+  border: 1px solid var(--neu-line);
+}
+
+html[data-theme] #parent-bench-slot.sub-target,
+html[data-theme] #parent-pitch .player-slot.sub-target {
+  outline: 2px solid var(--neu-accent);
+}
+
+html[data-theme] #parent-pitch .player-slot.sub-selected,
+html[data-theme] #parent-bench-slot.sub-selected {
+  outline: 2px solid var(--live-pause);
+}
+
 html[data-theme] .changelog-entry h3 {
   color: var(--neu-muted);
 }

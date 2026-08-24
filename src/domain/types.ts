@@ -146,6 +146,7 @@ export type Game = {
   /** Youth + friendly 11v11 = rolling returns. Official 11v11 = one-way, capped. */
   substitutionRegulation: SubstitutionRegulation
   extraTime: boolean
+  source?: GameSource
 }
 
 export type ClockState = {
@@ -175,6 +176,13 @@ export type Team = {
 export type AppLanguage = 'en' | 'fr'
 export type AppTheme = 'dark' | 'light'
 export type AppEntitlement = 'lite' | 'pro'
+export type AppRole = 'coach' | 'parent'
+export type GameSource = 'coach' | 'parent'
+
+export type ParentProfile = {
+  kid: Player
+  games: Game[]
+}
 
 export type AppSave = {
   saveVersion: typeof SAVE_VERSION
@@ -183,6 +191,9 @@ export type AppSave = {
   language: AppLanguage
   theme: AppTheme
   entitlement: AppEntitlement
+  role: AppRole
+  roleChosen: boolean
+  parent: ParentProfile
   teams: Team[]
   currentTeamId: string
   currentGame: Game | null

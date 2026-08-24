@@ -1,5 +1,6 @@
 import { YELLOWS_FOR_RED } from './config'
 import { newId } from './ids'
+import { isParentGame, replayParentFormation } from './parent'
 import { revertSubstitutionSwap } from './substitutions'
 import { emptyLiveStats, type ActionType, type Game, type GameAction, type LiveStats } from './types'
 
@@ -172,6 +173,9 @@ export function revertAction(game: Game, actionId: string): Game {
     homeScore: score.home,
     awayScore: score.away,
   }
-  if (removed?.actionType === 'substitution') return revertSubstitutionSwap(next, removed)
+  if (removed?.actionType === 'substitution') {
+    if (isParentGame(next) && removed.playerId) return replayParentFormation(next, removed.playerId)
+    return revertSubstitutionSwap(next, removed)
+  }
   return next
 }

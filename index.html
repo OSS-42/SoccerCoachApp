@@ -33,6 +33,30 @@
         </div>
       </section>
 
+      <section id="role-screen" class="screen">
+        <div class="app-header">
+          <h1 data-i18n="appTitle">ActionPitch</h1>
+        </div>
+        <div class="content role-pick">
+          <h2 data-i18n="roleAskTitle">Who is using ActionPitch?</h2>
+          <p class="form-hint" data-i18n="roleAskHint">You can switch later from the home screen.</p>
+          <button type="button" class="menu-btn role-pick-btn" id="pick-role-coach">
+            <span class="material-icons">sports</span>
+            <span>
+              <strong data-i18n="roleCoach">Coach</strong>
+              <small data-i18n="roleCoachHint">Track the whole team</small>
+            </span>
+          </button>
+          <button type="button" class="menu-btn role-pick-btn" id="pick-role-parent">
+            <span class="material-icons">child_care</span>
+            <span>
+              <strong data-i18n="roleParent">Parent</strong>
+              <small data-i18n="roleParentHint">Follow your kid</small>
+            </span>
+          </button>
+        </div>
+      </section>
+
       <main id="main-screen" class="screen">
         <div class="app-header">
           <h1 data-i18n="appTitle">ActionPitch</h1>
@@ -75,8 +99,76 @@
           <button class="menu-btn" id="resume-game-btn" hidden>
             <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
           </button>
+          <button class="menu-btn" id="coach-switch-parent" data-i18n="switchToParent">Switch to parent</button>
         </nav>
       </main>
+
+      <section id="parent-home" class="screen">
+        <div class="app-header">
+          <h1 data-i18n="appTitle">ActionPitch</h1>
+        </div>
+        <div class="content parent-home-content">
+          <div class="settings-group">
+            <h2 data-i18n="roleParent">Parent</h2>
+            <div class="form-group">
+              <label for="parent-kid-name" data-i18n="kidName">Kid name</label>
+              <input type="text" id="parent-kid-name" data-i18n-placeholder="kidNamePlaceholder" placeholder="Enter your kid's name" />
+            </div>
+            <div class="form-group parent-kid-meta">
+              <div>
+                <label for="parent-kid-number" data-i18n="jerseyNumber">Jersey Number:</label>
+                <input type="number" id="parent-kid-number" min="0" max="99" />
+              </div>
+              <div>
+                <label for="parent-kid-position" data-i18n="position">Position:</label>
+                <select id="parent-kid-position"></select>
+              </div>
+            </div>
+            <button type="button" class="secondary-btn" id="save-parent-kid" data-i18n="saveKid">Save kid</button>
+          </div>
+          <div id="parent-kid-stats" class="parent-kid-stats"></div>
+          <div class="settings-group">
+            <h2 data-i18n="parentNewGame">New game</h2>
+            <div class="form-group">
+              <label for="parent-opponent" data-i18n="opponentName">Opponent Team Name:</label>
+              <input type="text" id="parent-opponent" data-i18n-placeholder="opponentPlaceholder" placeholder="Enter opponent team name" />
+            </div>
+            <div class="form-group">
+              <label for="parent-game-date" data-i18n="gameDate">Game Date:</label>
+              <input type="date" id="parent-game-date" />
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="parent-starts-on" checked />
+                <span data-i18n="startsOnField">Starts on the field</span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label for="parent-num-periods" data-i18n="numPeriods">Number of Periods:</label>
+              <input type="number" id="parent-num-periods" value="4" min="1" />
+            </div>
+            <div class="form-group">
+              <label for="parent-period-duration" data-i18n="periodDuration">Time per Period (minutes):</label>
+              <input type="number" id="parent-period-duration" value="12" min="1" max="45" />
+            </div>
+            <button type="button" class="primary-btn" id="parent-start-game" data-i18n="startNewGame">Start New Game</button>
+            <button type="button" class="menu-btn" id="parent-resume-game" hidden>
+              <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
+            </button>
+          </div>
+          <div class="parent-home-footer">
+            <div class="menu-row">
+              <button class="menu-btn" data-go="settings">
+                <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
+              </button>
+              <button class="menu-btn" id="parent-open-tips">
+                <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
+              </button>
+            </div>
+            <button class="menu-btn" id="parent-switch-coach" data-i18n="switchToCoach">Switch to coach</button>
+          </div>
+        </div>
+      </section>
 
       <section id="team-setup" class="screen">
         <div class="app-header">
@@ -277,9 +369,11 @@
               <div class="live-team-name live-home-name" id="home-team-name">My Team</div>
             </div>
             <div class="live-score-center">
+              <button type="button" class="parent-score-btn" id="parent-home-plus" hidden data-i18n="homePlus">Home +1</button>
               <div class="live-score" id="home-score">0</div>
               <div class="live-score-sep">–</div>
               <div class="live-score" id="away-score">0</div>
+              <button type="button" class="parent-score-btn" id="parent-away-plus" hidden data-i18n="awayPlus">Opp +1</button>
             </div>
             <div class="live-header-right">
               <div class="live-team-name live-away-name" id="opponent-team-name">Opponent</div>
@@ -322,6 +416,15 @@
             <h3 data-i18n="bench">Bench</h3>
             <div class="player-grid" id="bench-grid"></div>
           </section>
+        </div>
+        <div id="parent-live-board" class="parent-live-board" hidden>
+          <div class="parent-pitch-row">
+            <div class="parent-bench-col">
+              <h4 data-i18n="bench">Bench</h4>
+              <div id="parent-bench-slot" class="bench-slot"></div>
+            </div>
+            <div class="formation-field" id="parent-pitch"></div>
+          </div>
         </div>
       </div>
 
@@ -387,7 +490,7 @@
               </label>
             </div>
           </div>
-          <div class="settings-group">
+          <div class="settings-group" id="settings-sub-group">
             <h2 data-i18n="substitutionDefault">Substitution default</h2>
             <div class="setting-option">
               <label for="default-sub-minutes" data-i18n="defaultSubMinutes">Default substitution timer (minutes)</label>
@@ -412,6 +515,7 @@
             </div>
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
+          <button class="secondary-btn" id="settings-switch-role" data-i18n="switchToParent">Switch to parent</button>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
           <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version"></span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
@@ -550,6 +654,7 @@
       <div id="tips-dialog" class="dialog">
         <div class="dialog-content">
           <h2 data-i18n="tipsTitle">How to use</h2>
+          <div id="tips-coach">
           <section class="tips-block">
             <h3 class="tips-screen" data-i18n="tipScreenLive">On the Live game screen</h3>
             <ul class="tips-list">
@@ -565,6 +670,23 @@
               <li data-i18n="tipFormation">Tap a player, then tap a pitch slot to place them.</li>
             </ul>
           </section>
+          </div>
+          <div id="tips-parent" hidden>
+          <section class="tips-block">
+            <h3 class="tips-screen" data-i18n="tipScreenParentHome">On the Parent home screen</h3>
+            <ul class="tips-list">
+              <li data-i18n="tipParentHome">Save your kid, then the opponent, date, periods, and whether they start. You can switch to coach from the bottom of this screen.</li>
+            </ul>
+          </section>
+          <section class="tips-block">
+            <h3 class="tips-screen" data-i18n="tipScreenParentLive">On the Live game screen</h3>
+            <ul class="tips-list">
+              <li data-i18n="tipParentLiveTap">Tap your kid for actions. Own goal counts for them and adds 1 for the opponent.</li>
+              <li data-i18n="tipParentLiveMove">Double-tap your kid to move them, then tap a pitch slot or the bench. Tap the kid again to cancel.</li>
+              <li data-i18n="tipParentLiveScore">Home +1 is a teammate goal — you will be asked if your kid made the last pass. Opponent +1 is their goal.</li>
+            </ul>
+          </section>
+          </div>
           <div class="dialog-buttons">
             <button class="primary-btn" id="close-tips" data-i18n="close">Close</button>
           </div>

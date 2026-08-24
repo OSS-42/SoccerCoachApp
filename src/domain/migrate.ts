@@ -1,4 +1,5 @@
 import { detectLocale, isLocale } from '@/i18n'
+import { emptyParentProfile, isParentGame, replayParentFormation } from './parent'
 import { reconstructStartingFormation } from './playingTime'
 import { createDefaultTeams, ensureDemoTeam, isPlayerPosition } from './teams'
 import {
@@ -19,6 +20,8 @@ import {
   type AppTheme,
   type SubstitutionRegulation,
   type PlayerPosition,
+  type ParentProfile,
+  type AppRole,
   type Team,
 } from './types'
 
@@ -174,6 +177,29 @@ function migrateGame(raw: unknown, index: number): Game | null {
     substitutionSeconds: asNumber(rec.substitutionSeconds, DEFAULT_SUB_MINUTES * 60),
     substitutionRegulation: asRegulation(rec.substitutionRegulation) ?? 'rolling',
     extraTime: asBool(rec.extraTime, false),
+    source: rec.source === 'parent' ? 'parent' : 'coach',
+  }
+}
+
+function migrateRole(raw: unknown): AppRole {
+  return raw === 'parent' ? 'parent' : 'coach'
+}
+
+function migrateParent(raw: unknown): ParentProfile {
+  const rec = asRecord(raw)
+  const base = emptyParentProfile()
+  if (!rec) return base
+  const kid = migratePlayer(rec.kid, 0)
+  return {
+    kid: kid ?? base.kid,
+    games: Array.isArray(rec.games)
+      ? rec.games
+          .map(migrateGame)
+          .filter((g): g is NonNullable<typeof g> => Boolean(g))
+          .map((game) =>
+            isParentGame(game) ? replayParentFormation(game, (kid ?? base.kid).id) : { ...game, source: 'parent' },
+          )
+      : [],
   }
 }
 
@@ -260,6 +286,9 @@ export function freshSave(): AppSave {
     language: detectLocale(),
     theme: 'dark',
     entitlement: 'lite',
+    role: 'coach',
+    roleChosen: false,
+    parent: emptyParentProfile(),
     teams,
     currentTeamId: teams[0].id,
     currentGame: null,
@@ -285,6 +314,9 @@ export function migrateUnknown(raw: unknown): AppSave {
       language: migrateLanguage(rec),
       theme: migrateTheme(rec),
       entitlement: migrateEntitlement(rec),
+      role: migrateRole(rec.role),
+      roleChosen: asBool(rec.roleChosen, false),
+      parent: migrateParent(rec.parent),
       teams: safeTeams,
       currentTeamId: safeTeams.some((t) => t.id === currentTeamId) ? currentTeamId : safeTeams[0].id,
       currentGame: inProgress,
@@ -317,6 +349,9 @@ export function migrateUnknown(raw: unknown): AppSave {
     language: migrateLanguage(rec),
     theme: migrateTheme(rec),
     entitlement: migrateEntitlement(rec),
+    role: migrateRole(rec.role),
+    roleChosen: asBool(rec.roleChosen, false),
+    parent: migrateParent(rec.parent),
     teams,
     currentTeamId: teams[0].id,
     currentGame: null,

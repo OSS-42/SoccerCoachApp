@@ -8,6 +8,19 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.57',
+    items: {
+      en: [
+        'Coach or Parent after the intro. Parent mode follows one kid: pitch slots, tap for actions, double-tap to move.',
+        'Parent live: Home +1 asks if the kid made the last pass. Opponent +1 is their goal. Kid-only report and PDF.',
+      ],
+      fr: [
+        'Coach ou Parent après l’intro. Le mode parent suit un enfant : places sur le terrain, toucher pour une action, double-toucher pour déplacer.',
+        'En direct parent : Dom. +1 demande si l’enfant a fait la dernière passe. Adv. +1 est leur but. Rapport et PDF centrés sur l’enfant.',
+      ],
+    },
+  },
+  {
     version: '2.4.56',
     items: {
       en: [

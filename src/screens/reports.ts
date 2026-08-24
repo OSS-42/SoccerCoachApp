@@ -3,7 +3,7 @@ import { VIEW_REPORT_EVENT } from '@/domain/config'
 import { formatClock, parseClockInput } from '@/domain/clock'
 import { buildGameReportPdf, reportPdfFileName } from '@/domain/reportPdf'
 import { askConfirm, askPrompt } from '@/ui/confirm'
-import { deleteCompletedGames, getCurrentTeam, setCompletedGameElapsed } from '@/state/store'
+import { deleteCompletedGames, findCompletedGame, getCurrentTeam, setCompletedGameElapsed } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { saveOrSharePdf } from '@/lib/shareFile'
@@ -73,8 +73,9 @@ export function renderReports(): void {
 }
 
 export function viewReport(gameId: string): void {
-  const team = getCurrentTeam()
-  const game = team?.games.find((g) => g.id === gameId)
+  const found = findCompletedGame(gameId)
+  const team = found?.team
+  const game = found?.game
   const dialog = document.getElementById('report-dialog-content')
   if (!team || !game || !dialog) {
     showMessage(t('reportMissing'), 'error')
@@ -109,8 +110,9 @@ export function viewReport(gameId: string): void {
 }
 
 async function exportReportPdf(gameId: string): Promise<void> {
-  const team = getCurrentTeam()
-  const game = team?.games.find((g) => g.id === gameId)
+  const found = findCompletedGame(gameId)
+  const team = found?.team
+  const game = found?.game
   if (!team || !game) {
     showMessage(t('reportMissing'), 'error')
     return

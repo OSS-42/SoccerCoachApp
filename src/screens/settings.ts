@@ -7,17 +7,20 @@ import { parseImportJson } from '@/lib/storage'
 import {
   exportBackupJson,
   getCurrentTeam,
+  getRole,
   getSave,
   importBackup,
   resetAllData,
   setDefaultSubstitution,
   setLanguage,
+  setRole,
   setTheme,
 } from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { fillTeamSelectors } from './shared'
+import { goToRoleHome } from './roleSelect'
 
 async function hardRefresh(): Promise<void> {
   try {
@@ -55,9 +58,20 @@ export function renderSettings(): void {
   })
   const version = document.getElementById('settings-app-version')
   if (version) version.textContent = APP_VERSION
+  const parent = getRole() === 'parent'
+  const back = document.querySelector<HTMLElement>('#settings .back-btn')
+  if (back) back.dataset.go = parent ? 'parent-home' : 'main-screen'
+  const subGroup = document.getElementById('settings-sub-group')
+  if (subGroup) subGroup.hidden = parent
+  const switchBtn = document.getElementById('settings-switch-role')
+  if (switchBtn) switchBtn.textContent = parent ? t('switchToCoach') : t('switchToParent')
 }
 
 export function bindSettings(): void {
+  document.getElementById('settings-switch-role')?.addEventListener('click', () => {
+    setRole(getRole() === 'parent' ? 'coach' : 'parent')
+    goToRoleHome('replace')
+  })
   document.querySelectorAll<HTMLInputElement>('input[name="language"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       if (!isLocale(radio.value)) return

@@ -1,7 +1,9 @@
 export type ScreenId =
   | 'ota-screen'
   | 'intro-screen'
+  | 'role-screen'
   | 'main-screen'
+  | 'parent-home'
   | 'team-setup'
   | 'game-setup'
   | 'formation-setup'
