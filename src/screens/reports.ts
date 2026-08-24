@@ -117,9 +117,11 @@ async function exportReportPdf(gameId: string): Promise<void> {
   }
   try {
     const pdf = buildGameReportPdf(game, team)
-    const name = reportPdfFileName(game)
-    await saveOrSharePdf(pdf.output('blob'), name)
-  } catch {
+    const bytes = pdf.output('arraybuffer')
+    if (!bytes.byteLength) throw new Error('empty pdf')
+    await saveOrSharePdf(bytes, reportPdfFileName(game))
+  } catch (err) {
+    console.error('PDF export failed', err)
     showMessage(t('pdfExportFailed'), 'error')
   }
 }

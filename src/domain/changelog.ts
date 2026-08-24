@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.56',
+    items: {
+      en: [
+        'PDF export on Android now opens the share sheet so you can save or send the report.',
+      ],
+      fr: [
+        'L’export PDF sur Android ouvre le menu de partage pour enregistrer ou envoyer le rapport.',
+      ],
+    },
+  },
+  {
     version: '2.4.55',
     items: {
       en: [

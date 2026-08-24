@@ -41,8 +41,11 @@ function pdfSafe(value: string): string {
 function fileSafe(value: string): string {
   return (
     pdfSafe(value)
-      .replace(/[^\p{L}\p{N}.-]+/gu, '_')
-      .replace(/^_+|_+$/g, '') || 'opponent'
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Za-z0-9._-]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^[_.-]+|[_.-]+$/g, '') || 'opponent'
   )
 }
 

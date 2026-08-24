@@ -1,49 +1,51 @@
 import { Capacitor } from '@capacitor/core'
 
-async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer()
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  return btoa(binary)
+/** Android MimeTypeMap only treats ASCII filenames as having a .pdf extension. */
+export function pdfFileName(name: string): string {
+  const trimmed = name.replace(/\.pdf$/i, '')
+  const ascii = trimmed
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9._-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^[_.-]+|[_.-]+$/g, '')
+  return `${ascii || 'report'}.pdf`
 }
 
-/** Web: share sheet or download. Native WebView cannot use <a download>. */
-export async function saveOrSharePdf(blob: Blob, name: string): Promise<void> {
-  if (Capacitor.isNativePlatform()) {
-    const { Directory, Filesystem } = await import('@capacitor/filesystem')
-    const { Share } = await import('@capacitor/share')
-    const file = await Filesystem.writeFile({
-      path: name,
-      data: await blobToBase64(blob),
-      directory: Directory.Cache,
-    })
-    try {
-      await Share.share({
-        title: name,
-        files: [file.uri],
-        dialogTitle: name,
-      })
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      if (/cancel/i.test(message)) return
-      throw err
-    }
-    return
-  }
+/** Capacitor Share on Android only accepts file: URLs, not bare paths. */
+export function asFileUri(uri: string): string {
+  if (uri.startsWith('file:') || uri.startsWith('content:')) return uri
+  return uri.startsWith('/') ? `file://${uri}` : `file:///${uri}`
+}
 
-  const file = new File([blob], name, { type: 'application/pdf' })
-  if (navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: name })
-      return
-    } catch (err) {
-      if ((err as DOMException).name === 'AbortError') return
-    }
+export function bytesToBase64(bytes: Uint8Array): string {
+  const chunk = 0x2000
+  const parts: string[] = []
+  for (let i = 0; i < bytes.length; i += chunk) {
+    let slice = ''
+    const end = Math.min(i + chunk, bytes.length)
+    for (let j = i; j < end; j += 1) slice += String.fromCharCode(bytes[j])
+    parts.push(slice)
   }
+  return btoa(parts.join(''))
+}
+
+function runningOnNative(): boolean {
+  if (Capacitor.isNativePlatform()) return true
+  return typeof document !== 'undefined' && document.documentElement.classList.contains('is-native')
+}
+
+function asBlob(data: Blob | ArrayBuffer): Blob {
+  if (data instanceof Blob) return data
+  return new Blob([new Uint8Array(data)], { type: 'application/pdf' })
+}
+
+async function asBytes(data: Blob | ArrayBuffer): Promise<Uint8Array> {
+  if (data instanceof ArrayBuffer) return new Uint8Array(data)
+  return new Uint8Array(await data.arrayBuffer())
+}
+
+function downloadPdf(blob: Blob, name: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -52,5 +54,44 @@ export async function saveOrSharePdf(blob: Blob, name: string): Promise<void> {
   document.body.appendChild(link)
   link.click()
   link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000)
+}
+
+async function shareNativePdf(data: Blob | ArrayBuffer, name: string): Promise<void> {
+  const { Directory, Filesystem } = await import('@capacitor/filesystem')
+  const { Share } = await import('@capacitor/share')
+  const fileName = pdfFileName(name)
+  const path = `reports/${fileName}`
+  const bytes = await asBytes(data)
+  if (!bytes.byteLength) throw new Error('empty pdf')
+  await Filesystem.writeFile({
+    path,
+    data: bytesToBase64(bytes),
+    directory: Directory.Cache,
+    recursive: true,
+  })
+  const located = await Filesystem.getUri({ path, directory: Directory.Cache })
+  const uri = asFileUri(located.uri)
+  if (!uri.startsWith('file:')) throw new Error('Could not get a shareable file URL')
+  try {
+    await Share.share({
+      title: fileName,
+      files: [uri],
+      dialogTitle: fileName,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (/cancel/i.test(message)) return
+    throw err
+  }
+}
+
+/** Web: download. Native WebView cannot use <a download>, so write + share. */
+export async function saveOrSharePdf(data: Blob | ArrayBuffer, name: string): Promise<void> {
+  const fileName = pdfFileName(name)
+  if (runningOnNative()) {
+    await shareNativePdf(data, fileName)
+    return
+  }
+  downloadPdf(asBlob(data), fileName)
 }

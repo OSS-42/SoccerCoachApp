@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { setLocale } from '@/i18n'
+import { bytesToBase64 } from '@/lib/shareFile'
 import { createAction } from './actions'
 import { buildGameReportPdf, reportPdfFileName } from './reportPdf'
 import type { Game, Player, Team } from './types'
@@ -66,6 +67,18 @@ describe('report PDF', () => {
     expect(reportPdfFileName(game({ opponentName: 'FC  Lyons!' }))).toBe(
       'report-2026-08-15-vs-FC_Lyons.pdf',
     )
+    expect(reportPdfFileName(game({ opponentName: 'Béziers' }))).toBe(
+      'report-2026-08-15-vs-Beziers.pdf',
+    )
+  })
+
+  it('produces a non-empty PDF that encodes as base64', () => {
+    const players = [player('p1', 'Ada', 1)]
+    const match = game({ actions: [createAction('goal', 'p1', 60)] })
+    const bytes = new Uint8Array(buildGameReportPdf(match, team(players, match)).output('arraybuffer'))
+    expect(bytes.byteLength).toBeGreaterThan(1000)
+    expect(String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3])).toBe('%PDF')
+    expect(bytesToBase64(bytes).startsWith('JVBERi')).toBe(true)
   })
 
   it('keeps the score, timeline, notes, and player names — not the minute-by-minute list', () => {
