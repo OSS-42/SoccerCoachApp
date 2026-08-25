@@ -15,7 +15,8 @@
     "cap:sync": "npm run build && npx cap sync android",
     "android:open": "npx cap open android",
     "android:apk": "npm run cap:sync && node scripts/android-gradle.mjs assembleDebug",
-    "android:apk:release": "npm run cap:sync && node scripts/android-gradle.mjs assembleRelease"
+    "android:apk:release": "npm run cap:sync && node scripts/android-gradle.mjs assembleRelease",
+    "android:aab": "npm run cap:sync && node scripts/android-gradle.mjs bundleRelease"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.0",

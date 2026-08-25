@@ -18,8 +18,12 @@ android/captures
 android/.idea
 src/assets/Proxy/
 src/assets/right+left.mp4
+src/certificates.zip
+\# Soccer coach app.md
 
 *.apk
 *.aab
 *.ap_
 *.dex
+android/keystore.properties
+android/keystore/

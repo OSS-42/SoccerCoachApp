@@ -54,3 +54,22 @@ Rebuild the native APK for Capacitor plugins, `appId`, icons, or Gradle/SDK chan
 ```bash
 npm run android:apk
 ```
+
+## Play Store AAB (upload key)
+
+Play needs a **signed `.aab`**, not the debug APK on the CDN.
+
+```bash
+npm run android:aab
+```
+
+Output: `release/actionpitch_X.Y.Z.aab` (gitignored).
+
+The **upload keystore** lives only on this machine:
+
+- `android/keystore/actionpitch-upload.jks`
+- `android/keystore.properties`
+
+Copy both to a password manager or encrypted backup. Losing them means you cannot ship Play updates until Google resets the upload key.
+
+First Play upload: Testing → Internal testing → Create release → drop in the `.aab` → let **Play App Signing** stay on. Google keeps the app-signing key; you keep the upload key.

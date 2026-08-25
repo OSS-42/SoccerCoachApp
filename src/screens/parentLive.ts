@@ -1,5 +1,6 @@
 import { FIELD_PLAYER_ACTIONS, BENCH_PLAYER_ACTIONS, ACTION_EMOJI, statsFromActions, playerIsUnavailable } from '@/domain/actions'
 import { DOUBLE_TAP_MS } from '@/domain/config'
+import { parentLiveTap } from '@/domain/liveTap'
 import { fieldSpotDefs, spotLabel } from '@/domain/formation'
 import { currentPeriod, formatClock } from '@/domain/clock'
 import { kidOnField } from '@/domain/parent'
@@ -42,7 +43,19 @@ function paintSlot(slot: HTMLElement, player: Player | null, positionLabel: stri
   </span>`
 }
 
+function closeKidActions(): void {
+  toggleDialog('player-action-dialog', false)
+}
+
+function cancelKidTapTimer(): void {
+  if (tapTimer != null) {
+    window.clearTimeout(tapTimer)
+    tapTimer = null
+  }
+}
+
 function openKidActions(role: 'field' | 'bench'): void {
+  if (moveArmed) return
   const game = getCurrentGame()
   const player = kid()
   if (!game) return
@@ -68,22 +81,28 @@ function openKidActions(role: 'field' | 'bench'): void {
 
 function clearMove(): void {
   moveArmed = false
+  lastTapAt = 0
+  cancelKidTapTimer()
   renderParentLive()
 }
 
 function onKidTap(role: 'field' | 'bench'): void {
-  if (moveArmed) {
+  cancelKidTapTimer()
+  const now = Date.now()
+  const decision = parentLiveTap({
+    moveArmed,
+    onKid: true,
+    doubleTap: now - lastTapAt <= DOUBLE_TAP_MS,
+  })
+  if (decision.action === 'cancel') {
+    closeKidActions()
     clearMove()
     return
   }
-  const now = Date.now()
-  if (tapTimer != null) {
-    window.clearTimeout(tapTimer)
-    tapTimer = null
-  }
-  if (now - lastTapAt <= DOUBLE_TAP_MS) {
+  if (decision.action === 'arm') {
     lastTapAt = 0
     moveArmed = true
+    closeKidActions()
     renderParentLive()
     return
   }
@@ -91,12 +110,17 @@ function onKidTap(role: 'field' | 'bench'): void {
   tapTimer = window.setTimeout(() => {
     tapTimer = null
     lastTapAt = 0
+    if (moveArmed) return
     openKidActions(role)
   }, DOUBLE_TAP_MS)
 }
 
 function onDestTap(dest: string | null): void {
-  if (!moveArmed) return
+  const decision = parentLiveTap({ moveArmed, onKid: false, doubleTap: false })
+  if (decision.action !== 'move') return
+  cancelKidTapTimer()
+  closeKidActions()
+  lastTapAt = 0
   const result = moveParentKidLive(dest)
   moveArmed = false
   if (!result.ok) showMessage(result.message ?? t('noGame'), 'error')
@@ -194,6 +218,8 @@ export function renderParentLive(): void {
 
 export function resetParentLiveUi(): void {
   moveArmed = false
+  lastTapAt = 0
+  cancelKidTapTimer()
   const tracking = document.getElementById('game-tracking')
   tracking?.classList.remove('is-parent')
   const board = document.getElementById('parent-live-board')

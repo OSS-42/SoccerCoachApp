@@ -62,9 +62,9 @@ export const fr: Record<keyof typeof en, string> = {
     'Enregistrez l’enfant, puis l’adversaire, la date, les périodes, et s’il est titulaire. Vous pouvez passer en mode coach en bas de l’écran.',
   tipScreenParentLive: 'Sur l’écran Match en direct',
   tipParentLiveTap:
-    'Touchez l’enfant pour une action. Un but contre son camp compte pour lui et ajoute 1 à l’adversaire.',
+    'Hors déplacement, touchez l’enfant pour une action. Un but contre son camp compte pour lui et ajoute 1 à l’adversaire.',
   tipParentLiveMove:
-    'Double-touchez l’enfant pour le déplacer, puis touchez une place ou le banc. Touchez-le encore pour annuler.',
+    'Double-touchez l’enfant pour passer en mode déplacement, puis touchez une place ou le banc. Touchez-le encore pour annuler. Les actions restent fermées pendant le déplacement.',
   tipParentLiveScore:
     'Dom. +1 est un but d’un coéquipier — on vous demande si l’enfant a fait la dernière passe. Adv. +1 est un but adverse.',
   newGame: 'Nouveau match',
@@ -92,10 +92,11 @@ export const fr: Record<keyof typeof en, string> = {
   changelog: 'Journal des versions',
   changelogTitle: 'Nouveautés',
   tipLiveChange:
-    'Double-touchez un joueur, puis double-touchez un joueur de l’autre côté, pour faire un changement. Les deux sens marchent.',
+    'Double-touchez un joueur pour passer en mode changement, puis touchez une fois un joueur de l’autre côté pour le faire. Les deux sens marchent.',
   tipLiveActions:
-    'Touchez une tuile pour une action. Sur le terrain : liste complète. Sur le banc : jaunes et rouges seulement.',
-  tipLiveCancel: 'Double-touchez le même joueur pour annuler la sélection.',
+    'Hors mode changement, touchez une tuile pour une action. Sur le terrain : liste complète. Sur le banc : jaunes et rouges seulement.',
+  tipLiveCancel:
+    'Touchez le même joueur pour annuler le mode changement. La liste d’actions ne s’ouvre pas pendant un changement.',
   tipOfficial:
     'En 11v11 officiel, un joueur sorti ne revient pas. 5 changements, plus 1 en prolongations.',
   tipFormation: 'Touchez un joueur, puis une place sur le terrain pour le poser.',
@@ -104,7 +105,7 @@ export const fr: Record<keyof typeof en, string> = {
   subCapReached: 'Plus de changement disponible ({cap} utilisés).',
   subSentOff: 'Un joueur expulsé ne peut pas être remplacé.',
   subUnavailableOn: 'Ce joueur ne peut pas entrer.',
-  subNeedFieldThenBench: 'Double-touchez un joueur sur le terrain, puis un remplaçant.',
+  subNeedFieldThenBench: 'Double-touchez un joueur, puis touchez un joueur de l’autre côté.',
   extraTime: 'Prolongations',
   extraTimeAsk: 'Lancer les prolongations ? Vous avez droit à un changement de plus.',
   extraTimeStarted: 'Prolongations. Un changement supplémentaire est disponible.',

@@ -9,6 +9,7 @@ import {
   statsFromActions,
 } from '@/domain/actions'
 import { DOUBLE_TAP_MS, NOTE_MAX_LENGTH, VIEW_REPORT_EVENT } from '@/domain/config'
+import { coachLiveTap } from '@/domain/liveTap'
 import { fieldSpotDepth, spotLabel } from '@/domain/formation'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { currentPeriod, formatClock, isLastPeriod, parseClockInput } from '@/domain/clock'
@@ -120,14 +121,25 @@ export function updateClockLabels(): void {
   }
 }
 
+function cancelActionTapTimer(): void {
+  if (actionTapTimer != null) {
+    window.clearTimeout(actionTapTimer)
+    actionTapTimer = null
+  }
+}
+
 export function renderLiveGame(): void {
   const game = getCurrentGame()
   if (!game) {
+    clearPendingSub()
+    cancelActionTapTimer()
     resetParentLiveUi()
     showScreen(homeForRole())
     return
   }
   if (isParentLive()) {
+    clearPendingSub()
+    cancelActionTapTimer()
     renderParentLive()
     return
   }
@@ -251,24 +263,39 @@ function liveTile(
 }
 
 function onTileClick(player: Player, role: 'field' | 'bench'): void {
+  cancelActionTapTimer()
   const now = Date.now()
-  if (actionTapTimer != null) {
-    window.clearTimeout(actionTapTimer)
-    actionTapTimer = null
-  }
-  if (lastTapId === player.id && now - lastTapAt <= DOUBLE_TAP_MS) {
-    lastTapId = null
-    lastTapAt = 0
-    handleLiveTile(player, role)
+  const doubleTap = lastTapId === player.id && now - lastTapAt <= DOUBLE_TAP_MS
+  const decision = coachLiveTap({
+    pendingId: pendingSubId,
+    pendingRole,
+    playerId: player.id,
+    role,
+    doubleTap,
+  })
+
+  if (decision.action === 'schedule-actions') {
+    lastTapId = player.id
+    lastTapAt = now
+    actionTapTimer = window.setTimeout(() => {
+      actionTapTimer = null
+      lastTapId = null
+      lastTapAt = 0
+      if (pendingSubId) return
+      openActions(player, role)
+    }, DOUBLE_TAP_MS)
     return
   }
-  lastTapId = player.id
-  lastTapAt = now
-  actionTapTimer = window.setTimeout(() => {
-    actionTapTimer = null
-    lastTapId = null
-    openActions(player, role)
-  }, DOUBLE_TAP_MS)
+
+  lastTapId = null
+  lastTapAt = 0
+  closeActionDialog()
+  if (decision.action === 'cancel') {
+    clearPendingSub()
+    paintLiveRosters()
+    return
+  }
+  handleLiveTile(player, role)
 }
 
 function clearPendingSub(): void {
@@ -334,6 +361,7 @@ function subFailMessage(reason?: string): string {
 }
 
 function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
+  if (pendingSubId) return
   const game = getCurrentGame()
   if (!game) return
   const stats = statsFromActions(game.actions, player.id)

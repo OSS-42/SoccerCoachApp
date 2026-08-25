@@ -59,9 +59,10 @@ export const en = {
   tipParentHome:
     'Save your kid, then the opponent, date, periods, and whether they start. You can switch to coach from the bottom of this screen.',
   tipScreenParentLive: 'On the Live game screen',
-  tipParentLiveTap: 'Tap your kid for actions. Own goal counts for them and adds 1 for the opponent.',
+  tipParentLiveTap:
+    'When you are not moving, tap your kid for actions. Own goal counts for them and adds 1 for the opponent.',
   tipParentLiveMove:
-    'Double-tap your kid to move them, then tap a pitch slot or the bench. Tap the kid again to cancel.',
+    'Double-tap your kid to enter move mode, then tap a pitch slot or the bench. Tap the kid again to cancel. Actions stay closed while moving.',
   tipParentLiveScore:
     'Home +1 is a teammate goal — you will be asked if your kid made the last pass. Opponent +1 is their goal.',
   newGame: 'New Game',
@@ -89,10 +90,11 @@ export const en = {
   changelog: 'Change log',
   changelogTitle: "What's new",
   tipLiveChange:
-    'Double-tap one player, then double-tap a player on the other side, to make a substitution. Either order works.',
+    'Double-tap a player to enter switch mode, then tap once on a player on the other side to complete the switch. Either order works.',
   tipLiveActions:
-    'Tap a tile for actions. On the field you get the full list. On the bench, only yellow and red cards.',
-  tipLiveCancel: 'Double-tap the same player again to cancel a selection.',
+    'When you are not switching, tap a tile for actions. On the field you get the full list. On the bench, only yellow and red cards.',
+  tipLiveCancel:
+    'Tap the same player again to cancel switch mode. The action list cannot open while switching.',
   tipOfficial:
     'In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.',
   tipFormation: 'Tap a player, then tap a pitch slot to place them.',
@@ -101,7 +103,7 @@ export const en = {
   subCapReached: 'No substitutions left ({cap} used).',
   subSentOff: 'A sent-off player cannot be replaced.',
   subUnavailableOn: 'That player cannot come on.',
-  subNeedFieldThenBench: 'Double-tap an on-field player, then a bench player.',
+  subNeedFieldThenBench: 'Double-tap a player, then tap a player on the other side.',
   extraTime: 'Extra time',
   extraTimeAsk: 'Start extra time? You get one more substitution.',
   extraTimeStarted: 'Extra time. One more substitution is available.',

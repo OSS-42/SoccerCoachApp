@@ -56,4 +56,20 @@ const result = spawnSync(gradlew, args, {
   stdio: 'inherit',
   shell: process.platform === 'win32',
 })
-process.exit(result.status ?? 1)
+if (result.status) process.exit(result.status)
+
+if (args.includes('bundleRelease')) {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
+  const src = path.join(androidDir, 'app/build/outputs/bundle/release/app-release.aab')
+  const destDir = path.join(root, 'release')
+  const dest = path.join(destDir, `actionpitch_${pkg.version}.aab`)
+  if (!fs.existsSync(src)) {
+    console.error(`Missing AAB: ${src}`)
+    process.exit(1)
+  }
+  fs.mkdirSync(destDir, { recursive: true })
+  fs.copyFileSync(src, dest)
+  console.log(`✓ AAB ready: ${dest}`)
+}
+
+process.exit(0)

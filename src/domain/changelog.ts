@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.61',
+    items: {
+      en: [
+        'Live game: double-tap to enter switch mode, then tap once to complete or cancel. The action list stays closed while switching.',
+      ],
+      fr: [
+        'Match en direct : double-touchez pour le mode changement, puis touchez une fois pour confirmer ou annuler. La liste d’actions reste fermée pendant le changement.',
+      ],
+    },
+  },
+  {
     version: '2.4.60',
     items: {
       en: [
