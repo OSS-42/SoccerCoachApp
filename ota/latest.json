@@ -1,6 +1,6 @@
 {
-  "version": "2.4.59",
+  "version": "2.4.60",
   "minAppVersion": "2.4.50",
-  "notes": "Parent/coach switch pinned to the same bottom bar. Parent home: no title; date row with Kid Starting.",
+  "notes": "Interception action on the pitch, with stats pills on reports, season, and PDF.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
