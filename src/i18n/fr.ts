@@ -56,8 +56,8 @@ export const fr: Record<keyof typeof en, string> = {
   startsOnField: '{name} dans le onze de départ',
   saveKid: 'Enregistrer {name}',
   parentNewGame: 'Nouveau match',
-  kidLastPassTitle: 'Dernière passe',
-  kidLastPassAsk: '{name} a fait la dernière passe ?',
+  kidLastPassTitle: 'Passe décisive',
+  kidLastPassAsk: '{name} a fait la passe décisive ?',
   homePlus: 'Dom. +1',
   awayPlus: 'Adv. +1',
   tipScreenParentHome: 'Sur l’écran Parent',
@@ -69,7 +69,7 @@ export const fr: Record<keyof typeof en, string> = {
   tipParentLiveMove:
     'Double-touchez {name} pour passer en mode déplacement, puis touchez une place ou le banc. Touchez {name} encore pour annuler. Les actions restent fermées pendant le déplacement.',
   tipParentLiveScore:
-    'Dom. +1 est un but d’un coéquipier — on vous demande si {name} a fait la dernière passe. Adv. +1 est un but adverse.',
+    'Dom. +1 est un but d’un coéquipier — on vous demande si {name} a fait la passe décisive. Adv. +1 est un but adverse.',
   newGame: 'Nouveau match',
   opponentName: 'Nom de l’adversaire :',
   opponentPlaceholder: 'Saisir le nom de l’adversaire',
@@ -222,7 +222,7 @@ export const fr: Record<keyof typeof en, string> = {
   statShortFoul: 'Faute',
   statShortYellow: 'Jaune',
   statShortRed: 'Rouge',
-  assistBy: 'Passe : {name}',
+  assistBy: 'Passe décisive : {name}',
   periodOf: 'Période {current} sur {total}',
   periodLine: 'P{n} {home}-{away}',
   ftScore: 'FT {home}-{away}',

@@ -540,6 +540,7 @@ export function bindLiveGame(): void {
     }
     if (type === 'assist') {
       if (isParentLive()) {
+        commit('goal', null)
         commit('assist', actor.id)
         closeActionDialog()
         return

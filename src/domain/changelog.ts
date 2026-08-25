@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.63',
+    items: {
+      en: [
+        'Parent live: tapping Assist also adds 1 to the team score (teammate goal). French copy uses “passe décisive”.',
+      ],
+      fr: [
+        'En direct parent : une passe décisive ajoute aussi 1 au score (but d’un coéquipier). Le texte dit « passe décisive ».',
+      ],
+    },
+  },
+  {
     version: '2.4.62',
     items: {
       en: [
