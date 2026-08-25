@@ -1,6 +1,6 @@
 {
-  "version": "2.4.60",
+  "version": "2.4.61",
   "minAppVersion": "2.4.50",
-  "notes": "Interception action on the pitch, with stats pills on reports, season, and PDF.",
+  "notes": "Live switch mode: double-tap to arm, single tap to complete or cancel. Action panel stays closed while switching.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
