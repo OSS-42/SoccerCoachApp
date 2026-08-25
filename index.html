@@ -122,19 +122,19 @@
               <input type="text" id="parent-kid-name" data-i18n-placeholder="kidNamePlaceholder" placeholder="Enter your kid's name" />
             </div>
             <div class="form-group parent-kid-meta">
-              <div>
-                <label for="parent-kid-number" data-i18n="jerseyNumber">Jersey Number:</label>
-                <input type="number" id="parent-kid-number" min="0" max="99" />
+              <div class="parent-kid-number">
+                <label for="parent-kid-number" data-i18n="jerseyShort">#</label>
+                <input type="number" id="parent-kid-number" min="0" max="99" inputmode="numeric" />
               </div>
-              <div>
-                <label for="parent-kid-position" data-i18n="position">Position:</label>
+              <div class="parent-kid-position">
+                <label for="parent-kid-position" data-i18n="positionShort">Pos</label>
                 <select id="parent-kid-position"></select>
               </div>
+              <button type="button" class="secondary-btn" id="save-parent-kid" data-i18n="saveKid">Save kid</button>
             </div>
-            <button type="button" class="secondary-btn" id="save-parent-kid" data-i18n="saveKid">Save kid</button>
           </div>
           <div id="parent-kid-stats" class="parent-kid-stats"></div>
-          <div class="settings-group">
+          <div class="settings-group parent-new-game">
             <h2 data-i18n="parentNewGame">New game</h2>
             <div class="form-group">
               <label for="parent-opponent" data-i18n="opponentName">Opponent Team Name:</label>
@@ -147,7 +147,7 @@
               </div>
               <label class="checkbox-label parent-starting-check">
                 <input type="checkbox" id="parent-starts-on" checked />
-                <span data-i18n="startsOnField">Kid Starting</span>
+                <span data-i18n="startsOnField">Kid on starting roster</span>
               </label>
             </div>
             <div class="form-group">

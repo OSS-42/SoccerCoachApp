@@ -1,6 +1,6 @@
 import { PLAYER_POSITIONS, type PlayerPosition } from '@/domain/types'
 import { calculateSeasonStats } from '@/domain/stats'
-import { t } from '@/i18n'
+import { t, type MessageKey } from '@/i18n'
 import {
   getParentProfile,
   hasInProgressGame,
@@ -15,6 +15,28 @@ import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { todayInputValue } from './shared'
 import { goToRoleHome } from './roleSelect'
+
+const PARENT_NAME_KEYS: MessageKey[] = [
+  'saveKid',
+  'startsOnField',
+  'tipParentHome',
+  'tipParentLiveTap',
+  'tipParentLiveMove',
+  'tipParentLiveScore',
+]
+
+export function parentKidName(): string {
+  return getParentProfile().kid.name.trim() || t('kidFallback')
+}
+
+export function paintParentKidCopy(): void {
+  const name = parentKidName()
+  for (const key of PARENT_NAME_KEYS) {
+    document.querySelectorAll(`[data-i18n="${key}"]`).forEach((node) => {
+      node.textContent = t(key, { name })
+    })
+  }
+}
 
 function fillPositionSelect(select: HTMLSelectElement, selected: string): void {
   select.innerHTML = PLAYER_POSITIONS.map(
@@ -70,6 +92,7 @@ export function renderParentHome(): void {
   if (date && !date.value) date.value = todayInputValue()
   const resume = document.getElementById('parent-resume-game') as HTMLButtonElement | null
   if (resume) resume.hidden = !hasInProgressGameFor('parent')
+  paintParentKidCopy()
   renderKidCard()
 }
 
@@ -116,6 +139,7 @@ export function bindParentHome(): void {
     const parent = document.getElementById('tips-parent')
     if (coach) coach.hidden = true
     if (parent) parent.hidden = false
+    paintParentKidCopy()
     toggleDialog('tips-dialog', true)
   })
   document.getElementById('parent-switch-coach')?.addEventListener('click', () => {

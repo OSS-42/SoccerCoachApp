@@ -4784,12 +4784,36 @@ button.no-assist-btn {
 .parent-starting-check {
     flex: 1;
     min-height: 44px;
-    white-space: nowrap;
+    white-space: normal;
+    line-height: 1.2;
 }
 .parent-kid-meta {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: 4.2rem 5.6rem minmax(0, 1fr);
+    gap: 8px;
+    align-items: end;
+}
+.parent-kid-meta label {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.parent-kid-meta input,
+.parent-kid-meta select {
+    width: 100%;
+    min-width: 0;
+}
+.parent-kid-meta #save-parent-kid {
+    width: 100%;
+    margin: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 #parent-home .checkbox-label {
     display: flex;
@@ -4854,9 +4878,10 @@ button.no-assist-btn {
 }
 .parent-pitch-row {
     display: flex;
+    align-items: stretch;
     gap: 8px;
     height: 100%;
-    min-height: 280px;
+    min-height: 0;
 }
 .parent-bench-col {
     width: 58px;
@@ -4877,10 +4902,39 @@ button.no-assist-btn {
     width: 100%;
 }
 #parent-pitch.formation-field {
-    flex: 1;
+    flex: 1 1 auto;
     height: 100%;
+    max-height: 100%;
     position: relative;
     min-width: 0;
+    min-height: 0;
+    display: grid;
+    place-items: center;
+    container-type: size;
+    overflow: hidden;
+}
+#parent-pitch .formation-field-surface {
+    position: relative;
+    inset: auto;
+    width: min(100%, calc(100cqh * 1224 / 1974));
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1224 / 1974;
+    margin: 0;
+    background-size: 100% 100%;
+    container-type: size;
+}
+#parent-pitch .player-slot {
+    width: clamp(26px, 14cqmin, 52px);
+    height: clamp(26px, 14cqmin, 52px);
+}
+#parent-pitch .player-slot:not(.occupied) {
+    width: clamp(22px, 11cqmin, 40px);
+    height: clamp(22px, 11cqmin, 40px);
+}
+#parent-pitch .player-slot .spot-label {
+    font-size: clamp(8px, 3.4cqmin, 11px);
 }
 #game-tracking.is-parent .live-rosters,
 #game-tracking:not(.is-parent) .parent-live-board {

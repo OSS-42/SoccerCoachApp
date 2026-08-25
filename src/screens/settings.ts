@@ -2,6 +2,7 @@ import { APP_VERSION, BACKUP_FILE_PREFIX } from '@/domain/config'
 import { recentChangelog } from '@/domain/changelog'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { applyDomTranslations, getLocale, isLocale, t } from '@/i18n'
+import { paintParentKidCopy } from './parentHome'
 import { isTheme } from '@/lib/theme'
 import { parseImportJson } from '@/lib/storage'
 import {
@@ -77,6 +78,7 @@ export function bindSettings(): void {
       if (!isLocale(radio.value)) return
       setLanguage(radio.value)
       applyDomTranslations()
+      paintParentKidCopy()
       renderSettings()
     })
   })
@@ -163,6 +165,7 @@ export function bindSettings(): void {
     if (!ok) return
     resetAllData()
     applyDomTranslations()
+    paintParentKidCopy()
     showMessage(t('dataCleared'), 'success')
     showScreen('main-screen')
   })

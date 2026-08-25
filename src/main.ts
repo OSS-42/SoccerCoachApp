@@ -20,7 +20,7 @@ import { bindSettings, renderSettings } from '@/screens/settings'
 import { bindTeamSetup, renderTeamSetup } from '@/screens/teamSetup'
 import { bindIntro } from '@/screens/intro'
 import { bootWithOta } from '@/screens/otaBoot'
-import { bindParentHome, renderParentHome } from '@/screens/parentHome'
+import { bindParentHome, paintParentKidCopy, renderParentHome } from '@/screens/parentHome'
 import { bindParentLive } from '@/screens/parentLive'
 import { bindRoleSelect } from '@/screens/roleSelect'
 import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
@@ -125,6 +125,7 @@ function startClockLoop(): void {
 
 hydrate()
 applyDomTranslations()
+paintParentKidCopy()
 onShow('main-screen', renderMainMenu)
 onShow('parent-home', renderParentHome)
 onShow('team-setup', renderTeamSetup)

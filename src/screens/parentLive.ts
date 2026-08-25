@@ -17,6 +17,7 @@ import {
 import { askConfirm } from '@/ui/confirm'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
+import { parentKidName } from './parentHome'
 
 let moveArmed = false
 let lastTapAt = 0
@@ -235,7 +236,7 @@ export function resetParentLiveUi(): void {
 export async function parentTeamGoal(): Promise<void> {
   const assisted = await askConfirm({
     title: t('kidLastPassTitle'),
-    message: t('kidLastPassAsk'),
+    message: t('kidLastPassAsk', { name: parentKidName() }),
     confirmLabel: t('yes'),
     cancelLabel: t('no'),
   })

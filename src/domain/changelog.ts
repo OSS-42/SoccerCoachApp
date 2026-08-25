@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.62',
+    items: {
+      en: [
+        'Parent home: jersey, position, and Save on one row. New game is its own card. Saved kid name replaces “kid” in labels and tips. Parent pitch keeps the field aspect ratio.',
+      ],
+      fr: [
+        'Accueil parent : n°, poste et Enregistrer sur une ligne. Nouveau match en carte. Le prénom remplace « enfant » dans les textes. Le terrain parent garde ses proportions.',
+      ],
+    },
+  },
+  {
     version: '2.4.61',
     items: {
       en: [

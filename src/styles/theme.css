@@ -482,6 +482,22 @@ html[data-theme] .settings-group h2 {
   margin-bottom: 8px;
 }
 
+html[data-theme] #parent-home .parent-new-game {
+  background: var(--neu-bg-2);
+  border: 1px solid var(--neu-line);
+  border-radius: var(--neu-radius);
+  padding: 16px 14px 18px;
+  margin-bottom: 16px;
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme] #parent-home .parent-new-game h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
 html[data-theme] .tips-list,
 html[data-theme] .changelog-entry ul {
   color: var(--neu-text);
@@ -512,6 +528,26 @@ html[data-theme] #parent-pitch .player-slot.sub-target {
 html[data-theme] #parent-pitch .player-slot.sub-selected,
 html[data-theme] #parent-bench-slot.sub-selected {
   outline: 2px solid var(--live-pause);
+}
+
+html[data-theme] #parent-pitch.formation-field {
+  display: grid;
+  place-items: center;
+  container-type: size;
+  overflow: hidden;
+}
+
+html[data-theme] #parent-pitch .formation-field-surface {
+  position: relative;
+  inset: auto;
+  width: min(100%, calc(100cqh * 1224 / 1974));
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1224 / 1974;
+  margin: 0;
+  background-size: 100% 100%;
+  container-type: size;
 }
 
 html[data-theme] .changelog-entry h3 {
