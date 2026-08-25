@@ -47,6 +47,7 @@ function renderKidCard(): void {
       ${metric(row?.shots ?? 0, t('statShortShot'))}
       ${metric(row?.saves ?? 0, t('statShortSave'))}
       ${metric(row?.blocks ?? 0, t('statShortBlock'))}
+      ${metric(row?.interceptions ?? 0, t('statShortIntercept'))}
       ${metric(row?.goalsAllowed ?? 0, t('goalsAllowedShort'), 'stat-against')}
       ${metric(row?.fouls ?? 0, t('statShortFoul'))}
       ${metric(row?.yellowCards ?? 0, t('statShortYellow'), 'stat-yellow')}

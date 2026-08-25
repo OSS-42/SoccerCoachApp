@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.60',
+    items: {
+      en: [
+        'Interception is a live action on the pitch, with the same pills on reports, season stats, and PDF.',
+      ],
+      fr: [
+        'Interception est une action en direct sur le terrain, avec les mêmes pastilles sur les rapports, les stats et le PDF.',
+      ],
+    },
+  },
+  {
     version: '2.4.59',
     items: {
       en: [

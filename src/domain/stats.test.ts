@@ -63,6 +63,24 @@ describe('season stats', () => {
     expect(rows.find((r) => r.playerId === 'p2')?.goals).toBe(0)
   })
 
+  it('counts interceptions from actions', () => {
+    const rows = calculateSeasonStats(players, [
+      completed({
+        actions: [
+          {
+            id: 'a1',
+            actionType: 'interception',
+            playerId: 'p1',
+            gameSecond: 20,
+            timestamp: '',
+          },
+        ],
+      }),
+    ])
+    expect(rows.find((r) => r.playerId === 'p1')?.interceptions).toBe(1)
+    expect(rows.find((r) => r.playerId === 'p2')?.interceptions).toBe(0)
+  })
+
   it('sums on-field minutes across completed games', () => {
     const rows = calculateSeasonStats(players, [
       completed({ id: 'g1', elapsedSeconds: 600 }),

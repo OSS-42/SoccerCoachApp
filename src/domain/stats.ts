@@ -15,6 +15,7 @@ export type SeasonRow = {
   goalsAllowed: number
   shots: number
   blocks: number
+  interceptions: number
   fouls: number
   yellowCards: number
   redCards: number
@@ -53,6 +54,7 @@ export function calculateSeasonStats(
         goalsAllowed: 0,
         shots: 0,
         blocks: 0,
+        interceptions: 0,
         fouls: 0,
         yellowCards: 0,
         redCards: 0,
@@ -82,6 +84,7 @@ export function calculateSeasonStats(
         row.goalsAllowed += stats.goalsAllowed
         row.shots += stats.shotOnGoal
         row.blocks += stats.blockedShot
+        row.interceptions += stats.interceptions
         row.fouls += stats.faults
         row.yellowCards += stats.yellowCards
         row.redCards += stats.redCards

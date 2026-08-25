@@ -74,6 +74,7 @@ export type ActionType =
   | 'goal_allowed'
   | 'shot_on_goal'
   | 'blocked_shot'
+  | 'interception'
   | 'fault'
   | 'yellow_card'
   | 'red_card'
@@ -218,6 +219,7 @@ export function emptyLiveStats() {
     goalsAllowed: 0,
     shotOnGoal: 0,
     blockedShot: 0,
+    interceptions: 0,
     faults: 0,
     yellowCards: 0,
     redCards: 0,

@@ -355,6 +355,7 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
     { key: 'shotOnGoal', label: t('statShortShot'), kind: '' },
     { key: 'saves', label: t('statShortSave'), kind: '' },
     { key: 'blockedShot', label: t('statShortBlock'), kind: '' },
+    { key: 'interceptions', label: t('statShortIntercept'), kind: '' },
     { key: 'goalsAllowed', label: t('goalsAllowedShort'), kind: 'against' },
     { key: 'faults', label: t('statShortFoul'), kind: '' },
     { key: 'yellowCards', label: t('statShortYellow'), kind: 'yellow' },
@@ -366,7 +367,8 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
   const cellW = (CONTENT_W - 8 - gap * (cols - 1)) / cols
   const cellH = 9
   const headerH = 16
-  const cardH = 6 + headerH + cellH * 2 + gap + 4
+  const metricRows = Math.ceil(metrics.length / cols)
+  const cardH = 6 + headerH + cellH * metricRows + gap * Math.max(0, metricRows - 1) + 4
 
   const roster = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
   const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)

@@ -102,6 +102,7 @@ function renderStats(): void {
     goalsAllowed: number
     shots: number
     blocks: number
+    interceptions: number
     fouls: number
     yellowCards: number
     redCards: number
@@ -117,6 +118,7 @@ function renderStats(): void {
       ${metric(row.shots, t('statShortShot'))}
       ${metric(row.saves, t('statShortSave'))}
       ${metric(row.blocks, t('statShortBlock'))}
+      ${metric(row.interceptions, t('statShortIntercept'))}
       ${metric(row.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
       ${metric(row.fouls, t('statShortFoul'))}
       ${metric(row.yellowCards, t('statShortYellow'), 'stat-yellow')}
@@ -134,6 +136,7 @@ function renderStats(): void {
       goalsAllowed: sum.goalsAllowed + row.goalsAllowed,
       shots: sum.shots + row.shots,
       blocks: sum.blocks + row.blocks,
+      interceptions: sum.interceptions + row.interceptions,
       fouls: sum.fouls + row.fouls,
       yellowCards: sum.yellowCards + row.yellowCards,
       redCards: sum.redCards + row.redCards,
@@ -150,6 +153,7 @@ function renderStats(): void {
       goalsAllowed: 0,
       shots: 0,
       blocks: 0,
+      interceptions: 0,
       fouls: 0,
       yellowCards: 0,
       redCards: 0,
@@ -198,6 +202,7 @@ function renderStats(): void {
           <th title="${t('action.goal_allowed')}">${t('goalsAllowedShort')}</th>
           <th title="${t('action.shot_on_goal')}">🎯</th>
           <th title="${t('action.blocked_shot')}">🛡</th>
+          <th title="${t('action.interception')}">✋</th>
           <th title="${t('action.fault')}">🚩</th>
           <th title="${t('action.yellow_card')}">🟨</th>
           <th title="${t('action.red_card')}">🟥</th>
@@ -219,6 +224,7 @@ function renderStats(): void {
               ${cell(row.goalsAllowed, 'stat-against')}
               ${cell(row.shots)}
               ${cell(row.blocks)}
+              ${cell(row.interceptions)}
               ${cell(row.fouls)}
               ${cell(row.yellowCards, 'stat-yellow')}
               ${cell(row.redCards, 'stat-red')}
@@ -239,6 +245,7 @@ function renderStats(): void {
           ${cell(totals.goalsAllowed, 'stat-against')}
           ${cell(totals.shots)}
           ${cell(totals.blocks)}
+          ${cell(totals.interceptions)}
           ${cell(totals.fouls)}
           ${cell(totals.yellowCards, 'stat-yellow')}
           ${cell(totals.redCards, 'stat-red')}

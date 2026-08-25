@@ -34,6 +34,8 @@ const ACTION_ALIASES: Record<string, ActionType> = {
   shot_on_goal: 'shot_on_goal',
   shot: 'shot_on_goal',
   blocked_shot: 'blocked_shot',
+  interception: 'interception',
+  intercept: 'interception',
   fault: 'fault',
   foul: 'fault',
   yellow_card: 'yellow_card',

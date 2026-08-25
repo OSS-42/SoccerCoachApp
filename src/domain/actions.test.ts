@@ -73,6 +73,12 @@ describe('actions', () => {
     expect(statsFromActions(next.actions, 'p1').redCards).toBe(1)
   })
 
+  it('counts interceptions on the player without changing the score', () => {
+    const next = applyAction(game(), createAction('interception', 'p1', 50))
+    expect(statsFromActions(next.actions, 'p1').interceptions).toBe(1)
+    expect(scoreFromActions(next.actions)).toEqual({ home: 0, away: 0 })
+  })
+
   it('reverts a goal and the score', () => {
     const action = createAction('goal', 'p1', 15)
     const next = applyAction(game(), action)

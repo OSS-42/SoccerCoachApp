@@ -220,6 +220,7 @@ export function buildReportDialogHtml(game: Game, team: Team): string {
           ${metric(stats.shotOnGoal, t('statShortShot'))}
           ${metric(stats.saves, t('statShortSave'))}
           ${metric(stats.blockedShot, t('statShortBlock'))}
+          ${metric(stats.interceptions, t('statShortIntercept'))}
           ${metric(stats.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
           ${metric(stats.faults, t('statShortFoul'))}
           ${metric(stats.yellowCards, t('statShortYellow'), 'stat-yellow')}

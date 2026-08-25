@@ -12,6 +12,7 @@ export const ACTION_EMOJI: Record<ActionType, string> = {
   goal_allowed: '⚽',
   shot_on_goal: '🎯',
   blocked_shot: '❌',
+  interception: '✋',
   fault: '⚠️',
   yellow_card: '🟨',
   red_card: '🟥',
@@ -32,6 +33,7 @@ export const FIELD_PLAYER_ACTIONS: ActionType[] = [
   'shot_on_goal',
   'own_goal',
   'blocked_shot',
+  'interception',
   'fault',
   'yellow_card',
   'red_card',
@@ -82,6 +84,9 @@ export function statsFromActions(actions: GameAction[], playerId: string): LiveS
         break
       case 'blocked_shot':
         stats.blockedShot += 1
+        break
+      case 'interception':
+        stats.interceptions += 1
         break
       case 'fault':
         stats.faults += 1
