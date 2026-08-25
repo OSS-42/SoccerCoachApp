@@ -5,7 +5,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
  * Must track package.json / APP_BUNDLE_VERSION (ota-publish bumps package.json;
  * keep this in sync or Capgo defaults to "1.0" and blocks later OTA tips).
  */
-const BUILTIN_WEB_VERSION = '2.4.61'
+const BUILTIN_WEB_VERSION = '2.4.62'
 
 const config: CapacitorConfig = {
   appId: 'com.actionpitch.app',

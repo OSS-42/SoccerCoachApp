@@ -1,6 +1,6 @@
 {
-  "version": "2.4.61",
+  "version": "2.4.62",
   "minAppVersion": "2.4.50",
-  "notes": "Live switch mode: double-tap to arm, single tap to complete or cancel. Action panel stays closed while switching.",
+  "notes": "Parent home compact kid row, New game card, saved name in copy, parent pitch keeps field aspect ratio.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
