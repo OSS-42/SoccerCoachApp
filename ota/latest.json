@@ -1,6 +1,6 @@
 {
-  "version": "2.4.63",
+  "version": "2.4.64",
   "minAppVersion": "2.4.50",
-  "notes": "Parent assist adds a team goal. French last-pass copy is passe décisive.",
+  "notes": "Coach formation Save, parent kickoff placement prompt, publish refuses secret files.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
