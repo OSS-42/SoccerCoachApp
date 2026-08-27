@@ -320,10 +320,7 @@ export function startPreparedGame(
   if (hasInProgressGame()) discardCurrentGame()
   const game = createGame(team, input)
   if (saveDefault) {
-    updateCurrentTeam((t) => ({
-      ...t,
-      defaultFormations: { ...t.defaultFormations, [input.matchType]: input.formation },
-    }))
+    saveDefaultFormation(input.matchType, input.formation, input.unavailablePlayers)
   }
   state = {
     ...state,
@@ -342,10 +339,15 @@ export function startPreparedGame(
   return { ok: true, message: t('gameStarted') }
 }
 
-export function saveDefaultFormation(matchType: MatchType, formation: FormationSpot[]): void {
+export function saveDefaultFormation(
+  matchType: MatchType,
+  formation: FormationSpot[],
+  unavailablePlayers: string[] = [],
+): void {
   updateCurrentTeam((t) => ({
     ...t,
     defaultFormations: { ...t.defaultFormations, [matchType]: formation },
+    defaultUnavailable: { ...t.defaultUnavailable, [matchType]: unavailablePlayers },
   }))
   persist()
 }
@@ -577,6 +579,7 @@ export function importBackup(
     games: source.games,
     settings: source.settings,
     defaultFormations: source.defaultFormations,
+    defaultUnavailable: source.defaultUnavailable,
   }))
   persist()
   return { ok: true, message: t('importOk') }

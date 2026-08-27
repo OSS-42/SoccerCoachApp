@@ -84,3 +84,12 @@ export function filterDefaultFormation(
   if (!saved?.length) return []
   return saved.filter((spot) => livingPlayerIds.has(spot.playerId))
 }
+
+export function filterDefaultUnavailable(
+  saved: string[] | undefined,
+  livingPlayerIds: Set<string>,
+  onFieldIds: Set<string>,
+): string[] {
+  if (!saved?.length) return []
+  return saved.filter((id) => livingPlayerIds.has(id) && !onFieldIds.has(id))
+}

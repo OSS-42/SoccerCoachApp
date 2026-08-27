@@ -20,6 +20,10 @@ src/assets/Proxy/
 src/assets/right+left.mp4
 src/certificates.zip
 \# Soccer coach app.md
+*.pem
+*.p12
+*.pfx
+*.key
 
 *.apk
 *.aab

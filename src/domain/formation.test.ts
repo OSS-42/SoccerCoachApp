@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { FIELD_SPOTS, filterDefaultFormation, spotLabel, validateFormation } from './formation'
+import {
+  FIELD_SPOTS,
+  filterDefaultFormation,
+  filterDefaultUnavailable,
+  spotLabel,
+  validateFormation,
+} from './formation'
 
 describe('formation', () => {
   it('exposes the named pitch spots from the position chart', () => {
@@ -47,5 +53,11 @@ describe('formation', () => {
       { playerId: 'gone', position: 'ST-1', x: 50, y: 10 },
     ]
     expect(filterDefaultFormation(saved, new Set(['keep']))).toEqual([saved[0]])
+  })
+
+  it('restores unavailable players who are still on the roster and not on the field', () => {
+    expect(
+      filterDefaultUnavailable(['keep', 'gone', 'starter'], new Set(['keep', 'starter']), new Set(['starter'])),
+    ).toEqual(['keep'])
   })
 })

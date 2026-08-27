@@ -41,6 +41,7 @@ export function createDemoTeam(): Team {
     games: [],
     settings: { defaultSubstitutionSeconds: null },
     defaultFormations: {},
+    defaultUnavailable: {},
   }
 }
 
@@ -57,6 +58,7 @@ export function createTeam(name: string, id?: string): Team {
     games: [],
     settings: { defaultSubstitutionSeconds: null },
     defaultFormations: {},
+    defaultUnavailable: {},
   }
 }
 

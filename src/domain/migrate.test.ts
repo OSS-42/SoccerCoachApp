@@ -71,6 +71,28 @@ describe('migrateUnknown', () => {
     expect(types).toEqual(['fault', 'goal_allowed'])
   })
 
+  it('keeps a saved formation and unavailable list per match type', () => {
+    const save = migrateUnknown({
+      teams: [
+        {
+          id: 't1',
+          name: 'A',
+          players: [{ id: 'p1', name: 'alex', jerseyNumber: 1, position: 'GK' }],
+          games: [],
+          defaultFormations: {
+            '7v7': [{ playerId: 'p1', position: 'GK', x: 50, y: 91 }],
+          },
+          defaultUnavailable: { '7v7': ['p2'] },
+        },
+      ],
+    })
+    expect(save.teams[0].defaultFormations['7v7']).toEqual([
+      { playerId: 'p1', position: 'GK', x: 50, y: 91 },
+    ])
+    expect(save.teams[0].defaultUnavailable['7v7']).toEqual(['p2'])
+    expect(save.teams[1].defaultUnavailable).toEqual({})
+  })
+
   it('keeps official substitution data on a saved game', () => {
     const save = migrateUnknown({
       teams: [

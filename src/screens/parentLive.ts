@@ -17,7 +17,6 @@ import {
 import { askConfirm } from '@/ui/confirm'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
-import { parentKidName } from './parentHome'
 
 let moveArmed = false
 let lastTapAt = 0
@@ -25,6 +24,10 @@ let tapTimer: number | null = null
 
 function kid(): Player {
   return getParentProfile().kid
+}
+
+function kidLabel(): string {
+  return kid().name.trim() || t('kidFallback')
 }
 
 function paintSlot(slot: HTMLElement, player: Player | null, positionLabel: string): void {
@@ -217,6 +220,25 @@ export function renderParentLive(): void {
   }
 }
 
+export function armParentKickoffPlacement(): void {
+  moveArmed = true
+  lastTapAt = 0
+  cancelKidTapTimer()
+}
+
+export async function promptParentKickoffPlacement(): Promise<void> {
+  if (!moveArmed || !isParentLive()) return
+  const name = kidLabel()
+  const ok = await askConfirm({
+    title: t('placeKidTitle', { name }),
+    message: t('placeKidAsk', { name }),
+    confirmLabel: t('placeKidNow'),
+    cancelLabel: t('later'),
+  })
+  if (!ok) clearMove()
+  else renderParentLive()
+}
+
 export function resetParentLiveUi(): void {
   moveArmed = false
   lastTapAt = 0
@@ -236,7 +258,7 @@ export function resetParentLiveUi(): void {
 export async function parentTeamGoal(): Promise<void> {
   const assisted = await askConfirm({
     title: t('kidLastPassTitle'),
-    message: t('kidLastPassAsk', { name: parentKidName() }),
+    message: t('kidLastPassAsk', { name: kidLabel() }),
     confirmLabel: t('yes'),
     cancelLabel: t('no'),
   })

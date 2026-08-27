@@ -227,6 +227,7 @@ function migrateTeam(raw: unknown, index: number): Team | null {
             : null,
     },
     defaultFormations: migrateDefaultFormations(rec.defaultFormations ?? rec.formationTemp),
+    defaultUnavailable: migrateDefaultUnavailable(rec.defaultUnavailable),
   }
 }
 
@@ -240,6 +241,17 @@ function migrateDefaultFormations(raw: unknown): Team['defaultFormations'] {
     return out
   }
   return {}
+}
+
+function migrateDefaultUnavailable(raw: unknown): Team['defaultUnavailable'] {
+  const rec = asRecord(raw)
+  if (!rec || Array.isArray(raw)) return {}
+  const out: Team['defaultUnavailable'] = {}
+  for (const key of MATCH_TYPES) {
+    if (!Array.isArray(rec[key])) continue
+    out[key] = rec[key].filter((id): id is string => typeof id === 'string' && id.length > 0)
+  }
+  return out
 }
 
 function emptyClock(): ClockState {

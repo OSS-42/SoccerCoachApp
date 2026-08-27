@@ -10,11 +10,12 @@ import {
   startParentGame,
 } from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
-import { toggleDialog } from '@/ui/dom'
+import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { todayInputValue } from './shared'
 import { goToRoleHome } from './roleSelect'
+import { armParentKickoffPlacement, promptParentKickoffPlacement } from './parentLive'
 
 const PARENT_NAME_KEYS: MessageKey[] = [
   'saveKid',
@@ -60,7 +61,7 @@ function renderKidCard(): void {
   host.innerHTML = `<div class="report-stat-card parent-stat-card">
     <div class="stat-card-head">
       <span class="jersey-chip">${jersey}</span>
-      <strong>${name}</strong>
+      <strong>${escapeHtml(name)}</strong>
     </div>
     <div class="report-stat-grid">
       ${metric(row?.gamesPlayed ?? 0, t('games'))}
@@ -129,7 +130,9 @@ export function bindParentHome(): void {
       showMessage(result.message, 'error')
       return
     }
+    armParentKickoffPlacement()
     showScreen('game-tracking')
+    void promptParentKickoffPlacement()
   })
   document.getElementById('parent-resume-game')?.addEventListener('click', () => {
     showScreen('game-tracking')

@@ -131,6 +131,7 @@ export function asParentTeam(profile: ParentProfile, name = 'HOME'): Team {
     games: profile.games,
     settings: { defaultSubstitutionSeconds: null },
     defaultFormations: {},
+    defaultUnavailable: {},
   }
 }
 

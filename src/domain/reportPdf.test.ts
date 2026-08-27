@@ -55,6 +55,7 @@ function team(players: Player[], match: Game): Team {
     games: [match],
     settings: { defaultSubstitutionSeconds: null },
     defaultFormations: {},
+    defaultUnavailable: {},
   }
 }
 

@@ -172,6 +172,7 @@ export type Team = {
   games: Game[]
   settings: TeamSettings
   defaultFormations: Partial<Record<MatchType, FormationSpot[]>>
+  defaultUnavailable: Partial<Record<MatchType, string[]>>
 }
 
 export type AppLanguage = 'en' | 'fr'

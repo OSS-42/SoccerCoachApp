@@ -20,6 +20,7 @@ describe('i18n', () => {
     expect(t('startsOnField', { name: 'LEA' })).toBe('LEA dans le onze de départ')
     expect(t('saveKid', { name: 'LEA' })).toBe('Enregistrer LEA')
     expect(t('kidLastPassAsk', { name: 'LEA' })).toBe('LEA a fait la passe décisive ?')
+    expect(t('placeKidTitle', { name: 'LEA' })).toBe('C’est le moment de placer LEA')
     setLocale('en')
     expect(t('startsOnField', { name: 'LEA' })).toBe('LEA on starting roster')
     expect(t('kidLastPassAsk', { name: 'LEA' })).toBe('Did LEA make the last pass?')

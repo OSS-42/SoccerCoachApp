@@ -4,11 +4,12 @@ import {
   benchSlotCount,
   fieldSpotDefs,
   filterDefaultFormation,
+  filterDefaultUnavailable,
   spotLabel,
   validateFormation,
 } from '@/domain/formation'
 import type { FormationSpot } from '@/domain/types'
-import { getCurrentTeam, pauseClock, startPreparedGame } from '@/state/store'
+import { getCurrentTeam, pauseClock, saveDefaultFormation, startPreparedGame } from '@/state/store'
 import { escapeHtml } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
@@ -287,7 +288,10 @@ export function renderFormation(): void {
 
   const living = new Set(team.players.map((p) => p.id))
   const defaults = filterDefaultFormation(team.defaultFormations[draft.matchType], living)
-  const used = new Set(defaults.map((d) => d.playerId))
+  const onField = new Set(defaults.map((d) => d.playerId))
+  const outIds = new Set(
+    filterDefaultUnavailable(team.defaultUnavailable[draft.matchType], living, onField),
+  )
   for (const spot of defaults) {
     const slot = surface.querySelector<HTMLElement>(`[data-position="${spot.position}"]`)
     if (!slot) continue
@@ -295,7 +299,10 @@ export function renderFormation(): void {
     paintSlot(slot, spot.playerId, meta.name, meta.jersey)
   }
   const remaining = team.players
-    .filter((p) => !used.has(p.id))
+    .filter((p) => !onField.has(p.id) && !outIds.has(p.id))
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  const outPlayers = team.players
+    .filter((p) => outIds.has(p.id))
     .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
 
   const sideSlotCount = benchSlotCount(draft.matchType, team.players.length)
@@ -308,30 +315,46 @@ export function renderFormation(): void {
       const slot = bench.children[index] as HTMLElement | undefined
       if (slot) paintSlot(slot, player.id, player.name, player.jerseyNumber)
     })
+    outPlayers.forEach((player, index) => {
+      const slot = unavailable.children[index] as HTMLElement | undefined
+      if (slot) paintSlot(slot, player.id, player.name, player.jerseyNumber)
+    })
   } else {
     surface.querySelectorAll<HTMLElement>('.player-slot').forEach((slot) => {
       slot.style.touchAction = 'none'
       slot.addEventListener('pointerdown', handleSlotPointer)
     })
-    const seatOnBench = (player: { id: string; name: string; jerseyNumber: number }): void => {
+    const seatOn = (
+      kind: 'bench' | 'unavailable',
+      player: { id: string; name: string; jerseyNumber: number },
+    ): void => {
       if (slotByPlayer(player.id)) return
-      const empty = [...document.querySelectorAll<HTMLElement>('.bench-slot')].find(
+      const empty = [...document.querySelectorAll<HTMLElement>(`.${kind}-slot`)].find(
         (slot) => !slot.dataset.playerId,
       )
       if (empty) {
         paintSlot(empty, player.id, player.name, player.jerseyNumber)
         return
       }
-      const extra = document.getElementById('bench-overflow')
-      if (!extra) return
-      extra.hidden = false
-      const slot = makeSideSlot('bench', extra.childElementCount + 100)
-      extra.appendChild(slot)
+      if (kind === 'bench') {
+        const extra = document.getElementById('bench-overflow')
+        if (!extra) return
+        extra.hidden = false
+        const slot = makeSideSlot('bench', extra.childElementCount + 100)
+        extra.appendChild(slot)
+        paintSlot(slot, player.id, player.name, player.jerseyNumber)
+        return
+      }
+      const out = document.getElementById('unavailable-slots')
+      if (!out) return
+      const slot = makeSideSlot('unavailable', out.childElementCount + 1)
+      out.appendChild(slot)
       paintSlot(slot, player.id, player.name, player.jerseyNumber)
     }
     const applyRails = () => {
       layoutFormationRails()
-      remaining.forEach(seatOnBench)
+      remaining.forEach((player) => seatOn('bench', player))
+      outPlayers.forEach((player) => seatOn('unavailable', player))
     }
     window.requestAnimationFrame(applyRails)
     formationResize?.disconnect()
@@ -352,6 +375,13 @@ export function renderFormation(): void {
 }
 
 export function bindFormation(): void {
+  document.getElementById('save-formation')?.addEventListener('click', () => {
+    const current = getGameDraft()
+    if (!current) return showScreen('game-setup')
+    const { field, unavailable } = readFormation()
+    saveDefaultFormation(current.matchType, field, unavailable)
+    showMessage(t('formationSaved'), 'success')
+  })
   document.getElementById('clear-formation')?.addEventListener('click', () => {
     const occupied = [
       ...document.querySelectorAll<HTMLElement>(

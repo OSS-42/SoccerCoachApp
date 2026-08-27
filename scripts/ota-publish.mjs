@@ -1,6 +1,9 @@
 /**
  * Full OTA publish pipeline → GitHub.
  *
+ * Secrets stay out of this file: SSH target, key path, and passwords come from
+ * gitignored `.env.ota.local` / `android/keystore.properties`. Do not hardcode them.
+ *
  * 1. Bump semver (patch by default)
  *  2. Commit the current app changes first (so source edits land before OTA metadata)
  *  3. Sync package.json + src/ota/config.ts + capacitor.config.ts Capgo version + ota/latest.json
@@ -240,12 +243,53 @@ function gitStatus() {
   }
 }
 
+/** Paths that must never ride along with `git add -A` on publish. */
+const SECRET_PATH_RE =
+  /(^|\/)(\.env\.ota\.local|keystore\.properties|certificates\.zip|# Soccer coach app\.md)$/i
+
+function isSecretPath(filePath) {
+  const normalized = String(filePath).replace(/\\/g, '/')
+  if (SECRET_PATH_RE.test(normalized)) return true
+  if (/(^|\/)keystore\//.test(normalized)) return true
+  if (/\.(jks|p12|pfx|pem|key)$/i.test(normalized)) return true
+  return false
+}
+
+function assertNoSecretsStaged() {
+  if (args.dryRun) return
+  let staged = ''
+  try {
+    staged = runSilent('git diff --cached --name-only -z')
+  } catch {
+    return
+  }
+  const hits = staged
+    .split('\0')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter(isSecretPath)
+  if (hits.length) {
+    die(
+      `Refusing to commit secret-looking paths:\n  ${hits.join('\n  ')}\n` +
+        'Those files must stay gitignored.',
+    )
+  }
+}
+
+function redactSshTarget(target) {
+  if (!target) return '(none)'
+  const at = target.lastIndexOf('@')
+  if (at < 0) return '…'
+  return `${target.slice(0, at)}@…`
+}
+
 /**
  * Stage everything that is not gitignored (tracked mods + untracked).
  * User wants full workspace commits on publish, not a path whitelist.
  */
 function stageAllWorkspace() {
   run('git add -A', { mutate: true })
+  assertNoSecretsStaged()
 }
 
 function stagePaths(paths) {
@@ -259,6 +303,7 @@ function stagePaths(paths) {
       }
     }
   }
+  assertNoSecretsStaged()
 }
 
 function commitMessageFile(message, notes) {
@@ -399,7 +444,7 @@ function deployArtifacts({ deploy, manifestFile, zipFile }) {
   ensureDeployTools()
 
   if (args.dryRun) {
-    console.log(`would deploy to ${deploy.target}:${deploy.remoteDir}`)
+    console.log(`would deploy to ${redactSshTarget(deploy.target)}:${deploy.remoteDir}`)
     console.log(`would upload: ${manifestFile} and ${zipFile}`)
     return
   }
@@ -408,14 +453,16 @@ function deployArtifacts({ deploy, manifestFile, zipFile }) {
   const scpArgs = scpArgsForDeploy(deploy)
 
   console.log(`\n[deploy] using SSH key: ${deploy.keyFile}`)
-  console.log(`$ ssh … ${deploy.target} mkdir -p ${deploy.remoteDir}`)
+  console.log(`$ ssh … ${redactSshTarget(deploy.target)} mkdir -p ${deploy.remoteDir}`)
   execFileSync(
     'ssh',
     [...sshArgs, deploy.target, 'mkdir', '-p', deploy.remoteDir],
     { cwd: root, stdio: 'inherit' },
   )
 
-  console.log(`$ scp … ${manifestFile} ${zipFile} ${deploy.target}:${deploy.remoteDir}/`)
+  console.log(
+    `$ scp … ${manifestFile} ${zipFile} ${redactSshTarget(deploy.target)}:${deploy.remoteDir}/`,
+  )
   execFileSync(
     'scp',
     [...scpArgs, manifestFile, zipFile, `${deploy.target}:${deploy.remoteDir}/`],
@@ -481,8 +528,10 @@ function deployApkArtifact({ deploy, apkFile, version }) {
   ensureDeployTools()
 
   if (args.dryRun) {
-    console.log(`would ensure dir ${deploy.target}:${deploy.apkRemoteDir}`)
-    console.log(`would scp ${apkFile} → ${deploy.target}:${remotePath}`)
+    console.log(
+      `would ensure dir ${redactSshTarget(deploy.target)}:${deploy.apkRemoteDir}`,
+    )
+    console.log(`would scp ${apkFile} → ${redactSshTarget(deploy.target)}:${remotePath}`)
     console.log(
       `would verify remote size, then delete other *.apk in ${deploy.apkRemoteDir} (keep ${apkName})`,
     )
@@ -492,7 +541,9 @@ function deployApkArtifact({ deploy, apkFile, version }) {
   const sshArgs = sshArgsForDeploy(deploy)
   const scpArgs = scpArgsForDeploy(deploy)
 
-  console.log(`\n[deploy-apk] ${apkName} → ${deploy.target}:${deploy.apkRemoteDir}/`)
+  console.log(
+    `\n[deploy-apk] ${apkName} → ${redactSshTarget(deploy.target)}:${deploy.apkRemoteDir}/`,
+  )
   ensureRemoteApkDir(deploy)
 
   // List previous APKs (informational) before upload
@@ -516,7 +567,7 @@ function deployApkArtifact({ deploy, apkFile, version }) {
     console.log('[deploy-apk] no previous APKs on host')
   }
 
-  console.log(`$ scp … ${apkFile} ${deploy.target}:${remotePath}`)
+  console.log(`$ scp … ${apkFile} ${redactSshTarget(deploy.target)}:${remotePath}`)
   execFileSync('scp', [...scpArgs, apkFile, `${deploy.target}:${remotePath}`], {
     cwd: root,
     stdio: 'inherit',

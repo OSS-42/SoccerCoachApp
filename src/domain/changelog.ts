@@ -8,6 +8,19 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.64',
+    items: {
+      en: [
+        'Coach formation: Save keeps the lineup (including unavailable) without starting the game.',
+        'Parent kickoff: a prompt to position the kid, then one tap on a slot (no double-tap).',
+      ],
+      fr: [
+        'Composition coach : Enregistrer garde le onze (et les absents) sans lancer le match.',
+        'Coup d’envoi parent : un message pour placer l’enfant, puis un toucher sur une place (sans double-toucher).',
+      ],
+    },
+  },
+  {
     version: '2.4.63',
     items: {
       en: [
