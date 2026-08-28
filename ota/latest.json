@@ -1,6 +1,6 @@
 {
-  "version": "2.4.64",
+  "version": "2.4.65",
   "minAppVersion": "2.4.50",
-  "notes": "Coach formation Save, parent kickoff placement prompt, publish refuses secret files.",
+  "notes": "On-screen tap hints for formation and live. Empty Team B removed from the dropdown.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
