@@ -105,7 +105,12 @@ export const en = {
     'Tap the same player again to cancel switch mode. The action list cannot open while switching.',
   tipOfficial:
     'In official 11v11, a player who goes off cannot return. You have 5 changes, plus 1 in extra time.',
-  tipFormation: 'Tap a player, then tap a pitch slot to place them.',
+  tipFormation: 'Tap a player, then tap a pitch, bench, or out slot to place or swap. No drag.',
+  hintFormation: 'Tap a player, then tap a pitch, bench, or out slot to place or swap. No drag.',
+  hintLiveCoach:
+    'Tap a player for actions. Double-tap to switch, then tap a player on the other side.',
+  hintLiveParent:
+    'Tap {name} for actions. Double-tap to move, then tap a pitch slot or the bench.',
   subDone: '#{off} off, #{on} on',
   subCannotReturn: 'That player cannot return in an official match.',
   subCapReached: 'No substitutions left ({cap} used).',

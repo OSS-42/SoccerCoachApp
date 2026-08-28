@@ -19,6 +19,7 @@ import {
 import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
 import { freshSave } from '@/domain/migrate'
+import { canSelectTeam } from '@/domain/entitlement'
 import { canAddTeam, createPlayer, createTeam, findTeam, updatePlayer } from '@/domain/teams'
 import {
   APP_VERSION,
@@ -215,6 +216,7 @@ export function findCompletedGame(gameId: string): { game: Game; team: Team } | 
 
 export function selectTeam(teamId: string): void {
   if (!state.teams.some((t) => t.id === teamId)) return
+  if (!canSelectTeam(state, teamId)) return
   state = { ...state, currentTeamId: teamId }
   persist()
 }

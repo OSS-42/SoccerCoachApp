@@ -1,15 +1,21 @@
+import { canSelectTeam } from '@/domain/entitlement'
 import { t } from '@/i18n'
 import { getCurrentTeam, getSave, selectTeam } from '@/state/store'
 import { el } from '@/ui/dom'
 
 export function fillTeamSelectors(): void {
   const save = getSave()
+  const visible = save.teams.filter((team) => canSelectTeam(save, team.id))
+  if (visible.length && !visible.some((team) => team.id === save.currentTeamId)) {
+    selectTeam(visible[0].id)
+    return
+  }
   const ids = ['main-team-selector', 'team-selector', 'reports-team-selector']
   for (const id of ids) {
     const select = document.getElementById(id) as HTMLSelectElement | null
     if (!select) continue
     select.innerHTML = ''
-    for (const team of save.teams) {
+    for (const team of visible) {
       const opt = document.createElement('option')
       opt.value = team.id
       opt.textContent = team.name

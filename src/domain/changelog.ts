@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.65',
+    items: {
+      en: [
+        'Formation and live screens show how to place or switch players by tap (no drag). Empty Team B is hidden from the team list.',
+      ],
+      fr: [
+        'Les écrans composition et match en direct expliquent le placement et les changements par toucher (pas de glisser). L’équipe B vide n’apparaît plus dans la liste.',
+      ],
+    },
+  },
+  {
     version: '2.4.64',
     items: {
       en: [

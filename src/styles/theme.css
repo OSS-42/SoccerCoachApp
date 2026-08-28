@@ -482,6 +482,12 @@ html[data-theme] .settings-group h2 {
   margin-bottom: 8px;
 }
 
+html[data-theme] .screen-hint {
+  background: var(--neu-bg-2);
+  color: var(--neu-text);
+  box-shadow: var(--neu-pressed);
+}
+
 html[data-theme] #parent-home .parent-new-game {
   background: var(--neu-bg-2);
   border: 1px solid var(--neu-line);

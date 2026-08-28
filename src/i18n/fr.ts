@@ -107,7 +107,12 @@ export const fr: Record<keyof typeof en, string> = {
     'Touchez le même joueur pour annuler le mode changement. La liste d’actions ne s’ouvre pas pendant un changement.',
   tipOfficial:
     'En 11v11 officiel, un joueur sorti ne revient pas. 5 changements, plus 1 en prolongations.',
-  tipFormation: 'Touchez un joueur, puis une place sur le terrain pour le poser.',
+  tipFormation: 'Touchez un joueur, puis une place (terrain, banc ou out) pour le poser ou l’échanger. Pas de glisser-déposer.',
+  hintFormation: 'Touchez un joueur, puis une place (terrain, banc ou out) pour le poser ou l’échanger. Pas de glisser-déposer.',
+  hintLiveCoach:
+    'Touchez un joueur pour une action. Double-touchez pour un changement, puis touchez un joueur de l’autre côté.',
+  hintLiveParent:
+    'Touchez {name} pour une action. Double-touchez pour déplacer, puis touchez une place ou le banc.',
   subDone: 'n°{off} sort, n°{on} entre',
   subCannotReturn: 'Ce joueur ne peut pas revenir en match officiel.',
   subCapReached: 'Plus de changement disponible ({cap} utilisés).',

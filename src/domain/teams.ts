@@ -63,7 +63,16 @@ export function createTeam(name: string, id?: string): Team {
 }
 
 export function createDefaultTeams(): Team[] {
-  return [createTeam('Team A', 't1'), createTeam('Team B', 't2'), createDemoTeam()]
+  return [createTeam('Team A', 't1'), createDemoTeam()]
+}
+
+/** Empty default “Team B” from older saves — not shown while Lite is the beta default. */
+export function dropEmptyPlaceholderTeams(teams: Team[]): Team[] {
+  return teams.filter((team) => {
+    if (team.id !== 't2') return true
+    if (team.players.length > 0 || team.games.length > 0) return true
+    return team.name !== 'TEAM B'
+  })
 }
 
 export function normalizeName(value: string): string {

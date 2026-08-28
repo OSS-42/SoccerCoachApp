@@ -1919,6 +1919,30 @@ body {
     margin-top: 5px;
 }
 
+.screen-hint {
+    flex: 0 0 auto;
+    margin: 0 12px 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.35;
+    font-weight: 600;
+    border-radius: 8px;
+    background: #eceff1;
+    color: #37474f;
+}
+#game-tracking .screen-hint {
+    margin: 4px 12px 8px;
+}
+#live-hint-parent {
+    display: none;
+}
+#game-tracking.is-parent #live-hint-parent {
+    display: block;
+}
+#game-tracking.is-parent #live-hint-coach {
+    display: none;
+}
+
 .content.formation-content {
     display: flex;
     flex-direction: column;

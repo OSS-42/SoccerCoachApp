@@ -24,6 +24,7 @@ const PARENT_NAME_KEYS: MessageKey[] = [
   'tipParentLiveTap',
   'tipParentLiveMove',
   'tipParentLiveScore',
+  'hintLiveParent',
 ]
 
 export function parentKidName(): string {

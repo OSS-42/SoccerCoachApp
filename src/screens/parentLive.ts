@@ -139,6 +139,8 @@ export function renderParentLive(): void {
   const tracking = document.getElementById('game-tracking')
   if (!game || !isParentLive()) return
   tracking?.classList.add('is-parent')
+  const parentHint = document.getElementById('live-hint-parent')
+  if (parentHint) parentHint.textContent = t('hintLiveParent', { name: kidLabel() })
   if (rosters) rosters.hidden = true
   if (board) board.hidden = false
   document.getElementById('parent-home-plus')?.removeAttribute('hidden')

@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { migrateUnknown } from './migrate'
 
 describe('migrateUnknown', () => {
-  it('creates Team A, Team B, and a 23-player DEMO TEAM', () => {
+  it('creates Team A and a 23-player DEMO TEAM', () => {
     const save = migrateUnknown(null)
-    expect(save.teams.map((t) => t.name)).toEqual(['TEAM A', 'TEAM B', 'DEMO TEAM'])
+    expect(save.teams.map((t) => t.name)).toEqual(['TEAM A', 'DEMO TEAM'])
     expect(save.teams[0].players).toHaveLength(0)
-    expect(save.teams[2].players).toHaveLength(23)
+    expect(save.teams[1].players).toHaveLength(23)
     expect(save.currentGame).toBeNull()
     expect(save.theme).toBe('dark')
     expect(save.roleChosen).toBe(false)
@@ -36,7 +36,7 @@ describe('migrateUnknown', () => {
         formationPlayers: [{ playerId: 'p1', position: 'GK', x: 50, y: 90 }],
       },
     })
-    expect(save.currentTeamId).toBe('t2')
+    expect(save.currentTeamId).toBe('t1')
     expect(save.currentGame?.opponentName).toBe('FOXES')
     expect(save.currentGame?.formation).toHaveLength(1)
     expect(save.currentGame?.actions[0].actionType).toBe('goal')
@@ -45,6 +45,16 @@ describe('migrateUnknown', () => {
     expect(save.clock.running).toBe(false)
     expect(save.teams[1].players[0].name).toBe('ALEX')
     expect(save.teams.some((t) => t.name === 'DEMO TEAM' && t.players.length === 23)).toBe(true)
+  })
+
+  it('drops an empty default Team B', () => {
+    const save = migrateUnknown({
+      teams: [
+        { id: 't1', name: 'Team A', players: [], games: [] },
+        { id: 't2', name: 'Team B', players: [], games: [] },
+      ],
+    })
+    expect(save.teams.map((t) => t.id)).toEqual(['t1', 't-demo'])
   })
 
   it('maps legacy foul / goals_allowed names', () => {

@@ -1,7 +1,8 @@
 import { detectLocale, isLocale } from '@/i18n'
 import { emptyParentProfile, isParentGame, replayParentFormation } from './parent'
 import { reconstructStartingFormation } from './playingTime'
-import { createDefaultTeams, ensureDemoTeam, isPlayerPosition } from './teams'
+import { canSelectTeam, liteHomeTeamId } from './entitlement'
+import { createDefaultTeams, dropEmptyPlaceholderTeams, ensureDemoTeam, isPlayerPosition } from './teams'
 import {
   APP_VERSION,
   DEFAULT_CLOCK,
@@ -310,18 +311,27 @@ export function freshSave(): AppSave {
   }
 }
 
+function withSelectableTeam(save: AppSave): AppSave {
+  if (canSelectTeam(save, save.currentTeamId)) return save
+  const next = liteHomeTeamId(save.teams) ?? save.teams[0]?.id
+  if (!next || next === save.currentTeamId) return save
+  return { ...save, currentTeamId: next }
+}
+
 export function migrateUnknown(raw: unknown): AppSave {
   const rec = asRecord(raw)
   if (!rec) return freshSave()
 
   if (Array.isArray(rec.teams) && rec.teams.length > 0) {
     const teams = rec.teams.map(migrateTeam).filter((t): t is Team => Boolean(t))
-    const safeTeams = ensureDemoTeam(teams.length ? teams : createDefaultTeams())
+    const safeTeams = dropEmptyPlaceholderTeams(
+      ensureDemoTeam(teams.length ? teams : createDefaultTeams()),
+    )
     const currentTeamId = asString(rec.currentTeamId, safeTeams[0].id)
     const currentGameRaw = rec.currentGame
     const currentGame = currentGameRaw ? migrateGame(currentGameRaw, 0) : null
     const inProgress = currentGame && !currentGame.isCompleted ? currentGame : null
-    return {
+    const draft: AppSave = {
       saveVersion: SAVE_VERSION,
       appVersion: APP_VERSION,
       updatedAt: new Date().toISOString(),
@@ -343,6 +353,7 @@ export function migrateUnknown(raw: unknown): AppSave {
           )
         : emptyClock(),
     }
+    return withSelectableTeam(draft)
   }
 
   const legacyTeam = migrateTeam(
@@ -355,8 +366,10 @@ export function migrateUnknown(raw: unknown): AppSave {
     },
     0,
   )
-  const teams = ensureDemoTeam([legacyTeam ?? createDefaultTeams()[0], createDefaultTeams()[1]])
-  return {
+  const teams = dropEmptyPlaceholderTeams(
+    ensureDemoTeam([legacyTeam ?? createDefaultTeams()[0]]),
+  )
+  return withSelectableTeam({
     saveVersion: SAVE_VERSION,
     appVersion: APP_VERSION,
     updatedAt: new Date().toISOString(),
@@ -370,5 +383,5 @@ export function migrateUnknown(raw: unknown): AppSave {
     currentTeamId: teams[0].id,
     currentGame: null,
     clock: emptyClock(),
-  }
+  })
 }
