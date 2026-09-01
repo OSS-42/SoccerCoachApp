@@ -1,6 +1,6 @@
 {
-  "version": "2.4.66",
+  "version": "2.4.67",
   "minAppVersion": "2.4.50",
-  "notes": "First-launch coach and parent tutorials (skip anytime, replay in Settings). After an update, a short What's new. Coach 9v9 practice match: place one player, clock, goal, end periods (Play again after ",
+  "notes": "Parent tutorial: kid name is editable before Save. Only the highlighted control works so the tour stays on track.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
