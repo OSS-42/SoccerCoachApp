@@ -1,6 +1,6 @@
 {
-  "version": "2.4.65",
+  "version": "2.4.66",
   "minAppVersion": "2.4.50",
-  "notes": "On-screen tap hints for formation and live. Empty Team B removed from the dropdown.",
+  "notes": "First-launch coach and parent tutorials (skip anytime, replay in Settings). After an update, a short What's new. Coach 9v9 practice match: place one player, clock, goal, end periods (Play again after ",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
