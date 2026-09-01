@@ -7,7 +7,7 @@ type OverlayOpts = {
   skipLabel: string
   showNext: boolean
   showSkip: boolean
-  target: HTMLElement | null
+  target: HTMLElement | HTMLElement[] | null
   allowTarget: boolean
   onNext: () => void
   onSkip: () => void
@@ -15,7 +15,7 @@ type OverlayOpts = {
 
 let onNext: (() => void) | null = null
 let onSkip: (() => void) | null = null
-let targetEl: HTMLElement | null = null
+let targetEls: HTMLElement[] = []
 let allowTarget = false
 
 function root(): HTMLElement | null {
@@ -24,6 +24,32 @@ function root(): HTMLElement | null {
 
 function dialogIsOpen(): boolean {
   return Boolean(document.querySelector('.dialog.active'))
+}
+
+function overlayGuarding(): boolean {
+  const node = root()
+  return Boolean(node && !node.hidden && !node.classList.contains('is-paused'))
+}
+
+function asTargets(target: OverlayOpts['target']): HTMLElement[] {
+  if (!target) return []
+  return (Array.isArray(target) ? target : [target]).filter((el) => document.body.contains(el))
+}
+
+function eventAllowed(event: Event): boolean {
+  const node = event.target
+  if (!(node instanceof Element)) return false
+  if (node.closest('#tutorial-card')) return true
+  if (node.closest('.dialog')) return true
+  if (allowTarget && targetEls.some((el) => el === node || el.contains(node))) return true
+  return false
+}
+
+function blockUnexpected(event: Event): void {
+  if (!overlayGuarding()) return
+  if (eventAllowed(event)) return
+  event.preventDefault()
+  event.stopPropagation()
 }
 
 function pauseForDialog(): void {
@@ -48,6 +74,9 @@ export function bindTutorialOverlay(): void {
     pauseForDialog()
     if (!dialogIsOpen()) layoutTutorialSpot()
   })
+  for (const type of ['pointerdown', 'click', 'touchstart'] as const) {
+    document.addEventListener(type, blockUnexpected, true)
+  }
 }
 
 export function showTutorialCard(opts: OverlayOpts): void {
@@ -55,7 +84,7 @@ export function showTutorialCard(opts: OverlayOpts): void {
   if (!node) return
   onNext = opts.onNext
   onSkip = opts.onSkip
-  targetEl = opts.target
+  targetEls = asTargets(opts.target)
   allowTarget = opts.allowTarget
   const title = document.getElementById('tutorial-title')
   const body = document.getElementById('tutorial-body')
@@ -74,8 +103,12 @@ export function showTutorialCard(opts: OverlayOpts): void {
   node.hidden = false
   node.setAttribute('aria-hidden', 'false')
   pauseForDialog()
-  if (allowTarget && targetEl) {
-    targetEl.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  if (allowTarget && targetEls[0]) {
+    try {
+      targetEls[0].scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    } catch {
+      /* jsdom */
+    }
   }
   layoutTutorialSpot()
   window.requestAnimationFrame(() => layoutTutorialSpot())
@@ -90,7 +123,7 @@ export function hideTutorialCard(): void {
   }
   onNext = null
   onSkip = null
-  targetEl = null
+  targetEls = []
   allowTarget = false
   const block = document.getElementById('tutorial-block')
   const spot = document.getElementById('tutorial-spot')
@@ -102,17 +135,26 @@ export function layoutTutorialSpot(): void {
   const spot = document.getElementById('tutorial-spot')
   const block = document.getElementById('tutorial-block')
   if (!spot || !block) return
-  if (!targetEl || !document.body.contains(targetEl)) {
+  const live = targetEls.filter((el) => document.body.contains(el))
+  if (!live.length) {
     block.style.clipPath = ''
     spot.hidden = true
     return
   }
   const pad = 8
-  const r = targetEl.getBoundingClientRect()
-  const left = Math.max(0, r.left - pad)
-  const top = Math.max(0, r.top - pad)
-  const right = Math.min(window.innerWidth, r.right + pad)
-  const bottom = Math.min(window.innerHeight, r.bottom + pad)
+  const holes = live.map((el) => {
+    const r = el.getBoundingClientRect()
+    return {
+      left: Math.max(0, r.left - pad),
+      top: Math.max(0, r.top - pad),
+      right: Math.min(window.innerWidth, r.right + pad),
+      bottom: Math.min(window.innerHeight, r.bottom + pad),
+    }
+  })
+  const left = Math.min(...holes.map((h) => h.left))
+  const top = Math.min(...holes.map((h) => h.top))
+  const right = Math.max(...holes.map((h) => h.right))
+  const bottom = Math.max(...holes.map((h) => h.bottom))
   spot.hidden = false
   spot.style.left = `${left}px`
   spot.style.top = `${top}px`
@@ -122,13 +164,17 @@ export function layoutTutorialSpot(): void {
   if (card) {
     const tall = bottom - top > window.innerHeight * 0.4
     const low = top > window.innerHeight * 0.45
-    const cardOnTop = low || tall
+    const spansBoth = top < window.innerHeight * 0.4 && bottom > window.innerHeight * 0.6
+    const cardOnTop = low || spansBoth
     card.style.top = cardOnTop ? 'max(12px, env(safe-area-inset-top, 0px))' : 'auto'
     card.style.bottom = cardOnTop ? 'auto' : 'max(16px, env(safe-area-inset-bottom, 0px))'
-    card.style.maxHeight = tall ? '28vh' : '42vh'
+    card.style.maxHeight = tall || spansBoth ? '28vh' : '42vh'
   }
   if (allowTarget) {
-    block.style.clipPath = `polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${left}px ${top}px, ${left}px ${bottom}px, ${right}px ${bottom}px, ${right}px ${top}px, ${left}px ${top}px)`
+    const holePath = holes
+      .map((h) => `${h.left}px ${h.top}px, ${h.left}px ${h.bottom}px, ${h.right}px ${h.bottom}px, ${h.right}px ${h.top}px, ${h.left}px ${h.top}px`)
+      .join(', ')
+    block.style.clipPath = `polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${holePath})`
   } else {
     block.style.clipPath = ''
   }

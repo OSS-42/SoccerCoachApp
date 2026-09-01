@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.67',
+    items: {
+      en: [
+        'Parent tour: type the kid’s name before Save. Only the highlighted control works, so the steps stay in order.',
+      ],
+      fr: [
+        'Tour parent : saisissez le prénom avant Enregistrer. Seul le contrôle mis en avant fonctionne, pour garder les étapes dans l’ordre.',
+      ],
+    },
+  },
+  {
     version: '2.4.66',
     items: {
       en: [

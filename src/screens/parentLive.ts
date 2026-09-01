@@ -95,9 +95,23 @@ function clearMove(): void {
   renderParentLive()
 }
 
+function actionOnlyGate(): boolean {
+  const gate = tutorialLiveGate()
+  return gate === 'goal' || gate === 'yellow'
+}
+
 function onKidTap(role: 'field' | 'bench'): void {
   cancelKidTapTimer()
   const now = Date.now()
+  if (actionOnlyGate()) {
+    lastTapAt = now
+    tapTimer = window.setTimeout(() => {
+      tapTimer = null
+      lastTapAt = 0
+      openKidActions(role)
+    }, DOUBLE_TAP_MS)
+    return
+  }
   const decision = parentLiveTap({
     moveArmed,
     onKid: true,
@@ -126,6 +140,7 @@ function onKidTap(role: 'field' | 'bench'): void {
 }
 
 function onDestTap(dest: string | null): void {
+  if (actionOnlyGate() || tutorialLiveGate() === 'opp-goal') return
   const decision = parentLiveTap({ moveArmed, onKid: false, doubleTap: false })
   if (decision.action !== 'move') return
   cancelKidTapTimer()

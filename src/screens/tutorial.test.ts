@@ -46,6 +46,11 @@ describe('tutorial plan', () => {
     expect(plan[end + 3]).toMatchObject({ id: 'stats', screen: 'team-setup' })
   })
 
+  it('lets the parent edit the kid form before saving', () => {
+    const kid = tutorialPlan('parent').find((step) => step.id === 'kid')
+    expect(kid).toMatchObject({ wait: 'kid-saved' })
+  })
+
   it('walks parent live like coach after placing the kid', () => {
     const plan = tutorialPlan('parent')
     expect(plan.find((step) => step.id === 'place')?.wait).toBe('kid-moved')

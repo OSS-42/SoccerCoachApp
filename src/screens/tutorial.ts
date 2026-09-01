@@ -37,7 +37,7 @@ type Step = {
   screen: ScreenId
   title: MessageKey
   body: MessageKey
-  target?: string | (() => HTMLElement | null)
+  target?: string | string[] | (() => HTMLElement | HTMLElement[] | null)
   allowTarget?: boolean
   wait?: TutorialEvent | 'screen'
   next?: 'start' | 'next' | 'done'
@@ -48,10 +48,15 @@ let active: TutorialRole | null = null
 let index = 0
 let liveGate: LiveGate = null
 
-function resolveTarget(step: Step): HTMLElement | null {
-  if (!step.target) return null
-  if (typeof step.target === 'function') return step.target()
-  return document.querySelector<HTMLElement>(step.target)
+function resolveTargets(step: Step): HTMLElement[] {
+  if (!step.target) return []
+  if (typeof step.target === 'function') {
+    const got = step.target()
+    if (!got) return []
+    return (Array.isArray(got) ? got : [got]).filter((el) => document.body.contains(el))
+  }
+  const selectors = Array.isArray(step.target) ? step.target : [step.target]
+  return selectors.flatMap((sel) => [...document.querySelectorAll<HTMLElement>(sel)])
 }
 
 function prefillOpponent(id: string, value: string): void {
@@ -293,9 +298,16 @@ const PARENT_STEPS: Step[] = [
     screen: 'parent-home',
     title: 'tutParentKidTitle',
     body: 'tutParentKidBody',
-    target: '#save-parent-kid',
+    target: '#parent-kid-form',
     allowTarget: true,
     wait: 'kid-saved',
+    enter: () => {
+      window.requestAnimationFrame(() => {
+        const input = document.getElementById('parent-kid-name') as HTMLInputElement | null
+        input?.focus()
+        input?.select()
+      })
+    },
   },
   {
     id: 'newGame',
@@ -327,7 +339,10 @@ const PARENT_STEPS: Step[] = [
     screen: 'game-tracking',
     title: 'tutLiveGoalTitle',
     body: 'tutParentGoalBody',
-    target: '#parent-live-board',
+    target: () =>
+      document.querySelector<HTMLElement>(
+        '#parent-pitch .player-slot[data-player-id], #parent-bench-slot[data-player-id]',
+      ),
     allowTarget: true,
     wait: 'goal',
   },
@@ -338,7 +353,10 @@ const PARENT_STEPS: Step[] = [
     screen: 'game-tracking',
     title: 'tutLiveYellowTitle',
     body: 'tutParentYellowBody',
-    target: '#parent-live-board',
+    target: () =>
+      document.querySelector<HTMLElement>(
+        '#parent-pitch .player-slot[data-player-id], #parent-bench-slot[data-player-id]',
+      ),
     allowTarget: true,
     wait: 'yellow',
   },
@@ -432,8 +450,8 @@ function paint(): void {
     skipLabel: t('tutSkip'),
     showNext: isWelcome || isDone || !step.wait,
     showSkip: !isDone,
-    target: resolveTarget(step),
-    allowTarget: Boolean(step.allowTarget && resolveTarget(step)),
+    target: resolveTargets(step),
+    allowTarget: Boolean(step.allowTarget && resolveTargets(step).length),
     onNext: () => {
       if (isDone) {
         finish()
