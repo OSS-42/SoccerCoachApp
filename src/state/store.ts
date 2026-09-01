@@ -19,6 +19,7 @@ import {
 import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
 import { freshSave } from '@/domain/migrate'
+import { TUTORIAL_COACH_REV, TUTORIAL_PARENT_REV, emptyTutorial } from '@/domain/tutorial'
 import { canSelectTeam } from '@/domain/entitlement'
 import { canAddTeam, createPlayer, createTeam, findTeam, updatePlayer } from '@/domain/teams'
 import {
@@ -121,6 +122,22 @@ export function hasChosenRole(): boolean {
 
 export function setRole(role: AppRole): void {
   state = { ...state, role, roleChosen: true }
+  persist()
+}
+
+export function completeTutorial(role: AppRole): void {
+  const key = role === 'parent' ? 'parentRev' : 'coachRev'
+  const rev = role === 'parent' ? TUTORIAL_PARENT_REV : TUTORIAL_COACH_REV
+  state = {
+    ...state,
+    tutorial: { ...(state.tutorial ?? emptyTutorial()), [key]: rev },
+    changelogSeenVersion: APP_VERSION,
+  }
+  persist()
+}
+
+export function markChangelogSeen(): void {
+  state = { ...state, changelogSeenVersion: APP_VERSION }
   persist()
 }
 

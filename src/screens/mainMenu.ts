@@ -6,6 +6,7 @@ import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { fillTeamSelectors } from './shared'
 import { goToRoleHome } from './roleSelect'
+import { onRoleSwitched } from './tutorial'
 
 export function renderMainMenu(): void {
   fillTeamSelectors()
@@ -44,6 +45,7 @@ export function bindMainMenu(): void {
   document.getElementById('coach-switch-parent')?.addEventListener('click', () => {
     setRole('parent')
     goToRoleHome('replace')
+    onRoleSwitched()
   })
   document.getElementById('close-tips')?.addEventListener('click', () => {
     toggleDialog('tips-dialog', false)

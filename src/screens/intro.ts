@@ -1,6 +1,7 @@
 import introVideo from '@/assets/intro_ActionPitch.mp4'
 import { APP_VERSION, INTRO_BUTTON_DELAY_MS, INTRO_MS } from '@/domain/config'
 import { goAfterIntro } from './roleSelect'
+import { maybeResumeOnboarding } from './tutorial'
 
 let introStarted = false
 
@@ -14,6 +15,7 @@ export function bindIntro(): void {
       /* ignore */
     }
     goAfterIntro()
+    maybeResumeOnboarding()
   })
 }
 

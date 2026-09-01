@@ -1811,7 +1811,70 @@ body {
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9000;
+}
+
+#tutorial-root {
+    position: fixed;
+    inset: 0;
+    z-index: 8000;
+    pointer-events: none;
+}
+body:has(.dialog.active) #tutorial-root,
+#tutorial-root.is-paused {
+    visibility: hidden;
+}
+body:has(.dialog.active) #tutorial-card,
+body:has(.dialog.active) #tutorial-block,
+#tutorial-root.is-paused #tutorial-card,
+#tutorial-root.is-paused #tutorial-block {
+    pointer-events: none;
+}
+#tutorial-block {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.62);
+    pointer-events: auto;
+}
+#tutorial-spot {
+    position: absolute;
+    border: 2px solid var(--neu-accent, #3ddc97);
+    border-radius: 12px;
+    box-shadow: 0 0 0 2px var(--neu-glow, rgba(61, 220, 151, 0.35));
+    pointer-events: none;
+}
+#tutorial-card {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding: 16px 16px 14px;
+    border-radius: 14px;
+    background: var(--neu-card, #121c17);
+    color: var(--neu-text, #f3f7f4);
+    box-shadow: var(--neu-raised, 0 14px 40px rgba(0, 0, 0, 0.45));
+    border: 1px solid var(--neu-line, rgba(255, 255, 255, 0.07));
+    pointer-events: auto;
+    max-height: 42vh;
+    overflow: auto;
+}
+#tutorial-card h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+}
+#tutorial-card p {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+.tutorial-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+.tutorial-actions button {
+    min-height: 44px;
 }
 
 .dialog.active {

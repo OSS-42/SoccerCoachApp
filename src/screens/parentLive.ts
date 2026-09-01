@@ -5,7 +5,7 @@ import { fieldSpotDefs, spotLabel } from '@/domain/formation'
 import { currentPeriod, formatClock } from '@/domain/clock'
 import { kidOnField } from '@/domain/parent'
 import { actionLabel, t } from '@/i18n'
-import type { Player } from '@/domain/types'
+import type { ActionType, Player } from '@/domain/types'
 import {
   getCurrentGame,
   getParentProfile,
@@ -17,6 +17,7 @@ import {
 import { askConfirm } from '@/ui/confirm'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
+import { notifyTutorialEvent, tutorialLiveGate } from '@/ui/tutorialBus'
 
 let moveArmed = false
 let lastTapAt = 0
@@ -60,6 +61,8 @@ function cancelKidTapTimer(): void {
 
 function openKidActions(role: 'field' | 'bench'): void {
   if (moveArmed) return
+  const gate = tutorialLiveGate()
+  if (gate === 'switch' || gate === 'opp-goal') return
   const game = getCurrentGame()
   const player = kid()
   if (!game) return
@@ -70,7 +73,9 @@ function openKidActions(role: 'field' | 'bench'): void {
   }
   const name = document.getElementById('action-player-name')
   if (name) name.textContent = player.name
-  const actions = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
+  const available = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
+  const actions: ActionType[] =
+    gate === 'goal' ? ['goal'] : gate === 'yellow' ? ['yellow_card'] : available
   const buttons = document.getElementById('action-buttons')
   if (buttons) {
     buttons.innerHTML = actions
@@ -115,6 +120,7 @@ function onKidTap(role: 'field' | 'bench'): void {
     tapTimer = null
     lastTapAt = 0
     if (moveArmed) return
+    if (tutorialLiveGate() === 'switch') return
     openKidActions(role)
   }, DOUBLE_TAP_MS)
 }
@@ -129,6 +135,7 @@ function onDestTap(dest: string | null): void {
   moveArmed = false
   if (!result.ok) showMessage(result.message ?? t('noGame'), 'error')
   renderParentLive()
+  if (result.ok) notifyTutorialEvent('kid-moved')
 }
 
 export function renderParentLive(): void {
@@ -280,6 +287,7 @@ export function parentOpponentGoal(): void {
     return
   }
   renderParentLive()
+  notifyTutorialEvent('opp-goal')
 }
 
 export function bindParentLive(): void {

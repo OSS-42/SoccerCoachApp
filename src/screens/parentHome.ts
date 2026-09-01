@@ -16,6 +16,8 @@ import { showScreen } from '@/ui/nav'
 import { todayInputValue } from './shared'
 import { goToRoleHome } from './roleSelect'
 import { armParentKickoffPlacement, promptParentKickoffPlacement } from './parentLive'
+import { isTutorialActive, onRoleSwitched } from './tutorial'
+import { notifyTutorialEvent } from '@/ui/tutorialBus'
 
 const PARENT_NAME_KEYS: MessageKey[] = [
   'saveKid',
@@ -106,7 +108,10 @@ export function bindParentHome(): void {
       .value as PlayerPosition
     const result = saveParentKid(name, jersey, position)
     showMessage(result.message, result.ok ? 'success' : 'error')
-    if (result.ok) renderParentHome()
+    if (result.ok) {
+      renderParentHome()
+      notifyTutorialEvent('kid-saved')
+    }
   })
   document.getElementById('parent-start-game')?.addEventListener('click', async () => {
     if (hasInProgressGame()) {
@@ -133,7 +138,7 @@ export function bindParentHome(): void {
     }
     armParentKickoffPlacement()
     showScreen('game-tracking')
-    void promptParentKickoffPlacement()
+    if (!isTutorialActive()) void promptParentKickoffPlacement()
   })
   document.getElementById('parent-resume-game')?.addEventListener('click', () => {
     showScreen('game-tracking')
@@ -149,5 +154,6 @@ export function bindParentHome(): void {
   document.getElementById('parent-switch-coach')?.addEventListener('click', () => {
     setRole('coach')
     goToRoleHome('replace')
+    onRoleSwitched()
   })
 }

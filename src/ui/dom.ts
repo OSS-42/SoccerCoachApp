@@ -17,9 +17,12 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
+export const DIALOG_TOGGLE_EVENT = 'actionpitch:dialog'
+
 export function toggleDialog(id: string, open: boolean): void {
   const dialog = optionalEl(id)
   if (!dialog) return
   dialog.style.display = open ? 'flex' : 'none'
   dialog.classList.toggle('active', open)
+  document.dispatchEvent(new CustomEvent(DIALOG_TOGGLE_EVENT, { detail: { id, open } }))
 }

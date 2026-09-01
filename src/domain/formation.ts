@@ -63,6 +63,36 @@ export function benchSlotCount(_matchType?: MatchType, _rosterSize?: number): nu
   return 26
 }
 
+/**
+ * Tutorial lineup: full roster minus one, always including a GK.
+ * The leftover player(s) stay on the bench for the user to place.
+ */
+export function almostReadyLineup(
+  players: { id: string; position: string; jerseyNumber: number }[],
+  matchType: MatchType,
+): { field: { playerId: string; position: string }[]; leftoverIds: string[] } {
+  const required = ON_FIELD_COUNT[matchType]
+  const sorted = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  const gk = sorted.find((player) => player.position === 'GK') ?? sorted[0]
+  if (!gk || sorted.length < required) {
+    return { field: [], leftoverIds: sorted.map((player) => player.id) }
+  }
+  const rest = sorted.filter((player) => player.id !== gk.id)
+  const starters = rest.slice(0, Math.max(0, required - 2))
+  const leftover = rest.slice(Math.max(0, required - 2))
+  const fieldSpots = FIELD_SPOTS.filter((spot) => spot.position !== 'GK')
+  return {
+    field: [
+      { playerId: gk.id, position: 'GK' },
+      ...starters.map((player, index) => ({
+        playerId: player.id,
+        position: fieldSpots[index]?.position ?? 'CM',
+      })),
+    ],
+    leftoverIds: leftover.map((player) => player.id),
+  }
+}
+
 export function validateFormation(
   spots: FormationSpot[],
   matchType: MatchType,

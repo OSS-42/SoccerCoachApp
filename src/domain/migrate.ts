@@ -24,7 +24,9 @@ import {
   type ParentProfile,
   type AppRole,
   type Team,
+  type TutorialSave,
 } from './types'
+import { emptyTutorial } from './tutorial'
 
 const ACTION_ALIASES: Record<string, ActionType> = {
   goal: 'goal',
@@ -308,6 +310,19 @@ export function freshSave(): AppSave {
     currentTeamId: teams[0].id,
     currentGame: null,
     clock: emptyClock(),
+    tutorial: emptyTutorial(),
+    changelogSeenVersion: null,
+  }
+}
+
+function migrateTutorial(raw: unknown): TutorialSave {
+  const rec = asRecord(raw)
+  if (!rec) return emptyTutorial()
+  const coach = rec.coachRev
+  const parent = rec.parentRev
+  return {
+    coachRev: typeof coach === 'number' && Number.isFinite(coach) ? coach : null,
+    parentRev: typeof parent === 'number' && Number.isFinite(parent) ? parent : null,
   }
 }
 
@@ -352,6 +367,8 @@ export function migrateUnknown(raw: unknown): AppSave {
             inProgress.substitutionSeconds,
           )
         : emptyClock(),
+      tutorial: migrateTutorial(rec.tutorial),
+      changelogSeenVersion: asString(rec.changelogSeenVersion) || null,
     }
     return withSelectableTeam(draft)
   }
@@ -383,5 +400,7 @@ export function migrateUnknown(raw: unknown): AppSave {
     currentTeamId: teams[0].id,
     currentGame: null,
     clock: emptyClock(),
+    tutorial: migrateTutorial(rec.tutorial),
+    changelogSeenVersion: asString(rec.changelogSeenVersion) || null,
   })
 }

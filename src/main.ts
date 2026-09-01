@@ -24,6 +24,13 @@ import { bindParentHome, paintParentKidCopy, renderParentHome } from '@/screens/
 import { bindParentLive } from '@/screens/parentLive'
 import { bindRoleSelect } from '@/screens/roleSelect'
 import { bindTeamSelectors, fillTeamSelectors } from '@/screens/shared'
+import {
+  bindTutorial,
+  isTutorialActive,
+  onTutorialScreenRendered,
+  skipTutorial,
+} from '@/screens/tutorial'
+import { bindTutorialOverlay } from '@/ui/tutorialOverlay'
 
 function blockEdgeSwipeBack(event: TouchEvent): void {
   const x = event.touches[0]?.clientX ?? 0
@@ -92,6 +99,7 @@ function renderActive(): void {
       renderSettings()
       break
   }
+  onTutorialScreenRendered()
 }
 
 function bindNavigation(): void {
@@ -137,6 +145,10 @@ onShow('settings', renderSettings)
 
 history.replaceState({ screen: 'ota-screen' }, '')
 bindHistoryNavigation((from) => {
+  if (isTutorialActive()) {
+    skipTutorial()
+    return true
+  }
   if (from === 'game-tracking' && hasInProgressGame()) return true
   return false
 })
@@ -154,6 +166,8 @@ bindFormation()
 bindLiveGame()
 bindReports()
 bindSettings()
+bindTutorialOverlay()
+bindTutorial()
 subscribe(renderActive)
 startClockLoop()
 

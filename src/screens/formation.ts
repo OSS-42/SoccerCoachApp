@@ -1,6 +1,7 @@
 import { t } from '@/i18n'
 import { askConfirm } from '@/ui/confirm'
 import {
+  almostReadyLineup,
   benchSlotCount,
   fieldSpotDefs,
   filterDefaultFormation,
@@ -8,11 +9,12 @@ import {
   spotLabel,
   validateFormation,
 } from '@/domain/formation'
-import type { FormationSpot } from '@/domain/types'
+import { ON_FIELD_COUNT, type FormationSpot } from '@/domain/types'
 import { getCurrentTeam, pauseClock, saveDefaultFormation, startPreparedGame } from '@/state/store'
 import { escapeHtml } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
+import { notifyTutorialEvent, tutorialRunning } from '@/ui/tutorialBus'
 import { clearGameDraft, getGameDraft } from './gameSetup'
 import { fillTeamSelectors } from './shared'
 
@@ -247,6 +249,15 @@ function handleSlotPointer(event: PointerEvent): void {
   }
   place(selectedPlayerId, slot)
   clearSelection()
+  notifyFormationReadyIfValid()
+}
+
+function notifyFormationReadyIfValid(): void {
+  if (!tutorialRunning()) return
+  const draft = getGameDraft()
+  if (!draft) return
+  const { field } = readFormation()
+  if (validateFormation(field, draft.matchType).ok) notifyTutorialEvent('formation-ready')
 }
 
 export function renderFormation(): void {
@@ -374,6 +385,48 @@ export function renderFormation(): void {
   clearSelection()
 }
 
+export function seedTutorialFormation(): void {
+  const draft = getGameDraft()
+  const team = getCurrentTeam()
+  if (!draft || !team) return
+  const { field } = almostReadyLineup(team.players, draft.matchType)
+  for (const spot of field) {
+    const dest = document.querySelector<HTMLElement>(
+      `#formation-field .player-slot[data-position="${spot.position}"]`,
+    )
+    if (!dest) continue
+    place(spot.playerId, dest)
+  }
+  const saveDefault = document.getElementById('save-default-formation') as HTMLInputElement | null
+  if (saveDefault) saveDefault.checked = false
+  clearSelection()
+}
+
+function fillTutorialFormationIfShort(): void {
+  const draft = getGameDraft()
+  if (!draft) return
+  const required = ON_FIELD_COUNT[draft.matchType]
+  const gkSlot = document.querySelector<HTMLElement>(
+    '#formation-field .player-slot[data-position="GK"]',
+  )
+  if (gkSlot && !gkSlot.dataset.playerId) {
+    const team = getCurrentTeam()
+    const gkId =
+      team?.players.find((player) => player.position === 'GK' && slotByPlayer(player.id))?.id ??
+      document.querySelector<HTMLElement>('.bench-slot[data-player-id]')?.dataset.playerId
+    if (gkId) place(gkId, gkSlot)
+  }
+  while (readFormation().field.length < required) {
+    const bench = document.querySelector<HTMLElement>('.bench-slot[data-player-id]')
+    const empty = [...document.querySelectorAll<HTMLElement>('#formation-field .player-slot')].find(
+      (slot) => !slot.dataset.playerId,
+    )
+    const id = bench?.dataset.playerId
+    if (!id || !empty) break
+    place(id, empty)
+  }
+}
+
 export function bindFormation(): void {
   document.getElementById('save-formation')?.addEventListener('click', () => {
     const current = getGameDraft()
@@ -414,6 +467,7 @@ export function bindFormation(): void {
   document.getElementById('start-from-formation')?.addEventListener('click', () => {
     const draft = getGameDraft()
     if (!draft) return showScreen('game-setup')
+    if (tutorialRunning()) fillTutorialFormationIfShort()
     const { field, unavailable } = readFormation()
     const valid = validateFormation(field, draft.matchType)
     if (!valid.ok) {

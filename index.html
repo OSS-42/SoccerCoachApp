@@ -545,6 +545,8 @@
           <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version"></span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="open-changelog" data-i18n="changelog">Change log</button>
+          <button class="secondary-btn" id="replay-tutorial-coach" data-i18n="replayTutorialCoach">Replay coach tutorial</button>
+          <button class="secondary-btn" id="replay-tutorial-parent" data-i18n="replayTutorialParent">Replay parent tutorial</button>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
       </div>
@@ -714,6 +716,19 @@
           </div>
           <div class="dialog-buttons">
             <button class="primary-btn" id="close-tips" data-i18n="close">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tutorial-root" hidden aria-hidden="true">
+        <div id="tutorial-block"></div>
+        <div id="tutorial-spot" hidden></div>
+        <div id="tutorial-card">
+          <h2 id="tutorial-title"></h2>
+          <p id="tutorial-body"></p>
+          <div class="tutorial-actions">
+            <button type="button" class="secondary-btn" id="tutorial-skip">Skip tutorial</button>
+            <button type="button" class="primary-btn" id="tutorial-next">Next</button>
           </div>
         </div>
       </div>

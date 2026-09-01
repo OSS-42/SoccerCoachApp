@@ -12,6 +12,8 @@ describe('migrateUnknown', () => {
     expect(save.roleChosen).toBe(false)
     expect(save.role).toBe('coach')
     expect(save.parent.kid.id).toBe('parent-kid')
+    expect(save.tutorial).toEqual({ coachRev: null, parentRev: null })
+    expect(save.changelogSeenVersion).toBeNull()
   })
 
   it('keeps the selected team and an in-progress game', () => {

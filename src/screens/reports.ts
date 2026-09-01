@@ -7,6 +7,7 @@ import { deleteCompletedGames, findCompletedGame, getCurrentTeam, setCompletedGa
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { saveOrSharePdf } from '@/lib/shareFile'
+import { notifyTutorialEvent } from '@/ui/tutorialBus'
 import { fillTeamSelectors } from './shared'
 import { buildReportDialogHtml } from './reportView'
 
@@ -140,6 +141,7 @@ export function bindReports(): void {
   document.getElementById('reports-list')?.addEventListener('change', (event) => {
     if (!(event.target as HTMLElement).classList.contains('report-checkbox')) return
     updateReportSelectBar()
+    notifyTutorialEvent('report-selected')
   })
   document.getElementById('report-select-cancel')?.addEventListener('click', () => {
     document.querySelectorAll<HTMLInputElement>('.report-checkbox').forEach((box) => {
@@ -159,6 +161,7 @@ export function bindReports(): void {
     if (!ok) return
     const result = deleteCompletedGames(ids)
     showMessage(result.message, result.ok ? 'success' : 'error')
+    if (result.ok) notifyTutorialEvent('report-deleted')
   })
   window.addEventListener(VIEW_REPORT_EVENT, (event) => {
     viewReport((event as CustomEvent<string>).detail)

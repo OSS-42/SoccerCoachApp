@@ -488,6 +488,15 @@ html[data-theme] .screen-hint {
   box-shadow: var(--neu-pressed);
 }
 
+html[data-theme] #tutorial-card {
+  background: var(--neu-card);
+  color: var(--neu-text);
+  box-shadow: var(--neu-raised);
+}
+html[data-theme] #tutorial-spot {
+  border-color: var(--neu-accent);
+}
+
 html[data-theme] #parent-home .parent-new-game {
   background: var(--neu-bg-2);
   border: 1px solid var(--neu-line);

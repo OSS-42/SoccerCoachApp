@@ -1,6 +1,5 @@
 import { APP_VERSION, BACKUP_FILE_PREFIX } from '@/domain/config'
-import { recentChangelog } from '@/domain/changelog'
-import { escapeHtml, toggleDialog } from '@/ui/dom'
+import { toggleDialog } from '@/ui/dom'
 import { applyDomTranslations, getLocale, isLocale, t } from '@/i18n'
 import { paintParentKidCopy } from './parentHome'
 import { isTheme } from '@/lib/theme'
@@ -22,6 +21,8 @@ import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { fillTeamSelectors } from './shared'
 import { goToRoleHome } from './roleSelect'
+import { onRoleSwitched, startTutorial } from './tutorial'
+import { openWhatsNew } from './whatsNew'
 
 async function hardRefresh(): Promise<void> {
   try {
@@ -72,6 +73,7 @@ export function bindSettings(): void {
   document.getElementById('settings-switch-role')?.addEventListener('click', () => {
     setRole(getRole() === 'parent' ? 'coach' : 'parent')
     goToRoleHome('replace')
+    onRoleSwitched()
   })
   document.querySelectorAll<HTMLInputElement>('input[name="language"]').forEach((radio) => {
     radio.addEventListener('change', () => {
@@ -90,22 +92,13 @@ export function bindSettings(): void {
     })
   })
   document.getElementById('open-changelog')?.addEventListener('click', () => {
-    const list = document.getElementById('changelog-list')
-    if (list) {
-      const locale = getLocale()
-      list.innerHTML = recentChangelog(2)
-        .map((entry) => {
-          const items = (entry.items[locale] ?? entry.items.en)
-            .map((item) => `<li>${escapeHtml(item)}</li>`)
-            .join('')
-          return `<section class="changelog-entry">
-            <h3>v${escapeHtml(entry.version)}</h3>
-            <ul>${items}</ul>
-          </section>`
-        })
-        .join('')
-    }
-    toggleDialog('changelog-dialog', true)
+    openWhatsNew()
+  })
+  document.getElementById('replay-tutorial-coach')?.addEventListener('click', () => {
+    startTutorial('coach')
+  })
+  document.getElementById('replay-tutorial-parent')?.addEventListener('click', () => {
+    startTutorial('parent')
   })
   document.getElementById('close-changelog')?.addEventListener('click', () => {
     toggleDialog('changelog-dialog', false)

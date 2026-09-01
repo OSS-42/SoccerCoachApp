@@ -8,10 +8,23 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.66',
+    items: {
+      en: [
+        'First-launch tour for coaches and parents. Skip anytime; replay from Settings. After an update, a short What’s new — the tour only runs again if how you use the app changed.',
+        'Coach practice match is 9v9: place one leftover player, start the clock, record a goal, end each period (then Play again), opponent goal, then end the game and delete that training report.',
+      ],
+      fr: [
+        'Tour de prise en main pour coach et parent. Vous pouvez passer à tout moment ; revoir depuis Réglages. Après une mise à jour, un court « Nouveautés » — le tour ne reprend que si l’usage de l’app a changé.',
+        'Match d’entraînement coach en 9v9 : placez le joueur restant, lancez le chrono, un but, fin de chaque période (puis Play), but adverse, puis fin du match et suppression de ce rapport d’entraînement.',
+      ],
+    },
+  },
+  {
     version: '2.4.65',
     items: {
       en: [
-        'Formation and live screens show how to place or switch players by tap (no drag). Empty Team B is hidden from the team list.',
+        'Hints on formation and live: tap to place or switch players (no dragging). Empty Team B no longer appears in the list.',
       ],
       fr: [
         'Les écrans composition et match en direct expliquent le placement et les changements par toucher (pas de glisser). L’équipe B vide n’apparaît plus dans la liste.',

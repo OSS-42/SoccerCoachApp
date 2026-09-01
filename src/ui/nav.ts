@@ -12,9 +12,15 @@ export type ScreenId =
   | 'settings'
 
 const listeners = new Map<ScreenId, () => void>()
+const afterShow = new Set<(id: ScreenId) => void>()
 
 export function onShow(id: ScreenId, fn: () => void): void {
   listeners.set(id, fn)
+}
+
+export function onAfterShow(fn: (id: ScreenId) => void): () => void {
+  afterShow.add(fn)
+  return () => afterShow.delete(fn)
 }
 
 export function activeScreenId(): ScreenId {
@@ -29,6 +35,7 @@ export function showScreen(
     screen.classList.toggle('active', screen.id === id)
   })
   listeners.get(id)?.()
+  afterShow.forEach((fn) => fn(id))
   const mode = opts.history ?? 'push'
   if (mode === 'push') history.pushState({ screen: id }, '')
   if (mode === 'replace') history.replaceState({ screen: id }, '')

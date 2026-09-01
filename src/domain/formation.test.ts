@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   FIELD_SPOTS,
+  almostReadyLineup,
   filterDefaultFormation,
   filterDefaultUnavailable,
   spotLabel,
@@ -19,6 +20,50 @@ describe('formation', () => {
     const ss = FIELD_SPOTS.find((s) => s.position === 'SS')
     expect(ss?.x).toBe(((lw?.x ?? 0) + (rw?.x ?? 0)) / 2)
     expect(ss?.y).toBe(lw?.y)
+  })
+
+  it('leaves one player off a 9v9 tutorial lineup and always includes a GK', () => {
+    const players = [
+      { id: 'g', position: 'GK', jerseyNumber: 1 },
+      { id: 'a', position: 'CB', jerseyNumber: 2 },
+      { id: 'b', position: 'LB', jerseyNumber: 3 },
+      { id: 'c', position: 'RB', jerseyNumber: 4 },
+      { id: 'd', position: 'CM', jerseyNumber: 5 },
+      { id: 'e', position: 'ST', jerseyNumber: 6 },
+      { id: 'f', position: 'ST', jerseyNumber: 7 },
+      { id: 'h', position: 'LW', jerseyNumber: 8 },
+      { id: 'i', position: 'RW', jerseyNumber: 9 },
+    ]
+    const seeded = almostReadyLineup(players, '9v9')
+    expect(seeded.field).toHaveLength(8)
+    expect(seeded.field.some((spot) => spot.position === 'GK' && spot.playerId === 'g')).toBe(true)
+    expect(seeded.leftoverIds).toEqual(['i'])
+    expect(
+      validateFormation(
+        seeded.field.map((spot) => ({ ...spot, x: 0, y: 0 })),
+        '9v9',
+      ).ok,
+    ).toBe(false)
+  })
+
+  it('leaves one player off a 7v7 tutorial lineup and always includes a GK', () => {
+    const players = [
+      { id: 'g', position: 'GK', jerseyNumber: 1 },
+      { id: 'a', position: 'CB', jerseyNumber: 2 },
+      { id: 'b', position: 'LB', jerseyNumber: 3 },
+      { id: 'c', position: 'RB', jerseyNumber: 4 },
+      { id: 'd', position: 'CM', jerseyNumber: 5 },
+      { id: 'e', position: 'ST', jerseyNumber: 6 },
+      { id: 'f', position: 'ST', jerseyNumber: 7 },
+    ]
+    const seeded = almostReadyLineup(players, '7v7')
+    expect(seeded.field).toHaveLength(6)
+    expect(seeded.field.some((spot) => spot.position === 'GK' && spot.playerId === 'g')).toBe(true)
+    expect(seeded.leftoverIds).toEqual(['f'])
+    expect(validateFormation(
+      seeded.field.map((spot) => ({ ...spot, x: 0, y: 0 })),
+      '7v7',
+    ).ok).toBe(false)
   })
 
   it('requires exact on-field count and a GK for 7v7', () => {

@@ -14,6 +14,7 @@ import {
 } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
+import { notifyTutorialEvent } from '@/ui/tutorialBus'
 import { fillTeamSelectors } from './shared'
 
 function fillPositionSelect(select: HTMLSelectElement, selected?: string): void {
@@ -280,6 +281,7 @@ export function bindTeamSetup(): void {
       ;(document.getElementById('player-name') as HTMLInputElement).value = ''
       ;(document.getElementById('jersey-number') as HTMLInputElement).value = ''
       toggleDialog('add-player-dialog', false)
+      notifyTutorialEvent('player-added')
     }
   })
 
@@ -329,6 +331,7 @@ export function bindTeamSetup(): void {
   document.getElementById('players-list')?.addEventListener('change', (event) => {
     if (!(event.target as HTMLElement).classList.contains('player-checkbox')) return
     updateSelectBar()
+    notifyTutorialEvent('player-selected')
   })
   document.getElementById('player-select-cancel')?.addEventListener('click', () => {
     document.querySelectorAll<HTMLInputElement>('.player-checkbox').forEach((box) => {
@@ -348,6 +351,7 @@ export function bindTeamSetup(): void {
     if (!ok) return
     const result = deletePlayers(ids)
     showMessage(result.message, result.ok ? 'success' : 'error')
+    if (result.ok) notifyTutorialEvent('player-deleted')
   })
   document.getElementById('cancel-edit-player')?.addEventListener('click', () => {
     toggleDialog('edit-player-dialog', false)

@@ -1,5 +1,6 @@
 import { getRole, hasChosenRole, setRole } from '@/state/store'
 import { showScreen, type ScreenId } from '@/ui/nav'
+import { maybeResumeOnboarding } from './tutorial'
 
 export function homeForRole(): ScreenId {
   return getRole() === 'parent' ? 'parent-home' : 'main-screen'
@@ -21,9 +22,11 @@ export function bindRoleSelect(): void {
   document.getElementById('pick-role-coach')?.addEventListener('click', () => {
     setRole('coach')
     goToRoleHome('replace')
+    maybeResumeOnboarding()
   })
   document.getElementById('pick-role-parent')?.addEventListener('click', () => {
     setRole('parent')
     goToRoleHome('replace')
+    maybeResumeOnboarding()
   })
 }

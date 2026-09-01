@@ -45,6 +45,7 @@ import {
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
+import { notifyTutorialEvent, tutorialLiveGate } from '@/ui/tutorialBus'
 import { renderParentLive, resetParentLiveUi } from './parentLive'
 import { homeForRole } from './roleSelect'
 
@@ -275,6 +276,11 @@ function onTileClick(player: Player, role: 'field' | 'bench'): void {
   })
 
   if (decision.action === 'schedule-actions') {
+    if (tutorialLiveGate() === 'switch') {
+      lastTapId = player.id
+      lastTapAt = now
+      return
+    }
     lastTapId = player.id
     lastTapAt = now
     actionTapTimer = window.setTimeout(() => {
@@ -333,6 +339,7 @@ function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
     }
     renderLiveGame()
     showMessage(t('subDone', { off: offJersey, on: onJersey }), 'success')
+    notifyTutorialEvent('sub')
     return
   }
 
@@ -362,6 +369,8 @@ function subFailMessage(reason?: string): string {
 
 function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
   if (pendingSubId) return
+  const gate = tutorialLiveGate()
+  if (gate === 'switch' || gate === 'opp-goal') return
   const game = getCurrentGame()
   if (!game) return
   const stats = statsFromActions(game.actions, player.id)
@@ -372,7 +381,9 @@ function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
   pendingPlayer = player
   const name = document.getElementById('action-player-name')
   if (name) name.textContent = player.name
-  const actions = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
+  const available = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
+  const actions =
+    gate === 'goal' ? (['goal'] as ActionType[]) : gate === 'yellow' ? (['yellow_card'] as ActionType[]) : available
   const buttons = document.getElementById('action-buttons')
   if (buttons) {
     buttons.innerHTML = actions
@@ -390,6 +401,16 @@ function closeActionDialog(): void {
   pendingPlayer = null
 }
 
+export function dismissLiveActionUi(): void {
+  closeActionDialog()
+  goalScorerId = null
+  assisterId = null
+  toggleDialog('opponent-action-dialog', false)
+  toggleDialog('assist-selection-dialog', false)
+  toggleDialog('scorer-selection-dialog', false)
+  toggleDialog('note-dialog', false)
+}
+
 function liveActor(): Player | null {
   if (pendingPlayer) return pendingPlayer
   if (isParentLive()) return getParentProfile().kid
@@ -403,7 +424,8 @@ function currentGkId(): string | null {
 function openOpponentActions(): void {
   const buttons = document.getElementById('opponent-action-buttons')
   if (!buttons) return
-  buttons.innerHTML = OPPONENT_ACTIONS.map(
+  const list = tutorialLiveGate() === 'opp-goal' ? (['goal_allowed'] as ActionType[]) : OPPONENT_ACTIONS
+  buttons.innerHTML = list.map(
     (type) =>
       `<button class="action-btn" data-opp-action="${type}"><span class="stat-emoji">${ACTION_EMOJI[type]}</span> ${escapeHtml(opponentActionLabel(type))}</button>`,
   ).join('')
@@ -428,6 +450,9 @@ function commit(type: ActionType, playerId: string | null, note?: string): void 
     showMessage(t('yellowSendOff', { name: player?.name ?? t('unknownPlayer') }), 'warning')
   }
   renderLiveGame()
+  if (type === 'goal') notifyTutorialEvent('goal')
+  if (type === 'yellow_card') notifyTutorialEvent('yellow')
+  if (type === 'goal_allowed') notifyTutorialEvent('opp-goal')
 }
 
 function finishMatchToReport(): void {
@@ -459,7 +484,10 @@ export function bindLiveGame(): void {
     showMessage(result.message, result.ok ? 'success' : 'error')
     renderLiveGame()
   })
-  document.getElementById('play-clock')?.addEventListener('click', () => playClock())
+  document.getElementById('play-clock')?.addEventListener('click', () => {
+    playClock()
+    notifyTutorialEvent('play')
+  })
   document.getElementById('pause-clock')?.addEventListener('click', () => pauseClock())
   document.getElementById('reset-sub')?.addEventListener('click', () => resetSubTimer())
   document.getElementById('end-game')?.addEventListener('click', () => {
@@ -513,6 +541,7 @@ export function bindLiveGame(): void {
     } else {
       const result = finishCurrentPeriod()
       showMessage(result.message, result.ok ? 'success' : 'error')
+      if (result.ok && !result.ended) notifyTutorialEvent('period')
     }
   })
 

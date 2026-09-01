@@ -186,6 +186,11 @@ export type ParentProfile = {
   games: Game[]
 }
 
+export type TutorialSave = {
+  coachRev: number | null
+  parentRev: number | null
+}
+
 export type AppSave = {
   saveVersion: typeof SAVE_VERSION
   appVersion: string
@@ -200,6 +205,8 @@ export type AppSave = {
   currentTeamId: string
   currentGame: Game | null
   clock: ClockState
+  tutorial: TutorialSave
+  changelogSeenVersion: string | null
 }
 
 export const DEFAULT_CLOCK: ClockState = {
