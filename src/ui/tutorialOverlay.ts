@@ -36,12 +36,29 @@ function asTargets(target: OverlayOpts['target']): HTMLElement[] {
   return (Array.isArray(target) ? target : [target]).filter((el) => document.body.contains(el))
 }
 
+function pointInTargets(x: number, y: number): boolean {
+  return targetEls.some((el) => {
+    if (!document.body.contains(el)) return false
+    const r = el.getBoundingClientRect()
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
+  })
+}
+
 function eventAllowed(event: Event): boolean {
   const node = event.target
-  if (!(node instanceof Element)) return false
-  if (node.closest('#tutorial-card')) return true
-  if (node.closest('.dialog')) return true
-  if (allowTarget && targetEls.some((el) => el === node || el.contains(node))) return true
+  if (node instanceof Element) {
+    if (node.closest('#tutorial-card')) return true
+    if (node.closest('.dialog')) return true
+    if (allowTarget && targetEls.some((el) => el === node || el.contains(node))) return true
+  }
+  if (!allowTarget) return false
+  if (event instanceof MouseEvent || event instanceof PointerEvent) {
+    return pointInTargets(event.clientX, event.clientY)
+  }
+  if (typeof TouchEvent !== 'undefined' && event instanceof TouchEvent) {
+    const point = event.touches[0] ?? event.changedTouches[0]
+    if (point) return pointInTargets(point.clientX, point.clientY)
+  }
   return false
 }
 
@@ -170,14 +187,13 @@ export function layoutTutorialSpot(): void {
     card.style.bottom = cardOnTop ? 'auto' : 'max(16px, env(safe-area-inset-bottom, 0px))'
     card.style.maxHeight = tall || spansBoth ? '28vh' : '42vh'
   }
-  if (allowTarget) {
-    const holePath = holes
-      .map((h) => `${h.left}px ${h.top}px, ${h.left}px ${h.bottom}px, ${h.right}px ${h.bottom}px, ${h.right}px ${h.top}px, ${h.left}px ${h.top}px`)
-      .join(', ')
-    block.style.clipPath = `polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${holePath})`
-  } else {
-    block.style.clipPath = ''
-  }
+  const holePath = holes
+    .map(
+      (h) =>
+        `${h.left}px ${h.top}px, ${h.left}px ${h.bottom}px, ${h.right}px ${h.bottom}px, ${h.right}px ${h.top}px, ${h.left}px ${h.top}px`,
+    )
+    .join(', ')
+  block.style.clipPath = `polygon(evenodd, 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, ${holePath})`
 }
 
 export function isTutorialOverlayOpen(): boolean {

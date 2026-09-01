@@ -177,6 +177,7 @@ export function startParentGame(input: {
   numPeriods: number
   periodDuration: number
   startsOnField: boolean
+  matchType?: MatchType
 }): { ok: boolean; message: string } {
   const kid = getParentProfile().kid
   if (!kid.name) return { ok: false, message: t('playerNameRequired') }
@@ -192,6 +193,7 @@ export function startParentGame(input: {
     numPeriods: input.numPeriods,
     periodDuration: input.periodDuration,
     startsOnField: input.startsOnField,
+    matchType: input.matchType,
   })
   state = {
     ...state,

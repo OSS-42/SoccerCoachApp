@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.68',
+    items: {
+      en: [
+        'Tour highlights cut a hole in the dimmer so you can see the control (kid stats card, reports, formation). Coach tour uses DEMO TEAM for the practice match. Parent practice match is 9v9 (3 periods).',
+      ],
+      fr: [
+        'Le tour perce un trou dans l’assombrissement pour voir le contrôle (carte de stats, rapports, composition). Le tour coach utilise DEMO TEAM pour l’entraînement. Le match parent d’entraînement est en 9v9 (3 périodes).',
+      ],
+    },
+  },
+  {
     version: '2.4.67',
     items: {
       en: [

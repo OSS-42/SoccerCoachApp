@@ -19,8 +19,8 @@ describe('settings changelog dialog', () => {
     const list = document.getElementById('changelog-list')
     expect(dialog?.classList.contains('active')).toBe(true)
     expect(list?.querySelectorAll('.changelog-entry')).toHaveLength(2)
+    expect(list?.textContent).toContain('v2.4.68')
     expect(list?.textContent).toContain('v2.4.67')
-    expect(list?.textContent).toContain('v2.4.66')
   })
 
   it('groups tips under the live and formation screens', () => {

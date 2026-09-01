@@ -131,6 +131,7 @@ export function bindParentHome(): void {
         (document.getElementById('parent-period-duration') as HTMLInputElement).value,
       ),
       startsOnField: (document.getElementById('parent-starts-on') as HTMLInputElement).checked,
+      matchType: isTutorialActive() ? '9v9' : undefined,
     })
     if (!result.ok) {
       showMessage(result.message, 'error')

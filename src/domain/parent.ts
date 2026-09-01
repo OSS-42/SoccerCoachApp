@@ -1,6 +1,6 @@
 import { newId } from './ids'
 import { FIELD_SPOTS, type FieldSpotDef } from './formation'
-import type { FormationSpot, Game, ParentProfile, Player, PlayerPosition, Team } from './types'
+import type { FormationSpot, Game, MatchType, ParentProfile, Player, PlayerPosition, Team } from './types'
 
 export const PARENT_KID_ID = 'parent-kid'
 
@@ -44,6 +44,7 @@ export function createParentGame(input: {
   numPeriods: number
   periodDuration: number
   startsOnField: boolean
+  matchType?: MatchType
 }): Game {
   const formation = input.startsOnField ? [formationSpotFor(input.kid.id, input.kid.position)] : []
   return {
@@ -51,7 +52,7 @@ export function createParentGame(input: {
     date: input.date,
     teamName: 'HOME',
     opponentName: input.opponentName.trim().toUpperCase(),
-    matchType: '7v7',
+    matchType: input.matchType ?? '7v7',
     numPeriods: input.numPeriods,
     periodDuration: input.periodDuration,
     homeScore: 0,

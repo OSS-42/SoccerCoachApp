@@ -72,10 +72,24 @@ function prefillCoachMatchType(): void {
   select.dispatchEvent(new Event('change'))
 }
 
-function ensureCoachDemoRoster(): void {
-  const team = getCurrentTeam()
-  if ((team?.players.length ?? 0) >= 9) return
+let tutorialTeamRestore: string | null = null
+
+function useDemoTeamForTutorial(): void {
+  const current = getSave().currentTeamId
+  if (current && current !== DEMO_TEAM_ID && tutorialTeamRestore == null) {
+    tutorialTeamRestore = current
+  }
   selectTeam(DEMO_TEAM_ID)
+}
+
+function restoreTutorialTeam(): void {
+  if (!tutorialTeamRestore) return
+  if (hasInProgressGame()) {
+    tutorialTeamRestore = null
+    return
+  }
+  selectTeam(tutorialTeamRestore)
+  tutorialTeamRestore = null
 }
 
 function livePlayStep(id: string, again: boolean): Step {
@@ -161,7 +175,7 @@ const COACH_STEPS: Step[] = [
     allowTarget: true,
     wait: 'screen',
     enter: () => {
-      ensureCoachDemoRoster()
+      useDemoTeamForTutorial()
       prefillOpponent('opponent-name', t('tutorialOpponent'))
       prefillCoachMatchType()
     },
@@ -175,9 +189,12 @@ const COACH_STEPS: Step[] = [
     allowTarget: true,
     wait: 'formation-ready',
     enter: () => {
+      useDemoTeamForTutorial()
       window.requestAnimationFrame(() => {
-        seedTutorialFormation()
-        layoutTutorialSpot()
+        window.requestAnimationFrame(() => {
+          seedTutorialFormation()
+          layoutTutorialSpot()
+        })
       })
     },
   },
@@ -237,6 +254,7 @@ const COACH_STEPS: Step[] = [
     title: 'tutCoachReportTitle',
     body: 'tutCoachReportHereBody',
     target: '#reports-list',
+    allowTarget: true,
   },
   {
     id: 'deleteReport',
@@ -321,6 +339,10 @@ const PARENT_STEPS: Step[] = [
       prefillOpponent('parent-opponent', t('tutorialOpponent'))
       const startsOn = document.getElementById('parent-starts-on') as HTMLInputElement | null
       if (startsOn) startsOn.checked = false
+      const periods = document.getElementById('parent-num-periods') as HTMLInputElement | null
+      const duration = document.getElementById('parent-period-duration') as HTMLInputElement | null
+      if (periods) periods.value = '3'
+      if (duration) duration.value = '20'
     },
   },
   {
@@ -386,6 +408,7 @@ const PARENT_STEPS: Step[] = [
     title: 'tutParentStatsTitle',
     body: 'tutParentStatsBody',
     target: '#parent-kid-stats',
+    allowTarget: true,
   },
   {
     id: 'openSettings',
@@ -502,6 +525,7 @@ function stopTutorialUi(): void {
   setTutorialEventHandler(null)
   setTutorialRunning(false)
   hideTutorialCard()
+  restoreTutorialTeam()
 }
 
 function finish(): void {

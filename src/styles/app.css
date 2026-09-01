@@ -1834,7 +1834,7 @@ body:has(.dialog.active) #tutorial-block,
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.62);
-    pointer-events: auto;
+    pointer-events: none;
 }
 #tutorial-spot {
     position: absolute;
