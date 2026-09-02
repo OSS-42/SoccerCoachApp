@@ -1,6 +1,6 @@
 {
-  "version": "2.4.68",
+  "version": "2.4.69",
   "minAppVersion": "2.4.50",
-  "notes": "Tutorial: highlighted UI is visible through the overlay. Coach practice match uses DEMO TEAM. Parent practice match is 9v9 with 3 periods.",
+  "notes": "Periods follow Stop (21' stays in the period until confirm). Coach tour: stats then delete practice report; replay opens Players. Parent reports back with the same steps. Formation leftover tap stays ",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
