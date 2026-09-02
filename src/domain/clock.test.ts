@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
   commitWallClock,
+  actionIsAtOrAfterPeriodBreak,
   currentPeriod,
   finishPeriodElapsed,
   formatClock,
   gameMinute,
+  isLastLivePeriod,
   isLastPeriod,
+  livePeriodNumber,
   parseClockInput,
+  periodBreakMinutes,
+  periodEndMarksBefore,
+  periodOfAction,
+  remainingPeriodEndMarks,
   wallElapsed,
   wallSubRemaining,
 } from './clock'
@@ -34,11 +41,43 @@ describe('clock', () => {
     expect(currentPeriod(36 * 60, 12, 4)).toBe(4)
   })
 
-  it('snaps finish-period to the next period start', () => {
-    expect(finishPeriodElapsed(8 * 60, 12, 4)).toBe(12 * 60)
-    expect(finishPeriodElapsed(12 * 60, 12, 4)).toBe(24 * 60)
+  it('snaps an early stop to the next scheduled start, and keeps added time', () => {
+    expect(finishPeriodElapsed(8 * 60, 12, 4, 0)).toBe(12 * 60)
+    expect(finishPeriodElapsed(12 * 60, 12, 4, 0)).toBe(12 * 60)
+    expect(finishPeriodElapsed(12 * 60, 12, 4, 1)).toBe(24 * 60)
     expect(isLastPeriod(36 * 60, 12, 4)).toBe(true)
-    expect(finishPeriodElapsed(36 * 60, 12, 4)).toBe(36 * 60)
+    expect(finishPeriodElapsed(36 * 60, 12, 4, 3)).toBe(36 * 60)
+    expect(finishPeriodElapsed(8 * 60, 20, 3, 0)).toBe(20 * 60)
+    expect(finishPeriodElapsed(21 * 60, 20, 3, 0)).toBe(21 * 60)
+    expect(finishPeriodElapsed(29 * 60, 20, 3, 1)).toBe(40 * 60)
+    expect(currentPeriod(20 * 60, 20, 3)).toBe(2)
+  })
+
+  it('uses confirmed period ends, not the clock, for the live period', () => {
+    expect(livePeriodNumber({ numPeriods: 3, periodScores: [] })).toBe(1)
+    expect(livePeriodNumber({ numPeriods: 3, periodScores: [{ home: 0, away: 0 }] })).toBe(2)
+    expect(livePeriodNumber({ numPeriods: 3, periodScores: [{ home: 0, away: 0 }, { home: 1, away: 0 }] })).toBe(3)
+    expect(isLastLivePeriod({ numPeriods: 3, periodScores: [] })).toBe(false)
+    expect(isLastLivePeriod({ numPeriods: 3, periodScores: [{ home: 0, away: 0 }] })).toBe(false)
+    expect(isLastLivePeriod({ numPeriods: 3, periodScores: [{ home: 0, away: 0 }, { home: 1, away: 0 }] })).toBe(true)
+  })
+
+  it('keeps a 21:00 action in period 1 when that period was stamped', () => {
+    const game = { numPeriods: 3, periodDuration: 20, periodScores: [] as { home: number; away: number }[] }
+    expect(periodOfAction({ gameSecond: 21 * 60, period: 1 }, game)).toBe(1)
+    expect(periodOfAction({ gameSecond: 21 * 60, period: 2 }, game)).toBe(2)
+    expect(periodOfAction({ gameSecond: 21 * 60 }, game)).toBe(2)
+    expect(periodEndMarksBefore(1, 1)).toEqual({ filled: [], shownPeriod: 1 })
+    expect(periodEndMarksBefore(1, 2)).toEqual({ filled: [1], shownPeriod: 2 })
+    expect(remainingPeriodEndMarks(1, 3)).toEqual([1, 2])
+  })
+
+  it('puts an action at the period boundary on the next period', () => {
+    expect(periodBreakMinutes(3, 20)).toEqual([20, 40])
+    expect(actionIsAtOrAfterPeriodBreak(20 * 60 - 1, 20)).toBe(false)
+    expect(actionIsAtOrAfterPeriodBreak(20 * 60, 20)).toBe(true)
+    expect(actionIsAtOrAfterPeriodBreak(20 * 60 + 5, 20)).toBe(true)
+    expect(gameMinute(20 * 60)).toBe(20)
   })
 
   it('reports whole minutes for action stamps', () => {

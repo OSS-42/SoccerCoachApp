@@ -25,9 +25,10 @@ import {
   showTutorialCard,
 } from '@/ui/tutorialOverlay'
 import { activeScreenId, onAfterShow, showScreen, type ScreenId } from '@/ui/nav'
-import { seedTutorialFormation } from './formation'
+import { seedTutorialFormation, tutorialFormationTargets } from './formation'
 import { dismissLiveActionUi } from './liveGame'
 import { armParentKickoffPlacement } from './parentLive'
+import { showTeamTab } from './teamSetup'
 import { openWhatsNew } from './whatsNew'
 
 type LiveGate = 'goal' | 'yellow' | 'opp-goal' | 'switch' | null
@@ -116,6 +117,35 @@ function livePeriodStep(id: string): Step {
   }
 }
 
+function reportsHereStep(): Step {
+  return {
+    id: 'reportsHere',
+    screen: 'reports',
+    title: 'tutCoachReportTitle',
+    body: 'tutCoachReportHereBody',
+    target: '#reports-list',
+    allowTarget: true,
+  }
+}
+
+function deleteReportStep(): Step {
+  return {
+    id: 'deleteReport',
+    screen: 'reports',
+    title: 'tutCoachDeleteTitle',
+    body: 'tutCoachDeleteBody',
+    target: () => {
+      const bar = document.getElementById('report-select-bar')
+      if (bar && !bar.hidden) return bar
+      return document.querySelector<HTMLElement>(
+        '#reports-list .report-item, #reports-list .report-checkbox, #reports-list',
+      )
+    },
+    allowTarget: true,
+    wait: 'report-deleted',
+  }
+}
+
 const COACH_STEPS: Step[] = [
   {
     id: 'welcome',
@@ -185,7 +215,7 @@ const COACH_STEPS: Step[] = [
     screen: 'formation-setup',
     title: 'tutCoachPosTitle',
     body: 'tutCoachPosBody',
-    target: '#formation-setup .formation-container',
+    target: tutorialFormationTargets,
     allowTarget: true,
     wait: 'formation-ready',
     enter: () => {
@@ -193,7 +223,7 @@ const COACH_STEPS: Step[] = [
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
           seedTutorialFormation()
-          layoutTutorialSpot()
+          paint()
         })
       })
     },
@@ -248,37 +278,17 @@ const COACH_STEPS: Step[] = [
     allowTarget: true,
     wait: 'screen',
   },
-  {
-    id: 'reportsHere',
-    screen: 'reports',
-    title: 'tutCoachReportTitle',
-    body: 'tutCoachReportHereBody',
-    target: '#reports-list',
-    allowTarget: true,
-  },
-  {
-    id: 'deleteReport',
-    screen: 'reports',
-    title: 'tutCoachDeleteTitle',
-    body: 'tutCoachDeleteBody',
-    target: () => {
-      const bar = document.getElementById('report-select-bar')
-      if (bar && !bar.hidden) return bar
-      return document.querySelector<HTMLElement>(
-        '#reports-list .report-item, #reports-list .report-checkbox, #reports-list',
-      )
-    },
-    allowTarget: true,
-    wait: 'report-deleted',
-  },
+  reportsHereStep(),
   {
     id: 'stats',
     screen: 'team-setup',
     title: 'tutCoachStatsTitle',
     body: 'tutCoachStatsBody',
-    target: '#team-setup [data-team-tab="statistics"]',
+    target: '#player-statistics-container',
     allowTarget: true,
+    enter: () => showTeamTab('statistics'),
   },
+  deleteReportStep(),
   {
     id: 'openSettings',
     screen: 'main-screen',
@@ -402,6 +412,7 @@ const PARENT_STEPS: Step[] = [
     allowTarget: true,
     wait: 'screen',
   },
+  reportsHereStep(),
   {
     id: 'stats',
     screen: 'parent-home',
@@ -410,6 +421,7 @@ const PARENT_STEPS: Step[] = [
     target: '#parent-kid-stats',
     allowTarget: true,
   },
+  deleteReportStep(),
   {
     id: 'openSettings',
     screen: 'parent-home',
@@ -448,6 +460,9 @@ function kidName(): string {
 }
 
 function hasCompletedReports(): boolean {
+  if (active === 'parent') {
+    return getParentProfile().games.some((game) => game.isCompleted)
+  }
   return Boolean(getCurrentTeam()?.games.some((game) => game.isCompleted))
 }
 
@@ -473,8 +488,8 @@ function paint(): void {
     skipLabel: t('tutSkip'),
     showNext: isWelcome || isDone || !step.wait,
     showSkip: !isDone,
-    target: resolveTargets(step),
-    allowTarget: Boolean(step.allowTarget && resolveTargets(step).length),
+    target: () => resolveTargets(step),
+    allowTarget: Boolean(step.allowTarget),
     onNext: () => {
       if (isDone) {
         finish()
@@ -503,6 +518,9 @@ function enterCurrent(): void {
   }
   dismissLiveActionUi()
   if (activeScreenId() !== step.screen) showScreen(step.screen, { history: 'replace' })
+  if (step.screen === 'team-setup') {
+    showTeamTab(step.id === 'stats' ? 'statistics' : 'players')
+  }
   step.enter?.()
   paint()
   window.requestAnimationFrame(() => layoutTutorialSpot())
@@ -561,7 +579,7 @@ export function startTutorial(role: TutorialRole): void {
     if (!step) return
     if (step.wait === event) goNext()
     else if (event === 'report-selected' && step.id === 'deleteReport') paint()
-    else if (event === 'player-selected' && step.id === 'deletePlayer') paint()
+    else if (event === 'player-selected' && (step.id === 'deletePlayer' || step.id === 'formation')) paint()
   })
   enterCurrent()
 }

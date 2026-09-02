@@ -1,7 +1,7 @@
 import { t } from '@/i18n'
 import { statsFromActions } from '@/domain/actions'
 import { TIMELINE_MARK_EVERY_MINUTES } from '@/domain/config'
-import { formatClock } from '@/domain/clock'
+import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
 import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from '@/domain/playingTime'
 import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from '@/domain/timeline'
@@ -135,19 +135,16 @@ function renderMatchLog(game: Game, players: Player[]): string {
   if (!events.length) {
     return `<div class="match-log"><div class="empty-state">${t('noEvents')}</div></div>`
   }
-  const breaks: { minute: number }[] = []
-  for (let i = 1; i < game.numPeriods; i += 1) {
-    breaks.push({ minute: i * game.periodDuration })
-  }
   const rows: string[] = []
-  let bi = 0
+  let shownPeriod = 1
   let home = 0
   let away = 0
   for (const event of events) {
-    while (bi < breaks.length && event.minute > breaks[bi].minute) {
-      rows.push(renderPeriodMark(game.numPeriods, bi + 1, home, away))
-      bi += 1
+    const marks = periodEndMarksBefore(shownPeriod, event.period)
+    for (const filled of marks.filled) {
+      rows.push(renderPeriodMark(game.numPeriods, filled, home, away))
     }
+    shownPeriod = marks.shownPeriod
     if (event.type === 'goal' || (event.type === 'ownGoal' && !event.isOpponent)) home += 1
     if (event.type === 'goalAllowed' || (event.type === 'ownGoal' && event.isOpponent)) away += 1
     const score =
@@ -156,9 +153,8 @@ function renderMatchLog(game: Game, players: Player[]): string {
         : ''
     rows.push(renderLogEvent(event, score))
   }
-  while (bi < breaks.length) {
-    rows.push(renderPeriodMark(game.numPeriods, bi + 1, home, away))
-    bi += 1
+  for (const filled of remainingPeriodEndMarks(shownPeriod, game.numPeriods)) {
+    rows.push(renderPeriodMark(game.numPeriods, filled, home, away))
   }
   rows.push(renderPeriodMark(game.numPeriods, game.numPeriods, game.homeScore, game.awayScore))
   return `<div class="match-log">${rows.join('')}</div>`

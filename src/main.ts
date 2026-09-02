@@ -89,10 +89,6 @@ function renderActive(): void {
       renderLiveGame()
       break
     case 'reports':
-      if (getRole() === 'parent') {
-        showScreen('parent-home', { history: 'replace' })
-        return
-      }
       renderReports()
       break
     case 'settings':

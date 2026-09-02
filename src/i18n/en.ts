@@ -367,7 +367,8 @@ export const en = {
   tutCoachDeleteTitle: 'Remove the practice report',
   tutCoachDeleteBody: 'Tick that report, then Delete, and confirm. You do not need to keep this training match.',
   tutCoachStatsTitle: 'Season stats',
-  tutCoachStatsBody: 'Open the Statistics tab to see season totals for your players.',
+  tutCoachStatsBody:
+    'Season totals for your players, including this practice match. Next you will delete that training report.',
   tutCoachSettingsTitle: 'Settings',
   tutCoachSettingsBody: 'Open Settings for language, appearance, and to replay this tutorial.',
   tutCoachSettingsHereBody: 'Language, theme, backup, and Replay tutorial live here.',
@@ -388,7 +389,8 @@ export const en = {
   tutParentReportTitle: 'End and report',
   tutParentReportBody: 'Tap End Game when you want the report. Confirm to finish this training match.',
   tutParentStatsTitle: 'Stats card',
-  tutParentStatsBody: 'This card is {name}’s season totals after completed matches.',
+  tutParentStatsBody:
+    'This card is {name}’s season totals after completed matches. Next you will delete that training report.',
   tutParentSettingsTitle: 'Settings',
   tutParentSettingsBody: 'Open Settings for language and to replay this tutorial.',
   tutParentSettingsHereBody: 'Language, theme, backup, and Replay tutorial live here.',

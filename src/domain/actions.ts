@@ -50,7 +50,7 @@ export function createAction(
   actionType: ActionType,
   playerId: string | null,
   gameSecond: number,
-  extra: { noteText?: string; relatedPlayerId?: string } = {},
+  extra: { noteText?: string; relatedPlayerId?: string; period?: number } = {},
 ): GameAction {
   return {
     id: newId('act'),

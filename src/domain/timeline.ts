@@ -1,5 +1,5 @@
 import { t } from '@/i18n'
-import { gameMinute } from './clock'
+import { gameMinute, periodOfAction } from './clock'
 import { spotLabel } from './formation'
 import { reconstructStartingFormation } from './playingTime'
 import type { FormationSpot, Game, GameAction, Player } from './types'
@@ -36,6 +36,7 @@ export function buildShotTimeline(game: Game): {
 export type ReportEvent = {
   second: number
   minute: number
+  period: number
   type: 'goal' | 'goalAllowed' | 'ownGoal' | 'yellow' | 'red' | 'injury' | 'substitution'
   playerName: string
   assistName: string | null
@@ -101,12 +102,14 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
   let spots = liveSpots(game)
   game.actions.forEach((action, index) => {
     const minute = gameMinute(action.gameSecond)
+    const period = periodOfAction(action, game)
     if (action.actionType === 'goal') {
       homeGoals += 1
       const assistId = assistForGoal(game.actions, index)
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'goal',
         playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: assistId ? playerName(players, assistId) : null,
@@ -122,6 +125,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'ownGoal',
         playerName: ours
           ? playerName(players, action.playerId) || t('unknownPlayer')
@@ -137,6 +141,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'goalAllowed',
         playerName: t('opponent'),
         assistName: null,
@@ -149,6 +154,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'yellow',
         playerName:
           action.actionType === 'opp_yellow'
@@ -164,6 +170,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'red',
         playerName:
           action.actionType === 'opp_red'
@@ -179,6 +186,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'injury',
         playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
@@ -196,6 +204,7 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       events.push({
         second: action.gameSecond,
         minute,
+        period,
         type: 'substitution',
         playerName: playerName(players, action.playerId) || t('unknownPlayer'),
         assistName: null,
@@ -206,5 +215,5 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
       })
     }
   })
-  return events.sort((a, b) => a.second - b.second || a.minute - b.minute)
+  return events.sort((a, b) => a.period - b.period || a.second - b.second || a.minute - b.minute)
 }

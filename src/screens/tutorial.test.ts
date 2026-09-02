@@ -2,11 +2,18 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { bindTutorialOverlay, isTutorialOverlayOpen } from '@/ui/tutorialOverlay'
+import {
+  bindTutorialOverlay,
+  hideTutorialCard,
+  isTutorialOverlayOpen,
+  showTutorialCard,
+} from '@/ui/tutorialOverlay'
+import { tutorialFormationTargets } from './formation'
 import { TUTORIAL_COACH_REV } from '@/domain/tutorial'
 import { getSave } from '@/state/store'
 import {
   isTutorialActive,
+  onTutorialNavigated,
   skipTutorial,
   startTutorial,
   tutorialPlan,
@@ -37,13 +44,22 @@ describe('tutorial plan', () => {
     expect(plan[place + 1]).toMatchObject({ id: 'formationStart', wait: 'screen' })
   })
 
-  it('ends the match, shows the report, then deletes the practice game', () => {
+  it('ends the match, shows the report, season stats, then deletes the practice game', () => {
     const plan = tutorialPlan('coach')
     const end = plan.findIndex((step) => step.id === 'endGame')
     expect(plan[end]).toMatchObject({ screen: 'game-tracking', wait: 'screen' })
     expect(plan[end + 1]).toMatchObject({ id: 'reportsHere', screen: 'reports' })
-    expect(plan[end + 2]).toMatchObject({ id: 'deleteReport', wait: 'report-deleted' })
-    expect(plan[end + 3]).toMatchObject({ id: 'stats', screen: 'team-setup' })
+    expect(plan[end + 2]).toMatchObject({ id: 'stats', screen: 'team-setup' })
+    expect(plan[end + 3]).toMatchObject({ id: 'deleteReport', wait: 'report-deleted' })
+  })
+
+  it('walks parent through the report, kid stats, then deleting the practice game', () => {
+    const plan = tutorialPlan('parent')
+    const end = plan.findIndex((step) => step.id === 'endGame')
+    expect(plan[end]).toMatchObject({ screen: 'game-tracking', wait: 'screen' })
+    expect(plan[end + 1]).toMatchObject({ id: 'reportsHere', screen: 'reports' })
+    expect(plan[end + 2]).toMatchObject({ id: 'stats', screen: 'parent-home' })
+    expect(plan[end + 3]).toMatchObject({ id: 'deleteReport', wait: 'report-deleted' })
   })
 
   it('lets the parent edit the kid form before saving', () => {
@@ -102,5 +118,66 @@ describe('tutorial overlay', () => {
     document.getElementById('tutorial-next')?.click()
     expect(document.getElementById('tutorial-title')?.textContent).toContain('Your team')
     expect(document.getElementById('tutorial-spot')?.hidden).toBe(false)
+  })
+
+  it('opens the roster tab on add-player even if statistics was left open', () => {
+    document.getElementById('players-tab-content')?.classList.remove('active')
+    document.getElementById('statistics-tab-content')?.classList.add('active')
+    document.querySelector('[data-team-tab="players"]')?.classList.remove('active')
+    document.querySelector('[data-team-tab="statistics"]')?.classList.add('active')
+    startTutorial('coach')
+    document.getElementById('tutorial-next')?.click()
+    onTutorialNavigated('team-setup')
+    expect(document.getElementById('players-tab-content')?.classList.contains('active')).toBe(true)
+    expect(document.getElementById('statistics-tab-content')?.classList.contains('active')).toBe(false)
+    expect(document.getElementById('tutorial-title')?.textContent).toContain('Add a player')
+  })
+
+  it('blocks clicks that are not the highlighted control', () => {
+    const hole = document.createElement('button')
+    hole.id = 'allowed-hole'
+    const outside = document.createElement('button')
+    outside.id = 'blocked-outside'
+    document.body.append(hole, outside)
+    showTutorialCard({
+      title: 't',
+      body: 'b',
+      nextLabel: 'n',
+      skipLabel: 's',
+      showNext: false,
+      showSkip: true,
+      target: () => hole,
+      allowTarget: true,
+      onNext: () => {},
+      onSkip: () => {},
+    })
+    const blocked = new MouseEvent('click', { bubbles: true, cancelable: true, clientX: 400, clientY: 400 })
+    outside.dispatchEvent(blocked)
+    expect(blocked.defaultPrevented).toBe(true)
+    const allowed = new MouseEvent('click', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })
+    hole.dispatchEvent(allowed)
+    expect(allowed.defaultPrevented).toBe(false)
+    hideTutorialCard()
+  })
+
+  it('formation tutorial highlights only the leftover bench player before they are selected', () => {
+    const leftover = document.createElement('div')
+    leftover.className = 'bench-slot'
+    leftover.dataset.playerId = 'p1'
+    const occupied = document.createElement('div')
+    occupied.className = 'player-slot'
+    occupied.dataset.playerId = 'p2'
+    occupied.dataset.position = 'GK'
+    const empty = document.createElement('div')
+    empty.className = 'player-slot'
+    empty.dataset.position = 'ST'
+    const field = document.createElement('div')
+    field.id = 'formation-field'
+    field.append(occupied, empty)
+    const setup = document.createElement('div')
+    setup.id = 'formation-setup'
+    setup.append(leftover, field)
+    document.body.append(setup)
+    expect(tutorialFormationTargets()).toEqual([leftover])
   })
 })

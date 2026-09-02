@@ -371,7 +371,8 @@ export const fr: Record<keyof typeof en, string> = {
   tutCoachDeleteBody:
     'Cochez ce rapport, puis Supprimer, et confirmez. Pas besoin de garder ce match d’entraînement.',
   tutCoachStatsTitle: 'Stats de saison',
-  tutCoachStatsBody: 'Ouvrez l’onglet Statistiques pour les totaux de vos joueurs.',
+  tutCoachStatsBody:
+    'Les totaux de saison de vos joueurs, y compris ce match d’entraînement. Ensuite vous supprimerez ce rapport.',
   tutCoachSettingsTitle: 'Réglages',
   tutCoachSettingsBody: 'Ouvrez Réglages pour la langue, l’apparence, et pour revoir ce tutoriel.',
   tutCoachSettingsHereBody: 'Langue, thème, sauvegarde et Revoir le tutoriel sont ici.',
@@ -392,7 +393,8 @@ export const fr: Record<keyof typeof en, string> = {
   tutParentReportTitle: 'Fin et rapport',
   tutParentReportBody: 'Touchez Fin du match pour le rapport. Confirmez pour terminer cet entraînement.',
   tutParentStatsTitle: 'Carte de stats',
-  tutParentStatsBody: 'Cette carte, ce sont les totaux de {name} après les matchs terminés.',
+  tutParentStatsBody:
+    'Cette carte, ce sont les totaux de {name} après les matchs terminés. Ensuite vous supprimerez ce rapport d’entraînement.',
   tutParentSettingsTitle: 'Réglages',
   tutParentSettingsBody: 'Ouvrez Réglages pour la langue et pour revoir ce tutoriel.',
   tutParentSettingsHereBody: 'Langue, thème, sauvegarde et Revoir le tutoriel sont ici.',

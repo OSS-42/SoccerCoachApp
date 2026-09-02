@@ -4,6 +4,7 @@ import {
   commitWallClock,
   currentPeriod,
   finishPeriodElapsed,
+  livePeriodNumber,
   wallElapsed,
   wallSubRemaining,
 } from '@/domain/clock'
@@ -309,9 +310,18 @@ export function editPlayerOnTeam(
 }
 
 export function deleteCompletedGames(gameIds: string[]): { ok: boolean; message: string } {
+  const ids = new Set(gameIds)
+  const parent = getParentProfile()
+  if (parent.games.some((game) => ids.has(game.id))) {
+    state = {
+      ...state,
+      parent: { ...parent, games: parent.games.filter((game) => !ids.has(game.id)) },
+    }
+    persist()
+    return { ok: true, message: t('reportsRemoved', { count: gameIds.length }) }
+  }
   const team = getCurrentTeam()
   if (!team) return { ok: false, message: t('noTeamSelected') }
-  const ids = new Set(gameIds)
   updateCurrentTeam((current) => ({
     ...current,
     games: current.games.filter((game) => !ids.has(game.id)),
@@ -381,6 +391,7 @@ export function recordLiveAction(
   if (!state.currentGame) return { ok: false, message: t('noGame') }
   const action = createAction(actionType, playerId, wallElapsed(state.clock), {
     noteText,
+    period: livePeriodNumber(state.currentGame),
   })
   const beforeYellows =
     playerId && actionType === 'yellow_card'
@@ -412,7 +423,13 @@ export function substituteLivePlayers(
 ): { ok: boolean; reason?: string } {
   if (!state.currentGame) return { ok: false, reason: 'no_game' }
   const elapsed = wallElapsed(state.clock)
-  const result = applySubstitution(state.currentGame, offId, onId, elapsed)
+  const result = applySubstitution(
+    state.currentGame,
+    offId,
+    onId,
+    elapsed,
+    livePeriodNumber(state.currentGame),
+  )
   if (!result.ok) return { ok: false, reason: result.reason }
   const clock = commitWallClock(state.clock)
   state = {
@@ -501,11 +518,16 @@ export function finishCurrentPeriod(): { ok: boolean; message: string; ended?: b
   const game = state.currentGame
   if (!game) return { ok: false, message: t('noGame') }
   const live = wallElapsed(state.clock)
-  const nextElapsed = finishPeriodElapsed(live, game.periodDuration, game.numPeriods)
-  if (nextElapsed === live) {
+  if (game.periodScores.length >= game.numPeriods - 1) {
     return endCurrentGame()
   }
-  const withScore = capturePeriodScore({ ...game, elapsedSeconds: nextElapsed })
+  const nextElapsed = finishPeriodElapsed(
+    live,
+    game.periodDuration,
+    game.numPeriods,
+    game.periodScores.length,
+  )
+  const withScore = capturePeriodScore({ ...game, elapsedSeconds: nextElapsed }, live)
   state = {
     ...state,
     currentGame: withScore,
@@ -535,7 +557,8 @@ export function discardCurrentGame(): void {
 export function endCurrentGame(): { ok: boolean; message: string; ended: boolean; gameId?: string } {
   const game = state.currentGame
   if (!game) return { ok: false, message: t('noGame'), ended: false }
-  const finished = completeGame(capturePeriodScore(game), wallElapsed(state.clock))
+  const live = wallElapsed(state.clock)
+  const finished = completeGame(capturePeriodScore(game, live), live)
   if (isParentGame(finished)) {
     const parent = getParentProfile()
     state = {
@@ -611,11 +634,17 @@ export function importIntoCurrentTeam(imported: AppSave): { ok: boolean; message
 }
 
 function trimPeriodScores(game: Game, elapsedSeconds: number): Game {
-  const period = currentPeriod(elapsedSeconds, game.periodDuration, game.numPeriods)
+  const hasEndedAt = game.periodScores.some((row) => typeof row.endedAt === 'number')
+  const periodScores = hasEndedAt
+    ? game.periodScores.filter((row) => (row.endedAt ?? 0) <= elapsedSeconds)
+    : game.periodScores.slice(
+        0,
+        Math.max(0, currentPeriod(elapsedSeconds, game.periodDuration, game.numPeriods) - 1),
+      )
   return {
     ...game,
     elapsedSeconds,
-    periodScores: game.periodScores.slice(0, Math.max(0, period - 1)),
+    periodScores,
   }
 }
 

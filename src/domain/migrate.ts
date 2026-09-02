@@ -114,6 +114,10 @@ function migrateAction(raw: unknown, index: number): GameAction | null {
     timestamp: asString(rec.timestamp, new Date().toISOString()),
     noteText: rec.noteText ? asString(rec.noteText) : undefined,
     relatedPlayerId: rec.relatedPlayerId ? asString(rec.relatedPlayerId) : undefined,
+    period:
+      typeof rec.period === 'number' && Number.isFinite(rec.period) && rec.period >= 1
+        ? Math.floor(rec.period)
+        : undefined,
   }
 }
 
@@ -175,7 +179,14 @@ function migrateGame(raw: unknown, index: number): Game | null {
     periodScores: Array.isArray(rec.periodScores)
       ? rec.periodScores.map((p) => {
           const row = asRecord(p)
-          return { home: asNumber(row?.home, 0), away: asNumber(row?.away, 0) }
+          return {
+            home: asNumber(row?.home, 0),
+            away: asNumber(row?.away, 0),
+            endedAt:
+              typeof row?.endedAt === 'number' && Number.isFinite(row.endedAt)
+                ? row.endedAt
+                : undefined,
+          }
         })
       : [],
     useSubstitutionTimer: asBool(rec.useSubstitutionTimer, false),

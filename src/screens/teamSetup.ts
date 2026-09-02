@@ -73,6 +73,15 @@ export function renderTeamSetup(): void {
   updateSelectBar()
 }
 
+export function showTeamTab(tab: 'players' | 'statistics'): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-team-tab]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.teamTab === tab)
+  })
+  document.getElementById('players-tab-content')?.classList.toggle('active', tab === 'players')
+  document.getElementById('statistics-tab-content')?.classList.toggle('active', tab === 'statistics')
+  if (tab === 'statistics') renderStats()
+}
+
 function renderStats(): void {
   const team = getCurrentTeam()
   const container = document.getElementById('player-statistics-container')
@@ -371,12 +380,7 @@ export function bindTeamSetup(): void {
   document.querySelectorAll<HTMLButtonElement>('[data-team-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.teamTab
-      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b === btn))
-      document.getElementById('players-tab-content')?.classList.toggle('active', tab === 'players')
-      document
-        .getElementById('statistics-tab-content')
-        ?.classList.toggle('active', tab === 'statistics')
-      if (tab === 'statistics') renderStats()
+      if (tab === 'players' || tab === 'statistics') showTeamTab(tab)
     })
   })
   document.getElementById('stats-start-date')?.addEventListener('change', renderStats)

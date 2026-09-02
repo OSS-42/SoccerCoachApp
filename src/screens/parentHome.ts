@@ -98,6 +98,10 @@ export function renderParentHome(): void {
   if (resume) resume.hidden = !hasInProgressGameFor('parent')
   paintParentKidCopy()
   renderKidCard()
+  const reportCounter = document.getElementById('parent-report-counter')
+  if (reportCounter) {
+    reportCounter.textContent = String(getParentProfile().games.filter((game) => game.isCompleted).length)
+  }
 }
 
 export function bindParentHome(): void {

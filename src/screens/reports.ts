@@ -3,7 +3,14 @@ import { VIEW_REPORT_EVENT } from '@/domain/config'
 import { formatClock, parseClockInput } from '@/domain/clock'
 import { buildGameReportPdf, reportPdfFileName } from '@/domain/reportPdf'
 import { askConfirm, askPrompt } from '@/ui/confirm'
-import { deleteCompletedGames, findCompletedGame, getCurrentTeam, setCompletedGameElapsed } from '@/state/store'
+import {
+  deleteCompletedGames,
+  findCompletedGame,
+  getCurrentTeam,
+  getRole,
+  parentRosterTeam,
+  setCompletedGameElapsed,
+} from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { saveOrSharePdf } from '@/lib/shareFile'
@@ -31,7 +38,12 @@ function updateReportSelectBar(): void {
 
 export function renderReports(): void {
   fillTeamSelectors()
-  const team = getCurrentTeam()
+  const parent = getRole() === 'parent'
+  const team = parent ? parentRosterTeam() : getCurrentTeam()
+  const banner = document.querySelector<HTMLElement>('#reports .team-name-banner')
+  if (banner) banner.hidden = parent
+  const back = document.querySelector<HTMLElement>('#reports .back-btn')
+  if (back) back.dataset.go = parent ? 'parent-home' : 'main-screen'
   const list = document.getElementById('reports-list')
   if (!list || !team) return
   const games = team.games.filter((g) => g.isCompleted).sort((a, b) => {

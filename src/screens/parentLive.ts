@@ -2,7 +2,7 @@ import { FIELD_PLAYER_ACTIONS, BENCH_PLAYER_ACTIONS, ACTION_EMOJI, statsFromActi
 import { DOUBLE_TAP_MS } from '@/domain/config'
 import { parentLiveTap } from '@/domain/liveTap'
 import { fieldSpotDefs, spotLabel } from '@/domain/formation'
-import { currentPeriod, formatClock } from '@/domain/clock'
+import { formatClock, livePeriodNumber } from '@/domain/clock'
 import { kidOnField } from '@/domain/parent'
 import { actionLabel, t } from '@/i18n'
 import type { ActionType, Player } from '@/domain/types'
@@ -190,7 +190,7 @@ export function renderParentLive(): void {
   const period = document.getElementById('period-counter')
   if (period) {
     period.textContent = t('periodOf', {
-      current: currentPeriod(liveElapsedSeconds(), game.periodDuration, game.numPeriods),
+      current: livePeriodNumber(game),
       total: game.numPeriods,
     })
   }

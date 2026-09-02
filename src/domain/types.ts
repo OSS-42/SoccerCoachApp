@@ -100,6 +100,8 @@ export type GameAction = {
   relatedPlayerId?: string
   /** Pitch spot the incoming player takes (copied from the player going off). */
   position?: string
+  /** 1-based period in which the action was recorded (stamped at save time). */
+  period?: number
 }
 
 export type Player = {
@@ -119,6 +121,8 @@ export type FormationSpot = {
 export type PeriodScore = {
   home: number
   away: number
+  /** Elapsed seconds when this period was confirmed ended. */
+  endedAt?: number
 }
 
 export type Game = {

@@ -99,6 +99,7 @@ export function applySubstitution(
   offId: string,
   onId: string,
   gameSecond: number,
+  period?: number,
 ): { ok: true; game: Game } | { ok: false; reason: SubFail } {
   const allowed = canSubstitute(game, offId, onId, gameSecond)
   if (!allowed.ok) return allowed
@@ -115,6 +116,7 @@ export function applySubstitution(
     gameSecond,
     timestamp: new Date().toISOString(),
     position: offSpot?.position,
+    period,
   }
   return {
     ok: true,

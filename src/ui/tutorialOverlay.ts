@@ -1,5 +1,7 @@
 import { DIALOG_TOGGLE_EVENT, optionalEl } from './dom'
 
+type OverlayTarget = HTMLElement | HTMLElement[] | (() => HTMLElement | HTMLElement[] | null) | null
+
 type OverlayOpts = {
   title: string
   body: string
@@ -7,7 +9,7 @@ type OverlayOpts = {
   skipLabel: string
   showNext: boolean
   showSkip: boolean
-  target: HTMLElement | HTMLElement[] | null
+  target: OverlayTarget
   allowTarget: boolean
   onNext: () => void
   onSkip: () => void
@@ -16,6 +18,7 @@ type OverlayOpts = {
 let onNext: (() => void) | null = null
 let onSkip: (() => void) | null = null
 let targetEls: HTMLElement[] = []
+let resolveTargets: () => HTMLElement[] = () => []
 let allowTarget = false
 
 function root(): HTMLElement | null {
@@ -31,9 +34,19 @@ function overlayGuarding(): boolean {
   return Boolean(node && !node.hidden && !node.classList.contains('is-paused'))
 }
 
-function asTargets(target: OverlayOpts['target']): HTMLElement[] {
+function asTargets(target: OverlayTarget): HTMLElement[] {
   if (!target) return []
+  if (typeof target === 'function') {
+    const got = target()
+    if (!got) return []
+    return (Array.isArray(got) ? got : [got]).filter((el) => document.body.contains(el))
+  }
   return (Array.isArray(target) ? target : [target]).filter((el) => document.body.contains(el))
+}
+
+function currentTargets(): HTMLElement[] {
+  targetEls = resolveTargets()
+  return targetEls
 }
 
 function pointInTargets(x: number, y: number): boolean {
@@ -45,6 +58,7 @@ function pointInTargets(x: number, y: number): boolean {
 }
 
 function eventAllowed(event: Event): boolean {
+  currentTargets()
   const node = event.target
   if (node instanceof Element) {
     if (node.closest('#tutorial-card')) return true
@@ -101,7 +115,8 @@ export function showTutorialCard(opts: OverlayOpts): void {
   if (!node) return
   onNext = opts.onNext
   onSkip = opts.onSkip
-  targetEls = asTargets(opts.target)
+  resolveTargets = () => asTargets(opts.target)
+  targetEls = currentTargets()
   allowTarget = opts.allowTarget
   const title = document.getElementById('tutorial-title')
   const body = document.getElementById('tutorial-body')
@@ -141,6 +156,7 @@ export function hideTutorialCard(): void {
   onNext = null
   onSkip = null
   targetEls = []
+  resolveTargets = () => []
   allowTarget = false
   const block = document.getElementById('tutorial-block')
   const spot = document.getElementById('tutorial-spot')
@@ -152,7 +168,7 @@ export function layoutTutorialSpot(): void {
   const spot = document.getElementById('tutorial-spot')
   const block = document.getElementById('tutorial-block')
   if (!spot || !block) return
-  const live = targetEls.filter((el) => document.body.contains(el))
+  const live = currentTargets()
   if (!live.length) {
     block.style.clipPath = ''
     spot.hidden = true

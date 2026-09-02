@@ -8,6 +8,19 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.69',
+    items: {
+      en: [
+        'Periods follow Stop, not the clock: a 21st-minute action stays in the period until you confirm; after confirm, new actions are the next period.',
+        'Coach tour: season stats, then delete the practice report. Replay opens the Players tab. Parent reports are back, with the same report → stats → delete steps. Formation: tap the leftover player, then any empty spot — extra taps do not cancel.',
+      ],
+      fr: [
+        'Les périodes suivent Stop, pas le chrono : une action à la 21e minute reste dans la période jusqu’à confirmation ; ensuite, les nouvelles actions sont la période suivante.',
+        'Tour coach : stats de saison, puis suppression du rapport d’entraînement. Rejouer ouvre l’onglet Joueurs. Les rapports parent reviennent, avec les mêmes étapes. Composition : touchez le joueur restant, puis n’importe quelle place vide — les autres touches n’annulent pas.',
+      ],
+    },
+  },
+  {
     version: '2.4.68',
     items: {
       en: [

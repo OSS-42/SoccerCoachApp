@@ -229,6 +229,14 @@ function clearSelection(): void {
   document.querySelectorAll('.tap-selected').forEach((n) => n.classList.remove('tap-selected'))
 }
 
+function tutorialFormationTapAllowed(slot: HTMLElement, tappedId: string | null): boolean {
+  if (!selectedPlayerId) {
+    return Boolean(tappedId && slot.classList.contains('bench-slot'))
+  }
+  if (tappedId === selectedPlayerId) return true
+  return slot.classList.contains('player-slot') && !tappedId
+}
+
 function handleSlotPointer(event: PointerEvent): void {
   event.preventDefault()
   const slot = (event.currentTarget as HTMLElement).closest<HTMLElement>(
@@ -236,20 +244,34 @@ function handleSlotPointer(event: PointerEvent): void {
   )
   if (!slot || !slotKind(slot)) return
   const tappedId = slot.dataset.playerId ?? null
+  if (tutorialRunning() && !tutorialFormationTapAllowed(slot, tappedId)) return
   if (!selectedPlayerId) {
     if (!tappedId) return
     selectedPlayerId = tappedId
     slot.classList.add('tap-selected')
     slot.querySelector('.player-number')?.classList.add('tap-selected')
+    if (tutorialRunning()) notifyTutorialEvent('player-selected')
     return
   }
   if (tappedId === selectedPlayerId) {
+    if (tutorialRunning()) return
     clearSelection()
     return
   }
   place(selectedPlayerId, slot)
   clearSelection()
   notifyFormationReadyIfValid()
+}
+
+/** Leftover bench player; after they pick them, the whole pitch so they can drop on any empty spot. */
+export function tutorialFormationTargets(): HTMLElement[] {
+  const leftover = document.querySelector<HTMLElement>(
+    '#formation-setup .bench-slot[data-player-id], #formation-setup #bench-overflow .bench-slot[data-player-id]',
+  )
+  if (!leftover) return []
+  if (selectedPlayerId !== leftover.dataset.playerId) return [leftover]
+  const field = document.getElementById('formation-field')
+  return field ? [leftover, field] : [leftover]
 }
 
 function notifyFormationReadyIfValid(): void {
@@ -385,17 +407,43 @@ export function renderFormation(): void {
   clearSelection()
 }
 
+function seatOnBench(playerId: string): void {
+  const current = slotByPlayer(playerId)
+  if (current?.classList.contains('bench-slot')) return
+  const empty = [...document.querySelectorAll<HTMLElement>('.bench-slot')].find(
+    (slot) => !slot.dataset.playerId,
+  )
+  if (current) paintSlot(current, null)
+  if (!empty) return
+  const meta = playerMeta(playerId)
+  paintSlot(empty, playerId, meta.name, meta.jersey)
+}
+
 export function seedTutorialFormation(): void {
   const draft = getGameDraft()
   const team = getCurrentTeam()
   if (!draft || !team) return
-  const { field } = almostReadyLineup(team.players, draft.matchType)
+  document
+    .querySelectorAll<HTMLElement>(
+      '#formation-field .player-slot[data-player-id], .unavailable-slot[data-player-id]',
+    )
+    .forEach((slot) => {
+      const id = slot.dataset.playerId
+      if (id) seatOnBench(id)
+    })
+  const { field, leftoverIds } = almostReadyLineup(team.players, draft.matchType)
   for (const spot of field) {
     const dest = document.querySelector<HTMLElement>(
       `#formation-field .player-slot[data-position="${spot.position}"]`,
     )
     if (!dest) continue
     place(spot.playerId, dest)
+  }
+  const keep = leftoverIds[0]
+  for (const id of leftoverIds) {
+    if (id === keep) continue
+    const dest = document.querySelector<HTMLElement>('.unavailable-slot:not([data-player-id])')
+    if (dest) place(id, dest)
   }
   const saveDefault = document.getElementById('save-default-formation') as HTMLInputElement | null
   if (saveDefault) saveDefault.checked = false
@@ -429,6 +477,7 @@ function fillTutorialFormationIfShort(): void {
 
 export function bindFormation(): void {
   document.getElementById('save-formation')?.addEventListener('click', () => {
+    if (tutorialRunning()) return
     const current = getGameDraft()
     if (!current) return showScreen('game-setup')
     const { field, unavailable } = readFormation()
@@ -436,6 +485,7 @@ export function bindFormation(): void {
     showMessage(t('formationSaved'), 'success')
   })
   document.getElementById('clear-formation')?.addEventListener('click', () => {
+    if (tutorialRunning()) return
     const occupied = [
       ...document.querySelectorAll<HTMLElement>(
         '.player-slot[data-player-id], .unavailable-slot[data-player-id]',
@@ -454,6 +504,7 @@ export function bindFormation(): void {
     }
   })
   document.getElementById('back-from-formation')?.addEventListener('click', async () => {
+    if (tutorialRunning()) return
     const ok = await askConfirm({
       title: t('leaveFormationTitle'),
       message: t('leaveFormation'),

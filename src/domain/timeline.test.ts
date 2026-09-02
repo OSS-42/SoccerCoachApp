@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { setLocale } from '@/i18n'
+import { periodEndMarksBefore } from './clock'
 import { buildGoalsCardsEvents, buildShotTimeline, substitutionLine } from './timeline'
 import type { Game } from './types'
 
@@ -45,6 +46,40 @@ describe('shot timeline', () => {
     expect(chart.user[2]).toEqual({ shots: 1, goals: 1 })
     expect(chart.opponent[4]).toEqual({ saves: 1, goalsAllowed: 1 })
     expect(chart.user[6].goals).toBe(1)
+  })
+
+  it('places a goal at 20:00 after the first-period break on a 20-minute 9v9', () => {
+    const match = game([
+      { id: 'early', actionType: 'goal', playerId: 'p1', gameSecond: 10 * 60, timestamp: '', period: 1 },
+      { id: 'kickoff', actionType: 'goal', playerId: 'p1', gameSecond: 20 * 60, timestamp: '', period: 2 },
+    ])
+    match.numPeriods = 3
+    match.periodDuration = 20
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'p1', name: 'ADA', jerseyNumber: 9, position: 'ST' },
+    ])
+    expect(events.map((e) => ({ minute: e.minute, period: e.period }))).toEqual([
+      { minute: 10, period: 1 },
+      { minute: 20, period: 2 },
+    ])
+    expect(periodEndMarksBefore(1, events[0].period).filled).toEqual([])
+    expect(periodEndMarksBefore(1, events[1].period).filled).toEqual([1])
+  })
+
+  it('keeps a 21:00 added-time goal in period 1, then the next 21:00 goal in period 2', () => {
+    const match = game([
+      { id: 'added', actionType: 'goal', playerId: 'p1', gameSecond: 21 * 60, timestamp: '', period: 1 },
+      { id: 'kickoff', actionType: 'goal', playerId: 'p1', gameSecond: 21 * 60, timestamp: '', period: 2 },
+    ])
+    match.numPeriods = 3
+    match.periodDuration = 20
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'p1', name: 'ADA', jerseyNumber: 9, position: 'ST' },
+    ])
+    expect(events.map((e) => e.period)).toEqual([1, 2])
+    expect(events.map((e) => e.minute)).toEqual([21, 21])
+    expect(periodEndMarksBefore(1, events[0].period).filled).toEqual([])
+    expect(periodEndMarksBefore(events[0].period, events[1].period).filled).toEqual([1])
   })
 
   it('lists substitutions in the report event feed', () => {

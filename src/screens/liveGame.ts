@@ -12,7 +12,7 @@ import { DOUBLE_TAP_MS, NOTE_MAX_LENGTH, VIEW_REPORT_EVENT } from '@/domain/conf
 import { coachLiveTap } from '@/domain/liveTap'
 import { fieldSpotDepth, spotLabel } from '@/domain/formation'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
-import { currentPeriod, formatClock, isLastPeriod, parseClockInput } from '@/domain/clock'
+import { formatClock, isLastLivePeriod, livePeriodNumber, parseClockInput } from '@/domain/clock'
 import {
   extraTimeActive,
   playerHasRed,
@@ -110,7 +110,7 @@ export function updateClockLabels(): void {
   const period = document.getElementById('period-counter')
   if (period) {
     period.textContent = t('periodOf', {
-      current: currentPeriod(elapsed, game.periodDuration, game.numPeriods),
+      current: livePeriodNumber(game),
       total: game.numPeriods,
     })
   }
@@ -456,10 +456,9 @@ function commit(type: ActionType, playerId: string | null, note?: string): void 
 }
 
 function finishMatchToReport(): void {
-  const parent = isParentLive()
   const result = endCurrentGame()
   if (result.ok && result.gameId) {
-    showScreen(parent ? 'parent-home' : 'reports')
+    showScreen('reports')
     window.dispatchEvent(new CustomEvent(VIEW_REPORT_EVENT, { detail: result.gameId }))
   }
 }
@@ -504,7 +503,7 @@ export function bindLiveGame(): void {
     const game = getCurrentGame()
     if (!game) return
     pauseClock()
-    const last = isLastPeriod(liveElapsedSeconds(), game.periodDuration, game.numPeriods)
+    const last = isLastLivePeriod(game)
     periodAction = last ? 'end' : 'finish'
     const title = document.getElementById('period-finish-title')
     const msg = document.getElementById('period-finish-message')

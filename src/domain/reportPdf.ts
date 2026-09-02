@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf'
 import { t } from '@/i18n'
 import { statsFromActions } from './actions'
-import { formatClock } from './clock'
+import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from './clock'
 import { periodGoalDeltas } from './game'
 import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from './playingTime'
 import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from './timeline'
@@ -269,16 +269,15 @@ function drawMatchLog(doc: Doc, game: Game, players: Player[]): void {
   const homeX = MARGIN + 12
   const awayX = PAGE_W - MARGIN
   const colW = (CONTENT_W - 16) / 2
-  const breaks: number[] = []
-  for (let i = 1; i < game.numPeriods; i += 1) breaks.push(i * game.periodDuration)
-  let bi = 0
+  let shownPeriod = 1
   let home = 0
   let away = 0
   for (const event of events) {
-    while (bi < breaks.length && event.minute > breaks[bi]) {
-      drawPeriodMarkPdf(doc, game.numPeriods, bi + 1, home, away)
-      bi += 1
+    const marks = periodEndMarksBefore(shownPeriod, event.period)
+    for (const filled of marks.filled) {
+      drawPeriodMarkPdf(doc, game.numPeriods, filled, home, away)
     }
+    shownPeriod = marks.shownPeriod
     if (event.type === 'goal' || (event.type === 'ownGoal' && !event.isOpponent)) home += 1
     if (event.type === 'goalAllowed' || (event.type === 'ownGoal' && event.isOpponent)) away += 1
     const score =
@@ -303,9 +302,8 @@ function drawMatchLog(doc: Doc, game: Game, players: Player[]): void {
     }
     doc.y += h
   }
-  while (bi < breaks.length) {
-    drawPeriodMarkPdf(doc, game.numPeriods, bi + 1, home, away)
-    bi += 1
+  for (const filled of remainingPeriodEndMarks(shownPeriod, game.numPeriods)) {
+    drawPeriodMarkPdf(doc, game.numPeriods, filled, home, away)
   }
   drawPeriodMarkPdf(doc, game.numPeriods, game.numPeriods, game.homeScore, game.awayScore)
 }

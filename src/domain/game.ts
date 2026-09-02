@@ -59,10 +59,13 @@ export function completeGame(game: Game, elapsedSeconds: number): Game {
   }
 }
 
-export function capturePeriodScore(game: Game): Game {
+export function capturePeriodScore(game: Game, endedAt?: number): Game {
   return {
     ...game,
-    periodScores: [...game.periodScores, { home: game.homeScore, away: game.awayScore }],
+    periodScores: [
+      ...game.periodScores,
+      { home: game.homeScore, away: game.awayScore, endedAt },
+    ],
   }
 }
 
