@@ -1,6 +1,6 @@
 {
-  "version": "2.4.69",
+  "version": "2.4.70",
   "minAppVersion": "2.4.50",
-  "notes": "Periods follow Stop (21' stays in the period until confirm). Coach tour: stats then delete practice report; replay opens Players. Parent reports back with the same steps. Formation leftover tap stays ",
+  "notes": "Intro video loads during the update check and plays without the play-button flash.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
