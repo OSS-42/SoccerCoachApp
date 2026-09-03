@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.70',
+    items: {
+      en: [
+        'Opening splash plays straight into the intro video — no play-button flash. The clip loads during the update check.',
+      ],
+      fr: [
+        'L’écran d’ouverture enchaîne directement sur la vidéo d’intro, sans l’icône lecture. Le clip se charge pendant la vérification de mise à jour.',
+      ],
+    },
+  },
+  {
     version: '2.4.69',
     items: {
       en: [

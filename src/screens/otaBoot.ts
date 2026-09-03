@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { APP_NAME, OTA_AFTER_CONFIRM_MS, OTA_BOOT_TIMEOUT_MS } from '@/domain/config'
 import { runOtaIfNeeded, type OtaProgress } from '@/ota/runOta'
 import { showScreen } from '@/ui/nav'
-import { startIntro } from './intro'
+import { primeIntroVideo, startIntro } from './intro'
 
 function paint(progress: OtaProgress): void {
   const message = document.getElementById('ota-message')
@@ -27,6 +27,7 @@ export function isNativeApp(): boolean {
 
 /** Native: check droplet channel, then land on the intro video. Web: intro immediately. */
 export async function bootWithOta(): Promise<void> {
+  primeIntroVideo()
   if (!isNativeApp()) {
     showScreen('intro-screen', { history: 'replace' })
     startIntro()

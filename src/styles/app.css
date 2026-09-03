@@ -25,6 +25,21 @@
   height: 100%;
   object-fit: cover;
   background: #000;
+  opacity: 0;
+}
+#intro-video.is-ready {
+  opacity: 1;
+}
+#intro-video::-webkit-media-controls,
+#intro-video::-webkit-media-controls-enclosure,
+#intro-video::-webkit-media-controls-start-playback-button,
+#intro-video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+  -webkit-appearance: none;
+  opacity: 0 !important;
+  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 .intro-overlay {
   position: absolute;
