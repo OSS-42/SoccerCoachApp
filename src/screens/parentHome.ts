@@ -27,6 +27,7 @@ const PARENT_NAME_KEYS: MessageKey[] = [
   'tipParentLiveMove',
   'tipParentLiveScore',
   'hintLiveParent',
+  'parentWelcome',
 ]
 
 export function parentKidName(): string {
@@ -84,6 +85,15 @@ function renderKidCard(): void {
   </div>`
 }
 
+export function showParentTab(tab: 'home' | 'stats'): void {
+  document.querySelectorAll<HTMLButtonElement>('#parent-home [data-parent-tab]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.parentTab === tab)
+  })
+  document.getElementById('parent-home-tab')?.classList.toggle('active', tab === 'home')
+  document.getElementById('parent-stats-tab')?.classList.toggle('active', tab === 'stats')
+  if (tab === 'stats') renderKidCard()
+}
+
 export function renderParentHome(): void {
   const kid = getParentProfile().kid
   const name = document.getElementById('parent-kid-name') as HTMLInputElement | null
@@ -105,6 +115,12 @@ export function renderParentHome(): void {
 }
 
 export function bindParentHome(): void {
+  document.querySelectorAll<HTMLButtonElement>('#parent-home [data-parent-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.parentTab
+      if (tab === 'home' || tab === 'stats') showParentTab(tab)
+    })
+  })
   document.getElementById('save-parent-kid')?.addEventListener('click', () => {
     const name = (document.getElementById('parent-kid-name') as HTMLInputElement).value
     const jersey = Number((document.getElementById('parent-kid-number') as HTMLInputElement).value)

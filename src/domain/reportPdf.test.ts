@@ -93,6 +93,7 @@ describe('report PDF', () => {
       actions: [
         createAction('goal', 'p2', 120),
         createAction('shot_on_goal', 'p2', 400),
+        createAction('interception', 'p2', 500),
         createAction('goal_allowed', 'p1', 900),
         createAction('yellow_card', 'p3', 1100),
         createAction('substitution', 'p3', 1500, { relatedPlayerId: 'p2' }),
@@ -107,6 +108,7 @@ describe('report PDF', () => {
     expect(text).toContain('Watch the left wing')
     expect(text).toContain('Ada is tired')
     expect(text).toContain('Player Statistics')
+    expect(text).toContain('Intercept')
     expect(text).toContain('Ada')
     expect(text).toContain('Bea')
     expect(text).not.toContain('No goals, cards, injuries, or substitutions recorded')

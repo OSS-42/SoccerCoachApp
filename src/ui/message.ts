@@ -18,4 +18,8 @@ export function hideMessage(): void {
   const ribbon = el('message-ribbon')
   ribbon.classList.add('hidden')
   ribbon.style.display = 'none'
+  if (hideTimer) {
+    window.clearTimeout(hideTimer)
+    hideTimer = null
+  }
 }

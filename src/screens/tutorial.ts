@@ -83,6 +83,14 @@ function useDemoTeamForTutorial(): void {
   selectTeam(DEMO_TEAM_ID)
 }
 
+function showParentHomeTab(tab: 'home' | 'stats'): void {
+  document.querySelectorAll<HTMLButtonElement>('#parent-home [data-parent-tab]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.parentTab === tab)
+  })
+  document.getElementById('parent-home-tab')?.classList.toggle('active', tab === 'home')
+  document.getElementById('parent-stats-tab')?.classList.toggle('active', tab === 'stats')
+}
+
 function restoreTutorialTeam(): void {
   if (!tutorialTeamRestore) return
   if (hasInProgressGame()) {
@@ -520,6 +528,9 @@ function enterCurrent(): void {
   if (activeScreenId() !== step.screen) showScreen(step.screen, { history: 'replace' })
   if (step.screen === 'team-setup') {
     showTeamTab(step.id === 'stats' ? 'statistics' : 'players')
+  }
+  if (step.screen === 'parent-home') {
+    showParentHomeTab(step.id === 'kid' || step.id === 'stats' ? 'stats' : 'home')
   }
   step.enter?.()
   paint()

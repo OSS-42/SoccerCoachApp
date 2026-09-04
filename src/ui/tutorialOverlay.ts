@@ -175,13 +175,14 @@ export function layoutTutorialSpot(): void {
     return
   }
   const pad = 8
+  const frame = (document.getElementById('tutorial-root') ?? block).getBoundingClientRect()
   const holes = live.map((el) => {
     const r = el.getBoundingClientRect()
     return {
-      left: Math.max(0, r.left - pad),
-      top: Math.max(0, r.top - pad),
-      right: Math.min(window.innerWidth, r.right + pad),
-      bottom: Math.min(window.innerHeight, r.bottom + pad),
+      left: Math.max(0, r.left - pad - frame.left),
+      top: Math.max(0, r.top - pad - frame.top),
+      right: Math.min(frame.width, r.right + pad - frame.left),
+      bottom: Math.min(frame.height, r.bottom + pad - frame.top),
     }
   })
   const left = Math.min(...holes.map((h) => h.left))

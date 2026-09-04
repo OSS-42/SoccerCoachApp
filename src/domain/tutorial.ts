@@ -1,5 +1,5 @@
 export const TUTORIAL_COACH_REV = 6
-export const TUTORIAL_PARENT_REV = 5
+export const TUTORIAL_PARENT_REV = 6
 
 export type TutorialState = {
   coachRev: number | null

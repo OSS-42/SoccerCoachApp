@@ -39,7 +39,7 @@ function allSlots(): HTMLElement[] {
 }
 
 function isDesktopFormation(): boolean {
-  return window.matchMedia('(min-width: 769px)').matches
+  return document.documentElement.classList.contains('is-wide-ui')
 }
 
 function makeSideSlot(kind: 'bench' | 'unavailable', index: number): HTMLElement {
@@ -177,7 +177,7 @@ function paintSlot(slot: HTMLElement, playerId: string | null, name = '', jersey
   }
   slot.dataset.playerId = playerId
   slot.classList.add('occupied')
-  const nameHtml = `<span class="${onField ? 'player-name-field' : 'player-name-bench'}">${escapeHtml(name)}</span>`
+  const nameHtml = `<span class="${onField ? 'player-name-field' : 'player-name-bench'}" title="${escapeHtml(name)}">${escapeHtml(name)}</span>`
   const numHtml = `<span class="jersey-num">${jersey}</span>`
   const posHtml = onField && posText ? `<span class="spot-pos">${escapeHtml(posText)}</span>` : ''
   slot.innerHTML = `<span class="player-number ${onField ? 'player-number-placed' : ''}" data-player-id="${playerId}">${

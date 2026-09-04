@@ -59,7 +59,7 @@
             <span class="material-icons">child_care</span>
             <span>
               <strong data-i18n="roleParent">Parent</strong>
-              <small data-i18n="roleParentHint">Follow your kid</small>
+              <small data-i18n="roleParentHint">Follow your player</small>
             </span>
           </button>
         </div>
@@ -101,12 +101,14 @@
             </button>
           </div>
           <div class="menu-spacer" aria-hidden="true"></div>
-          <button class="menu-btn" id="start-new-game-btn">
-            <span class="material-icons">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
-          </button>
-          <button class="menu-btn" id="resume-game-btn" hidden>
-            <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
-          </button>
+          <div class="menu-row" id="coach-game-actions">
+            <button class="menu-btn" id="start-new-game-btn">
+              <span class="material-icons">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
+            </button>
+            <button class="menu-btn" id="resume-game-btn" hidden>
+              <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
+            </button>
+          </div>
         </nav>
         <div class="home-switch-bar">
           <button class="menu-btn role-switch-btn" id="coach-switch-parent">
@@ -124,72 +126,87 @@
           <h1 data-i18n="appTitle">ActionPitch</h1>
         </div>
         <div class="content parent-home-content">
-          <div class="settings-group" id="parent-kid-form">
-            <div class="form-group">
-              <label for="parent-kid-name" data-i18n="kidName">Kid name</label>
-              <input type="text" id="parent-kid-name" data-i18n-placeholder="kidNamePlaceholder" placeholder="Enter your kid's name" />
-            </div>
-            <div class="form-group parent-kid-meta">
-              <div class="parent-kid-number">
-                <label for="parent-kid-number" data-i18n="jerseyShort">#</label>
-                <input type="number" id="parent-kid-number" min="0" max="99" inputmode="numeric" />
-              </div>
-              <div class="parent-kid-position">
-                <label for="parent-kid-position" data-i18n="positionShort">Pos</label>
-                <select id="parent-kid-position"></select>
-              </div>
-              <button type="button" class="secondary-btn" id="save-parent-kid" data-i18n="saveKid">Save kid</button>
-            </div>
-          </div>
-          <div id="parent-kid-stats" class="parent-kid-stats"></div>
-          <div class="settings-group parent-new-game">
-            <h2 data-i18n="parentNewGame">New game</h2>
-            <div class="form-group">
-              <label for="parent-opponent" data-i18n="opponentName">Opponent Team Name:</label>
-              <input type="text" id="parent-opponent" data-i18n-placeholder="opponentPlaceholder" placeholder="Enter opponent team name" />
-            </div>
-            <div class="form-group parent-date-row">
-              <div class="parent-date-field">
-                <label for="parent-game-date" data-i18n="gameDate">Game Date:</label>
-                <input type="date" id="parent-game-date" />
-              </div>
-              <label class="checkbox-label parent-starting-check">
-                <input type="checkbox" id="parent-starts-on" checked />
-                <span data-i18n="startsOnField">Kid on starting roster</span>
-              </label>
-            </div>
-            <div class="form-group">
-              <label for="parent-num-periods" data-i18n="numPeriods">Number of Periods:</label>
-              <input type="number" id="parent-num-periods" value="4" min="1" />
-            </div>
-            <div class="form-group">
-              <label for="parent-period-duration" data-i18n="periodDuration">Time per Period (minutes):</label>
-              <input type="number" id="parent-period-duration" value="12" min="1" max="45" />
-            </div>
-            <button type="button" class="primary-btn" id="parent-start-game" data-i18n="startNewGame">Start New Game</button>
-            <button type="button" class="menu-btn" id="parent-resume-game" hidden>
-              <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
+          <nav class="tab-navigation" id="parent-tab-nav">
+            <button type="button" class="tab-btn active" data-parent-tab="home">
+              <span class="material-icons">home</span> <span data-i18n="parentHomeTab">Home menu</span>
             </button>
-          </div>
-          <div class="parent-home-footer">
-            <div class="menu-row">
-              <button class="menu-btn" data-go="reports">
-                <span class="material-icons">assessment</span> <span data-i18n="reports">Reports</span>
-              </button>
-              <span class="game-report-counter"
-                ><span class="material-icons">description</span>
-                <span id="parent-report-counter">0</span></span
-              >
+            <button type="button" class="tab-btn" data-parent-tab="stats">
+              <span class="material-icons">analytics</span> <span data-i18n="parentStatsTab">Player stats</span>
+            </button>
+          </nav>
+          <section id="parent-home-tab" class="tab-content active">
+            <p class="parent-welcome" data-i18n="parentWelcome">
+              Welcome. Follow your player from here: start a match, open reports, or open settings.
+            </p>
+            <div class="parent-home-footer">
+              <div class="menu-row">
+                <button class="menu-btn" data-go="reports">
+                  <span class="material-icons">assessment</span> <span data-i18n="reports">Reports</span>
+                </button>
+                <span class="game-report-counter"
+                  ><span class="material-icons">description</span>
+                  <span id="parent-report-counter">0</span></span
+                >
+              </div>
+              <div class="menu-row">
+                <button class="menu-btn" data-go="settings">
+                  <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
+                </button>
+                <button class="menu-btn" id="parent-open-tips">
+                  <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
+                </button>
+              </div>
             </div>
-            <div class="menu-row">
-              <button class="menu-btn" data-go="settings">
-                <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
-              </button>
-              <button class="menu-btn" id="parent-open-tips">
-                <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
+            <div class="settings-group parent-new-game">
+              <h2 data-i18n="parentNewGame">New game</h2>
+              <div class="form-group">
+                <label for="parent-opponent" data-i18n="opponentName">Opponent Team Name:</label>
+                <input type="text" id="parent-opponent" data-i18n-placeholder="opponentPlaceholder" placeholder="Enter opponent team name" />
+              </div>
+              <div class="form-group parent-date-row">
+                <div class="parent-date-field">
+                  <label for="parent-game-date" data-i18n="gameDate">Game Date:</label>
+                  <input type="date" id="parent-game-date" />
+                </div>
+                <label class="checkbox-label parent-starting-check">
+                  <input type="checkbox" id="parent-starts-on" checked />
+                  <span data-i18n="startsOnField">Player on starting roster</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="parent-num-periods" data-i18n="numPeriods">Number of Periods:</label>
+                <input type="number" id="parent-num-periods" value="4" min="1" />
+              </div>
+              <div class="form-group">
+                <label for="parent-period-duration" data-i18n="periodDuration">Time per Period (minutes):</label>
+                <input type="number" id="parent-period-duration" value="12" min="1" max="45" />
+              </div>
+              <button type="button" class="primary-btn" id="parent-start-game" data-i18n="startNewGame">Start New Game</button>
+              <button type="button" class="menu-btn" id="parent-resume-game" hidden>
+                <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
               </button>
             </div>
-          </div>
+          </section>
+          <section id="parent-stats-tab" class="tab-content">
+            <div class="settings-group" id="parent-kid-form">
+              <div class="form-group">
+                <label for="parent-kid-name" data-i18n="kidName">Player name</label>
+                <input type="text" id="parent-kid-name" data-i18n-placeholder="kidNamePlaceholder" placeholder="Enter the player's name" />
+              </div>
+              <div class="form-group parent-kid-meta">
+                <div class="parent-kid-number">
+                  <label for="parent-kid-number" data-i18n="jerseyShort">#</label>
+                  <input type="number" id="parent-kid-number" min="0" max="99" inputmode="numeric" />
+                </div>
+                <div class="parent-kid-position">
+                  <label for="parent-kid-position" data-i18n="positionShort">Pos</label>
+                  <select id="parent-kid-position"></select>
+                </div>
+                <button type="button" class="secondary-btn" id="save-parent-kid" data-i18n="saveKid">Save player</button>
+              </div>
+            </div>
+            <div id="parent-kid-stats" class="parent-kid-stats"></div>
+          </section>
         </div>
         <div class="home-switch-bar">
           <button class="menu-btn role-switch-btn" id="parent-switch-coach">
@@ -719,15 +736,15 @@
           <section class="tips-block">
             <h3 class="tips-screen" data-i18n="tipScreenParentHome">On the Parent home screen</h3>
             <ul class="tips-list">
-              <li data-i18n="tipParentHome">Save your kid, then the opponent, date, periods, and whether they start. You can switch to coach from the bottom of this screen.</li>
+              <li data-i18n="tipParentHome">Save your player, then the opponent, date, periods, and whether they start. You can switch to coach from the bottom of this screen.</li>
             </ul>
           </section>
           <section class="tips-block">
             <h3 class="tips-screen" data-i18n="tipScreenParentLive">On the Live game screen</h3>
             <ul class="tips-list">
-              <li data-i18n="tipParentLiveTap">When you are not moving, tap your kid for actions. Own goal counts for them and adds 1 for the opponent.</li>
-              <li data-i18n="tipParentLiveMove">Double-tap your kid to enter move mode, then tap a pitch slot or the bench. Tap the kid again to cancel. Actions stay closed while moving.</li>
-              <li data-i18n="tipParentLiveScore">Home +1 is a teammate goal — you will be asked if your kid made the last pass. Opponent +1 is their goal.</li>
+              <li data-i18n="tipParentLiveTap">When you are not moving, tap your player for actions. Own goal counts for them and adds 1 for the opponent.</li>
+              <li data-i18n="tipParentLiveMove">Double-tap your player to enter move mode, then tap a pitch slot or the bench. Tap the player again to cancel. Actions stay closed while moving.</li>
+              <li data-i18n="tipParentLiveScore">Home +1 is a teammate goal — you will be asked if your player made the last pass. Opponent +1 is their goal.</li>
             </ul>
           </section>
           </div>

@@ -250,7 +250,6 @@ body {
   }
 
   .message-ribbon {
-    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
     font-size: 14px;
   }
 

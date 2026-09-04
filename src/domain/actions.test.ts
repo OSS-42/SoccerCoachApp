@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applyAction,
   createAction,
+  FIELD_PLAYER_ACTIONS,
   revertAction,
   scoreFromActions,
   statsFromActions,
@@ -77,6 +78,11 @@ describe('actions', () => {
     const next = applyAction(game(), createAction('interception', 'p1', 50))
     expect(statsFromActions(next.actions, 'p1').interceptions).toBe(1)
     expect(scoreFromActions(next.actions)).toEqual({ home: 0, away: 0 })
+  })
+
+  it('puts interception on the field live-action list with the other play actions', () => {
+    expect(FIELD_PLAYER_ACTIONS).toContain('interception')
+    expect(FIELD_PLAYER_ACTIONS.indexOf('interception')).toBeLessThan(FIELD_PLAYER_ACTIONS.indexOf('fault'))
   })
 
   it('reverts a goal and the score', () => {

@@ -53,7 +53,7 @@ describe('tutorial plan', () => {
     expect(plan[end + 3]).toMatchObject({ id: 'deleteReport', wait: 'report-deleted' })
   })
 
-  it('walks parent through the report, kid stats, then deleting the practice game', () => {
+  it('walks parent through the report, player stats, then deleting the practice game', () => {
     const plan = tutorialPlan('parent')
     const end = plan.findIndex((step) => step.id === 'endGame')
     expect(plan[end]).toMatchObject({ screen: 'game-tracking', wait: 'screen' })
@@ -62,12 +62,12 @@ describe('tutorial plan', () => {
     expect(plan[end + 3]).toMatchObject({ id: 'deleteReport', wait: 'report-deleted' })
   })
 
-  it('lets the parent edit the kid form before saving', () => {
+  it('lets the parent edit the player form before saving', () => {
     const kid = tutorialPlan('parent').find((step) => step.id === 'kid')
     expect(kid).toMatchObject({ wait: 'kid-saved' })
   })
 
-  it('walks parent live like coach after placing the kid', () => {
+  it('walks parent live like coach after placing the player', () => {
     const plan = tutorialPlan('parent')
     expect(plan.find((step) => step.id === 'place')?.wait).toBe('kid-moved')
     expect(
@@ -111,6 +111,14 @@ describe('tutorial overlay', () => {
     expect(isTutorialActive()).toBe(false)
     expect(isTutorialOverlayOpen()).toBe(false)
     expect(getSave().tutorial.coachRev).toBe(TUTORIAL_COACH_REV)
+  })
+
+  it('opens the parent stats tab for the player step', () => {
+    startTutorial('parent')
+    document.getElementById('tutorial-next')?.click()
+    expect(document.getElementById('parent-stats-tab')?.classList.contains('active')).toBe(true)
+    expect(document.getElementById('parent-home-tab')?.classList.contains('active')).toBe(false)
+    expect(document.getElementById('tutorial-title')?.textContent).toContain('Your player')
   })
 
   it('Start then Next moves from welcome to the team-setup highlight', () => {

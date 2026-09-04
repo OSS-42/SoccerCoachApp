@@ -3,13 +3,17 @@
 .version-footer {
   position: fixed;
   right: 8px;
-  bottom: 8px;
+  bottom: calc(8px + var(--ribbon-slot, 48px));
   font-size: 11px;
   color: #888;
   z-index: 30;
 }
 #resume-game-btn[hidden] { display: none !important; }
 
+#intro-screen,
+#ota-screen {
+  bottom: 0;
+}
 #intro-screen {
   background: #000 !important;
   overflow: hidden !important;
@@ -181,14 +185,27 @@ body {
     top: auto;
     left: 0;
     right: 0;
-    padding: 20px;
+    height: var(--ribbon-slot, 48px);
+    min-height: var(--ribbon-slot, 48px);
+    max-height: var(--ribbon-slot, 48px);
+    padding: 0 14px env(safe-area-inset-bottom, 0px);
     color: white;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     z-index: 9999;
+    box-sizing: border-box;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#message-text {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .message-ribbon.error {
@@ -200,10 +217,6 @@ body {
 }
 .message-ribbon.hidden {
     display: none;
-    height: 0;
-    padding: 0;
-    margin: 0;
-    border: none;
 }
 
 /* Ensure players-list has no padding by default */
@@ -223,6 +236,9 @@ body {
     position: fixed;
     top: var(--header-height);
     bottom: auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
@@ -288,6 +304,53 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     box-sizing: border-box;
     overscroll-behavior: none; /* Prevent pull-to-refresh and horizontal overscroll navigation */
+}
+
+/* Desktop web: full height, phone aspect (9:19.5). Native and real phones stay full-bleed. */
+@media (min-width: 769px) {
+  html:not(.is-native) {
+    --app-h: 100vh;
+    --app-h: 100dvh;
+    --app-w: min(100vw, calc(var(--app-h) * 9 / 19.5));
+    --app-left: calc((100vw - var(--app-w)) / 2);
+  }
+  html:not(.is-native) body {
+    background: #020403;
+    min-height: var(--app-h);
+  }
+  html:not(.is-native)[data-theme='light'] body {
+    background: #d6d6d6;
+  }
+  html:not(.is-native) #app {
+    width: var(--app-w);
+    max-width: var(--app-w);
+    height: var(--app-h);
+    min-height: var(--app-h);
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 0 48px rgba(0, 0, 0, 0.45);
+  }
+  html:not(.is-native) .screen {
+    left: var(--app-left) !important;
+    right: auto !important;
+    width: var(--app-w) !important;
+    max-width: var(--app-w) !important;
+  }
+  html:not(.is-native) .dialog,
+  html:not(.is-native) #tutorial-root {
+    left: var(--app-left);
+    width: var(--app-w);
+    height: var(--app-h);
+    right: auto;
+  }
+  html:not(.is-native) .message-ribbon {
+    left: var(--app-left);
+    right: auto;
+    width: var(--app-w);
+  }
+  html:not(.is-native) .version-footer {
+    right: calc(100vw - var(--app-left) - var(--app-w) + 8px);
+  }
 }
 
 /* Team selector in headers */
@@ -379,7 +442,7 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: var(--ribbon-slot, 48px);
     z-index: 10;
     overflow: auto;
     background-color: #f5f5f5;
@@ -450,7 +513,7 @@ body {
 /* Version Footer - Bottom Right Corner */
 .version-footer {
     position: fixed;
-    bottom: 10px;
+    bottom: calc(10px + var(--ribbon-slot, 48px));
     right: 10px;
     font-size: 11px;
     color: #999;
@@ -1036,12 +1099,11 @@ body {
 }
 
 /* Game Tracking Styles */
-/* Ensure #game-tracking fills the viewport and stacks elements vertically */
+/* Live game stacks in the screen; visibility stays on .screen / .screen.active. */
 #game-tracking {
-    display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100vh;
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -2850,8 +2912,8 @@ button.no-assist-btn {
  * MOBILE: THREE-COLUMN LAYOUT (Available Left | Field Center | Unavailable Right)
  * ============================================================================ */
 
-@media screen and (max-width: 768px) {
-    /* MOBILE: THREE-COLUMN LAYOUT */
+html.is-phone-ui {
+    /* MOBILE / APP STORE: THREE-COLUMN LAYOUT */
     /* BENCH (LEFT) | FIELD (CENTER, LARGEST) | UNAVAILABLE (RIGHT) */
     
     .formation-container {
@@ -3155,7 +3217,7 @@ button.no-assist-btn {
  * DESKTOP: VERTICAL LAYOUT (Available Top | Field + Controls Bottom)
  * ============================================================================ */
 
-@media screen and (min-width: 769px) {
+html.is-wide-ui {
     /* DESKTOP: STACKED VERTICAL LAYOUT */
     /* ROW 1: BENCH | ROW 2: FIELD | ROW 3: UNAVAILABLE */
     
@@ -4580,9 +4642,8 @@ button.no-assist-btn {
     border: 1px solid #e2e8f0;
 }
 
-/* Live game: scoreboard + grid that stay inside the viewport on desktop */
-#game-tracking {
-    display: flex !important;
+/* Live game: scoreboard + grid that stay inside the screen */
+#game-tracking.screen.active {
     flex-direction: column;
     height: 100%;
     min-height: 0;
@@ -4749,6 +4810,47 @@ button.no-assist-btn {
     box-sizing: border-box;
 }
 
+html.is-phone-ui #game-tracking:not(.is-parent) .live-rosters {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 8px;
+}
+html.is-phone-ui #game-tracking:not(.is-parent) .live-roster-section {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+html.is-phone-ui #game-tracking:not(.is-parent) .live-roster-section h3 {
+    flex: 0 0 auto;
+    margin: 0 10px 4px;
+}
+html.is-phone-ui #game-tracking:not(.is-parent) .player-grid {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 6px;
+    padding: 0 10px 6px;
+    align-content: stretch;
+}
+html.is-phone-ui #game-tracking:not(.is-parent) .player-grid-item {
+    max-width: none;
+    min-height: 0;
+    height: auto;
+    margin: 0;
+    padding: 4px 3px;
+}
+html.is-phone-ui #game-tracking:not(.is-parent) .live-tile-name {
+    font-size: 11px;
+}
+html.is-phone-ui #game-tracking:not(.is-parent) .live-tile-num {
+    font-size: 11px;
+}
+
 #game-tracking .live-sub-count {
     display: flex;
     align-items: baseline;
@@ -4852,7 +4954,38 @@ button.no-assist-btn {
 #parent-home .parent-home-content {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+#team-setup .tab-navigation,
+#parent-home .tab-navigation {
+    flex: 0 0 auto;
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    margin: 0 0 12px;
+    box-sizing: border-box;
+}
+#team-setup .tab-btn,
+#parent-home .tab-btn {
+    flex: 1 1 0;
+    justify-content: center;
+    min-width: 0;
+}
+#parent-home .tab-content.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+}
+.parent-welcome {
+    margin: 0 0 16px;
+    font-size: 15px;
+    line-height: 1.4;
+    font-weight: 600;
+    opacity: 0.9;
 }
 .home-switch-bar {
     flex: 0 0 auto;
@@ -4957,8 +5090,8 @@ button.no-assist-btn {
     margin-left: 10px;
 }
 .parent-home-footer {
-    margin-top: auto;
-    padding-top: 24px;
+    margin: 0 0 16px;
+    padding-top: 0;
     display: flex;
     flex-direction: column;
     gap: 10px;

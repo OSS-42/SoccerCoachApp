@@ -8,6 +8,19 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.71',
+    items: {
+      en: [
+        'Interception is on the first screen when you tap a player. Stats cards, season, and the PDF say Intercept.',
+        'Parent home has two tabs: Home menu and Player stats. The phone stays in portrait. Coach live shows every tile without scrolling; Resume sits beside Start New Game. Labels say player, not kid.',
+      ],
+      fr: [
+        'Interception est sur le premier écran quand vous touchez un joueur. Les cartes de stats, la saison et le PDF disent Interc.',
+        'L’accueil parent a deux onglets : Menu d’accueil et Stats du joueur. Le téléphone reste en portrait. En direct coach, toutes les tuiles tiennent à l’écran ; Reprendre est à côté de Nouveau match. Les textes disent joueur, pas enfant.',
+      ],
+    },
+  },
+  {
     version: '2.4.70',
     items: {
       en: [
@@ -35,7 +48,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.68',
     items: {
       en: [
-        'Tour highlights cut a hole in the dimmer so you can see the control (kid stats card, reports, formation). Coach tour uses DEMO TEAM for the practice match. Parent practice match is 9v9 (3 periods).',
+        'Tour highlights cut a hole in the dimmer so you can see the control (player stats card, reports, formation). Coach tour uses DEMO TEAM for the practice match. Parent practice match is 9v9 (3 periods).',
       ],
       fr: [
         'Le tour perce un trou dans l’assombrissement pour voir le contrôle (carte de stats, rapports, composition). Le tour coach utilise DEMO TEAM pour l’entraînement. Le match parent d’entraînement est en 9v9 (3 périodes).',
@@ -46,7 +59,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.67',
     items: {
       en: [
-        'Parent tour: type the kid’s name before Save. Only the highlighted control works, so the steps stay in order.',
+        'Parent tour: type the player’s name before Save. Only the highlighted control works, so the steps stay in order.',
       ],
       fr: [
         'Tour parent : saisissez le prénom avant Enregistrer. Seul le contrôle mis en avant fonctionne, pour garder les étapes dans l’ordre.',
@@ -82,11 +95,11 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: {
       en: [
         'Coach formation: Save keeps the lineup (including unavailable) without starting the game.',
-        'Parent kickoff: a prompt to position the kid, then one tap on a slot (no double-tap).',
+        'Parent kickoff: a prompt to position the player, then one tap on a slot (no double-tap).',
       ],
       fr: [
         'Composition coach : Enregistrer garde le onze (et les absents) sans lancer le match.',
-        'Coup d’envoi parent : un message pour placer l’enfant, puis un toucher sur une place (sans double-toucher).',
+        'Coup d’envoi parent : un message pour placer le joueur, puis un toucher sur une place (sans double-toucher).',
       ],
     },
   },
@@ -105,10 +118,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.62',
     items: {
       en: [
-        'Parent home: jersey, position, and Save on one row. New game is its own card. Saved kid name replaces “kid” in labels and tips. Parent pitch keeps the field aspect ratio.',
+        'Parent home: jersey, position, and Save on one row. New game is its own card. Saved player name replaces “player” in labels and tips. Parent pitch keeps the field aspect ratio.',
       ],
       fr: [
-        'Accueil parent : n°, poste et Enregistrer sur une ligne. Nouveau match en carte. Le prénom remplace « enfant » dans les textes. Le terrain parent garde ses proportions.',
+        'Accueil parent : n°, poste et Enregistrer sur une ligne. Nouveau match en carte. Le nom remplace « joueur » dans les textes. Le terrain parent garde ses proportions.',
       ],
     },
   },
@@ -138,10 +151,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.59',
     items: {
       en: [
-        'Coach and Parent homes share the same bottom Switch button. Parent home: no extra title; date sits beside “Kid Starting”.',
+        'Coach and Parent homes share the same bottom Switch button. Parent home: no extra title; date sits beside “Player starting”.',
       ],
       fr: [
-        'Les accueil Coach et Parent ont le bouton d’échange en bas. Accueil parent : plus de titre ; la date est à côté de « Enfant titulaire ».',
+        'Les accueil Coach et Parent ont le bouton d’échange en bas. Accueil parent : plus de titre ; la date est à côté de « Joueur titulaire ».',
       ],
     },
   },
@@ -149,7 +162,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.58',
     items: {
       en: [
-        'Parent home always shows the kid stats card. Smaller “starts on the field” checkbox. Swap arrows on Coach/Parent switch.',
+        'Parent home always shows the player stats card. Smaller “starts on the field” checkbox. Swap arrows on Coach/Parent switch.',
       ],
       fr: [
         'L’écran parent affiche toujours la carte de stats. Case « titulaire » plus petite. Flèches d’échange sur le bouton Coach/Parent.',
@@ -160,12 +173,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.4.57',
     items: {
       en: [
-        'Coach or Parent after the intro. Parent mode follows one kid: pitch slots, tap for actions, double-tap to move.',
-        'Parent live: Home +1 asks if the kid made the last pass. Opponent +1 is their goal. Kid-only report and PDF.',
+        'Coach or Parent after the intro. Parent mode follows one player: pitch slots, tap for actions, double-tap to move.',
+        'Parent live: Home +1 asks if the player made the last pass. Opponent +1 is their goal. Player-only report and PDF.',
       ],
       fr: [
-        'Coach ou Parent après l’intro. Le mode parent suit un enfant : places sur le terrain, toucher pour une action, double-toucher pour déplacer.',
-        'En direct parent : Dom. +1 demande si l’enfant a fait la dernière passe. Adv. +1 est leur but. Rapport et PDF centrés sur l’enfant.',
+        'Coach ou Parent après l’intro. Le mode parent suit un joueur : places sur le terrain, toucher pour une action, double-toucher pour déplacer.',
+        'En direct parent : Dom. +1 demande si le joueur a fait la dernière passe. Adv. +1 est leur but. Rapport et PDF centrés sur le joueur.',
       ],
     },
   },

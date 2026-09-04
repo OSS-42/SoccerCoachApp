@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { CHANGELOG } from '@/domain/changelog'
 import { bindSettings } from './settings'
 
 const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8')
@@ -19,8 +20,8 @@ describe('settings changelog dialog', () => {
     const list = document.getElementById('changelog-list')
     expect(dialog?.classList.contains('active')).toBe(true)
     expect(list?.querySelectorAll('.changelog-entry')).toHaveLength(2)
-    expect(list?.textContent).toContain('v2.4.68')
-    expect(list?.textContent).toContain('v2.4.67')
+    expect(list?.textContent).toContain(`v${CHANGELOG[0].version}`)
+    expect(list?.textContent).toContain(`v${CHANGELOG[1].version}`)
   })
 
   it('groups tips under the live and formation screens', () => {

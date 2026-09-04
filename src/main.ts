@@ -6,7 +6,23 @@ import { APP_VERSION, CLOCK_PERSIST_EVERY_TICKS, CLOCK_TICK_MS, EDGE_SWIPE_PX } 
 
 if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('is-native')
+  const wide = window.matchMedia('(min-width: 769px)')
+  const syncWide = (): void => {
+    document.documentElement.classList.toggle('is-wide-ui', wide.matches)
+    document.documentElement.classList.toggle('is-phone-ui', !wide.matches)
+  }
+  syncWide()
+  wide.addEventListener('change', syncWide)
+} else {
+  document.documentElement.classList.add('is-phone-ui')
 }
+
+const lockPortrait = (
+  screen.orientation as ScreenOrientation & { lock?: (mode: string) => Promise<void> }
+).lock
+void lockPortrait?.('portrait').catch(() => {
+  /* browsers often allow lock only in fullscreen; Android uses the manifest */
+})
 import { applyDomTranslations } from '@/i18n'
 import { getRole, getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
 import { hideMessage } from '@/ui/message'
