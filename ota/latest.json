@@ -1,6 +1,6 @@
 {
-  "version": "2.4.70",
+  "version": "2.4.71",
   "minAppVersion": "2.4.50",
-  "notes": "Intro video loads during the update check and plays without the play-button flash.",
+  "notes": "Interception on the live action sheet and stats. Parent home tabs. Portrait lock. Coach live tiles fit on screen.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
