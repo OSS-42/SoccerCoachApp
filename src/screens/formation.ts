@@ -97,7 +97,7 @@ function layoutFormationRails(): void {
   const field = document.getElementById('formation-field')
   const team = getCurrentTeam()
   const draft = getGameDraft()
-  if (!benchCol || !outCol || !bench || !overflow || !out || !team || !draft) return
+  if (!benchCol || !outCol || !bench || !overflow || !out || !field || !team || !draft) return
 
   const gap = 4
   const benchTotal = benchSlotCount(draft.matchType, team.players.length)

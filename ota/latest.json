@@ -1,6 +1,6 @@
 {
-  "version": "2.4.73",
+  "version": "2.4.74",
   "minAppVersion": "2.4.50",
-  "notes": "Spectator role (follow one player). Centered replay tutorials. No role switch in Settings.",
+  "notes": "Formation pitch keeps its real shape on every phone.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
