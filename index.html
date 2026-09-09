@@ -56,10 +56,10 @@
             </span>
           </button>
           <button type="button" class="menu-btn role-pick-btn" id="pick-role-parent">
-            <span class="material-icons">child_care</span>
+            <span class="material-icons">visibility</span>
             <span>
-              <strong data-i18n="roleParent">Parent</strong>
-              <small data-i18n="roleParentHint">Follow your player</small>
+              <strong data-i18n="roleParent">Spectator</strong>
+              <small data-i18n="roleParentHint">Follow one player</small>
             </span>
           </button>
         </div>
@@ -116,7 +116,7 @@
               <span class="material-icons">arrow_back</span>
               <span class="material-icons">arrow_forward</span>
             </span>
-            <span data-i18n="switchToParent">Switch to parent</span>
+            <span data-i18n="switchToParent">Switch to spectator</span>
           </button>
         </div>
       </main>
@@ -568,19 +568,12 @@
             </div>
             <input type="file" id="import-file" accept=".json" hidden />
           </div>
-          <button class="secondary-btn role-switch-btn" id="settings-switch-role">
-            <span class="role-swap-icon" aria-hidden="true">
-              <span class="material-icons">arrow_back</span>
-              <span class="material-icons">arrow_forward</span>
-            </span>
-            <span id="settings-switch-role-label" data-i18n="switchToParent">Switch to parent</span>
-          </button>
           <button class="primary-btn" id="save-settings" data-i18n="saveSettings">Save Settings</button>
           <p class="settings-version"><span data-i18n="version">Version</span> <span id="settings-app-version"></span></p>
           <p class="settings-reload-hint" data-i18n="reloadLatestHint">Use this after an update if the screen still looks old.</p>
           <button class="secondary-btn" id="open-changelog" data-i18n="changelog">Change log</button>
           <button class="secondary-btn" id="replay-tutorial-coach" data-i18n="replayTutorialCoach">Replay coach tutorial</button>
-          <button class="secondary-btn" id="replay-tutorial-parent" data-i18n="replayTutorialParent">Replay parent tutorial</button>
+          <button class="secondary-btn" id="replay-tutorial-parent" data-i18n="replayTutorialParent">Replay spectator tutorial</button>
           <button class="secondary-btn" id="reload-latest" data-i18n="reloadLatest">Reload latest version</button>
         </div>
       </div>
@@ -734,7 +727,7 @@
           </div>
           <div id="tips-parent" hidden>
           <section class="tips-block">
-            <h3 class="tips-screen" data-i18n="tipScreenParentHome">On the Parent home screen</h3>
+            <h3 class="tips-screen" data-i18n="tipScreenParentHome">On the Spectator home screen</h3>
             <ul class="tips-list">
               <li data-i18n="tipParentHome">Save your player, then the opponent, date, periods, and whether they start. You can switch to coach from the bottom of this screen.</li>
             </ul>

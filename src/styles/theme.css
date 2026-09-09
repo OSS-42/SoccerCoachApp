@@ -762,6 +762,16 @@ html[data-theme] .version-footer {
   color: var(--neu-muted);
 }
 
+html[data-theme] #open-changelog,
+html[data-theme] #reload-latest,
+html[data-theme] #replay-tutorial-coach,
+html[data-theme] #replay-tutorial-parent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
 html[data-theme] .regulation-option {
   background: var(--neu-bg);
   border: 1px solid var(--neu-line);

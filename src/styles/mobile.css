@@ -15,8 +15,13 @@
 }
 
 #open-changelog,
-#reload-latest {
-  display: block;
+#reload-latest,
+#replay-tutorial-coach,
+#replay-tutorial-parent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   width: calc(100% - 32px);
   max-width: 360px;
   margin: 10px auto 0;

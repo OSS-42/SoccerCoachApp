@@ -8,14 +8,25 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.73',
+    items: {
+      en: [
+        'The second path is Spectator: follow one player. Replay coach and spectator tutorials sit in the center in Settings. Role switch stays on the home screen, not in Settings.',
+      ],
+      fr: [
+        'Le second parcours s’appelle Spectateur : suivre un seul joueur. Revoir les tutoriels coach et spectateur est centré dans Réglages. Le changement de rôle reste sur l’accueil, plus dans Réglages.',
+      ],
+    },
+  },
+  {
     version: '2.4.72',
     items: {
       en: [
-        'Tutorial Skip and Next sit in the center on both coach and parent tours.',
+        'Tutorial Skip and Next sit in the center on both coach and spectator tours.',
         'The title bar and selected-team strip are the same height on every screen. Team Setup still lets you rename the team below that strip.',
       ],
       fr: [
-        'Passer et Suivant du tutoriel sont centrés, pour le tour coach et le tour parent.',
+        'Passer et Suivant du tutoriel sont centrés, pour le tour coach et le tour spectateur.',
         'La barre de titre et le bandeau d’équipe ont la même hauteur sur tous les écrans. En configuration d’équipe, le renommage reste sous ce bandeau.',
       ],
     },
@@ -25,11 +36,11 @@ export const CHANGELOG: ChangelogEntry[] = [
     items: {
       en: [
         'Interception is on the first screen when you tap a player. Stats cards, season, and the PDF say Intercept.',
-        'Parent home has two tabs: Home menu and Player stats. The phone stays in portrait. Coach live shows every tile without scrolling; Resume sits beside Start New Game. Labels say player, not kid.',
+        'Spectator home has two tabs: Home menu and Player stats. The phone stays in portrait. Coach live shows every tile without scrolling; Resume sits beside Start New Game. Labels say player, not kid.',
       ],
       fr: [
         'Interception est sur le premier écran quand vous touchez un joueur. Les cartes de stats, la saison et le PDF disent Interc.',
-        'L’accueil parent a deux onglets : Menu d’accueil et Stats du joueur. Le téléphone reste en portrait. En direct coach, toutes les tuiles tiennent à l’écran ; Reprendre est à côté de Nouveau match. Les textes disent joueur, pas enfant.',
+        'L’accueil spectateur a deux onglets : Menu d’accueil et Stats du joueur. Le téléphone reste en portrait. En direct coach, toutes les tuiles tiennent à l’écran ; Reprendre est à côté de Nouveau match. Les textes disent joueur, pas enfant.',
       ],
     },
   },

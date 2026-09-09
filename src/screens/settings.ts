@@ -13,15 +13,13 @@ import {
   resetAllData,
   setDefaultSubstitution,
   setLanguage,
-  setRole,
   setTheme,
 } from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { fillTeamSelectors } from './shared'
-import { goToRoleHome } from './roleSelect'
-import { onRoleSwitched, startTutorial } from './tutorial'
+import { startTutorial } from './tutorial'
 import { openWhatsNew } from './whatsNew'
 
 async function hardRefresh(): Promise<void> {
@@ -65,16 +63,9 @@ export function renderSettings(): void {
   if (back) back.dataset.go = parent ? 'parent-home' : 'main-screen'
   const subGroup = document.getElementById('settings-sub-group')
   if (subGroup) subGroup.hidden = parent
-  const switchLabel = document.getElementById('settings-switch-role-label')
-  if (switchLabel) switchLabel.textContent = parent ? t('switchToCoach') : t('switchToParent')
 }
 
 export function bindSettings(): void {
-  document.getElementById('settings-switch-role')?.addEventListener('click', () => {
-    setRole(getRole() === 'parent' ? 'coach' : 'parent')
-    goToRoleHome('replace')
-    onRoleSwitched()
-  })
   document.querySelectorAll<HTMLInputElement>('input[name="language"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       if (!isLocale(radio.value)) return
