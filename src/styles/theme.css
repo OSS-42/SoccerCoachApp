@@ -30,6 +30,8 @@
   --app-header-control: 44px;
   --app-header-pad: 8px;
   --team-banner-h: 56px;
+  /* Native field.png size. Inscribe this box; never stretch. */
+  --pitch-ratio: 1224 / 1974;
 }
 
 /* Punch-hole / Dynamic Island: Android WebView often reports env() as 0. */
@@ -716,11 +718,11 @@ html[data-theme] #parent-pitch.formation-field {
 html[data-theme] #parent-pitch .formation-field-surface {
   position: relative;
   inset: auto;
-  width: min(100%, calc(100cqh * 1224 / 1974));
+  width: min(100%, calc(100cqh * var(--pitch-ratio)));
   height: auto;
   max-width: 100%;
   max-height: 100%;
-  aspect-ratio: 1224 / 1974;
+  aspect-ratio: var(--pitch-ratio);
   margin: 0;
   background-size: 100% 100%;
   container-type: size;
@@ -1115,7 +1117,7 @@ html.is-phone-ui[data-theme] #formation-setup .formation-container {
 html.is-phone-ui[data-theme] .formation-pitch-row {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;
   gap: 2px;
   min-height: 0;
   flex: 1 1 auto;
@@ -1131,12 +1133,37 @@ html.is-phone-ui[data-theme] #formation-setup .formation-field {
   width: auto;
   max-width: none;
   margin-inline: 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
   overflow: hidden;
 }
 
 html.is-phone-ui[data-theme] #formation-setup .formation-field-surface {
-  inset: 0;
+  position: relative;
+  inset: auto;
+  width: min(100%, calc(100cqh * var(--pitch-ratio)));
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: var(--pitch-ratio);
+  margin: 0;
   background-size: 100% 100%;
+  container-type: size;
+}
+
+html.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot {
+  width: clamp(26px, 14cqmin, 52px);
+  height: clamp(26px, 14cqmin, 52px);
+}
+
+html.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot:not(.occupied) {
+  width: clamp(22px, 11cqmin, 40px);
+  height: clamp(22px, 11cqmin, 40px);
+}
+
+html.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot .spot-label {
+  font-size: clamp(8px, 3.4cqmin, 11px);
 }
 
 html.is-phone-ui[data-theme] .bench-players,
@@ -1144,7 +1171,8 @@ html.is-phone-ui[data-theme] .unavailable-players {
   width: calc(var(--bench-tile, 48px) + 4px);
   flex: 0 0 calc(var(--bench-tile, 48px) + 4px);
   overflow: hidden;
-  max-height: none;
+  max-height: 100%;
+  align-self: center;
   padding: 1px 0;
   gap: 3px;
 }

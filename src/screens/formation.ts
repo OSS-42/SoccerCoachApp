@@ -103,12 +103,18 @@ function layoutFormationRails(): void {
   const benchTotal = benchSlotCount(draft.matchType, team.players.length)
   const wasHidden = overflow.hidden
   overflow.hidden = false
+  const surface = field.querySelector<HTMLElement>('.formation-field-surface')
+  const pitchH = Math.round(surface?.getBoundingClientRect().height ?? 0)
+  if (pitchH > 0) {
+    benchCol.style.height = `${pitchH}px`
+    outCol.style.height = `${pitchH}px`
+  }
   const overflowWidth =
-    field?.clientWidth ||
+    field.clientWidth ||
     overflow.clientWidth ||
     Math.max(0, (overflow.parentElement?.clientWidth ?? 0) - benchCol.offsetWidth - outCol.offsetWidth)
   const titleH = (benchCol.querySelector('h4')?.getBoundingClientRect().height ?? 20) + 4
-  const railH = Math.max(0, benchCol.clientHeight - titleH)
+  const railH = Math.max(0, (pitchH || benchCol.clientHeight) - titleH)
   let tile = 48
   let benchFit = 1
   let perRow = 1
@@ -389,13 +395,12 @@ export function renderFormation(): void {
       remaining.forEach((player) => seatOn('bench', player))
       outPlayers.forEach((player) => seatOn('unavailable', player))
     }
-    window.requestAnimationFrame(applyRails)
+    window.requestAnimationFrame(() => window.requestAnimationFrame(applyRails))
     formationResize?.disconnect()
     const row = document.querySelector('.formation-pitch-row')
-    if (row) {
-      formationResize = new ResizeObserver(() => layoutFormationRails())
-      formationResize.observe(row)
-    }
+    formationResize = new ResizeObserver(() => layoutFormationRails())
+    if (row) formationResize.observe(row)
+    formationResize.observe(field)
     clearSelection()
     return
   }

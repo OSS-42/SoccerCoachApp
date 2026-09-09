@@ -5161,11 +5161,11 @@ html.is-phone-ui #game-tracking:not(.is-parent) .live-tile-num {
 #parent-pitch .formation-field-surface {
     position: relative;
     inset: auto;
-    width: min(100%, calc(100cqh * 1224 / 1974));
+    width: min(100%, calc(100cqh * var(--pitch-ratio, 1224 / 1974)));
     height: auto;
     max-width: 100%;
     max-height: 100%;
-    aspect-ratio: 1224 / 1974;
+    aspect-ratio: var(--pitch-ratio, 1224 / 1974);
     margin: 0;
     background-size: 100% 100%;
     container-type: size;

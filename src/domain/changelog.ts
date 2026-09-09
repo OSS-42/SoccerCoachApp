@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.74',
+    items: {
+      en: [
+        'Formation pitch keeps its real shape on every phone. The grass is no longer stretched to fill the leftover space.',
+      ],
+      fr: [
+        'Le terrain de composition garde ses vraies proportions sur tous les téléphones. L’herbe n’est plus étirée pour remplir l’espace restant.',
+      ],
+    },
+  },
+  {
     version: '2.4.73',
     items: {
       en: [
