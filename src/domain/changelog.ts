@@ -8,6 +8,19 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.72',
+    items: {
+      en: [
+        'Tutorial Skip and Next sit in the center on both coach and parent tours.',
+        'The title bar and selected-team strip are the same height on every screen. Team Setup still lets you rename the team below that strip.',
+      ],
+      fr: [
+        'Passer et Suivant du tutoriel sont centrés, pour le tour coach et le tour parent.',
+        'La barre de titre et le bandeau d’équipe ont la même hauteur sur tous les écrans. En configuration d’équipe, le renommage reste sous ce bandeau.',
+      ],
+    },
+  },
+  {
     version: '2.4.71',
     items: {
       en: [

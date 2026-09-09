@@ -107,17 +107,18 @@ body {
   }
 
   .team-name-banner {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
     gap: 8px;
-    padding: 10px;
+    padding: 6px 12px;
   }
 
   .team-name-banner h2,
   .team-name-banner > div {
     min-width: 0 !important;
-    width: 100%;
-    flex: 1 1 auto;
+    width: auto;
+    flex: 1 1 0;
   }
 
   .team-name-edit {

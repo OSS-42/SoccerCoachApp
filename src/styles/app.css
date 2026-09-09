@@ -1946,12 +1946,22 @@ body:has(.dialog.active) #tutorial-block,
 }
 .tutorial-actions {
     display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: nowrap;
 }
 .tutorial-actions button {
     min-height: 44px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 12rem;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+}
+.tutorial-actions button[hidden] {
+    display: none !important;
 }
 
 .dialog.active {

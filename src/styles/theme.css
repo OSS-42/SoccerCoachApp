@@ -27,6 +27,9 @@
   --neu-radius-sm: 12px;
   --neu-radius-pill: 12px;
   --neu-glow: rgba(61, 220, 151, 0.24);
+  --app-header-control: 44px;
+  --app-header-pad: 8px;
+  --team-banner-h: 56px;
 }
 
 /* Punch-hole / Dynamic Island: Android WebView often reports env() as 0. */
@@ -115,22 +118,52 @@ html[data-theme='light'] .screen.active::before {
 }
 
 html[data-theme] .app-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  flex: 0 0 auto;
   background: transparent;
   color: var(--neu-text);
   box-shadow: none;
-  padding: calc(18px + var(--safe-top)) 18px 10px;
+  height: calc(var(--safe-top) + var(--app-header-pad) * 2 + var(--app-header-control));
+  min-height: calc(var(--safe-top) + var(--app-header-pad) * 2 + var(--app-header-control));
+  padding: calc(var(--safe-top) + var(--app-header-pad)) 12px var(--app-header-pad);
 }
 
 html[data-theme] .app-header h1 {
-  font-size: 20px;
+  position: absolute;
+  left: 56px;
+  right: 56px;
+  margin: 0;
+  height: var(--app-header-control);
+  line-height: var(--app-header-control);
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.03em;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html[data-theme] .app-header h1,
 html[data-theme] .back-btn,
 html[data-theme] .app-header .action-btn {
   color: var(--neu-text);
+}
+
+html[data-theme] .app-header .back-btn {
+  width: var(--app-header-control);
+  height: var(--app-header-control);
+  min-width: var(--app-header-control);
+  min-height: var(--app-header-control);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
 }
 
 html[data-theme] .app-header .action-btn.white-btn,
@@ -147,17 +180,25 @@ html[data-theme] .app-header .action-btn.white-btn .material-icons {
 }
 
 html[data-theme] .team-name-banner {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--team-banner-h);
+  min-height: var(--team-banner-h);
+  max-height: var(--team-banner-h);
   margin: 0 16px 8px;
-  padding: 16px 18px;
+  padding: 6px 12px;
+  overflow: hidden;
   background: var(--neu-card);
   color: var(--neu-text);
   border-radius: var(--neu-radius);
   box-shadow: var(--neu-raised-sm);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 html[data-theme] .team-name-banner h2,
@@ -166,34 +207,114 @@ html[data-theme] .team-name-banner .team-selector select {
 }
 
 html[data-theme] .team-name-banner > div {
-  flex: 0 1 auto;
-  width: 100%;
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  height: var(--app-header-control);
   justify-content: center;
 }
 
 html[data-theme] .team-name-banner h2 {
-  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
   min-width: 0;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  height: var(--app-header-control);
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 html[data-theme] .team-name-banner .team-name-edit {
   margin-top: 0;
-  width: 100%;
+  width: auto;
+  min-width: 0;
   justify-content: center;
+  gap: 6px;
+}
+
+html[data-theme] .team-name-banner .team-name-edit input,
+html[data-theme] .team-name-banner .team-selector select {
+  min-height: var(--app-header-control);
+  height: var(--app-header-control);
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 html[data-theme] .team-name-banner .team-selector {
+  display: flex;
   margin: 0;
-  width: 100%;
+  width: auto;
+  min-width: 0;
   justify-content: center;
+  gap: 6px;
 }
 
 html[data-theme] .team-name-banner .team-selector select {
   width: min(280px, 100%);
+  min-width: 0;
   text-align: center;
   text-align-last: center;
+}
+
+html[data-theme] .team-name-banner .team-name-edit input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+html[data-theme] #team-setup .team-name-banner .team-selector select {
+  width: auto;
+  flex: 1 1 0;
+}
+
+html[data-theme] .team-name-banner #save-team-name,
+html[data-theme] .team-name-banner .team-selector .small {
+  box-sizing: border-box;
+  min-height: var(--app-header-control);
+  height: var(--app-header-control);
+  padding: 0 10px;
+  flex: 0 0 auto;
+}
+
+html[data-theme] #team-setup .team-name-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+html[data-theme] #team-setup .team-name-edit input {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--app-header-control);
+  height: var(--app-header-control);
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html[data-theme] #team-setup .team-name-edit #save-team-name {
+  flex: 0 0 auto;
+  min-height: var(--app-header-control);
+  height: var(--app-header-control);
+  padding: 0 14px;
+}
+
+html[data-theme] .team-name-banner .team-selector .small {
+  width: var(--app-header-control);
+  min-width: var(--app-header-control);
+  padding: 0;
 }
 
 html[data-theme] .main-menu,
@@ -522,6 +643,16 @@ html[data-theme] #tutorial-card {
   background: var(--neu-card);
   color: var(--neu-text);
   box-shadow: var(--neu-raised);
+}
+
+html[data-theme] .tutorial-actions {
+  justify-content: center;
+}
+
+html[data-theme] .tutorial-actions .primary-btn,
+html[data-theme] .tutorial-actions .secondary-btn {
+  min-height: 44px;
+  text-transform: none;
 }
 html[data-theme] #tutorial-spot {
   border-color: var(--neu-accent);
