@@ -185,10 +185,10 @@ body {
     top: auto;
     left: 0;
     right: 0;
-    height: var(--ribbon-slot, 48px);
-    min-height: var(--ribbon-slot, 48px);
-    max-height: var(--ribbon-slot, 48px);
-    padding: 0 14px env(safe-area-inset-bottom, 0px);
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
     color: white;
     font-weight: bold;
     display: flex;
@@ -198,6 +198,7 @@ body {
     z-index: 9999;
     box-sizing: border-box;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
 }
 
 #message-text {
@@ -217,6 +218,12 @@ body {
 }
 .message-ribbon.hidden {
     display: none;
+}
+
+.message-ribbon .close-btn,
+.message-ribbon.warning,
+.message-ribbon.warning * {
+    pointer-events: auto;
 }
 
 /* Ensure players-list has no padding by default */
@@ -5015,22 +5022,30 @@ html.is-phone-ui #game-tracking:not(.is-parent) .live-tile-num {
 }
 .parent-date-row {
     display: flex;
-    align-items: flex-end;
-    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 0;
 }
 .parent-date-field {
-    flex: 0 1 11.5rem;
+    flex: none;
+    width: 100%;
+    max-width: 11.5rem;
     min-width: 0;
 }
 .parent-date-field input[type='date'] {
+    display: block;
+    box-sizing: border-box;
     width: 100%;
     max-width: 11.5rem;
+    min-width: 0;
 }
 .parent-starting-check {
-    flex: 1;
-    min-height: 44px;
+    width: 100%;
+    min-height: 40px;
     white-space: normal;
     line-height: 1.2;
+    align-items: center;
 }
 .parent-kid-meta {
     display: grid;

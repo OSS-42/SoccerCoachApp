@@ -13,7 +13,7 @@ import { askConfirm } from '@/ui/confirm'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
-import { todayInputValue } from './shared'
+import { formatDisplayDate, todayInputValue } from './shared'
 import { goToRoleHome } from './roleSelect'
 import { armParentKickoffPlacement, promptParentKickoffPlacement } from './parentLive'
 import { isTutorialActive, onRoleSwitched } from './tutorial'
@@ -102,8 +102,11 @@ export function renderParentHome(): void {
   if (name) name.value = kid.name
   if (number) number.value = String(kid.jerseyNumber)
   if (position) fillPositionSelect(position, kid.position)
+  const today = todayInputValue()
   const date = document.getElementById('parent-game-date') as HTMLInputElement | null
-  if (date && !date.value) date.value = todayInputValue()
+  if (date) date.value = today
+  const dateLabel = document.getElementById('parent-game-date-label')
+  if (dateLabel) dateLabel.textContent = formatDisplayDate(today)
   const resume = document.getElementById('parent-resume-game') as HTMLButtonElement | null
   if (resume) resume.hidden = !hasInProgressGameFor('parent')
   paintParentKidCopy()
@@ -145,7 +148,8 @@ export function bindParentHome(): void {
     }
     const result = startParentGame({
       opponentName: (document.getElementById('parent-opponent') as HTMLInputElement).value,
-      date: (document.getElementById('parent-game-date') as HTMLInputElement).value,
+      date:
+        (document.getElementById('parent-game-date') as HTMLInputElement).value || todayInputValue(),
       numPeriods: Number((document.getElementById('parent-num-periods') as HTMLInputElement).value),
       periodDuration: Number(
         (document.getElementById('parent-period-duration') as HTMLInputElement).value,

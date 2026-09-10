@@ -9,7 +9,7 @@ import { t } from '@/i18n'
 import { getCurrentTeam, setDefaultSubstitution } from '@/state/store'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
-import { fillTeamSelectors, todayInputValue } from './shared'
+import { fillTeamSelectors, formatDisplayDate, todayInputValue } from './shared'
 
 export type GameDraft = {
   opponentName: string
@@ -42,8 +42,11 @@ function syncSubTimerNeeded(): void {
 
 export function renderGameSetup(): void {
   fillTeamSelectors()
+  const today = todayInputValue()
   const date = document.getElementById('game-date') as HTMLInputElement
-  if (date && !date.value) date.value = todayInputValue()
+  if (date) date.value = today
+  const dateLabel = document.getElementById('game-date-label')
+  if (dateLabel) dateLabel.textContent = formatDisplayDate(today)
   const team = getCurrentTeam()
   const subDefault = team?.settings.defaultSubstitutionSeconds
   const subInput = document.getElementById('substitution-time') as HTMLInputElement
@@ -150,7 +153,8 @@ export function bindGameSetup(): void {
   document.getElementById('go-formation')?.addEventListener('click', () => {
     const team = getCurrentTeam()
     const opponent = (document.getElementById('opponent-name') as HTMLInputElement).value.trim()
-    const date = (document.getElementById('game-date') as HTMLInputElement).value
+    const date =
+      (document.getElementById('game-date') as HTMLInputElement).value || todayInputValue()
     const matchType = (document.getElementById('match-type') as HTMLSelectElement).value as MatchType
     const numPeriods = Number((document.getElementById('num-periods') as HTMLInputElement).value)
     const periodDuration = Number((document.getElementById('period-duration') as HTMLInputElement).value)
@@ -159,7 +163,6 @@ export function bindGameSetup(): void {
       (document.getElementById('substitution-time') as HTMLInputElement).value,
     )
     if (!opponent) return showMessage(t('needOpponent'), 'error')
-    if (!date) return showMessage(t('needDate'), 'error')
     if (!matchType) return showMessage(t('needMatchType'), 'error')
     if (!numPeriods || numPeriods < 1) return showMessage(t('needPeriod'), 'error')
     if (!periodDuration || periodDuration < 1) {

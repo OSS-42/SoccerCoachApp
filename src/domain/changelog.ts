@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.75',
+    items: {
+      en: [
+        'New game uses today’s date on the title row (no date picker). Spectator live: no Reset Sub; Opponent and Game Note share a row. Messages overlay briefly and do not block buttons, so Formation gets more pitch.',
+      ],
+      fr: [
+        'Nouveau match : la date du jour est sur la ligne du titre (plus de calendrier). En direct spectateur : plus de Reset relève ; Adversaire et Note de match partagent une ligne. Les messages passent au-dessus, plus courts, et ne bloquent plus les boutons : le terrain de composition a plus de place.',
+      ],
+    },
+  },
+  {
     version: '2.4.74',
     items: {
       en: [

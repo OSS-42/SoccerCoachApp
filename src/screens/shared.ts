@@ -1,5 +1,5 @@
 import { canSelectTeam } from '@/domain/entitlement'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
 import { getCurrentTeam, getSave, selectTeam } from '@/state/store'
 import { el } from '@/ui/dom'
 
@@ -54,6 +54,19 @@ export function todayInputValue(): string {
   const m = String(now.getMonth() + 1).padStart(2, '0')
   const d = String(now.getDate()).padStart(2, '0')
   return `${now.getFullYear()}-${m}-${d}`
+}
+
+/** e.g. 10/Sep/2026 */
+export function formatDisplayDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  if (!year || !month || !day) return isoDate
+  const date = new Date(year, month - 1, day)
+  const dd = String(date.getDate()).padStart(2, '0')
+  const mmm = date
+    .toLocaleString(getLocale() === 'fr' ? 'fr-FR' : 'en-GB', { month: 'short' })
+    .replace('.', '')
+  const monthLabel = mmm.charAt(0).toUpperCase() + mmm.slice(1)
+  return `${dd}/${monthLabel}/${date.getFullYear()}`
 }
 
 export function requireEl(id: string): HTMLElement {

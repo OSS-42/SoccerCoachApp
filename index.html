@@ -158,16 +158,16 @@
               </div>
             </div>
             <div class="settings-group parent-new-game">
-              <h2 data-i18n="parentNewGame">New game</h2>
+              <div class="parent-new-game-head">
+                <h2 data-i18n="parentNewGame">New game</h2>
+                <span id="parent-game-date-label" class="new-game-date"></span>
+              </div>
+              <input type="hidden" id="parent-game-date" />
               <div class="form-group">
                 <label for="parent-opponent" data-i18n="opponentName">Opponent Team Name:</label>
                 <input type="text" id="parent-opponent" data-i18n-placeholder="opponentPlaceholder" placeholder="Enter opponent team name" />
               </div>
               <div class="form-group parent-date-row">
-                <div class="parent-date-field">
-                  <label for="parent-game-date" data-i18n="gameDate">Game Date:</label>
-                  <input type="date" id="parent-game-date" />
-                </div>
                 <label class="checkbox-label parent-starting-check">
                   <input type="checkbox" id="parent-starts-on" checked />
                   <span data-i18n="startsOnField">Player on starting roster</span>
@@ -292,18 +292,16 @@
             <span class="material-icons">arrow_back</span>
           </button>
           <h1 data-i18n="newGame">New Game</h1>
+          <span id="game-date-label" class="new-game-date"></span>
         </div>
         <div class="team-name-banner">
           <h2 data-team-name>Team Name</h2>
         </div>
         <div class="content">
+          <input type="hidden" id="game-date" />
           <div class="form-group">
             <label for="opponent-name" data-i18n="opponentName">Opponent Team Name:</label>
             <input type="text" id="opponent-name" data-i18n-placeholder="opponentPlaceholder" placeholder="Enter opponent team name" />
-          </div>
-          <div class="form-group">
-            <label for="game-date" data-i18n="gameDate">Game Date:</label>
-            <input type="date" id="game-date" />
           </div>
           <div class="form-group">
             <label for="match-type" data-i18n="matchType">Match Type:</label>

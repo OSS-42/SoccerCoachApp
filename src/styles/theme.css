@@ -2,7 +2,8 @@
 
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
-  --ribbon-slot: calc(48px + env(safe-area-inset-bottom, 0px));
+  /* Screens only inset for the home indicator. Toasts overlay; they do not reserve a strip. */
+  --ribbon-slot: env(safe-area-inset-bottom, 0px);
   --menu-row-h: 64px;
   --menu-count-w: 64px;
   --pill-mint: #c8efd4;
@@ -34,9 +35,31 @@
   --pitch-ratio: 1224 / 1974;
 }
 
-/* Punch-hole / Dynamic Island: Android WebView often reports env() as 0. */
-html.is-native {
+/* Android WebView often reports env(safe-area-inset-top) as 0. iOS reports the notch. */
+html.is-native.is-android {
   --safe-top: max(env(safe-area-inset-top, 0px), 56px);
+}
+
+html.is-native.is-ios {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --app-header-pad: 4px;
+  --app-header-control: 36px;
+  --team-banner-h: 44px;
+  --menu-row-h: 52px;
+  --menu-count-w: 52px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* WKWebView paints type larger than Android Chrome. */
+html.is-ios,
+html.is-ios body {
+  font-size: 14px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html[data-theme='dark'] {
@@ -669,11 +692,39 @@ html[data-theme] #parent-home .parent-new-game {
   box-shadow: var(--neu-raised-sm);
 }
 
+html[data-theme] .parent-new-game-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 html[data-theme] #parent-home .parent-new-game h2 {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  margin-bottom: 12px;
+  margin: 0;
+}
+
+html[data-theme] .new-game-date {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--neu-muted);
+  white-space: nowrap;
+}
+
+html[data-theme] .app-header .new-game-date {
+  position: relative;
+  z-index: 1;
+  margin-left: auto;
+  line-height: var(--app-header-control);
+  font-size: 12px;
+}
+
+html[data-theme] #game-setup .app-header h1 {
+  right: 92px;
 }
 
 html[data-theme] .tips-list,
@@ -771,6 +822,17 @@ html[data-theme] #replay-tutorial-parent {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+}
+
+html[data-theme] #save-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 16px 0 0;
+  min-height: 48px;
   text-align: center;
 }
 
@@ -1162,6 +1224,16 @@ html.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-s
   height: clamp(22px, 11cqmin, 40px);
 }
 
+html.is-ios.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot {
+  width: clamp(30px, 16cqmin, 56px);
+  height: clamp(30px, 16cqmin, 56px);
+}
+
+html.is-ios.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot:not(.occupied) {
+  width: clamp(26px, 13cqmin, 44px);
+  height: clamp(26px, 13cqmin, 44px);
+}
+
 html.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot .spot-label {
   font-size: clamp(8px, 3.4cqmin, 11px);
 }
@@ -1479,6 +1551,20 @@ html[data-theme] #game-tracking .note-btn,
 html[data-theme] #game-tracking .game-controls .note-btn {
   grid-column: span 3;
   display: flex !important;
+}
+
+html[data-theme] #game-tracking.is-parent #reset-sub {
+  display: none !important;
+}
+
+html[data-theme] #game-tracking.is-parent #end-game,
+html[data-theme] #game-tracking.is-parent #open-action-review {
+  grid-column: span 3;
+}
+
+html[data-theme] #game-tracking.is-parent .opponent-btn,
+html[data-theme] #game-tracking.is-parent .note-btn {
+  grid-column: span 3;
 }
 
 html[data-theme] #game-tracking .control-btn,
@@ -2341,4 +2427,108 @@ html[data-theme] .report-dialog h3 {
 
 html[data-theme] .timeline-chart {
   margin: 8px 0;
+}
+
+/* iOS: reclaim chrome so the pitch and lists match Android density. */
+html.is-ios[data-theme] .app-header h1 {
+  font-size: 16px;
+}
+
+html.is-ios[data-theme] .team-name-banner {
+  margin: 0 10px 6px;
+  overflow: visible;
+  height: auto;
+  max-height: none;
+  min-height: var(--app-header-control);
+}
+
+html.is-ios[data-theme] .team-name-banner h2 {
+  font-size: 14px;
+}
+
+html.is-ios[data-theme] .content {
+  padding: 10px 12px;
+}
+
+html.is-ios[data-theme] .form-group {
+  margin-bottom: 10px;
+}
+
+html.is-ios[data-theme] .form-group input,
+html.is-ios[data-theme] .form-group select,
+html.is-ios[data-theme] .form-group textarea,
+html.is-ios[data-theme] input[type='text'],
+html.is-ios[data-theme] input[type='number'],
+html.is-ios[data-theme] input[type='date'],
+html.is-ios[data-theme] select,
+html.is-ios[data-theme] textarea {
+  min-height: 40px;
+  padding: 6px 10px;
+  font-size: 16px;
+}
+
+html.is-ios[data-theme] .primary-btn,
+html.is-ios[data-theme] .secondary-btn,
+html.is-ios[data-theme] .menu-btn,
+html.is-ios[data-theme] .control-btn {
+  min-height: 40px;
+  font-size: 14px;
+  padding: 4px 10px;
+}
+
+html.is-ios[data-theme] .team-name-banner .team-selector select {
+  min-height: 36px;
+  height: 36px;
+  line-height: 36px;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+html.is-ios[data-theme] .main-menu,
+html.is-ios[data-theme] .parent-home-footer {
+  --menu-row-h: 52px;
+  --menu-count-w: 52px;
+}
+
+html.is-ios[data-theme] .main-menu {
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+html.is-ios[data-theme] .parent-welcome {
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+html.is-ios[data-theme] #parent-home .parent-new-game {
+  padding: 10px 12px 12px;
+  margin-bottom: 10px;
+}
+
+html.is-ios[data-theme] #parent-home .parent-new-game h2 {
+  font-size: 1.15rem;
+  margin-bottom: 8px;
+}
+
+html.is-ios[data-theme] .settings-group {
+  margin-bottom: 14px;
+}
+
+html.is-ios[data-theme] .settings-group h2 {
+  font-size: 15px;
+}
+
+html.is-ios.is-phone-ui[data-theme] #formation-setup .formation-container {
+  padding: 2px;
+  gap: 2px;
+}
+
+html.is-ios.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot {
+  width: clamp(32px, 17cqmin, 58px);
+  height: clamp(32px, 17cqmin, 58px);
+}
+
+html.is-ios.is-phone-ui[data-theme] #formation-setup .formation-field-surface .player-slot:not(.occupied) {
+  width: clamp(28px, 14cqmin, 46px);
+  height: clamp(28px, 14cqmin, 46px);
 }

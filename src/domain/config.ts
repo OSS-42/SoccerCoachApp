@@ -41,8 +41,8 @@ export const DOUBLE_TAP_MS = 320
 export const CLOCK_TICK_MS = 1000
 export const CLOCK_PERSIST_EVERY_TICKS = 10
 export const EDGE_SWIPE_PX = 18
-export const MESSAGE_ERROR_MS = 7000
-export const MESSAGE_OK_MS = 5000
+export const MESSAGE_ERROR_MS = 2500
+export const MESSAGE_OK_MS = 1800
 export const TIMELINE_MARK_EVERY_MINUTES = 15
 
 export const VIEW_REPORT_EVENT = 'actionpitch:view-report'

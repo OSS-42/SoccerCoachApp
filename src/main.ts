@@ -6,6 +6,7 @@ import { APP_VERSION, CLOCK_PERSIST_EVERY_TICKS, CLOCK_TICK_MS, EDGE_SWIPE_PX } 
 
 if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('is-native')
+  document.documentElement.classList.add(`is-${Capacitor.getPlatform()}`)
   const wide = window.matchMedia('(min-width: 769px)')
   const syncWide = (): void => {
     document.documentElement.classList.toggle('is-wide-ui', wide.matches)

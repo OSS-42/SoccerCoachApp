@@ -19,6 +19,10 @@ const config: CapacitorConfig = {
     backgroundColor: '#07110c',
     allowMixedContent: false,
   },
+  ios: {
+    backgroundColor: '#07110c',
+    contentInset: 'never',
+  },
   plugins: {
     CapacitorUpdater: {
       autoUpdate: false,
