@@ -1,6 +1,6 @@
 {
-  "version": "2.4.75",
+  "version": "2.4.76",
   "minAppVersion": "2.4.50",
-  "notes": "New game date on the title. Spectator live layout. Overlay toasts. More pitch height.",
+  "notes": "iOS: period over the live score. Android: larger names on live tiles.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
