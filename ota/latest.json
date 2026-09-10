@@ -1,6 +1,6 @@
 {
-  "version": "2.4.74",
+  "version": "2.4.75",
   "minAppVersion": "2.4.50",
-  "notes": "Formation pitch keeps its real shape on every phone.",
+  "notes": "New game date on the title. Spectator live layout. Overlay toasts. More pitch height.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
