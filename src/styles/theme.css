@@ -1524,13 +1524,70 @@ html[data-theme] #game-tracking #live-sub-count-value {
 }
 
 html[data-theme] #game-tracking .period-counter {
-  padding: 8px 12px;
+  padding: 6px 8px;
   border-radius: var(--neu-radius-pill);
   background: var(--neu-card);
   color: var(--neu-text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   box-shadow: var(--neu-raised-sm);
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .live-header-right {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .live-header-right .live-team-name {
+  flex: 0 1 auto;
+  width: 100%;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .period-counter {
+  width: 100%;
+  font-size: 11px;
+  padding: 4px 6px;
+}
+
+html.is-ios[data-theme] #game-tracking .live-scoreboard {
+  position: relative;
+  padding-top: 26px;
+}
+
+html.is-ios[data-theme] #game-tracking .live-header-right {
+  flex-direction: row;
+  align-items: center;
+}
+
+html.is-ios[data-theme] #game-tracking .period-counter {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(92%, 14rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  padding: 4px 10px;
+  z-index: 2;
+}
+
+html.is-android.is-phone-ui[data-theme] #game-tracking:not(.is-parent) .live-tile-name {
+  font-size: 14px;
+}
+
+html.is-android.is-phone-ui[data-theme] #game-tracking:not(.is-parent) .live-tile-num {
+  font-size: 13px;
 }
 
 html[data-theme] #game-tracking .game-controls {

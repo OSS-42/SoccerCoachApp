@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.76',
+    items: {
+      en: [
+        'Live game: on iPhone the period sits over the score so it is not cut off. On Android, player names on the tiles are larger.',
+      ],
+      fr: [
+        'Match en direct : sur iPhone, la période est au-dessus du score pour ne plus être coupée. Sur Android, les noms sur les tuiles sont plus grands.',
+      ],
+    },
+  },
+  {
     version: '2.4.75',
     items: {
       en: [
