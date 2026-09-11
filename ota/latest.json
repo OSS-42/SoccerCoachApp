@@ -1,6 +1,6 @@
 {
-  "version": "2.4.76",
+  "version": "2.4.77",
   "minAppVersion": "2.4.50",
-  "notes": "iOS: period over the live score. Android: larger names on live tiles.",
+  "notes": "Spectator yellow/red tiles, two yellows = red in the report, place player before the clock.",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
 }
