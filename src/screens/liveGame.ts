@@ -46,7 +46,7 @@ import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
 import { notifyTutorialEvent, tutorialLiveGate } from '@/ui/tutorialBus'
-import { renderParentLive, resetParentLiveUi } from './parentLive'
+import { renderParentLive, resetParentLiveUi, spectatorNeedsPosition } from './parentLive'
 import { homeForRole } from './roleSelect'
 
 let pendingPlayer: Player | null = null
@@ -375,7 +375,7 @@ function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
   if (!game) return
   const stats = statsFromActions(game.actions, player.id)
   if (playerIsUnavailable(stats)) {
-    showMessage(t('cannotAct'), 'error')
+    showMessage(stats.redCards > 0 ? t('cannotActRed') : t('cannotAct'), 'error')
     return
   }
   pendingPlayer = player
@@ -484,6 +484,10 @@ export function bindLiveGame(): void {
     renderLiveGame()
   })
   document.getElementById('play-clock')?.addEventListener('click', () => {
+    if (spectatorNeedsPosition()) {
+      showMessage(t('confirmPositionFirst'), 'error')
+      return
+    }
     playClock()
     notifyTutorialEvent('play')
   })

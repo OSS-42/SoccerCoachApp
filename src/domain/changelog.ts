@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.4.77',
+    items: {
+      en: [
+        'Spectator: the player’s tile turns yellow then red (two yellows = send-off, shown in the report). After a red, no more actions. Place the player on the pitch before starting the clock.',
+      ],
+      fr: [
+        'Spectateur : la tuile du joueur passe au jaune puis au rouge (deux jaunes = expulsion, visible dans le rapport). Après un rouge, plus d’actions. Placez le joueur sur le terrain avant de lancer le chronomètre.',
+      ],
+    },
+  },
+  {
     version: '2.4.76',
     items: {
       en: [

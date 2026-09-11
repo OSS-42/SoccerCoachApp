@@ -1,4 +1,5 @@
 import { t } from '@/i18n'
+import { YELLOWS_FOR_RED } from './config'
 import { gameMinute, periodOfAction } from './clock'
 import { spotLabel } from './formation'
 import { reconstructStartingFormation } from './playingTime'
@@ -100,6 +101,8 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
   let homeGoals = 0
   let awayGoals = 0
   let spots = liveSpots(game)
+  const yellowsByPlayer = new Map<string, number>()
+  const redLogged = new Set<string>()
   game.actions.forEach((action, index) => {
     const minute = gameMinute(action.gameSecond)
     const period = periodOfAction(action, game)
@@ -151,37 +154,61 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         position: null,
       })
     } else if (action.actionType === 'yellow_card' || action.actionType === 'opp_yellow') {
+      const ours = action.actionType === 'yellow_card'
       events.push({
         second: action.gameSecond,
         minute,
         period,
         type: 'yellow',
-        playerName:
-          action.actionType === 'opp_yellow'
-            ? t('opponent')
-            : playerName(players, action.playerId) || t('unknownPlayer'),
+        playerName: ours
+          ? playerName(players, action.playerId) || t('unknownPlayer')
+          : t('opponent'),
         assistName: null,
         relatedName: null,
         scoreIndex: null,
-        isOpponent: action.actionType === 'opp_yellow',
+        isOpponent: !ours,
         position: null,
       })
+      if (ours && action.playerId) {
+        const count = (yellowsByPlayer.get(action.playerId) ?? 0) + 1
+        yellowsByPlayer.set(action.playerId, count)
+        if (count >= YELLOWS_FOR_RED && !redLogged.has(action.playerId)) {
+          redLogged.add(action.playerId)
+          events.push({
+            second: action.gameSecond,
+            minute,
+            period,
+            type: 'red',
+            playerName: playerName(players, action.playerId) || t('unknownPlayer'),
+            assistName: null,
+            relatedName: null,
+            scoreIndex: null,
+            isOpponent: false,
+            position: null,
+          })
+        }
+      }
     } else if (action.actionType === 'red_card' || action.actionType === 'opp_red') {
-      events.push({
-        second: action.gameSecond,
-        minute,
-        period,
-        type: 'red',
-        playerName:
-          action.actionType === 'opp_red'
-            ? t('opponent')
-            : playerName(players, action.playerId) || t('unknownPlayer'),
-        assistName: null,
-        relatedName: null,
-        scoreIndex: null,
-        isOpponent: action.actionType === 'opp_red',
-        position: null,
-      })
+      const ours = action.actionType === 'red_card'
+      if (ours && action.playerId && redLogged.has(action.playerId)) {
+        // Second yellow already logged the send-off.
+      } else {
+        if (ours && action.playerId) redLogged.add(action.playerId)
+        events.push({
+          second: action.gameSecond,
+          minute,
+          period,
+          type: 'red',
+          playerName: ours
+            ? playerName(players, action.playerId) || t('unknownPlayer')
+            : t('opponent'),
+          assistName: null,
+          relatedName: null,
+          scoreIndex: null,
+          isOpponent: !ours,
+          position: null,
+        })
+      }
     } else if (action.actionType === 'injury') {
       events.push({
         second: action.gameSecond,

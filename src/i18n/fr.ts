@@ -303,6 +303,8 @@ export const fr: Record<keyof typeof en, string> = {
   noActionsYet: 'Aucune action enregistrée',
   enterNote: 'Saisir une note',
   cannotAct: 'Action impossible sur ce joueur',
+  cannotActRed: 'Carton rouge — aucune action possible',
+  confirmPositionFirst: 'Confirmez d’abord la position — puis lancez le chronomètre',
   yellowSendOff: '2 cartons jaunes pour {name}. Expulsé.',
   reportMissing: 'Rapport introuvable',
   unknownPlayer: 'Inconnu',

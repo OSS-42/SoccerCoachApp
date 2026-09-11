@@ -152,6 +152,32 @@ describe('shot timeline', () => {
     ])
   })
 
+  it('adds a send-off red in the log when a player receives a second yellow', () => {
+    setLocale('en')
+    const match = game([
+      { id: 'y1', actionType: 'yellow_card', playerId: 'p1', gameSecond: 60, timestamp: '' },
+      { id: 'y2', actionType: 'yellow_card', playerId: 'p1', gameSecond: 200, timestamp: '' },
+    ])
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'p1', name: 'ADA', jerseyNumber: 9, position: 'ST' },
+    ])
+    expect(events.map((event) => event.type)).toEqual(['yellow', 'yellow', 'red'])
+    expect(events[2]).toMatchObject({ type: 'red', playerName: 'ADA', second: 200 })
+  })
+
+  it('does not log a second red when an explicit red follows two yellows', () => {
+    setLocale('en')
+    const match = game([
+      { id: 'y1', actionType: 'yellow_card', playerId: 'p1', gameSecond: 60, timestamp: '' },
+      { id: 'y2', actionType: 'yellow_card', playerId: 'p1', gameSecond: 200, timestamp: '' },
+      { id: 'r', actionType: 'red_card', playerId: 'p1', gameSecond: 201, timestamp: '' },
+    ])
+    const events = buildGoalsCardsEvents(match, [
+      { id: 'p1', name: 'ADA', jerseyNumber: 9, position: 'ST' },
+    ])
+    expect(events.filter((event) => event.type === 'red')).toHaveLength(1)
+  })
+
   it('puts opponent cards and our own goals on the away side', () => {
     setLocale('en')
     const match = game([

@@ -754,6 +754,39 @@ html[data-theme] #parent-pitch .player-slot.sub-target {
   outline: 2px solid var(--neu-accent);
 }
 
+html[data-theme] #parent-pitch .player-slot.yellow-card .player-number,
+html[data-theme] #parent-pitch .player-slot.yellow-card .player-number-placed,
+html[data-theme] #parent-pitch .gk-slot.yellow-card .player-number-placed,
+html[data-theme] #parent-bench-slot.yellow-card .player-number {
+  background: var(--pill-yellow) !important;
+  background-image: none !important;
+  color: var(--pill-ink);
+  border-color: transparent;
+}
+
+html[data-theme] #parent-pitch .player-slot.red-card .player-number,
+html[data-theme] #parent-pitch .player-slot.red-card .player-number-placed,
+html[data-theme] #parent-pitch .gk-slot.red-card .player-number-placed,
+html[data-theme] #parent-bench-slot.red-card .player-number {
+  background: var(--pill-rose) !important;
+  background-image: none !important;
+  color: var(--pill-ink);
+  border-color: transparent;
+}
+
+html[data-theme] #parent-pitch .player-slot.yellow-card .jersey-num,
+html[data-theme] #parent-pitch .player-slot.yellow-card .player-name-field,
+html[data-theme] #parent-pitch .player-slot.yellow-card .spot-pos,
+html[data-theme] #parent-pitch .player-slot.red-card .jersey-num,
+html[data-theme] #parent-pitch .player-slot.red-card .player-name-field,
+html[data-theme] #parent-pitch .player-slot.red-card .spot-pos,
+html[data-theme] #parent-bench-slot.yellow-card .jersey-num,
+html[data-theme] #parent-bench-slot.yellow-card .player-name-bench,
+html[data-theme] #parent-bench-slot.red-card .jersey-num,
+html[data-theme] #parent-bench-slot.red-card .player-name-bench {
+  color: var(--pill-ink) !important;
+}
+
 html[data-theme] #parent-pitch .player-slot.sub-selected,
 html[data-theme] #parent-bench-slot.sub-selected {
   outline: 2px solid var(--live-pause);

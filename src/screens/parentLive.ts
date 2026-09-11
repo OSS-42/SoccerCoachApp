@@ -5,7 +5,7 @@ import { fieldSpotDefs, spotLabel } from '@/domain/formation'
 import { formatClock, livePeriodNumber } from '@/domain/clock'
 import { kidOnField } from '@/domain/parent'
 import { actionLabel, t } from '@/i18n'
-import type { ActionType, Player } from '@/domain/types'
+import type { ActionType, LiveStats, Player } from '@/domain/types'
 import {
   getCurrentGame,
   getParentProfile,
@@ -31,10 +31,20 @@ function kidLabel(): string {
   return kid().name.trim() || t('kidFallback')
 }
 
-function paintSlot(slot: HTMLElement, player: Player | null, positionLabel: string): void {
+function applyCardLook(el: HTMLElement, stats: LiveStats | null): void {
+  el.classList.toggle('injured', Boolean(stats?.injured))
+  el.classList.toggle('red-card', Boolean(stats && stats.redCards > 0 && !stats.injured))
+  el.classList.toggle(
+    'yellow-card',
+    Boolean(stats && stats.yellowCards > 0 && stats.redCards === 0 && !stats.injured),
+  )
+}
+
+function paintSlot(slot: HTMLElement, player: Player | null, positionLabel: string, stats: LiveStats | null): void {
   slot.classList.toggle('occupied', Boolean(player))
   slot.classList.toggle('sub-selected', Boolean(player) && moveArmed)
   slot.classList.toggle('sub-target', !player && moveArmed)
+  applyCardLook(slot, player ? stats : null)
   if (!player) {
     delete slot.dataset.playerId
     slot.innerHTML = `<span class="spot-label">${escapeHtml(positionLabel)}</span>`
@@ -68,7 +78,7 @@ function openKidActions(role: 'field' | 'bench'): void {
   if (!game) return
   const stats = statsFromActions(game.actions, player.id)
   if (playerIsUnavailable(stats)) {
-    showMessage(t('cannotAct'), 'error')
+    showMessage(stats.redCards > 0 ? t('cannotActRed') : t('cannotAct'), 'error')
     return
   }
   const name = document.getElementById('action-player-name')
@@ -219,10 +229,11 @@ export function renderParentLive(): void {
   }
 
   const on = kidOnField(game, player.id)
+  const stats = statsFromActions(game.actions, player.id)
   pitch?.querySelectorAll<HTMLElement>('.player-slot').forEach((slot) => {
     const pos = slot.dataset.position ?? ''
     const here = on?.position === pos
-    paintSlot(slot, here ? player : null, spotLabel(pos))
+    paintSlot(slot, here ? player : null, spotLabel(pos), stats)
   })
 
   const bench = document.getElementById('parent-bench-slot')
@@ -230,6 +241,7 @@ export function renderParentLive(): void {
     bench.classList.toggle('occupied', !on)
     bench.classList.toggle('sub-selected', !on && moveArmed)
     bench.classList.toggle('sub-target', Boolean(on) && moveArmed)
+    applyCardLook(bench, on ? null : stats)
     if (on) {
       delete bench.dataset.playerId
       bench.innerHTML = ''
@@ -241,6 +253,13 @@ export function renderParentLive(): void {
       </span>`
     }
   }
+}
+
+export function spectatorNeedsPosition(): boolean {
+  if (!isParentLive()) return false
+  const game = getCurrentGame()
+  if (!game) return true
+  return !kidOnField(game, kid().id)
 }
 
 export function armParentKickoffPlacement(): void {

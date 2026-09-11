@@ -300,6 +300,8 @@ export const en = {
   noActionsYet: 'No actions recorded yet',
   enterNote: 'Please enter a note',
   cannotAct: 'Cannot perform actions on this player',
+  cannotActRed: 'Red card — no actions available',
+  confirmPositionFirst: 'Confirm position first — then start game clock',
   yellowSendOff: '2 yellow cards for {name}. Sent off.',
   reportMissing: 'Game report not found',
   unknownPlayer: 'Unknown',
