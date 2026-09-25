@@ -6,8 +6,8 @@
  *
  * 1. Bump semver (patch by default)
  *  2. Commit the current app changes first (so source edits land before OTA metadata)
- *  3. Sync package.json + src/ota/config.ts + capacitor.config.ts Capgo version + ota/latest.json
- *  4. Build web + zip dist → release/dist.zip
+ *  3. Sync package.json + capacitor.config.ts Capgo version (src/ota/config.ts reads __APP_VERSION__)
+ *  4. Build web + zip dist → release/dist.zip, then write ota/latest.json with the zip's SHA-256
  *  5. Commit version/channel files
  *  6. Push branch
  *  7. Create GitHub Release tag ota-X.Y.Z with dist.zip
@@ -21,6 +21,7 @@
  * Requires: git, gh (authenticated: gh auth login), network.
  */
 import { execFileSync, execSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -28,7 +29,6 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const pkgPath = path.join(root, 'package.json')
-const configPath = path.join(root, 'src/ota/config.ts')
 const capacitorConfigPath = path.join(root, 'capacitor.config.ts')
 const manifestPath = path.join(root, 'ota/latest.json')
 const zipPath = path.join(root, 'release/dist.zip')
@@ -75,6 +75,7 @@ function parseArgs(argv) {
   const out = {
     bump: 'patch',
     version: null,
+    minApp: null,
     notes: null,
     dryRun: false,
     skipPush: false,
@@ -87,6 +88,7 @@ function parseArgs(argv) {
     const a = argv[i]
     if (a === '--bump') out.bump = argv[++i] || 'patch'
     else if (a === '--version') out.version = argv[++i]
+    else if (a === '--min-app') out.minApp = argv[++i]
     else if (a === '--notes') out.notes = argv[++i]
     else if (a === '--dry-run') out.dryRun = true
     else if (a === '--no-push') out.skipPush = true
@@ -97,6 +99,8 @@ function parseArgs(argv) {
       console.log(`Usage: node scripts/ota-publish.mjs [options]
   --bump patch|minor|major   Semver bump (default: patch)
   --version X.Y.Z            Set exact version (skips bump)
+  --min-app X.Y.Z            Raise minAppVersion: shells older than this skip the bundle.
+                             Use when the bundle needs a new native plugin/shell.
   --notes "text"             Release notes
   --dry-run                  Print plan only
   --no-push                  Do not git push
@@ -460,14 +464,15 @@ function deployArtifacts({ deploy, manifestFile, zipFile }) {
     { cwd: root, stdio: 'inherit' },
   )
 
-  console.log(
-    `$ scp … ${manifestFile} ${zipFile} ${redactSshTarget(deploy.target)}:${deploy.remoteDir}/`,
-  )
-  execFileSync(
-    'scp',
-    [...scpArgs, manifestFile, zipFile, `${deploy.target}:${deploy.remoteDir}/`],
-    { cwd: root, stdio: 'inherit' },
-  )
+  // Zip first: a device must never see a manifest whose checksum points at a zip not yet uploaded.
+  for (const file of [zipFile, manifestFile]) {
+    console.log(`$ scp … ${file} ${redactSshTarget(deploy.target)}:${deploy.remoteDir}/`)
+    execFileSync(
+      'scp',
+      [...scpArgs, file, `${deploy.target}:${deploy.remoteDir}/`],
+      { cwd: root, stdio: 'inherit' },
+    )
+  }
 
   console.log(`✓ OTA files deployed: ${deploy.baseUrl}/latest.json and ${deploy.bundleUrl}`)
 }
@@ -666,6 +671,13 @@ echo "kept: $DIR/$KEEP"
   return publicUrl
 }
 
+const OTA_BUNDLE_ORIGIN = 'https://cdn-studiophoenix.net'
+const SEMVER_RE = /^\d+\.\d+\.\d+$/
+
+function sha256File(file) {
+  return createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+}
+
 function die(msg) {
   console.error(`\n✖ ${msg}`)
   process.exit(1)
@@ -707,6 +719,22 @@ Deploy:   ${deploy.enabled ? 'enabled' : 'disabled'}
 SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id_ed25519_ota)'}
 `)
 
+  // Devices reject any bundleUrl outside this origin (src/ota/manifest.ts).
+  let bundleOrigin = ''
+  try {
+    bundleOrigin = new URL(bundleUrl).origin
+  } catch {
+    /* reported below */
+  }
+  if (bundleOrigin !== OTA_BUNDLE_ORIGIN) {
+    const msg = `bundleUrl ${bundleUrl} is not on ${OTA_BUNDLE_ORIGIN}; devices would reject it. Set OTA_DEPLOY_BASE_URL.`
+    if (args.dryRun) console.warn(`⚠ ${msg}`)
+    else die(msg)
+  }
+  if (args.minApp && !SEMVER_RE.test(args.minApp)) {
+    die(`--min-app must be X.Y.Z (got ${args.minApp})`)
+  }
+
   // --- commit ALL current changes first (tracked + untracked, respect .gitignore) ---
   if (gitStatus()) {
     stageAllWorkspace()
@@ -723,19 +751,8 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
     console.log(`would write package.json version ${newVersion}`)
   }
 
-  let config = fs.readFileSync(configPath, 'utf8')
-  if (!/APP_BUNDLE_VERSION\s*=\s*['"][^'"]+['"]/.test(config)) {
-    die('APP_BUNDLE_VERSION not found in src/ota/config.ts')
-  }
-  config = config.replace(
-    /APP_BUNDLE_VERSION\s*=\s*['"][^'"]+['"]/,
-    `APP_BUNDLE_VERSION = '${newVersion}'`,
-  )
-  if (!args.dryRun) fs.writeFileSync(configPath, config)
-  else console.log(`would set APP_BUNDLE_VERSION = '${newVersion}'`)
-
   // Capgo defaults the native shell to "1.0" when this is missing/stale.
-  // "1.0" > "0.1.x" and blocks every 0.x OTA tip — keep in lockstep with APP_BUNDLE_VERSION.
+  // "1.0" > "0.1.x" and blocks every 0.x OTA tip — keep in lockstep with package.json.
   let capConfig = fs.readFileSync(capacitorConfigPath, 'utf8')
   if (!/BUILTIN_WEB_VERSION\s*=\s*['"][^'"]+['"]/.test(capConfig)) {
     die('BUILTIN_WEB_VERSION not found in capacitor.config.ts')
@@ -747,19 +764,6 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
   if (!args.dryRun) fs.writeFileSync(capacitorConfigPath, capConfig)
   else console.log(`would set BUILTIN_WEB_VERSION = '${newVersion}'`)
 
-  const prevManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-  const manifest = {
-    version: newVersion,
-    minAppVersion: prevManifest.minAppVersion || newVersion,
-    notes: notes.split('\n')[0].slice(0, 200),
-    bundleUrl,
-  }
-  if (!args.dryRun) {
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
-  } else {
-    console.log('would write ota/latest.json:', manifest)
-  }
-
   // --- build + zip ---
   run('npm run build', { mutate: true })
   run('node scripts/ota-bundle.mjs', { mutate: true })
@@ -769,6 +773,22 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
   if (!args.dryRun) {
     const mb = (fs.statSync(zipPath).size / (1024 * 1024)).toFixed(1)
     console.log(`\n✓ Bundle ready (${mb} MB): ${zipPath}`)
+  }
+
+  // --- channel manifest (after zip: checksum must match the uploaded dist.zip) ---
+  const prevManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+  const manifest = {
+    version: newVersion,
+    minAppVersion: args.minApp || prevManifest.minAppVersion || newVersion,
+    notes: notes.split('\n')[0].slice(0, 200),
+    bundleUrl,
+    checksum: args.dryRun ? '(sha256 of release/dist.zip)' : sha256File(zipPath),
+  }
+  if (!args.dryRun) {
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+    console.log(`✓ ota/latest.json checksum ${manifest.checksum}`)
+  } else {
+    console.log('would write ota/latest.json:', manifest)
   }
 
   // --- optional deploy (droplet / static host) ---

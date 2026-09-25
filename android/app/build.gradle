@@ -9,10 +9,18 @@ if (keystorePropertiesFile.exists()) {
 def packageJson = new groovy.json.JsonSlurper().parse(file("${rootDir}/../package.json"))
 def appVersion = packageJson.version ?: '0.0.0'
 def versionParts = appVersion.tokenize('.')
-def computedVersionCode =
-    (versionParts.size() > 0 ? versionParts[0].toInteger() : 0) * 10000 +
-    (versionParts.size() > 1 ? versionParts[1].toInteger() : 0) * 100 +
-    (versionParts.size() > 2 ? versionParts[2].toInteger() : 0)
+def versionMajor = versionParts.size() > 0 ? versionParts[0].toInteger() : 0
+def versionMinor = versionParts.size() > 1 ? versionParts[1].toInteger() : 0
+def versionPatch = versionParts.size() > 2 ? versionParts[2].toInteger() : 0
+
+if (versionMinor > 999 || versionPatch > 999) {
+    throw new GradleException(
+        "versionCode scheme (major*1_000_000 + minor*1_000 + patch) can't represent version " +
+        "${appVersion}: minor and patch must each be ≤ 999. Bump the major version instead."
+    )
+}
+
+def computedVersionCode = versionMajor * 1_000_000 + versionMinor * 1_000 + versionPatch
 
 android {
     namespace = "com.actionpitch.app"

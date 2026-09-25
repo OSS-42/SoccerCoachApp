@@ -1,3 +1,4 @@
+import 'material-icons/iconfont/filled.css'
 import './styles/app.css'
 import './styles/mobile.css'
 import './styles/theme.css'

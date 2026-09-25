@@ -169,3 +169,105 @@ describe('migrateUnknown', () => {
     expect(save.teams[0].games[0].startingFormation.map((s) => s.playerId)).toEqual(['p1'])
   })
 })
+
+describe('import sanitization', () => {
+  const hostile = 'x"><img src=x onerror=alert(1)>'
+  const SAFE = /^[A-Za-z0-9_-]{1,64}$/
+
+  function hostileSave() {
+    return migrateUnknown({
+      currentTeamId: hostile,
+      teams: [
+        {
+          id: hostile,
+          name: 'U12',
+          players: [
+            { id: hostile, name: 'alex', jerseyNumber: 10, position: 'ST' },
+            { id: 'p2', name: 'sam', jerseyNumber: 7, position: 'CM' },
+          ],
+          games: [
+            {
+              id: hostile,
+              isCompleted: true,
+              numPeriods: 1e9,
+              periodDuration: -5,
+              homeScore: 1e12,
+              awayScore: -3,
+              actions: [
+                { id: hostile, actionType: 'goal', playerId: hostile, relatedPlayerId: 'p2', gameMinute: 4 },
+                { actionType: 'assist', playerId: 'p2', relatedPlayerId: hostile, gameSecond: -40 },
+              ],
+              formation: [
+                { playerId: hostile, position: 'ST"]', x: 500, y: -20 },
+                { playerId: 'p2', position: 'CM', x: 50, y: 45 },
+              ],
+              substitutes: [hostile],
+              unavailablePlayers: [hostile, 'p2'],
+            },
+          ],
+          defaultUnavailable: { '7v7': [hostile] },
+        },
+      ],
+    })
+  }
+
+  it('replaces unsafe ids and keeps references consistent', () => {
+    const save = hostileSave()
+    const team = save.teams[0]
+    const [alex, sam] = team.players
+    const game = team.games[0]
+
+    expect(alex.id).toMatch(SAFE)
+    expect(alex.id).not.toBe(hostile)
+    expect(sam.id).toBe('p2')
+    expect(team.id).toMatch(SAFE)
+    expect(save.currentTeamId).toBe(team.id)
+    expect(game.id).toMatch(SAFE)
+    expect(game.actions[0].id).toMatch(SAFE)
+
+    expect(game.actions[0].playerId).toBe(alex.id)
+    expect(game.actions[1].relatedPlayerId).toBe(alex.id)
+    expect(game.formation[0].playerId).toBe(alex.id)
+    expect(game.substitutes).toEqual([alex.id])
+    expect(game.unavailablePlayers).toEqual([alex.id, 'p2'])
+    expect(team.defaultUnavailable['7v7']).toEqual([alex.id])
+  })
+
+  it('maps the same unsafe id to the same safe id on every load', () => {
+    expect(hostileSave().teams[0].players[0].id).toBe(hostileSave().teams[0].players[0].id)
+  })
+
+  it('clamps out-of-range numbers and rejects unsafe positions', () => {
+    const game = hostileSave().teams[0].games[0]
+    expect(game.numPeriods).toBe(20)
+    expect(game.periodDuration).toBe(1)
+    expect(game.homeScore).toBe(999)
+    expect(game.awayScore).toBe(0)
+    expect(game.actions[1].gameSecond).toBe(0)
+    expect(game.formation[0]).toMatchObject({ position: 'MID-1', x: 100, y: 0 })
+    expect(game.formation[1]).toMatchObject({ position: 'CM', x: 50, y: 45 })
+  })
+
+  it('clamps jersey numbers to the allowed range', () => {
+    const save = migrateUnknown({
+      teams: [
+        {
+          id: 't1',
+          name: 'U12',
+          players: [
+            { id: 'a', name: 'a', jerseyNumber: 250 },
+            { id: 'b', name: 'b', jerseyNumber: -4 },
+          ],
+        },
+      ],
+    })
+    expect(save.teams[0].players.map((p) => p.jerseyNumber)).toEqual([99, 0])
+  })
+
+  it('keeps ids already in the safe format untouched', () => {
+    const save = migrateUnknown({
+      teams: [{ id: 't1', name: 'U12', players: [{ id: 'player_lz3k9a_x7f2qp', name: 'a', jerseyNumber: 1 }] }],
+    })
+    expect(save.teams[0].players[0].id).toBe('player_lz3k9a_x7f2qp')
+  })
+})

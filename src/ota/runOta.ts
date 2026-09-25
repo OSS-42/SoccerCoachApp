@@ -1,12 +1,9 @@
+import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import { Network } from '@capacitor/network'
-import {
-  APP_BUNDLE_VERSION,
-  OTA_MANIFEST_FALLBACK_URLS,
-  OTA_MANIFEST_URL,
-  type OtaManifest,
-} from './config'
+import { APP_BUNDLE_VERSION, OTA_MANIFEST_URL } from './config'
+import { cmpSemver, validateManifest } from './manifest'
 
 const MANIFEST_ATTEMPTS = 4
 const DOWNLOAD_ATTEMPTS = 2
@@ -18,7 +15,7 @@ function sleep(ms: number): Promise<void> {
   })
 }
 
-async function fetchManifest(url: string): Promise<OtaManifest> {
+async function fetchManifest(url: string): Promise<unknown> {
   const controller = new AbortController()
   const kill = window.setTimeout(() => controller.abort(), MANIFEST_TIMEOUT_MS)
   try {
@@ -27,13 +24,17 @@ async function fetchManifest(url: string): Promise<OtaManifest> {
       signal: controller.signal,
     })
     if (!res.ok) throw new Error(`Manifest HTTP ${res.status}`)
-    const parsed = (await res.json()) as OtaManifest
-    if (!parsed?.version || !parsed?.bundleUrl) {
-      throw new Error('Manifest missing required fields')
-    }
-    return parsed
+    return (await res.json()) as unknown
   } finally {
     window.clearTimeout(kill)
+  }
+}
+
+async function nativeAppVersion(): Promise<string | null> {
+  try {
+    return (await App.getInfo()).version
+  } catch {
+    return null
   }
 }
 
@@ -43,17 +44,6 @@ export type OtaProgress = {
   percent: number
   message: string
   diagnostics?: string[]
-}
-
-function cmpSemver(a: string, b: string): number {
-  const pa = a.replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0)
-  const pb = b.replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0)
-  const len = Math.max(pa.length, pb.length)
-  for (let i = 0; i < len; i++) {
-    const d = (pa[i] ?? 0) - (pb[i] ?? 0)
-    if (d !== 0) return d
-  }
-  return 0
 }
 
 /**
@@ -125,53 +115,65 @@ export async function runOtaIfNeeded(
     // Network plugin unavailable — still try fetch
   }
 
-  let manifest: OtaManifest | null = null
+  let rawManifest: unknown = null
   let manifestErr: unknown = null
   const manifestAttempts: string[] = []
-  // Droplet CDN first; GitHub mirrors only if public
-  const manifestUrls = [OTA_MANIFEST_URL, ...OTA_MANIFEST_FALLBACK_URLS]
-  for (let attempt = 1; attempt <= MANIFEST_ATTEMPTS && !manifest; attempt++) {
-    for (const url of manifestUrls) {
-      try {
-        onProgress({
-          phase: 'check',
-          percent: 0,
-          message:
-            attempt > 1
-              ? `Retrying update check (${attempt}/${MANIFEST_ATTEMPTS})…`
-              : 'Checking for updates…',
-        })
-        manifest = await fetchManifest(url)
-        break
-      } catch (e) {
-        manifestErr = e
-        const msg = e instanceof Error ? e.message : String(e)
-        manifestAttempts.push(`${url} => ${msg}`)
+  for (let attempt = 1; attempt <= MANIFEST_ATTEMPTS && rawManifest == null; attempt++) {
+    try {
+      onProgress({
+        phase: 'check',
+        percent: 0,
+        message:
+          attempt > 1
+            ? `Retrying update check (${attempt}/${MANIFEST_ATTEMPTS})…`
+            : 'Checking for updates…',
+      })
+      rawManifest = await fetchManifest(OTA_MANIFEST_URL)
+    } catch (e) {
+      manifestErr = e
+      manifestAttempts.push(e instanceof Error ? e.message : String(e))
+      if (attempt < MANIFEST_ATTEMPTS) {
+        await sleep(700 * attempt)
       }
-    }
-    if (!manifest && attempt < MANIFEST_ATTEMPTS) {
-      await sleep(700 * attempt)
     }
   }
 
-  if (!manifest) {
-    const reachabilityHint = manifestAttempts.some((m) => m.includes('HTTP 401') || m.includes('HTTP 403') || m.includes('HTTP 404'))
-      ? 'Update channel is not publicly reachable (private repo or restricted URL)'
-      : 'Update server unreachable'
+  if (rawManifest == null) {
     onProgress({
       phase: 'skip',
       percent: 100,
-      message: `${reachabilityHint} — using installed build`,
+      message: 'Update server unreachable — using installed build',
       diagnostics: [
         `appVersion=${APP_BUNDLE_VERSION}`,
-        `manifestUrls=${manifestUrls.join(', ')}`,
+        `manifestUrl=${OTA_MANIFEST_URL}`,
         `manifestFetch=${manifestAttempts.join(' | ')}`,
-        `error=${manifestErr instanceof Error ? manifestErr.message : String(manifestErr)}`,
       ],
     })
     console.warn('[ota] manifest', manifestErr)
     return
   }
+
+  const nativeVersion = await nativeAppVersion()
+  const check = validateManifest(rawManifest, nativeVersion)
+  if (!check.ok) {
+    onProgress({
+      phase: 'skip',
+      percent: 100,
+      message:
+        check.reason === 'minAppVersion'
+          ? 'Update requires a newer app from Google Play — using installed build'
+          : 'Update rejected — using installed build',
+      diagnostics: [
+        `appVersion=${APP_BUNDLE_VERSION}`,
+        `nativeVersion=${nativeVersion ?? '(unknown)'}`,
+        `reason=${check.reason}`,
+        `error=${check.message}`,
+      ],
+    })
+    console.warn('[ota] manifest rejected', check.reason, check.message)
+    return
+  }
+  const manifest = check.manifest
 
   let rawCapgoVersion = ''
   let currentVersion = APP_BUNDLE_VERSION
@@ -243,6 +245,7 @@ export async function runOtaIfNeeded(
         bundle = await CapacitorUpdater.download({
           url: manifest.bundleUrl,
           version: manifest.version,
+          checksum: manifest.checksum,
         })
       } catch (e) {
         lastDownloadErr = e

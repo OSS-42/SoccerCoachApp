@@ -3,6 +3,7 @@ import { emptyParentProfile, isParentGame, replayParentFormation } from './paren
 import { reconstructStartingFormation } from './playingTime'
 import { canSelectTeam, liteHomeTeamId } from './entitlement'
 import { createDefaultTeams, dropEmptyPlaceholderTeams, ensureDemoTeam, isPlayerPosition } from './teams'
+import { JERSEY_MAX, JERSEY_MIN } from './config'
 import {
   APP_VERSION,
   DEFAULT_CLOCK,
@@ -69,6 +70,43 @@ function asBool(value: unknown, fallback = false): boolean {
   return typeof value === 'boolean' ? value : fallback
 }
 
+const MAX_PERIODS = 20
+const MAX_PERIOD_MINUTES = 120
+const MAX_SCORE = 999
+const MAX_GAME_SECONDS = 24 * 60 * 60
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/
+const SAFE_POSITION = /^[A-Za-z0-9_-]{1,32}$/
+
+function fnv1a(value: string, seed: number): string {
+  let h = seed
+  for (let i = 0; i < value.length; i++) {
+    h ^= value.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0).toString(36)
+}
+
+/**
+ * Ids end up in HTML attributes and CSS selectors. Unsafe ids are replaced by a
+ * deterministic hash so every reference to the same raw id still resolves.
+ */
+export function asId(value: unknown, fallback: string): string {
+  const raw = typeof value === 'number' && Number.isFinite(value) ? String(value) : value
+  if (typeof raw !== 'string' || !raw) return fallback
+  if (SAFE_ID.test(raw)) return raw
+  return `id_${fnv1a(raw, 0x811c9dc5)}${fnv1a(raw, 0x9e3779b9)}`
+}
+
+function asIdList(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.map((id) => asId(id, '')).filter(Boolean)
+}
+
 function asMatchType(value: unknown): MatchType {
   return MATCH_TYPES.includes(value as MatchType) ? (value as MatchType) : '11v11'
 }
@@ -92,9 +130,9 @@ function migratePlayer(raw: unknown, index: number): Player | null {
   const name = asString(rec.name).trim().toUpperCase()
   if (!name) return null
   return {
-    id: asString(rec.id, `p_legacy_${index}`),
+    id: asId(rec.id, `p_legacy_${index}`),
     name,
-    jerseyNumber: asNumber(rec.jerseyNumber, index + 1),
+    jerseyNumber: clamp(Math.round(asNumber(rec.jerseyNumber, index + 1)), JERSEY_MIN, JERSEY_MAX),
     position: asPosition(rec.position),
   }
 }
@@ -107,13 +145,13 @@ function migrateAction(raw: unknown, index: number): GameAction | null {
   const minute = asNumber(rec.gameMinute, 0)
   const second = rec.gameSecond != null ? asNumber(rec.gameSecond, minute * 60) : minute * 60
   return {
-    id: asString(rec.id, `act_legacy_${index}`),
+    id: asId(rec.id, `act_legacy_${index}`),
     actionType: type,
-    playerId: rec.playerId == null ? null : asString(rec.playerId),
-    gameSecond: second,
+    playerId: rec.playerId == null ? null : asId(rec.playerId, ''),
+    gameSecond: clamp(second, 0, MAX_GAME_SECONDS),
     timestamp: asString(rec.timestamp, new Date().toISOString()),
     noteText: rec.noteText ? asString(rec.noteText) : undefined,
-    relatedPlayerId: rec.relatedPlayerId ? asString(rec.relatedPlayerId) : undefined,
+    relatedPlayerId: rec.relatedPlayerId ? asId(rec.relatedPlayerId, '') || undefined : undefined,
     period:
       typeof rec.period === 'number' && Number.isFinite(rec.period) && rec.period >= 1
         ? Math.floor(rec.period)
@@ -130,12 +168,14 @@ function migrateFormation(raw: unknown): FormationSpot[] {
   return raw
     .map((item) => {
       const rec = asRecord(item)
-      if (!rec || !rec.playerId) return null
+      const playerId = asId(rec?.playerId, '')
+      if (!rec || !playerId) return null
+      const position = asString(rec.position, 'MID-1')
       return {
-        playerId: asString(rec.playerId),
-        position: asString(rec.position, 'MID-1'),
-        x: asNumber(rec.x, 50),
-        y: asNumber(rec.y, 50),
+        playerId,
+        position: SAFE_POSITION.test(position) ? position : 'MID-1',
+        x: clamp(asNumber(rec.x, 50), 0, 100),
+        y: clamp(asNumber(rec.y, 50), 0, 100),
       }
     })
     .filter((s): s is FormationSpot => Boolean(s))
@@ -145,26 +185,22 @@ function migrateGame(raw: unknown, index: number): Game | null {
   const rec = asRecord(raw)
   if (!rec) return null
   const formation = migrateFormation(rec.formation ?? rec.formationPlayers)
-  const unavailable = Array.isArray(rec.unavailablePlayers)
-    ? rec.unavailablePlayers.map((id) => String(id))
-    : []
-  const substitutes = Array.isArray(rec.substitutes)
-    ? rec.substitutes.map((id) => String(id))
-    : []
+  const unavailable = asIdList(rec.unavailablePlayers)
+  const substitutes = asIdList(rec.substitutes)
   const actions = Array.isArray(rec.actions)
     ? rec.actions.map(migrateAction).filter((a): a is GameAction => Boolean(a))
     : []
   const startingSaved = migrateFormation(rec.startingFormation)
   return {
-    id: asString(rec.id, `game_legacy_${index}`),
+    id: asId(rec.id, `game_legacy_${index}`),
     date: asString(rec.date, new Date().toISOString().slice(0, 10)),
     teamName: asString(rec.teamName, 'TEAM'),
     opponentName: asString(rec.opponentName, 'OPPONENT').toUpperCase(),
     matchType: asMatchType(rec.matchType),
-    numPeriods: Math.max(1, asNumber(rec.numPeriods, 2)),
-    periodDuration: Math.max(1, asNumber(rec.periodDuration, 12)),
-    homeScore: asNumber(rec.homeScore, 0),
-    awayScore: asNumber(rec.awayScore, 0),
+    numPeriods: clamp(Math.round(asNumber(rec.numPeriods, 2)), 1, MAX_PERIODS),
+    periodDuration: clamp(asNumber(rec.periodDuration, 12), 1, MAX_PERIOD_MINUTES),
+    homeScore: clamp(asNumber(rec.homeScore, 0), 0, MAX_SCORE),
+    awayScore: clamp(asNumber(rec.awayScore, 0), 0, MAX_SCORE),
     startTime: asString(rec.startTime, new Date().toISOString()),
     endTime: rec.endTime ? asString(rec.endTime) : null,
     actions,
@@ -175,13 +211,13 @@ function migrateGame(raw: unknown, index: number): Game | null {
     substitutes,
     unavailablePlayers: unavailable,
     isCompleted: asBool(rec.isCompleted, false),
-    elapsedSeconds: asNumber(rec.elapsedSeconds ?? rec.totalGameTime ?? rec.gameTime, 0),
+    elapsedSeconds: clamp(asNumber(rec.elapsedSeconds ?? rec.totalGameTime ?? rec.gameTime, 0), 0, MAX_GAME_SECONDS),
     periodScores: Array.isArray(rec.periodScores)
-      ? rec.periodScores.map((p) => {
+      ? rec.periodScores.slice(0, MAX_PERIODS * 2).map((p) => {
           const row = asRecord(p)
           return {
-            home: asNumber(row?.home, 0),
-            away: asNumber(row?.away, 0),
+            home: clamp(asNumber(row?.home, 0), 0, MAX_SCORE),
+            away: clamp(asNumber(row?.away, 0), 0, MAX_SCORE),
             endedAt:
               typeof row?.endedAt === 'number' && Number.isFinite(row.endedAt)
                 ? row.endedAt
@@ -224,7 +260,7 @@ function migrateTeam(raw: unknown, index: number): Team | null {
   if (!rec) return null
   const settingsRec = asRecord(rec.settings)
   return {
-    id: asString(rec.id, `t${index + 1}`),
+    id: asId(rec.id, `t${index + 1}`),
     name: asString(rec.name, `Team ${index + 1}`).toUpperCase(),
     players: Array.isArray(rec.players)
       ? rec.players.map(migratePlayer).filter((p): p is Player => Boolean(p))
@@ -263,7 +299,7 @@ function migrateDefaultUnavailable(raw: unknown): Team['defaultUnavailable'] {
   const out: Team['defaultUnavailable'] = {}
   for (const key of MATCH_TYPES) {
     if (!Array.isArray(rec[key])) continue
-    out[key] = rec[key].filter((id): id is string => typeof id === 'string' && id.length > 0)
+    out[key] = asIdList(rec[key].filter((id): id is string => typeof id === 'string'))
   }
   return out
 }
@@ -353,7 +389,7 @@ export function migrateUnknown(raw: unknown): AppSave {
     const safeTeams = dropEmptyPlaceholderTeams(
       ensureDemoTeam(teams.length ? teams : createDefaultTeams()),
     )
-    const currentTeamId = asString(rec.currentTeamId, safeTeams[0].id)
+    const currentTeamId = asId(rec.currentTeamId, safeTeams[0].id)
     const currentGameRaw = rec.currentGame
     const currentGame = currentGameRaw ? migrateGame(currentGameRaw, 0) : null
     const inProgress = currentGame && !currentGame.isCompleted ? currentGame : null

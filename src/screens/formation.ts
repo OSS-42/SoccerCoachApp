@@ -186,7 +186,7 @@ function paintSlot(slot: HTMLElement, playerId: string | null, name = '', jersey
   const nameHtml = `<span class="${onField ? 'player-name-field' : 'player-name-bench'}" title="${escapeHtml(name)}">${escapeHtml(name)}</span>`
   const numHtml = `<span class="jersey-num">${jersey}</span>`
   const posHtml = onField && posText ? `<span class="spot-pos">${escapeHtml(posText)}</span>` : ''
-  slot.innerHTML = `<span class="player-number ${onField ? 'player-number-placed' : ''}" data-player-id="${playerId}">${
+  slot.innerHTML = `<span class="player-number ${onField ? 'player-number-placed' : ''}" data-player-id="${escapeHtml(playerId)}">${
     onField ? `${posHtml}${numHtml}${nameHtml}` : `${nameHtml}${numHtml}`
   }</span>`
 }

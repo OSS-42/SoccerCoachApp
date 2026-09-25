@@ -605,6 +605,9 @@ export function importBackup(
   if (kind === 'full') {
     state = {
       ...imported,
+      entitlement: state.entitlement,
+      role: state.role,
+      roleChosen: state.roleChosen,
       appVersion: APP_VERSION,
       saveVersion: SAVE_VERSION,
       updatedAt: new Date().toISOString(),

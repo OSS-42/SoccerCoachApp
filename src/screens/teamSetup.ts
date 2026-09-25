@@ -62,10 +62,10 @@ export function renderTeamSetup(): void {
         <div class="player-position">${escapeHtml(player.position)}</div>
       </div>
       <div class="player-actions">
-        <button class="player-action-btn" data-edit="${player.id}">
+        <button class="player-action-btn" data-edit="${escapeHtml(player.id)}">
           <span class="material-icons">edit</span>
         </button>
-        <input type="checkbox" class="player-checkbox" data-player-id="${player.id}" />
+        <input type="checkbox" class="player-checkbox" data-player-id="${escapeHtml(player.id)}" />
       </div>
     `
     list.appendChild(item)

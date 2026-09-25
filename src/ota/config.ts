@@ -15,21 +15,11 @@
 /** Public HTTPS base for the live channel (no trailing slash). */
 export const OTA_CDN_BASE_URL = 'https://cdn-studiophoenix.net/sca/live'
 
-/** Channel tip — must be anonymously reachable over HTTPS. */
+/** Channel tip — the only manifest source; offline or unreachable keeps the installed build. */
 export const OTA_MANIFEST_URL = `${OTA_CDN_BASE_URL}/latest.json`
 
-/**
- * Extra manifest mirrors tried after the primary CDN URL fails.
- * GitHub raw / jsDelivr only work if the repo is public — kept as last-resort.
- */
-export const OTA_MANIFEST_FALLBACK_URLS: readonly string[] = [
-  'https://cdn-studiophoenix.net/sca/live/latest.json',
-  'https://raw.githubusercontent.com/OSS-42/SoccerCoachApp/main/ota/latest.json',
-  'https://cdn.jsdelivr.net/gh/OSS-42/SoccerCoachApp@main/ota/latest.json',
-]
-
-/** Bundled app version (bumped in package.json / ota channel). */
-export const APP_BUNDLE_VERSION = '2.4.77'
+/** Web bundle version, injected from package.json at build time. */
+export const APP_BUNDLE_VERSION: string = __APP_VERSION__
 
 export type OtaManifest = {
   version: string
@@ -37,4 +27,6 @@ export type OtaManifest = {
   notes?: string
   /** Direct HTTPS URL to a zip of the Vite `dist/` folder (Capgo-compatible). */
   bundleUrl: string
+  /** Lowercase hex SHA-256 of the zip at bundleUrl; Capgo rejects a mismatch. */
+  checksum: string
 }

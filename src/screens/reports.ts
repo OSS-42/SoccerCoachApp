@@ -75,10 +75,10 @@ export function renderReports(): void {
         </div>
       </div>
       <div class="report-actions">
-        <button class="secondary-btn" data-view="${game.id}">${t('viewReport')}</button>
-        <button class="secondary-btn" data-print="${game.id}">${t('pdf')}</button>
+        <button class="secondary-btn" data-view="${escapeHtml(game.id)}">${t('viewReport')}</button>
+        <button class="secondary-btn" data-print="${escapeHtml(game.id)}">${t('pdf')}</button>
       </div>
-      <input type="checkbox" class="report-checkbox" data-game-id="${game.id}" />
+      <input type="checkbox" class="report-checkbox" data-game-id="${escapeHtml(game.id)}" />
     `
     list.appendChild(item)
   }
