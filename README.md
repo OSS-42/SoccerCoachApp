@@ -35,6 +35,19 @@ Installed apps pick the new bundle up on the next cold start. Phones verify the 
 bundles from `https://cdn-studiophoenix.net`. Use `--min-app X.Y.Z` when a bundle needs a newer native
 shell (new Capacitor plugin); older shells then keep their current bundle.
 
+### App Store build (native)
+
+Only needed when native code or `capacitor.config.ts` changes (OTA covers everything else):
+
+```bash
+npm run ios:release
+```
+
+Sets the iOS version to `package.json` (build number `major*1e6 + minor*1e3 + patch`), runs the tests,
+builds, syncs, archives and exports `release/ios/<version>/App.ipa`, then checks the IPA (version, build,
+Capgo built-in version, auto-update off, telemetry off). It does not upload: use Xcode Organizer or
+Transporter, then submit in App Store Connect. The sideload APK is rebuilt by every `ota:publish`.
+
 ### Signed manifests
 
 `latest.json` is signed (ECDSA P-256) so a compromised droplet cannot push its own bundle. The app
