@@ -397,6 +397,23 @@ function bumpSemver(v, kind) {
   return `${a}.${b}.${c}`
 }
 
+const changelogPath = path.join(root, 'src/domain/changelog.ts')
+
+/** The in-app "What's new" shows the newest CHANGELOG entries; each release needs its own, first. */
+export function newestChangelogVersion(source) {
+  return String(source).match(/version:\s*['"](\d+\.\d+\.\d+)['"]/)?.[1] ?? null
+}
+
+function assertChangelogEntry(version) {
+  const newest = newestChangelogVersion(fs.readFileSync(changelogPath, 'utf8'))
+  if (newest !== version) {
+    die(
+      `The in-app change log has no entry for ${version} (newest is ${newest ?? 'none'}).\n` +
+        `Add { version: '${version}', items: { en: [...], fr: [...] } } at the top of src/domain/changelog.ts, then publish again.`,
+    )
+  }
+}
+
 /**
  * GitHub rejects pushes that touch .github/workflows unless the token has the `workflow`
  * scope. Check before deploying so a release never goes live on the droplet but not on GitHub.
@@ -790,6 +807,7 @@ function main() {
   const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
   const oldVersion = pkg.version
   const newVersion = args.version || bumpSemver(oldVersion, args.bump)
+  assertChangelogEntry(newVersion)
   const tag = `ota-${newVersion}`
   const slug = githubSlug()
   const deploy = deployConfig('dist.zip')

@@ -8,6 +8,39 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.2',
+    items: {
+      en: [
+        'Faster start-up: the PDF tools load only when you export a report. Screen readers now name the Back, Add player and Edit buttons, and dialogs close with Escape. Free version: adding a team you could not open now shows a clear message instead.',
+      ],
+      fr: [
+        'Démarrage plus rapide : les outils PDF se chargent seulement quand vous exportez un rapport. Les lecteurs d’écran annoncent les boutons Retour, Ajouter un joueur et Modifier, et les fenêtres se ferment avec Échap. Version gratuite : ajouter une équipe impossible à ouvrir affiche maintenant un message clair.',
+      ],
+    },
+  },
+  {
+    version: '2.5.1',
+    items: {
+      en: [
+        'Export backup now works on iPhone and Android: choose Save to Files, Drive or email. Your data is better protected: a full phone no longer loses changes silently, and a safety copy restores your teams if the app’s storage is wiped.',
+      ],
+      fr: [
+        'L’export de sauvegarde fonctionne maintenant sur iPhone et Android : choisissez Enregistrer dans Fichiers, Drive ou e-mail. Vos données sont mieux protégées : un téléphone plein ne perd plus de changements en silence, et une copie de sécurité restaure vos équipes si le stockage de l’app est effacé.',
+      ],
+    },
+  },
+  {
+    version: '2.5.0',
+    items: {
+      en: [
+        'Icons now show without internet at the field. Updates are verified before they install. Imported backup files are checked so a bad file cannot break the app.',
+      ],
+      fr: [
+        'Les icônes s’affichent maintenant sans Internet au terrain. Les mises à jour sont vérifiées avant l’installation. Les fichiers de sauvegarde importés sont vérifiés pour qu’un fichier défectueux ne bloque pas l’app.',
+      ],
+    },
+  },
+  {
     version: '2.4.77',
     items: {
       en: [

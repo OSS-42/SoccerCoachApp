@@ -21,9 +21,12 @@ npm run build    # writes dist/
 npm run ota:publish -- --notes "What changed"
 ```
 
+Before publishing, add the new version at the top of `src/domain/changelog.ts` (English and French). The
+in-app "What's new" shows the two newest entries, and the script refuses to publish a version without one.
+
 One command ships everything (see `scripts/ota-publish.mjs`):
 
-- runs the tests, builds, zips `dist/` and writes `ota/latest.json` with the zip's SHA-256
+- checks the change log entry and the GitHub `workflow` permission (when workflow files changed), then runs the tests, builds, zips `dist/` and writes `ota/latest.json` with the zip's SHA-256
 - uploads `dist.zip`, then `latest.json`, then `docs/privacy.html` to the droplet (privacy page is verified live)
 - builds and uploads the sideload APK
 - commits, pushes `main` (which triggers the web deploy workflow) and creates the GitHub Release

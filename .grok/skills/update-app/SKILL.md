@@ -21,6 +21,7 @@ Script: `scripts/ota-publish.mjs` · env: `.env.ota.local` (`OTA_DEPLOY_*`, key 
 
 ## Pipeline (script owns details)
 
+0. Before running: add the new version's entry (en + fr) at the top of `src/domain/changelog.ts`; the script refuses to publish without it
 1. Bump semver in `package.json` (the only version source)
 2. `npm test` → build → `release/dist.zip` → `ota/latest.json` with the zip's SHA-256
 3. SCP `dist.zip` then `latest.json` to `/var/www/ota/sca/live/`; `docs/privacy.html` → `/var/www/ota/sca/privacy.html` (verified live)
