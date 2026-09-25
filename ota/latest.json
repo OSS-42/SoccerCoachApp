@@ -1,6 +1,7 @@
 {
-  "version": "2.4.77",
+  "version": "2.5.0",
   "minAppVersion": "2.4.50",
-  "notes": "Spectator yellow/red tiles, two yellows = red in the report, place player before the clock.",
-  "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip"
+  "notes": "Offline icons, safer imports, verified updates",
+  "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
+  "checksum": "eafda3205946ca4baeeee818d4916479ffe06e66a7ea01599c1e1afa574c0673"
 }
