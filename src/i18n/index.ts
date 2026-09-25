@@ -48,6 +48,10 @@ export function applyDomTranslations(root: ParentNode = document): void {
     const key = node.dataset.i18n as MessageKey | undefined
     if (key) node.textContent = t(key)
   })
+  root.querySelectorAll<HTMLElement>('[data-i18n-label]').forEach((node) => {
+    const key = node.dataset.i18nLabel as MessageKey | undefined
+    if (key) node.setAttribute('aria-label', t(key))
+  })
   root.querySelectorAll<HTMLElement>('[data-i18n-placeholder]').forEach((node) => {
     const key = node.dataset.i18nPlaceholder as MessageKey | undefined
     if (key && 'placeholder' in node) {

@@ -21,10 +21,11 @@ Script: `scripts/ota-publish.mjs` · env: `.env.ota.local` (`OTA_DEPLOY_*`, key 
 
 ## Pipeline (script owns details)
 
-1. Bump semver + `APP_BUNDLE_VERSION` + `ota/latest.json` (CDN `bundleUrl`)
-2. Build → `release/dist.zip` → SCP `/var/www/ota/sca/live/`
-3. Cap sync + debug APK → SCP `/var/www/ota/sca/apk/` (size-verify, then delete other `actionpitch_*.apk`)
-4. Commit + push + `gh release create ota-X.Y.Z`
+1. Bump semver in `package.json` (the only version source)
+2. `npm test` → build → `release/dist.zip` → `ota/latest.json` with the zip's SHA-256
+3. SCP `dist.zip` then `latest.json` to `/var/www/ota/sca/live/`; `docs/privacy.html` → `/var/www/ota/sca/privacy.html` (verified live)
+4. Cap sync + debug APK → SCP `/var/www/ota/sca/apk/` (size-verify, then delete other `actionpitch_*.apk`)
+5. Commit (secret paths/content abort) + push + `gh release create ota-X.Y.Z`
 
 ## Report (keep short)
 

@@ -205,8 +205,11 @@ body {
     min-width: 0;
     flex: 1;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow-wrap: anywhere;
 }
 
 .message-ribbon.error {
@@ -1896,6 +1899,10 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 9000;
+}
+
+.dialog:focus {
+    outline: none;
 }
 
 #tutorial-root {

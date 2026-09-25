@@ -6,9 +6,10 @@
  *
  * 1. Bump semver (patch by default)
  *  2. Commit the current app changes first (so source edits land before OTA metadata)
- *  3. Sync package.json + capacitor.config.ts Capgo version (src/ota/config.ts reads __APP_VERSION__)
+ *  3. Bump package.json — the single version source (Vite, ota/config.ts, capacitor.config.ts read it)
  *  4. Build web + zip dist → release/dist.zip, then write ota/latest.json with the zip's SHA-256
- *  5. Commit version/channel files
+ *     Deploy: dist.zip, latest.json, docs/privacy.html (verified live), APK — all to the droplet
+ *  5. Commit version/channel files (secret-looking paths or content abort the commit)
  *  6. Push branch
  *  7. Create GitHub Release tag ota-X.Y.Z with dist.zip
  *
@@ -29,9 +30,9 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const pkgPath = path.join(root, 'package.json')
-const capacitorConfigPath = path.join(root, 'capacitor.config.ts')
 const manifestPath = path.join(root, 'ota/latest.json')
 const zipPath = path.join(root, 'release/dist.zip')
+const privacyPath = path.join(root, 'docs/privacy.html')
 const apkFilePrefix = 'actionpitch'
 /** Default deploy key — must match the key on the OTA host (not DOragoug / github keys). */
 const DEFAULT_OTA_SSH_KEY = path.join(os.homedir(), '.ssh', 'id_ed25519_ota')
@@ -251,12 +252,32 @@ function gitStatus() {
 const SECRET_PATH_RE =
   /(^|\/)(\.env\.ota\.local|keystore\.properties|certificates\.zip|# Soccer coach app\.md)$/i
 
-function isSecretPath(filePath) {
+export function isSecretPath(filePath) {
   const normalized = String(filePath).replace(/\\/g, '/')
   if (SECRET_PATH_RE.test(normalized)) return true
+  if (/(^|\/)\.env(\.[^/]*)?$/i.test(normalized) && !/\.example$/i.test(normalized)) return true
   if (/(^|\/)keystore\//.test(normalized)) return true
-  if (/\.(jks|p12|pfx|pem|key)$/i.test(normalized)) return true
+  if (/(^|\/)id_(rsa|ed25519|ecdsa)[^/]*$/i.test(normalized)) return true
+  if (/\.(jks|keystore|p12|pfx|pem|key|p8|cer|mobileprovision)$/i.test(normalized)) return true
   return false
+}
+
+/** Content that must never be committed, whatever the file is called. */
+const SECRET_CONTENT_RE = [
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\bgh[pousr]_[A-Za-z0-9]{36,}\b/,
+  /\bgithub_pat_[A-Za-z0-9_]{40,}\b/,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /\bsk-[A-Za-z0-9_-]{32,}\b/,
+  /\bxox[abprs]-[A-Za-z0-9-]{10,}\b/,
+]
+
+export function findSecretContent(diffText) {
+  const added = String(diffText)
+    .split('\n')
+    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+    .join('\n')
+  return SECRET_CONTENT_RE.filter((re) => re.test(added)).map((re) => re.source)
 }
 
 function assertNoSecretsStaged() {
@@ -265,7 +286,7 @@ function assertNoSecretsStaged() {
   try {
     staged = runSilent('git diff --cached --name-only -z')
   } catch {
-    return
+    die('Could not list staged files; refusing to commit without a secret check.')
   }
   const hits = staged
     .split('\0')
@@ -276,6 +297,18 @@ function assertNoSecretsStaged() {
     die(
       `Refusing to commit secret-looking paths:\n  ${hits.join('\n  ')}\n` +
         'Those files must stay gitignored.',
+    )
+  }
+  const diff = execSync('git diff --cached --no-color -U0', {
+    cwd: root,
+    encoding: 'utf8',
+    maxBuffer: 256 * 1024 * 1024,
+  })
+  const patterns = findSecretContent(diff)
+  if (patterns.length) {
+    die(
+      `Refusing to commit: staged changes contain secret-looking content (${patterns.join(', ')}).\n` +
+        'Remove it (git restore --staged <file>) and keep secrets in gitignored files.',
     )
   }
 }
@@ -449,7 +482,9 @@ function deployArtifacts({ deploy, manifestFile, zipFile }) {
 
   if (args.dryRun) {
     console.log(`would deploy to ${redactSshTarget(deploy.target)}:${deploy.remoteDir}`)
-    console.log(`would upload: ${manifestFile} and ${zipFile}`)
+    console.log(`would upload: ${zipFile}, then ${manifestFile}`)
+    const privacy = privacyTarget(deploy)
+    console.log(`would upload: ${privacyPath} → ${privacy.remoteFile} (verify ${privacy.url})`)
     return
   }
 
@@ -475,6 +510,33 @@ function deployArtifacts({ deploy, manifestFile, zipFile }) {
   }
 
   console.log(`✓ OTA files deployed: ${deploy.baseUrl}/latest.json and ${deploy.bundleUrl}`)
+
+  deployPrivacyPage(deploy, scpArgs)
+}
+
+/** The public privacy policy lives one level above the live channel (…/sca/privacy.html). */
+function privacyTarget(deploy) {
+  return {
+    remoteFile: `${path.posix.dirname(deploy.remoteDir)}/privacy.html`,
+    url: `${deploy.baseUrl.replace(/\/[^/]+$/, '')}/privacy.html`,
+  }
+}
+
+function deployPrivacyPage(deploy, scpArgs) {
+  const { remoteFile, url } = privacyTarget(deploy)
+  console.log(`$ scp … ${path.relative(root, privacyPath)} ${redactSshTarget(deploy.target)}:${remoteFile}`)
+  execFileSync('scp', [...scpArgs, privacyPath, `${deploy.target}:${remoteFile}`], {
+    cwd: root,
+    stdio: 'inherit',
+  })
+  const live = execFileSync('curl', ['-fsS', '--max-time', '20', `${url}?t=${Date.now()}`], {
+    cwd: root,
+    maxBuffer: 16 * 1024 * 1024,
+  })
+  const localHash = createHash('sha256').update(fs.readFileSync(privacyPath)).digest('hex')
+  const liveHash = createHash('sha256').update(live).digest('hex')
+  if (liveHash !== localHash) die(`Privacy page at ${url} does not match docs/privacy.html after upload`)
+  console.log(`✓ Privacy policy live: ${url}`)
 }
 
 /**
@@ -739,11 +801,12 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
   if (gitStatus()) {
     stageAllWorkspace()
     if (gitStatus()) {
-      commitStaged('chore: commit current workspace changes', notes)
+      const summary = args.notes ? notes.split('\n')[0].slice(0, 72) : 'commit current workspace changes'
+      commitStaged(`chore(app): ${summary}`, notes)
     }
   }
 
-  // --- version files ---
+  // --- version: package.json is the single source (Vite, ota/config.ts and capacitor.config.ts read it) ---
   pkg.version = newVersion
   if (!args.dryRun) {
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
@@ -751,20 +814,8 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
     console.log(`would write package.json version ${newVersion}`)
   }
 
-  // Capgo defaults the native shell to "1.0" when this is missing/stale.
-  // "1.0" > "0.1.x" and blocks every 0.x OTA tip — keep in lockstep with package.json.
-  let capConfig = fs.readFileSync(capacitorConfigPath, 'utf8')
-  if (!/BUILTIN_WEB_VERSION\s*=\s*['"][^'"]+['"]/.test(capConfig)) {
-    die('BUILTIN_WEB_VERSION not found in capacitor.config.ts')
-  }
-  capConfig = capConfig.replace(
-    /BUILTIN_WEB_VERSION\s*=\s*['"][^'"]+['"]/,
-    `BUILTIN_WEB_VERSION = '${newVersion}'`,
-  )
-  if (!args.dryRun) fs.writeFileSync(capacitorConfigPath, capConfig)
-  else console.log(`would set BUILTIN_WEB_VERSION = '${newVersion}'`)
-
-  // --- build + zip ---
+  // --- test + build + zip (a failing test stops the release before anything is deployed) ---
+  run('npm test', { mutate: true })
   run('npm run build', { mutate: true })
   run('node scripts/ota-bundle.mjs', { mutate: true })
   if (!args.dryRun && !fs.existsSync(zipPath)) {
@@ -823,12 +874,7 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
   if (args.includeApp) {
     stageAllWorkspace()
   } else {
-    stagePaths([
-      'package.json',
-      'src/ota/config.ts',
-      'capacitor.config.ts',
-      'ota/latest.json',
-    ])
+    stagePaths(['package.json', 'ota/latest.json', 'docs/privacy.html'])
   }
 
   const status = gitStatus()
@@ -894,6 +940,7 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
   APK local: release/actionpitch_${newVersion}.apk
   APK CDN:  ${deploy.enabled ? apkUrlLine : 'deploy disabled'}
   Deploy:   ${deploy.enabled ? `${deploy.baseUrl}/latest.json` : 'disabled'}
+  Privacy:  ${deploy.enabled ? privacyTarget(deploy).url : 'not deployed (deploy disabled)'}
 
 Installed APKs will download content OTA on next cold start.
 Sideload native shell from the APK CDN URL when needed.

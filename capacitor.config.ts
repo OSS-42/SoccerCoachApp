@@ -1,11 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 /**
- * Builtin Capgo version for the web assets baked into the APK.
- * Must track package.json / APP_BUNDLE_VERSION (ota-publish bumps package.json;
- * keep this in sync or Capgo defaults to "1.0" and blocks later OTA tips).
+ * Builtin Capgo version for the web assets baked into the native shell, read from
+ * package.json (without it Capgo defaults to "1.0" and blocks later OTA tips).
  */
-const BUILTIN_WEB_VERSION = '2.5.1'
+const BUILTIN_WEB_VERSION: string = JSON.parse(
+  readFileSync(join(process.cwd(), 'package.json'), 'utf8'),
+).version
 
 const config: CapacitorConfig = {
   appId: 'com.actionpitch.app',
