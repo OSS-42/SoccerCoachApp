@@ -1,7 +1,7 @@
 {
-  "version": "2.5.1",
+  "version": "2.5.2",
   "minAppVersion": "2.4.50",
-  "notes": "Backup export on iPhone, safer saving, automatic recovery",
+  "notes": "Faster startup, accessibility labels, free-plan team limit fix, safer CI",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "ff5e9ac73f5af93778edc8760787c9c52596cc0d59fb9a7b4c01066286def7e4"
+  "checksum": "8682be35638065b86b583f35d042d87a903921906e14ca114e130faca37528e0"
 }

@@ -48,14 +48,14 @@
           <h2 data-i18n="roleAskTitle">Who is using ActionPitch?</h2>
           <p class="form-hint" data-i18n="roleAskHint">You can switch later from the home screen.</p>
           <button type="button" class="menu-btn role-pick-btn" id="pick-role-coach">
-            <span class="material-icons">sports</span>
+            <span class="material-icons" aria-hidden="true">sports</span>
             <span>
               <strong data-i18n="roleCoach">Coach</strong>
               <small data-i18n="roleCoachHint">Track the whole team</small>
             </span>
           </button>
           <button type="button" class="menu-btn role-pick-btn" id="pick-role-parent">
-            <span class="material-icons">visibility</span>
+            <span class="material-icons" aria-hidden="true">visibility</span>
             <span>
               <strong data-i18n="roleParent">Spectator</strong>
               <small data-i18n="roleParentHint">Follow one player</small>
@@ -76,44 +76,44 @@
         <nav class="main-menu">
           <div class="menu-row">
             <button class="menu-btn" data-go="team-setup">
-              <span class="material-icons">people</span> <span data-i18n="teamSetup">Team Setup</span>
+              <span class="material-icons" aria-hidden="true">people</span> <span data-i18n="teamSetup">Team Setup</span>
             </button>
             <span class="player-counter"
-              ><span class="material-icons">person</span> <span id="player-counter">0</span></span
+              ><span class="material-icons" aria-hidden="true">person</span> <span id="player-counter">0</span></span
             >
           </div>
           <div class="menu-row">
             <button class="menu-btn" data-go="reports">
-              <span class="material-icons">assessment</span> <span data-i18n="reports">Reports</span>
+              <span class="material-icons" aria-hidden="true">assessment</span> <span data-i18n="reports">Reports</span>
             </button>
             <span class="game-report-counter"
-              ><span class="material-icons">description</span>
+              ><span class="material-icons" aria-hidden="true">description</span>
               <span id="game-report-counter">0</span></span
             >
           </div>
           <div class="menu-row">
             <button class="menu-btn" data-go="settings">
-              <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
+              <span class="material-icons" aria-hidden="true">settings</span> <span data-i18n="settings">Settings</span>
             </button>
             <button class="menu-btn" id="open-tips">
-              <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
+              <span class="material-icons" aria-hidden="true">help_outline</span> <span data-i18n="tips">How to use</span>
             </button>
           </div>
           <div class="menu-spacer" aria-hidden="true"></div>
           <div class="menu-row" id="coach-game-actions">
             <button class="menu-btn" id="start-new-game-btn">
-              <span class="material-icons">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
+              <span class="material-icons" aria-hidden="true">sports_soccer</span> <span data-i18n="startNewGame">Start New Game</span>
             </button>
             <button class="menu-btn" id="resume-game-btn" hidden>
-              <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
+              <span class="material-icons" aria-hidden="true">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
             </button>
           </div>
         </nav>
         <div class="home-switch-bar">
           <button class="menu-btn role-switch-btn" id="coach-switch-parent">
             <span class="role-swap-icon" aria-hidden="true">
-              <span class="material-icons">arrow_back</span>
-              <span class="material-icons">arrow_forward</span>
+              <span class="material-icons" aria-hidden="true">arrow_back</span>
+              <span class="material-icons" aria-hidden="true">arrow_forward</span>
             </span>
             <span data-i18n="switchToParent">Switch to spectator</span>
           </button>
@@ -127,10 +127,10 @@
         <div class="content parent-home-content">
           <nav class="tab-navigation" id="parent-tab-nav">
             <button type="button" class="tab-btn active" data-parent-tab="home">
-              <span class="material-icons">home</span> <span data-i18n="parentHomeTab">Home menu</span>
+              <span class="material-icons" aria-hidden="true">home</span> <span data-i18n="parentHomeTab">Home menu</span>
             </button>
             <button type="button" class="tab-btn" data-parent-tab="stats">
-              <span class="material-icons">analytics</span> <span data-i18n="parentStatsTab">Player stats</span>
+              <span class="material-icons" aria-hidden="true">analytics</span> <span data-i18n="parentStatsTab">Player stats</span>
             </button>
           </nav>
           <section id="parent-home-tab" class="tab-content active">
@@ -140,19 +140,19 @@
             <div class="parent-home-footer">
               <div class="menu-row">
                 <button class="menu-btn" data-go="reports">
-                  <span class="material-icons">assessment</span> <span data-i18n="reports">Reports</span>
+                  <span class="material-icons" aria-hidden="true">assessment</span> <span data-i18n="reports">Reports</span>
                 </button>
                 <span class="game-report-counter"
-                  ><span class="material-icons">description</span>
+                  ><span class="material-icons" aria-hidden="true">description</span>
                   <span id="parent-report-counter">0</span></span
                 >
               </div>
               <div class="menu-row">
                 <button class="menu-btn" data-go="settings">
-                  <span class="material-icons">settings</span> <span data-i18n="settings">Settings</span>
+                  <span class="material-icons" aria-hidden="true">settings</span> <span data-i18n="settings">Settings</span>
                 </button>
                 <button class="menu-btn" id="parent-open-tips">
-                  <span class="material-icons">help_outline</span> <span data-i18n="tips">How to use</span>
+                  <span class="material-icons" aria-hidden="true">help_outline</span> <span data-i18n="tips">How to use</span>
                 </button>
               </div>
             </div>
@@ -182,7 +182,7 @@
               </div>
               <button type="button" class="primary-btn" id="parent-start-game" data-i18n="startNewGame">Start New Game</button>
               <button type="button" class="menu-btn" id="parent-resume-game" hidden>
-                <span class="material-icons">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
+                <span class="material-icons" aria-hidden="true">play_circle</span> <span data-i18n="resumeGame">Resume Game</span>
               </button>
             </div>
           </section>
@@ -210,8 +210,8 @@
         <div class="home-switch-bar">
           <button class="menu-btn role-switch-btn" id="parent-switch-coach">
             <span class="role-swap-icon" aria-hidden="true">
-              <span class="material-icons">arrow_back</span>
-              <span class="material-icons">arrow_forward</span>
+              <span class="material-icons" aria-hidden="true">arrow_back</span>
+              <span class="material-icons" aria-hidden="true">arrow_forward</span>
             </span>
             <span data-i18n="switchToCoach">Switch to coach</span>
           </button>
@@ -220,8 +220,8 @@
 
       <section id="team-setup" class="screen">
         <div class="app-header">
-          <button class="back-btn" data-go="main-screen">
-            <span class="material-icons">arrow_back</span>
+          <button class="back-btn" data-go="main-screen" aria-label="Back" data-i18n-label="back">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
           </button>
           <h1 data-i18n="teamSetup">Team Setup</h1>
         </div>
@@ -239,10 +239,10 @@
           </div>
           <nav class="tab-navigation">
             <button class="tab-btn active" data-team-tab="players">
-              <span class="material-icons">people</span> <span data-i18n="players">Players</span>
+              <span class="material-icons" aria-hidden="true">people</span> <span data-i18n="players">Players</span>
             </button>
             <button class="tab-btn" data-team-tab="statistics">
-              <span class="material-icons">analytics</span> <span data-i18n="statistics">Statistics</span>
+              <span class="material-icons" aria-hidden="true">analytics</span> <span data-i18n="statistics">Statistics</span>
             </button>
           </nav>
           <section id="players-tab-content" class="tab-content active">
@@ -250,11 +250,11 @@
               <h2 data-i18n="players">Players</h2>
               <div class="players-header-tools">
                 <span class="player-counter-team">
-                  <span class="material-icons">person</span>
+                  <span class="material-icons" aria-hidden="true">person</span>
                   <span id="team-player-counter">0</span>
                 </span>
-                <button class="action-btn white-btn" id="open-add-player">
-                  <span class="material-icons">person_add</span>
+                <button class="action-btn white-btn" id="open-add-player" aria-label="Add Player" data-i18n-label="addPlayer">
+                  <span class="material-icons" aria-hidden="true">person_add</span>
                 </button>
               </div>
             </div>
@@ -287,8 +287,8 @@
 
       <div id="game-setup" class="screen">
         <div class="app-header">
-          <button class="back-btn" data-go="main-screen">
-            <span class="material-icons">arrow_back</span>
+          <button class="back-btn" data-go="main-screen" aria-label="Back" data-i18n-label="back">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
           </button>
           <h1 data-i18n="newGame">New Game</h1>
           <span id="game-date-label" class="new-game-date"></span>
@@ -356,8 +356,8 @@
 
       <div id="formation-setup" class="screen">
         <div class="app-header">
-          <button class="back-btn" id="back-from-formation">
-            <span class="material-icons">arrow_back</span>
+          <button class="back-btn" id="back-from-formation" aria-label="Back" data-i18n-label="back">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
           </button>
           <h1 data-i18n="formationSetup">Formation Setup</h1>
         </div>
@@ -432,26 +432,26 @@
         <div class="controls-row">
           <div class="game-controls">
             <button class="control-btn play-btn" id="play-clock">
-              <span class="material-icons">play_arrow</span> <span data-i18n="play">Play</span>
+              <span class="material-icons" aria-hidden="true">play_arrow</span> <span data-i18n="play">Play</span>
             </button>
             <button class="control-btn pause-btn" id="pause-clock">
-              <span class="material-icons">pause</span> <span data-i18n="pause">Pause</span>
+              <span class="material-icons" aria-hidden="true">pause</span> <span data-i18n="pause">Pause</span>
             </button>
             <button class="control-btn stop-btn" id="stop-period">
-              <span class="material-icons">stop</span> <span data-i18n="stop">Stop</span>
+              <span class="material-icons" aria-hidden="true">stop</span> <span data-i18n="stop">Stop</span>
             </button>
             <button class="control-btn reset-btn" id="reset-sub">
-              <span class="material-icons">replay</span> <span data-i18n="resetSub">Reset Sub</span>
+              <span class="material-icons" aria-hidden="true">replay</span> <span data-i18n="resetSub">Reset Sub</span>
             </button>
             <button class="control-btn end-game-btn" id="end-game" data-i18n="endGame">End Game</button>
             <button class="control-btn action-review-btn" id="open-action-review">
-              <span class="material-icons">rule</span> <span data-i18n="actionReview">Action Review</span>
+              <span class="material-icons" aria-hidden="true">rule</span> <span data-i18n="actionReview">Action Review</span>
             </button>
             <button class="control-btn opponent-btn" id="open-opponent-action">
-              <span class="material-icons">sports_soccer</span> <span data-i18n="opponentAction">Opponent</span>
+              <span class="material-icons" aria-hidden="true">sports_soccer</span> <span data-i18n="opponentAction">Opponent</span>
             </button>
             <button class="control-btn note-btn" id="open-game-note">
-              <span class="material-icons">note_add</span> <span data-i18n="gameNote">Game Note</span>
+              <span class="material-icons" aria-hidden="true">note_add</span> <span data-i18n="gameNote">Game Note</span>
             </button>
           </div>
         </div>
@@ -480,8 +480,8 @@
 
       <div id="reports" class="screen">
         <div class="app-header">
-          <button class="back-btn" data-go="main-screen">
-            <span class="material-icons">arrow_back</span>
+          <button class="back-btn" data-go="main-screen" aria-label="Back" data-i18n-label="back">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
           </button>
           <h1 data-i18n="gameReports">Game Reports</h1>
         </div>
@@ -504,8 +504,8 @@
 
       <div id="settings" class="screen">
         <div class="app-header">
-          <button class="back-btn" data-go="main-screen">
-            <span class="material-icons">arrow_back</span>
+          <button class="back-btn" data-go="main-screen" aria-label="Back" data-i18n-label="back">
+            <span class="material-icons" aria-hidden="true">arrow_back</span>
           </button>
           <h1 data-i18n="settings">Settings</h1>
         </div>
@@ -551,15 +551,15 @@
             <h2 data-i18n="dataManagement">Data Management</h2>
             <div class="setting-option data-management-buttons">
               <button class="secondary-btn" id="export-json">
-                <span class="material-icons">file_download</span>
+                <span class="material-icons" aria-hidden="true">file_download</span>
                 <span data-i18n="exportJson">Export Team Data (JSON)</span>
               </button>
               <button class="secondary-btn" id="import-json">
-                <span class="material-icons">file_upload</span>
+                <span class="material-icons" aria-hidden="true">file_upload</span>
                 <span data-i18n="importJson">Import Team Data</span>
               </button>
               <button class="secondary-btn danger-btn" id="clear-all-data">
-                <span class="material-icons">delete_forever</span>
+                <span class="material-icons" aria-hidden="true">delete_forever</span>
                 <span data-i18n="clearAllData">Clear All Data</span>
               </button>
             </div>

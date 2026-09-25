@@ -1,7 +1,6 @@
 import { t } from '@/i18n'
 import { VIEW_REPORT_EVENT } from '@/domain/config'
 import { formatClock, parseClockInput } from '@/domain/clock'
-import { buildGameReportPdf, reportPdfFileName } from '@/domain/reportPdf'
 import { askConfirm, askPrompt } from '@/ui/confirm'
 import {
   deleteCompletedGames,
@@ -131,6 +130,8 @@ async function exportReportPdf(gameId: string): Promise<void> {
     return
   }
   try {
+    // jsPDF + html2canvas + DOMPurify (~390 kB) load only when a report is exported.
+    const { buildGameReportPdf, reportPdfFileName } = await import('@/domain/reportPdf')
     const pdf = buildGameReportPdf(game, team)
     const bytes = pdf.output('arraybuffer')
     if (!bytes.byteLength) throw new Error('empty pdf')

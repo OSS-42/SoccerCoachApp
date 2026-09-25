@@ -21,7 +21,7 @@ import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/s
 import type { NewGameInput } from '@/domain/game'
 import { freshSave, migrateUnknown } from '@/domain/migrate'
 import { TUTORIAL_COACH_REV, TUTORIAL_PARENT_REV, emptyTutorial } from '@/domain/tutorial'
-import { canSelectTeam } from '@/domain/entitlement'
+import { canAddUserTeam, canSelectTeam } from '@/domain/entitlement'
 import { canAddTeam, createPlayer, createTeam, findTeam, updatePlayer } from '@/domain/teams'
 import {
   APP_VERSION,
@@ -316,6 +316,10 @@ export function addTeam(name: string): { ok: boolean; message: string } {
       ok: false,
       message: t('maxTeams', { max: MAX_TEAMS }),
     }
+  }
+  // Same rule as the team pickers: a team Lite could never select must not be created.
+  if (!canAddUserTeam(state)) {
+    return { ok: false, message: t('liteTeamLimit') }
   }
   const team = createTeam(name)
   state = { ...state, teams: [...state.teams, team], currentTeamId: team.id }
