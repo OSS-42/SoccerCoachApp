@@ -29,6 +29,9 @@ const config: CapacitorConfig = {
   plugins: {
     CapacitorUpdater: {
       autoUpdate: false,
+      // No telemetry to Capgo's servers (device id, app/OS versions, JS errors). Native setting:
+      // takes effect with the next App Store / APK build, not over OTA.
+      statsUrl: '',
       appReadyTimeout: 12_000,
       version: BUILTIN_WEB_VERSION,
     },

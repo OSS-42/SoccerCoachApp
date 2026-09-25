@@ -29,4 +29,13 @@ export type OtaManifest = {
   bundleUrl: string
   /** Lowercase hex SHA-256 of the zip at bundleUrl; Capgo rejects a mismatch. */
   checksum: string
+  /** ECDSA signature over the fields above (see ./signature.ts), and which trusted key made it. */
+  keyId?: string
+  signature?: string
 }
+
+/**
+ * false = check signatures and report only; true = refuse unsigned or badly signed updates.
+ * Turn on only after a report-only release has shown `signature=valid` on real devices.
+ */
+export const OTA_REQUIRE_SIGNATURE = false

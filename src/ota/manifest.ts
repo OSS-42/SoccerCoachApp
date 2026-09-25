@@ -65,6 +65,14 @@ export function validateManifest(raw: unknown, nativeVersion: string | null): Ma
   const notes = str(rec.notes)
   return {
     ok: true,
-    manifest: { version, bundleUrl, checksum, minAppVersion, notes: notes || undefined },
+    manifest: {
+      version,
+      bundleUrl,
+      checksum,
+      minAppVersion,
+      notes: notes || undefined,
+      keyId: str(rec.keyId) || undefined,
+      signature: str(rec.signature) || undefined,
+    },
   }
 }

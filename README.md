@@ -35,6 +35,19 @@ Installed apps pick the new bundle up on the next cold start. Phones verify the 
 bundles from `https://cdn-studiophoenix.net`. Use `--min-app X.Y.Z` when a bundle needs a newer native
 shell (new Capacitor plugin); older shells then keep their current bundle.
 
+### Signed manifests
+
+`latest.json` is signed (ECDSA P-256) so a compromised droplet cannot push its own bundle. The app
+trusts the public keys in `src/ota/signature.ts`; the publish script signs with
+`~/.config/actionpitch/ota-signing-primary.pem` (or `OTA_SIGNING_KEY`), checks the signature with the
+app's own code before uploading, and checks the live manifest again afterwards.
+
+- Private keys never go in the repo. Keep the backup key (`ota-signing-backup.pem`) offline, e.g. in a
+  password manager; publish with it (`OTA_SIGNING_KEY=…`) if the primary is lost.
+- `OTA_REQUIRE_SIGNATURE` in `src/ota/config.ts` switches phones from report-only to refusing unsigned
+  updates. If every trusted key were lost while it is on, only a new App Store/APK build could restore updates.
+- Rotating a key: first ship a bundle that trusts the new key, still signed with a key the previous bundle trusts.
+
 Secrets stay local: `.env.ota.local` (droplet SSH settings), SSH keys and keystores are gitignored, and the
 publish script refuses to commit secret-looking files or content.
 

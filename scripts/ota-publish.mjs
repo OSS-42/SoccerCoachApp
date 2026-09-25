@@ -22,11 +22,13 @@
  * Requires: git, gh (authenticated: gh auth login), network.
  */
 import { execFileSync, execSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
+import { createHash, createPrivateKey, createPublicKey, sign } from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+// Same file the app uses to verify, so the signed payload cannot drift (Node strips the TS types).
+import { OTA_SIGNING_KEYS, manifestSigningPayload, verifyManifestSignature } from '../src/ota/signature.ts'
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const pkgPath = path.join(root, 'package.json')
@@ -395,6 +397,60 @@ function bumpSemver(v, kind) {
     c += 1
   }
   return `${a}.${b}.${c}`
+}
+
+/** Private signing key: never in the repo. Override with OTA_SIGNING_KEY in .env.ota.local. */
+const DEFAULT_SIGNING_KEY = path.join(os.homedir(), '.config', 'actionpitch', 'ota-signing-primary.pem')
+
+function loadSigningKey() {
+  const file = expandPath(envValue('OTA_SIGNING_KEY') || DEFAULT_SIGNING_KEY)
+  if (!fs.existsSync(file)) {
+    die(`OTA signing key not found: ${file}\nSet OTA_SIGNING_KEY in .env.ota.local or restore the key from your backup.`)
+  }
+  if (path.resolve(file).startsWith(root + path.sep)) {
+    die(`OTA signing key must live outside the repository: ${file}`)
+  }
+  if ((fs.statSync(file).mode & 0o077) !== 0) {
+    die(`OTA signing key is readable by other users: chmod 600 "${file}"`)
+  }
+  const privateKey = createPrivateKey(fs.readFileSync(file))
+  const spki = createPublicKey(privateKey).export({ type: 'spki', format: 'der' }).toString('base64')
+  const trusted = OTA_SIGNING_KEYS.find((key) => key.spki === spki)
+  if (!trusted) {
+    die(`The signing key ${file} is not one the app trusts (src/ota/signature.ts); devices would reject the update.`)
+  }
+  console.log(`✓ Signing with ${trusted.id}`)
+  return { privateKey, keyId: trusted.id }
+}
+
+/** Signs, then verifies with the app's own code before anything is written or uploaded. */
+async function signManifest(signer, manifest) {
+  const signature = sign('sha256', Buffer.from(manifestSigningPayload(manifest)), {
+    key: signer.privateKey,
+    dsaEncoding: 'ieee-p1363',
+  }).toString('base64')
+  const signed = { ...manifest, keyId: signer.keyId, signature }
+  const status = await verifyManifestSignature(signed)
+  if (status !== 'valid') die(`Manifest signature self-check failed (${status}); nothing was deployed.`)
+  return signed
+}
+
+async function verifyLiveManifest(deploy, expected) {
+  const url = `${deploy.baseUrl}/latest.json`
+  const body = execFileSync('curl', ['-fsS', '--max-time', '20', `${url}?t=${Date.now()}`], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+  let live = null
+  try {
+    live = JSON.parse(body)
+  } catch {
+    die(`Live manifest at ${url} is not valid JSON`)
+  }
+  if (JSON.stringify(live) !== JSON.stringify(expected)) die(`Live manifest at ${url} differs from ota/latest.json`)
+  const status = await verifyManifestSignature(live)
+  if (status !== 'valid') die(`Live manifest at ${url} failed the signature check (${status})`)
+  console.log(`✓ Live manifest verified: v${live.version}, checksum and signature (${live.keyId}) OK`)
 }
 
 const changelogPath = path.join(root, 'src/domain/changelog.ts')
@@ -798,7 +854,7 @@ function githubSlug() {
   return m[1]
 }
 
-function main() {
+async function main() {
   console.log('=== ActionPitch OTA publish ===')
   if (args.dryRun) console.log('(dry-run mode)')
 
@@ -808,6 +864,7 @@ function main() {
   const oldVersion = pkg.version
   const newVersion = args.version || bumpSemver(oldVersion, args.bump)
   assertChangelogEntry(newVersion)
+  const signer = loadSigningKey()
   const tag = `ota-${newVersion}`
   const slug = githubSlug()
   const deploy = deployConfig('dist.zip')
@@ -877,16 +934,16 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
 
   // --- channel manifest (after zip: checksum must match the uploaded dist.zip) ---
   const prevManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-  const manifest = {
+  const manifest = await signManifest(signer, {
     version: newVersion,
     minAppVersion: args.minApp || prevManifest.minAppVersion || newVersion,
     notes: notes.split('\n')[0].slice(0, 200),
     bundleUrl,
-    checksum: args.dryRun ? '(sha256 of release/dist.zip)' : sha256File(zipPath),
-  }
+    checksum: args.dryRun ? '0'.repeat(64) : sha256File(zipPath),
+  })
   if (!args.dryRun) {
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
-    console.log(`✓ ota/latest.json checksum ${manifest.checksum}`)
+    console.log(`✓ ota/latest.json checksum ${manifest.checksum}, signed by ${manifest.keyId}`)
   } else {
     console.log('would write ota/latest.json:', manifest)
   }
@@ -897,6 +954,7 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
     manifestFile: manifestPath,
     zipFile: zipPath,
   })
+  if (deploy.enabled && !args.dryRun) await verifyLiveManifest(deploy, manifest)
 
   // --- build APK ---
   run('npm run cap:sync', { mutate: true })
@@ -1002,5 +1060,8 @@ const isMain =
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 if (isMain) {
-  main()
+  main().catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })
 }

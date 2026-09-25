@@ -2,8 +2,9 @@ import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { CapacitorUpdater } from '@capgo/capacitor-updater'
 import { Network } from '@capacitor/network'
-import { APP_BUNDLE_VERSION, OTA_MANIFEST_URL } from './config'
+import { APP_BUNDLE_VERSION, OTA_MANIFEST_URL, OTA_REQUIRE_SIGNATURE } from './config'
 import { cmpSemver, validateManifest } from './manifest'
+import { verifyManifestSignature } from './signature'
 
 const MANIFEST_ATTEMPTS = 4
 const DOWNLOAD_ATTEMPTS = 2
@@ -21,6 +22,8 @@ async function fetchManifest(url: string): Promise<unknown> {
   try {
     const res = await fetch(`${url}?t=${Date.now()}`, {
       cache: 'no-store',
+      credentials: 'omit',
+      redirect: 'error',
       signal: controller.signal,
     })
     if (!res.ok) throw new Error(`Manifest HTTP ${res.status}`)
@@ -161,7 +164,7 @@ export async function runOtaIfNeeded(
       percent: 100,
       message:
         check.reason === 'minAppVersion'
-          ? 'Update requires a newer app from Google Play — using installed build'
+          ? 'Update needs a newer version of the app from the store — using installed build'
           : 'Update rejected — using installed build',
       diagnostics: [
         `appVersion=${APP_BUNDLE_VERSION}`,
@@ -174,6 +177,24 @@ export async function runOtaIfNeeded(
     return
   }
   const manifest = check.manifest
+
+  const signature = await verifyManifestSignature(manifest)
+  console.info(`[ota] manifest v${manifest.version} signature=${signature} key=${manifest.keyId ?? '(none)'}`)
+  // 'unsupported' means this WebView lacks WebCrypto; an attacker cannot cause that, so don't brick updates on it.
+  if (OTA_REQUIRE_SIGNATURE && signature !== 'valid' && signature !== 'unsupported') {
+    onProgress({
+      phase: 'skip',
+      percent: 100,
+      message: 'Update rejected — using installed build',
+      diagnostics: [
+        `appVersion=${APP_BUNDLE_VERSION}`,
+        `manifestVersion=${manifest.version}`,
+        `reason=signature`,
+        `signature=${signature}`,
+      ],
+    })
+    return
+  }
 
   let rawCapgoVersion = ''
   let currentVersion = APP_BUNDLE_VERSION
