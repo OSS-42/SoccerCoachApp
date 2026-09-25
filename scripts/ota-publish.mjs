@@ -397,6 +397,34 @@ function bumpSemver(v, kind) {
   return `${a}.${b}.${c}`
 }
 
+/**
+ * GitHub rejects pushes that touch .github/workflows unless the token has the `workflow`
+ * scope. Check before deploying so a release never goes live on the droplet but not on GitHub.
+ */
+function assertCanPushWorkflows() {
+  let changed = ''
+  try {
+    changed = runSilent('git diff --name-only @{u}..HEAD -- .github/workflows')
+  } catch {
+    return
+  }
+  if (!changed) return
+  let authOut = ''
+  try {
+    authOut = execSync('gh auth status 2>&1', { cwd: root, encoding: 'utf8' })
+  } catch (e) {
+    authOut = String(e.stdout || '') + String(e.stderr || '')
+  }
+  const scopes = authOut.match(/Token scopes:\s*(.*)/i)?.[1] ?? ''
+  if (!/'workflow'/.test(scopes)) {
+    die(
+      `This release changes GitHub workflow files:\n  ${changed.split('\n').join('\n  ')}\n` +
+        "The GitHub login lacks the 'workflow' permission, so the push would be rejected.\n" +
+        'Run: gh auth refresh -h github.com -s workflow   (nothing was deployed)',
+    )
+  }
+}
+
 function ensureTools() {
   try {
     runSilent('git rev-parse --is-inside-work-tree')
@@ -805,6 +833,9 @@ SSH key:  ${deploy.keyFile || '(none — set OTA_DEPLOY_SSH_KEY or use ~/.ssh/id
       commitStaged(`chore(app): ${summary}`, notes)
     }
   }
+
+  // Nothing may be deployed if the push to GitHub is going to be rejected afterwards.
+  if (!args.skipPush) assertCanPushWorkflows()
 
   // --- version: package.json is the single source (Vite, ota/config.ts and capacitor.config.ts read it) ---
   pkg.version = newVersion
