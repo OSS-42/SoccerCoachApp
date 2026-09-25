@@ -1,7 +1,7 @@
 {
-  "version": "2.5.0",
+  "version": "2.5.1",
   "minAppVersion": "2.4.50",
-  "notes": "Offline icons, safer imports, verified updates",
+  "notes": "Backup export on iPhone, safer saving, automatic recovery",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "eafda3205946ca4baeeee818d4916479ffe06e66a7ea01599c1e1afa574c0673"
+  "checksum": "ff5e9ac73f5af93778edc8760787c9c52596cc0d59fb9a7b4c01066286def7e4"
 }
