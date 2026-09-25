@@ -1,7 +1,9 @@
 {
-  "version": "2.5.2",
+  "version": "2.5.3",
   "minAppVersion": "2.4.50",
-  "notes": "Faster startup, accessibility labels, free-plan team limit fix, safer CI",
+  "notes": "Signed OTA updates (report-only), safer update check",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "8682be35638065b86b583f35d042d87a903921906e14ca114e130faca37528e0"
+  "checksum": "b4a695c23235277460ff1d09243c0c89d14cd2ef0128886e4e6fa3755717f773",
+  "keyId": "primary-5f3eed95",
+  "signature": "I9SMfka9QLMUDdhCRtFGF/U7B0pYRe3YRvQV1L0ASphkigTohn/jWFZUVN5KVXHy6hKNcld8nveBkRXs6nQpbQ=="
 }
