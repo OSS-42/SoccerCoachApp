@@ -19,7 +19,7 @@ import {
 } from '@/domain/parent'
 import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
-import { freshSave } from '@/domain/migrate'
+import { freshSave, migrateUnknown } from '@/domain/migrate'
 import { TUTORIAL_COACH_REV, TUTORIAL_PARENT_REV, emptyTutorial } from '@/domain/tutorial'
 import { canSelectTeam } from '@/domain/entitlement'
 import { canAddTeam, createPlayer, createTeam, findTeam, updatePlayer } from '@/domain/teams'
@@ -40,21 +40,53 @@ import {
 } from '@/domain/types'
 import { setLocale, t, type Locale, type MessageKey } from '@/i18n'
 import { applyTheme } from '@/lib/theme'
-import { clearSaves, loadSave, writeSave } from '@/lib/storage'
+import {
+  clearSaves,
+  goodSnapshotVersion,
+  loadSave,
+  parseGoodSnapshot,
+  readRawMainSave,
+  writeGoodSnapshot,
+  writeLiveClock,
+  writeSave,
+  type SaveSource,
+} from '@/lib/storage'
+import { deleteSaveMirror, readSaveMirror, writeSaveMirror } from '@/lib/saveMirror'
 
 type Listener = () => void
 
 let state: AppSave = freshSave()
+let loadedFrom: SaveSource = 'fresh'
 const listeners = new Set<Listener>()
+const saveErrorListeners = new Set<Listener>()
+let saveFailing = false
 
 function emit(): void {
   for (const listener of listeners) listener()
 }
 
+function reportSaveResult(ok: boolean): void {
+  if (!ok && !saveFailing) {
+    for (const listener of saveErrorListeners) listener()
+  }
+  saveFailing = !ok
+}
+
 function persist(): void {
   state = { ...state, appVersion: APP_VERSION, saveVersion: SAVE_VERSION, updatedAt: new Date().toISOString() }
-  writeSave(state)
+  reportSaveResult(writeSave(state))
   emit()
+}
+
+function snapshotGood(save: unknown): void {
+  const json = writeGoodSnapshot(save)
+  writeSaveMirror(json).catch((err) => console.warn('[save] mirror', err))
+}
+
+/** Fires once each time saving starts failing (storage full / unavailable). */
+export function onSaveError(listener: Listener): () => void {
+  saveErrorListeners.add(listener)
+  return () => saveErrorListeners.delete(listener)
 }
 
 function updateCurrentTeam(mutator: (team: Team) => Team): void {
@@ -68,7 +100,14 @@ function updateCurrentTeam(mutator: (team: Team) => Team): void {
 }
 
 export function hydrate(): void {
-  state = loadSave()
+  const previousMain = readRawMainSave()
+  const loaded = loadSave()
+  state = loaded.save
+  loadedFrom = loaded.source
+  if (loaded.source !== 'fresh' && goodSnapshotVersion() !== APP_VERSION) {
+    // First launch of this app version: keep what the previous version last wrote.
+    snapshotGood(loaded.source === 'main' ? previousMain : state)
+  }
   setLocale(state.language)
   applyTheme(state.theme ?? 'dark')
   if (state.clock?.running && !state.clock.runningStartedAt) {
@@ -78,6 +117,28 @@ export function hydrate(): void {
     }
   }
   persist()
+}
+
+/**
+ * When localStorage came up empty (e.g. the OS cleared WebView data), restore the
+ * native mirror of the last good save. Resolves true when the app should reload.
+ */
+export async function recoverFromSaveMirror(): Promise<boolean> {
+  if (loadedFrom !== 'fresh') return false
+  const raw = await readSaveMirror()
+  if (!raw) return false
+  let parsed: unknown = null
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return false
+  }
+  const snapshot = parseGoodSnapshot(parsed)
+  if (!snapshot) return false
+  const restored = migrateUnknown(snapshot.save)
+  const ok = writeSave(restored)
+  if (ok) writeGoodSnapshot(snapshot.save)
+  return ok
 }
 
 export function setLanguage(language: Locale): void {
@@ -468,14 +529,15 @@ export function liveSubRemaining(): number {
 
 export function persistClock(): void {
   const clock = commitWallClock(state.clock)
-  state = {
-    ...state,
-    clock,
-    currentGame: state.currentGame
-      ? { ...state.currentGame, elapsedSeconds: clock.elapsedSeconds }
-      : null,
+  const game = state.currentGame
+  if (!game) {
+    state = { ...state, clock }
+    persist()
+    return
   }
-  persist()
+  state = { ...state, clock, currentGame: { ...game, elapsedSeconds: clock.elapsedSeconds } }
+  reportSaveResult(writeLiveClock(game.id, clock, clock.elapsedSeconds))
+  emit()
 }
 
 export function playClock(): void {
@@ -576,6 +638,7 @@ export function endCurrentGame(): { ok: boolean; message: string; ended: boolean
     }
   }
   persist()
+  snapshotGood(state)
   return { ok: true, message: t('gameEnded'), ended: true, gameId: finished.id }
 }
 
@@ -602,6 +665,8 @@ export function importBackup(
   imported: AppSave,
   kind: 'full' | 'team',
 ): { ok: boolean; message: string } {
+  // Keep the pre-import data as the known-good copy so a wrong file can be undone.
+  snapshotGood(state)
   if (kind === 'full') {
     state = {
       ...imported,
@@ -701,6 +766,7 @@ export function resetAllData(): void {
   const language = state.language
   const theme = state.theme
   clearSaves()
+  void deleteSaveMirror()
   const next = freshSave()
   setLocale(language)
   applyTheme(theme)

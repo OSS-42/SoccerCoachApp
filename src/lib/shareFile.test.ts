@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { asFileUri, bytesToBase64, pdfFileName } from './shareFile'
+import { asFileUri, bytesToBase64, pdfFileName, safeFileName } from './shareFile'
 
 describe('pdf share helpers', () => {
   it('keeps an ASCII .pdf name that Android can MIME-sniff', () => {
@@ -9,6 +9,14 @@ describe('pdf share helpers', () => {
     expect(pdfFileName('report-2026-08-15-vs-Béziers.pdf')).toBe(
       'report-2026-08-15-vs-Beziers.pdf',
     )
+  })
+
+  it('builds ASCII backup file names with the right extension', () => {
+    expect(safeFileName('actionpitch-backup-2026-09-24', 'json', 'backup')).toBe(
+      'actionpitch-backup-2026-09-24.json',
+    )
+    expect(safeFileName('sauvegarde été.json', 'json', 'backup')).toBe('sauvegarde_ete.json')
+    expect(safeFileName('???', 'json', 'backup')).toBe('backup.json')
   })
 
   it('turns a bare cache path into a file URL for Share', () => {

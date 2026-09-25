@@ -22,7 +22,10 @@ export const FORCE_PRO = false
 export const LEGACY_SAVE_KEY = 'soccerCoachApp2'
 export const LEGACY_SAVE_KEY_V1 = 'soccerCoachApp'
 export const SAVE_KEY = 'soccerCoachApp.v2'
+/** Rolling copy from ≤2.5.0; read as a fallback only, removed once a good snapshot exists. */
 export const SAVE_BACKUP_KEY = 'soccerCoachApp.v2.bak'
+export const SAVE_GOOD_KEY = 'soccerCoachApp.v2.good'
+export const SAVE_LIVE_KEY = 'soccerCoachApp.v2.live'
 
 export const DEMO_TEAM_ID = 't-demo'
 
@@ -42,6 +45,7 @@ export const CLOCK_TICK_MS = 1000
 export const CLOCK_PERSIST_EVERY_TICKS = 10
 export const EDGE_SWIPE_PX = 18
 export const MESSAGE_ERROR_MS = 2500
+export const STORAGE_ERROR_MS = 10_000
 export const MESSAGE_OK_MS = 1800
 export const TIMELINE_MARK_EVERY_MINUTES = 15
 

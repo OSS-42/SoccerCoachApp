@@ -3,7 +3,13 @@ import './styles/app.css'
 import './styles/mobile.css'
 import './styles/theme.css'
 import { Capacitor } from '@capacitor/core'
-import { APP_VERSION, CLOCK_PERSIST_EVERY_TICKS, CLOCK_TICK_MS, EDGE_SWIPE_PX } from '@/domain/config'
+import {
+  APP_VERSION,
+  CLOCK_PERSIST_EVERY_TICKS,
+  CLOCK_TICK_MS,
+  EDGE_SWIPE_PX,
+  STORAGE_ERROR_MS,
+} from '@/domain/config'
 
 if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('is-native')
@@ -25,9 +31,18 @@ const lockPortrait = (
 void lockPortrait?.('portrait').catch(() => {
   /* browsers often allow lock only in fullscreen; Android uses the manifest */
 })
-import { applyDomTranslations } from '@/i18n'
-import { getRole, getSave, hasInProgressGame, hydrate, persistClock, subscribe } from '@/state/store'
-import { hideMessage } from '@/ui/message'
+import { applyDomTranslations, t } from '@/i18n'
+import {
+  getRole,
+  getSave,
+  hasInProgressGame,
+  hydrate,
+  onSaveError,
+  persistClock,
+  recoverFromSaveMirror,
+  subscribe,
+} from '@/state/store'
+import { hideMessage, showMessage } from '@/ui/message'
 import { activeScreenId, bindHistoryNavigation, onShow, showScreen, type ScreenId } from '@/ui/nav'
 import { bindFormation, renderFormation } from '@/screens/formation'
 import { bindGameSetup, renderGameSetup } from '@/screens/gameSetup'
@@ -188,4 +203,12 @@ startClockLoop()
 const footer = document.getElementById('version-footer')
 if (footer) footer.textContent = `v${APP_VERSION}`
 
-void bootWithOta()
+onSaveError(() => showMessage(t('storageFull'), 'error', STORAGE_ERROR_MS))
+
+void (async () => {
+  if (await recoverFromSaveMirror()) {
+    window.location.reload()
+    return
+  }
+  await bootWithOta()
+})()

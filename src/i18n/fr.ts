@@ -250,6 +250,8 @@ export const fr: Record<keyof typeof en, string> = {
   importReplace: 'Cela remplacera les données de l’équipe actuelle. Continuer ?',
   restoreAsk: 'Remplacer toutes les équipes, les matchs et le match en cours par cette sauvegarde ?',
   backupSaved: 'Sauvegarde enregistrée',
+  backupExportFailed: 'Impossible d’exporter la sauvegarde. Réessayez.',
+  storageFull: 'Stockage plein — les modifications ne sont pas enregistrées. Exportez une sauvegarde dans Réglages.',
   timeUpdated: 'Temps mis à jour',
   editTimeTitle: 'Temps de jeu',
   editTimeAsk: 'Saisir le temps en minutes ou m:ss',

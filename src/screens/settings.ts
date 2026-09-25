@@ -3,6 +3,7 @@ import { toggleDialog } from '@/ui/dom'
 import { applyDomTranslations, getLocale, isLocale, t } from '@/i18n'
 import { paintParentKidCopy } from './parentHome'
 import { isTheme } from '@/lib/theme'
+import { saveOrShareFile, safeFileName } from '@/lib/shareFile'
 import { parseImportJson } from '@/lib/storage'
 import {
   exportBackupJson,
@@ -102,16 +103,16 @@ export function bindSettings(): void {
     setDefaultSubstitution(raw ? Number(raw) * 60 : null)
     showMessage(t('settingsSaved'), 'success')
   })
-  document.getElementById('export-json')?.addEventListener('click', () => {
-    const blob = new Blob([exportBackupJson()], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
+  document.getElementById('export-json')?.addEventListener('click', async () => {
     const day = new Date().toISOString().slice(0, 10)
-    link.download = `${BACKUP_FILE_PREFIX}-${day}.json`
-    link.click()
-    URL.revokeObjectURL(url)
-    showMessage(t('backupSaved'), 'success')
+    const fileName = safeFileName(`${BACKUP_FILE_PREFIX}-${day}`, 'json', BACKUP_FILE_PREFIX)
+    try {
+      const saved = await saveOrShareFile(exportBackupJson(), fileName, 'application/json')
+      if (saved) showMessage(t('backupSaved'), 'success')
+    } catch (err) {
+      console.error('Backup export failed', err)
+      showMessage(t('backupExportFailed'), 'error')
+    }
   })
   document.getElementById('import-json')?.addEventListener('click', () => {
     document.getElementById('import-file')?.click()

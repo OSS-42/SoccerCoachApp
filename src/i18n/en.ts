@@ -248,6 +248,8 @@ export const en = {
   importReplace: 'This will replace your current team data. Continue?',
   restoreAsk: 'Replace all teams, games, and the live match with this backup?',
   backupSaved: 'Backup saved',
+  backupExportFailed: 'Could not export the backup. Try again.',
+  storageFull: 'Storage is full — changes are not being saved. Export a backup in Settings.',
   timeUpdated: 'Time updated',
   editTimeTitle: 'Match time',
   editTimeAsk: 'Enter time as minutes or m:ss',
