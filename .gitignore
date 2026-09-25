@@ -31,3 +31,8 @@ src/certificates.zip
 *.dex
 android/keystore.properties
 android/keystore/
+
+# Local-only notes and tooling (never publish)
+docs/AUDIT.md
+docs/MITIGATION_PLAN.md
+.claude/
