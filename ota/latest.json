@@ -1,9 +1,9 @@
 {
-  "version": "2.5.3",
+  "version": "2.5.4",
   "minAppVersion": "2.4.50",
-  "notes": "Signed OTA updates (report-only), safer update check",
+  "notes": "Signed updates required; privacy policy: Capgo statistics disclosure",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "b4a695c23235277460ff1d09243c0c89d14cd2ef0128886e4e6fa3755717f773",
+  "checksum": "3147174beb3f902e535586d76b27708d375819ffdafbee08a08123b57134db42",
   "keyId": "primary-5f3eed95",
-  "signature": "I9SMfka9QLMUDdhCRtFGF/U7B0pYRe3YRvQV1L0ASphkigTohn/jWFZUVN5KVXHy6hKNcld8nveBkRXs6nQpbQ=="
+  "signature": "5tsGvVguRAC8pCPoE5awjalIzksBvx08enNBQWs0QH2v3bbnZ0ZpBTqV/zeqDRjJr37NBH5B+8KMLd2TG0pGPA=="
 }
