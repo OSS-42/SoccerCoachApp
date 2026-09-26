@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.4',
+    items: {
+      en: [
+        'The app now only installs updates signed by ActionPitch. Privacy policy updated.',
+      ],
+      fr: [
+        'L’application n’installe plus que les mises à jour signées par ActionPitch. Politique de confidentialité mise à jour.',
+      ],
+    },
+  },
+  {
     version: '2.5.3',
     items: {
       en: [

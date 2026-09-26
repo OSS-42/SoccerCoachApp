@@ -35,7 +35,8 @@ export type OtaManifest = {
 }
 
 /**
- * false = check signatures and report only; true = refuse unsigned or badly signed updates.
- * Turn on only after a report-only release has shown `signature=valid` on real devices.
+ * true = refuse unsigned or badly signed updates (on since 2.5.4, after 2.5.3 reported
+ * `signature=valid` on iOS and Android). If every trusted key were lost, only a new
+ * App Store / APK build could restore updates.
  */
-export const OTA_REQUIRE_SIGNATURE = false
+export const OTA_REQUIRE_SIGNATURE = true
