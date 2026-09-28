@@ -1,4 +1,4 @@
-import { ON_FIELD_COUNT, type FormationSpot, type MatchType } from './types'
+import { MIN_ON_FIELD_COUNT, ON_FIELD_COUNT, type FormationSpot, type MatchType } from './types'
 
 export type FieldSpotDef = {
   /** Unique slot id. Two strikers share the display label `ST`. */
@@ -93,18 +93,23 @@ export function almostReadyLineup(
   }
 }
 
+/** Full strength, or short-handed down to the official minimum; a goalkeeper is always required. */
 export function validateFormation(
   spots: FormationSpot[],
   matchType: MatchType,
-): { ok: true } | { ok: false; reason: 'count' | 'gk'; required: number; selected: number } {
+):
+  | { ok: true; short: boolean; required: number; selected: number }
+  | { ok: false; reason: 'count' | 'gk'; min: number; required: number; selected: number } {
   const required = ON_FIELD_COUNT[matchType]
-  if (spots.length !== required) {
-    return { ok: false, reason: 'count', required, selected: spots.length }
+  const min = MIN_ON_FIELD_COUNT[matchType]
+  const selected = spots.length
+  if (selected < min || selected > required) {
+    return { ok: false, reason: 'count', min, required, selected }
   }
   if (!spots.some((s) => s.position === 'GK')) {
-    return { ok: false, reason: 'gk', required, selected: spots.length }
+    return { ok: false, reason: 'gk', min, required, selected }
   }
-  return { ok: true }
+  return { ok: true, short: selected < required, required, selected }
 }
 
 export function filterDefaultFormation(

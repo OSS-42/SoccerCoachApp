@@ -52,6 +52,7 @@ const ACTION_ALIASES: Record<string, ActionType> = {
   note: 'note',
   game_note: 'game_note',
   substitution: 'substitution',
+  enter: 'enter',
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -156,6 +157,8 @@ function migrateAction(raw: unknown, index: number): GameAction | null {
       typeof rec.period === 'number' && Number.isFinite(rec.period) && rec.period >= 1
         ? Math.floor(rec.period)
         : undefined,
+    position: typeof rec.position === 'string' && SAFE_POSITION.test(rec.position) ? rec.position : undefined,
+    arrived: rec.arrived === true ? true : undefined,
   }
 }
 

@@ -3,7 +3,12 @@ import { statsFromActions } from '@/domain/actions'
 import { TIMELINE_MARK_EVERY_MINUTES } from '@/domain/config'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
-import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from '@/domain/playingTime'
+import {
+  formatPlayedDistribution,
+  playedMinutesByPlayer,
+  playedMinutesByPlayerPosition,
+  shortStartLabel,
+} from '@/domain/playingTime'
 import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from '@/domain/timeline'
 import type { Game, Player, Team } from '@/domain/types'
 import { escapeHtml } from '@/ui/dom'
@@ -84,6 +89,11 @@ function renderLogEvent(
       ? `<div class="log-assist">${escapeHtml(t('assistBy', { name: event.assistName }))}</div>`
       : ''
     body = `<div class="log-goal">${ball} ${escapeHtml(event.playerName)}${og} <span class="log-score">${escapeHtml(runningScore)}</span>${assist}</div>`
+  } else if (event.type === 'enter') {
+    const pos = event.position ? ` <span class="log-pos">${escapeHtml(event.position)}</span>` : ''
+    body = `<div class="log-sub"><div class="log-sub-in">${escapeHtml(t('cameOn', { name: event.playerName }))}${pos}</div></div>`
+  } else if (event.type === 'arrived') {
+    body = `<div class="log-injury">🕒 ${escapeHtml(t('arrivedLog', { name: event.playerName }))}</div>`
   } else if (event.type === 'yellow' || event.type === 'red') {
     const card = event.type === 'yellow' ? '<span class="log-card is-yellow"></span>' : '<span class="log-card is-red"></span>'
     body = `<div class="log-card-row">${escapeHtml(event.playerName)} ${card}</div>`
@@ -251,7 +261,9 @@ export function buildReportDialogHtml(game: Game, team: Team): string {
       </div>
     </div>
     <div class="report-header-info" id="report-header-info">
-      <div>${escapeHtml(game.date)} · ${game.matchType} · ${formatClock(game.elapsedSeconds)}</div>
+      <div>${escapeHtml(game.date)} · ${game.matchType} · ${formatClock(game.elapsedSeconds)}${
+        shortStartLabel(game) ? ` · ${escapeHtml(shortStartLabel(game) ?? '')}` : ''
+      }</div>
     </div>
     ${renderScorers(game, team.players)}
     <div class="report-section timeline-section">

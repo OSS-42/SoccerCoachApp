@@ -4,7 +4,7 @@ import {
   ELEVEN_V11_OFFICIAL_MINUTES,
   ELEVEN_V11_PERIODS,
 } from '@/domain/config'
-import { isMatchType, MATCH_PERIOD_DEFAULTS, ON_FIELD_COUNT, type MatchType } from '@/domain/types'
+import { isMatchType, MATCH_PERIOD_DEFAULTS, MIN_ON_FIELD_COUNT, type MatchType } from '@/domain/types'
 import { t } from '@/i18n'
 import { getCurrentTeam, setDefaultSubstitution } from '@/state/store'
 import { showMessage } from '@/ui/message'
@@ -171,7 +171,7 @@ export function bindGameSetup(): void {
     if (!timerNotNeeded && !substitutionMinutes) {
       return showMessage(t('needSubTime'), 'error')
     }
-    const required = ON_FIELD_COUNT[matchType]
+    const required = MIN_ON_FIELD_COUNT[matchType]
     if ((team?.players.length ?? 0) < required) {
       return showMessage(
         t('needPlayers', { required, matchType, count: team?.players.length ?? 0 }),

@@ -17,7 +17,12 @@ import {
   moveParentKid,
   validateParentKid,
 } from '@/domain/parent'
-import { applySubstitution, beginExtraTime as unlockExtraTime } from '@/domain/substitutions'
+import {
+  applyArrival,
+  applyEnter,
+  applySubstitution,
+  beginExtraTime as unlockExtraTime,
+} from '@/domain/substitutions'
 import type { NewGameInput } from '@/domain/game'
 import { freshSave, migrateUnknown } from '@/domain/migrate'
 import { TUTORIAL_COACH_REV, TUTORIAL_PARENT_REV, emptyTutorial } from '@/domain/tutorial'
@@ -508,6 +513,30 @@ export function substituteLivePlayers(
   }
   persist()
   return { ok: true }
+}
+
+/** A player marked absent at kickoff arrives: they go to the bench and the late arrival is logged. */
+export function markLivePlayerArrived(playerId: string): { ok: boolean } {
+  if (!state.currentGame) return { ok: false }
+  const elapsed = wallElapsed(state.clock)
+  const result = applyArrival(state.currentGame, playerId, elapsed, livePeriodNumber(state.currentGame))
+  if (!result.ok) return { ok: false }
+  state = { ...state, currentGame: { ...result.game, elapsedSeconds: elapsed } }
+  persist()
+  return { ok: true }
+}
+
+/** A bench player takes an open spot while the team is short-handed. */
+export function enterLivePlayer(playerId: string): { ok: boolean; reason?: string; position?: string } {
+  const game = state.currentGame
+  if (!game) return { ok: false, reason: 'no_game' }
+  const player = getCurrentTeam()?.players.find((p) => p.id === playerId)
+  const elapsed = wallElapsed(state.clock)
+  const result = applyEnter(game, playerId, player?.position, elapsed, livePeriodNumber(game))
+  if (!result.ok) return { ok: false, reason: result.reason }
+  state = { ...state, currentGame: { ...result.game, elapsedSeconds: elapsed } }
+  persist()
+  return { ok: true, position: result.game.formation.find((spot) => spot.playerId === playerId)?.position }
 }
 
 export function startExtraTime(): { ok: boolean; message: string } {

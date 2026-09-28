@@ -971,6 +971,22 @@ html[data-theme] #game-tracking .player-grid-item.sub-target {
   box-shadow: 0 0 0 3px var(--neu-accent);
 }
 
+html[data-theme] #game-tracking .player-grid-item.starter.open-slot {
+  background: transparent;
+  border: 2px dashed var(--pill-mint);
+  box-shadow: none;
+}
+
+html[data-theme] #game-tracking .player-grid-item.starter.open-slot.sub-target {
+  box-shadow: 0 0 0 3px var(--neu-accent);
+}
+
+html[data-theme] #game-tracking .player-grid-item.starter.open-slot,
+html[data-theme] #game-tracking .player-grid-item.starter.open-slot .live-tile-name,
+html[data-theme] #game-tracking .player-grid-item.starter.open-slot .material-icons {
+  color: var(--pill-mint);
+}
+
 html[data-theme] #game-tracking .live-tile-name,
 html[data-theme] #game-tracking .live-tile-num {
   color: var(--pill-ink);
@@ -1588,6 +1604,68 @@ html.is-phone-ui[data-theme] #game-tracking .period-counter {
   width: 100%;
   font-size: 11px;
   padding: 4px 6px;
+}
+
+/* Phone: home side mirrors the away side (name on top, clock below) so the name gets the full column. */
+html.is-phone-ui[data-theme] #game-tracking .live-header-left {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .live-home-name {
+  order: -1;
+  flex: 0 1 auto;
+  width: 100%;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .live-clock-block {
+  justify-content: center;
+}
+
+/* Long team names wrap to two lines before they get cut. */
+html.is-phone-ui[data-theme] #game-tracking .live-team-name {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .live-clock {
+  align-items: center;
+}
+
+html.is-phone-ui[data-theme] #game-tracking .live-clock .live-meta-label {
+  display: none;
+}
+
+/* Sub timer + official sub count: own row under the scoreboard, only when one of them is on. */
+html[data-theme] #game-tracking .live-sub-row {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 20px;
+  padding-top: 8px;
+}
+
+html[data-theme] #game-tracking .live-sub-row[hidden] {
+  display: none;
+}
+
+html[data-theme] #game-tracking .live-sub-row .live-sub-count,
+html[data-theme] #game-tracking .live-sub-row .substitution-timer-small {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+}
+
+html[data-theme] #game-tracking .live-sub-row .substitution-timer-small .timer-value,
+html[data-theme] #game-tracking .live-sub-row #live-sub-count-value {
+  font-size: 22px;
 }
 
 html.is-ios[data-theme] #game-tracking .live-scoreboard {

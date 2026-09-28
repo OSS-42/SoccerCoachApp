@@ -3,7 +3,12 @@ import { t } from '@/i18n'
 import { statsFromActions } from './actions'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from './clock'
 import { periodGoalDeltas } from './game'
-import { formatPlayedDistribution, playedMinutesByPlayer, playedMinutesByPlayerPosition } from './playingTime'
+import {
+  formatPlayedDistribution,
+  playedMinutesByPlayer,
+  playedMinutesByPlayerPosition,
+  shortStartLabel,
+} from './playingTime'
 import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from './timeline'
 import type { Game, LiveStats, Player, Team } from './types'
 
@@ -11,25 +16,25 @@ type MetricKey = {
   [K in keyof LiveStats]: LiveStats[K] extends number ? K : never
 }[keyof LiveStats]
 
-const PAGE_W = 210
-const PAGE_H = 297
-const MARGIN = 12
-const CONTENT_W = PAGE_W - MARGIN * 2
+export const PAGE_W = 210
+export const PAGE_H = 297
+export const MARGIN = 12
+export const CONTENT_W = PAGE_W - MARGIN * 2
 
-const INK: [number, number, number] = [17, 19, 24]
-const MUTED: [number, number, number] = [90, 90, 90]
-const MINT: [number, number, number] = [200, 239, 212]
-const ROSE: [number, number, number] = [254, 202, 202]
-const YELLOW: [number, number, number] = [253, 230, 138]
-const PEACH: [number, number, number] = [245, 198, 179]
-const CARD: [number, number, number] = [247, 248, 247]
-const GREEN: [number, number, number] = [76, 175, 80]
-const RED: [number, number, number] = [229, 57, 53]
-const LINE: [number, number, number] = [200, 205, 200]
+export const INK: [number, number, number] = [17, 19, 24]
+export const MUTED: [number, number, number] = [90, 90, 90]
+export const MINT: [number, number, number] = [200, 239, 212]
+export const ROSE: [number, number, number] = [254, 202, 202]
+export const YELLOW: [number, number, number] = [253, 230, 138]
+export const PEACH: [number, number, number] = [245, 198, 179]
+export const CARD: [number, number, number] = [247, 248, 247]
+export const GREEN: [number, number, number] = [76, 175, 80]
+export const RED: [number, number, number] = [229, 57, 53]
+export const LINE: [number, number, number] = [200, 205, 200]
 
-type RGB = [number, number, number]
+export type RGB = [number, number, number]
 
-function pdfSafe(value: string): string {
+export function pdfSafe(value: string): string {
   return value
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
@@ -38,7 +43,7 @@ function pdfSafe(value: string): string {
     .replace(/\u00A0/g, ' ')
 }
 
-function fileSafe(value: string): string {
+export function fileSafe(value: string): string {
   return (
     pdfSafe(value)
       .normalize('NFKD')
@@ -64,15 +69,15 @@ function ensure(doc: Doc, height: number): void {
   doc.y = MARGIN
 }
 
-function setFill(pdf: jsPDF, color: RGB): void {
+export function setFill(pdf: jsPDF, color: RGB): void {
   pdf.setFillColor(...color)
 }
 
-function setText(pdf: jsPDF, color: RGB): void {
+export function setText(pdf: jsPDF, color: RGB): void {
   pdf.setTextColor(...color)
 }
 
-function fit(pdf: jsPDF, text: string, maxWidth: number): string {
+export function fit(pdf: jsPDF, text: string, maxWidth: number): string {
   const value = pdfSafe(text)
   if (pdf.getTextWidth(value) <= maxWidth) return value
   let cut = value
@@ -143,7 +148,11 @@ function drawScoreHeader(doc: Doc, game: Game, teamName: string): void {
   pdf.setFontSize(9)
   setText(pdf, MUTED)
   pdf.text(
-    pdfSafe(`${game.date}  ·  ${game.matchType}  ·  ${formatClock(game.elapsedSeconds)}`),
+    pdfSafe(
+      [game.date, game.matchType, formatClock(game.elapsedSeconds), shortStartLabel(game)]
+        .filter(Boolean)
+        .join('  ·  '),
+    ),
     x,
     doc.y + 4,
   )
@@ -212,6 +221,11 @@ function eventLine(event: ReturnType<typeof buildGoalsCardsEvents>[number], scor
     const pos = event.position ? ` (${event.position})` : ''
     return [`> ${event.playerName}${pos}`, `< ${event.relatedName ?? ''}`]
   }
+  if (event.type === 'enter') {
+    const pos = event.position ? ` (${event.position})` : ''
+    return [`> ${t('cameOn', { name: event.playerName })}${pos}`]
+  }
+  if (event.type === 'arrived') return [t('arrivedLog', { name: event.playerName })]
   if (event.type === 'ownGoal') return [`${event.playerName} OG ${score}`]
   if (event.type === 'goal' || event.type === 'goalAllowed') {
     const assist = event.assistName ? [`Assist: ${event.assistName}`] : []

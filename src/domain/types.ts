@@ -33,6 +33,18 @@ export const ON_FIELD_COUNT: Record<MatchType, number> = {
   '11v11': 11,
 }
 
+/**
+ * Fewest players (goalkeeper included) a team may start or continue with.
+ * 11v11: IFAB Laws of the Game, Law 3. 9v9 / 7v7: Quebec league rules (e.g. LDSE 2024,
+ * ARS Québec Loi 3). 5v5: common small-sided rule (Soccer Québec runs no official U4–U8 matches).
+ */
+export const MIN_ON_FIELD_COUNT: Record<MatchType, number> = {
+  '5v5': 4,
+  '7v7': 5,
+  '9v9': 6,
+  '11v11': 7,
+}
+
 /** Usual period setup for each format. Coaches can still edit the fields. */
 export const MATCH_PERIOD_DEFAULTS: Record<MatchType, { numPeriods: number; periodDuration: number }> = {
   '5v5': { numPeriods: 4, periodDuration: 10 },
@@ -86,6 +98,8 @@ export type ActionType =
   | 'note'
   | 'game_note'
   | 'substitution'
+  /** A bench player takes an open spot (team was short); nobody goes off. */
+  | 'enter'
 
 export type SubstitutionRegulation = 'rolling' | 'official'
 
@@ -102,6 +116,8 @@ export type GameAction = {
   position?: string
   /** 1-based period in which the action was recorded (stamped at save time). */
   period?: number
+  /** late_to_game recorded when a player marked absent arrived (moved from absent to the bench). */
+  arrived?: boolean
 }
 
 export type Player = {

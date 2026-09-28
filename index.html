@@ -278,6 +278,10 @@
                   <input type="date" id="stats-end-date" />
                   <button class="secondary-btn" id="clear-stats-filter" data-i18n="clear">Clear</button>
                 </div>
+                <button class="secondary-btn season-pdf-btn" id="export-season-pdf">
+                  <span class="material-icons" aria-hidden="true">picture_as_pdf</span>
+                  <span data-i18n="seasonPdf">Season PDF</span>
+                </button>
               </div>
             </div>
             <div id="player-statistics-container" class="statistics-container"></div>
@@ -405,14 +409,6 @@
                   <span class="live-meta-label" data-i18n="time">Time</span>
                   <span class="game-time" id="game-time">0:00</span>
                 </div>
-                <div class="substitution-timer-small" id="substitution-timer">
-                  <span class="timer-label" data-i18n="sub">Sub</span>
-                  <span class="timer-value">6:00</span>
-                </div>
-                <div class="live-sub-count" id="live-sub-count" hidden>
-                  <span class="live-meta-label" data-i18n="sub">Sub</span>
-                  <span id="live-sub-count-value">0/5</span>
-                </div>
               </div>
               <div class="live-team-name live-home-name" id="home-team-name">My Team</div>
             </div>
@@ -426,6 +422,16 @@
             <div class="live-header-right">
               <div class="live-team-name live-away-name" id="opponent-team-name">Opponent</div>
               <div class="period-counter" id="period-counter">Period 1 of 4</div>
+            </div>
+          </div>
+          <div class="live-sub-row" id="live-sub-row" hidden>
+            <div class="substitution-timer-small" id="substitution-timer">
+              <span class="timer-label" data-i18n="sub">Sub</span>
+              <span class="timer-value">6:00</span>
+            </div>
+            <div class="live-sub-count" id="live-sub-count" hidden>
+              <span class="live-meta-label" data-i18n="subsUsed">Subs used</span>
+              <span id="live-sub-count-value">0/5</span>
             </div>
           </div>
         </div>
@@ -465,6 +471,10 @@
           <section class="live-roster-section">
             <h3 data-i18n="bench">Bench</h3>
             <div class="player-grid" id="bench-grid"></div>
+          </section>
+          <section class="live-roster-section" id="absent-section" hidden>
+            <h3 data-i18n="absentPlayers">Absent</h3>
+            <div class="player-grid" id="absent-grid"></div>
           </section>
         </div>
         <div id="parent-live-board" class="parent-live-board" hidden>

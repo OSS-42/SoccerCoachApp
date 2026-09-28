@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.5',
+    items: {
+      en: [
+        'Late arrivals: tap a player under Absent on the live screen and they join the bench (counted as present, marked late). Play short-handed: start with fewer players, down to the official minimum (5v5: 4, 7v7: 5, 9v9: 6, 11v11: 7, goalkeeper required); tap an open spot to bring a player on. New season PDF in Team → Statistics. Live header: the sub timer and sub count have their own row, so team names are no longer cut off.',
+      ],
+      fr: [
+        'Retardataires : touchez un joueur sous Absents en match et il rejoint le banc (compté présent, marqué en retard). Effectif réduit : commencez avec moins de joueurs, jusqu’au minimum officiel (5 c. 5 : 4, 7 c. 7 : 5, 9 c. 9 : 6, 11 c. 11 : 7, gardien obligatoire) ; touchez une place libre pour faire entrer un joueur. Nouveau PDF de la saison dans Équipe → Statistiques. En match, le chrono de relève et le compteur de changements ont leur propre ligne : les noms d’équipe ne sont plus coupés.',
+      ],
+    },
+  },
+  {
     version: '2.5.4',
     items: {
       en: [

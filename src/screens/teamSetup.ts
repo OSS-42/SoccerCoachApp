@@ -1,6 +1,6 @@
 import { t } from '@/i18n'
 import { formatPlayedDistribution } from '@/domain/playingTime'
-import { calculateSeasonStats } from '@/domain/stats'
+import { calculateSeasonStats, seasonMetrics, seasonTotals, type SeasonCounts } from '@/domain/stats'
 import { askConfirm, askPrompt } from '@/ui/confirm'
 import { PLAYER_POSITIONS, type PlayerPosition } from '@/domain/types'
 import {
@@ -12,6 +12,7 @@ import {
   getCurrentTeam,
   renameTeam,
 } from '@/state/store'
+import { saveOrSharePdf } from '@/lib/shareFile'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { notifyTutorialEvent } from '@/ui/tutorialBus'
@@ -104,75 +105,13 @@ function renderStats(): void {
       <span class="stat-metric-value">${value === 0 ? '–' : value}</span>
       <span class="stat-metric-label">${escapeHtml(label)}</span>
     </div>`
-  const cardMetrics = (row: {
-    gamesPlayed: number
-    goals: number
-    assists: number
-    saves: number
-    goalsAllowed: number
-    shots: number
-    blocks: number
-    interceptions: number
-    fouls: number
-    yellowCards: number
-    redCards: number
-    ownGoals: number
-    missedGames: number
-    lateToGame: number
-    minutesPlayed?: number
-  }): string =>
+  const cardMetrics = (row: SeasonCounts): string =>
     `<div class="report-stat-grid">
-      ${metric(row.gamesPlayed, t('games'))}
-      ${metric(row.goals, t('statShortGoal'), 'stat-goal')}
-      ${metric(row.assists, t('statShortAssist'))}
-      ${metric(row.shots, t('statShortShot'))}
-      ${metric(row.saves, t('statShortSave'))}
-      ${metric(row.blocks, t('statShortBlock'))}
-      ${metric(row.interceptions, t('statShortIntercept'))}
-      ${metric(row.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
-      ${metric(row.fouls, t('statShortFoul'))}
-      ${metric(row.yellowCards, t('statShortYellow'), 'stat-yellow')}
-      ${metric(row.redCards, t('statShortRed'), 'stat-red')}
-      ${metric(row.ownGoals, t('ownGoalShort'))}
-      ${metric(row.missedGames, t('missedGames'))}
-      ${metric(row.lateToGame, t('lateToGame'))}
+      ${seasonMetrics(row)
+        .map((m) => metric(m.value, m.label, m.kind))
+        .join('')}
     </div>`
-  const totals = rows.reduce(
-    (sum, row) => ({
-      gamesPlayed: Math.max(sum.gamesPlayed, row.gamesPlayed),
-      goals: sum.goals + row.goals,
-      assists: sum.assists + row.assists,
-      saves: sum.saves + row.saves,
-      goalsAllowed: sum.goalsAllowed + row.goalsAllowed,
-      shots: sum.shots + row.shots,
-      blocks: sum.blocks + row.blocks,
-      interceptions: sum.interceptions + row.interceptions,
-      fouls: sum.fouls + row.fouls,
-      yellowCards: sum.yellowCards + row.yellowCards,
-      redCards: sum.redCards + row.redCards,
-      ownGoals: sum.ownGoals + row.ownGoals,
-      missedGames: sum.missedGames + row.missedGames,
-      lateToGame: sum.lateToGame + row.lateToGame,
-      minutesPlayed: sum.minutesPlayed + row.minutesPlayed,
-    }),
-    {
-      gamesPlayed: 0,
-      goals: 0,
-      assists: 0,
-      saves: 0,
-      goalsAllowed: 0,
-      shots: 0,
-      blocks: 0,
-      interceptions: 0,
-      fouls: 0,
-      yellowCards: 0,
-      redCards: 0,
-      ownGoals: 0,
-      missedGames: 0,
-      lateToGame: 0,
-      minutesPlayed: 0,
-    },
-  )
+  const totals = seasonTotals(rows)
   container.innerHTML = `
     <div class="season-stats-cards">
       <article class="season-stat-card is-totals">
@@ -390,4 +329,27 @@ export function bindTeamSetup(): void {
     ;(document.getElementById('stats-end-date') as HTMLInputElement).value = ''
     renderStats()
   })
+  document.getElementById('export-season-pdf')?.addEventListener('click', () => void exportSeasonPdf())
+}
+
+async function exportSeasonPdf(): Promise<void> {
+  const team = getCurrentTeam()
+  if (!team) return
+  if (!team.games.some((game) => game.isCompleted)) {
+    showMessage(t('noGamesStats'), 'error')
+    return
+  }
+  const range = {
+    start: (document.getElementById('stats-start-date') as HTMLInputElement).value || null,
+    end: (document.getElementById('stats-end-date') as HTMLInputElement).value || null,
+  }
+  try {
+    // jsPDF loads only when a PDF is requested.
+    const { buildSeasonStatsPdf, seasonPdfFileName } = await import('@/domain/seasonPdf')
+    const bytes = buildSeasonStatsPdf(team, range).output('arraybuffer')
+    await saveOrSharePdf(bytes, seasonPdfFileName(team, range))
+  } catch (err) {
+    console.error('Season PDF export failed', err)
+    showMessage(t('pdfExportFailed'), 'error')
+  }
 }

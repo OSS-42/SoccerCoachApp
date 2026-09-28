@@ -15,6 +15,7 @@ import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { formatClock, isLastLivePeriod, livePeriodNumber, parseClockInput } from '@/domain/clock'
 import {
   extraTimeActive,
+  openFieldSlots,
   playerHasRed,
   substitutionCap,
   substitutionCount,
@@ -24,6 +25,7 @@ import { substitutionLine, substitutionSpotLabel } from '@/domain/timeline'
 import type { ActionType, Player } from '@/domain/types'
 import {
   endCurrentGame,
+  enterLivePlayer,
   finishCurrentPeriod,
   getCurrentGame,
   getCurrentTeam,
@@ -32,6 +34,7 @@ import {
   isParentLive,
   liveElapsedSeconds,
   liveSubRemaining,
+  markLivePlayerArrived,
   parentRosterTeam,
   pauseClock,
   playClock,
@@ -51,7 +54,8 @@ import { homeForRole } from './roleSelect'
 
 let pendingPlayer: Player | null = null
 let pendingSubId: string | null = null
-let pendingRole: 'field' | 'bench' | null = null
+/** 'open' = an open spot was tapped first; the next bench tap puts that player on. */
+let pendingRole: 'field' | 'bench' | 'open' | null = null
 let lastTapId: string | null = null
 let lastTapAt = 0
 let actionTapTimer: number | null = null
@@ -168,7 +172,17 @@ export function renderLiveGame(): void {
   updateClockLabels()
 
   paintSubCount()
+  syncSubRow()
   paintLiveRosters()
+}
+
+/** The sub row under the scoreboard only appears when it has something to show. */
+function syncSubRow(): void {
+  const row = document.getElementById('live-sub-row')
+  if (!row) return
+  const timer = document.getElementById('substitution-timer')
+  const count = document.getElementById('live-sub-count')
+  row.hidden = Boolean(timer?.hidden ?? true) && Boolean(count?.hidden ?? true)
 }
 
 function paintSubCount(): void {
@@ -220,11 +234,90 @@ function paintLiveRosters(): void {
       ),
     )
   }
+  for (let i = 0; i < openFieldSlots(game); i++) fieldGrid.appendChild(openSlotTile())
   for (const player of benchPlayers) {
     benchGrid.appendChild(
       liveTile(player, 'bench', usedOff.has(player.id), false, undefined, minutes.get(player.id) ?? 0),
     )
   }
+  paintAbsent(team.players.filter((player) => game.unavailablePlayers.includes(player.id)))
+}
+
+function openSlotTile(): HTMLElement {
+  const item = document.createElement('button')
+  item.type = 'button'
+  item.className = 'player-grid-item starter open-slot'
+  if (pendingRole === 'bench') item.classList.add('sub-target')
+  if (pendingRole === 'open') item.classList.add('sub-selected')
+  item.setAttribute('aria-label', t('openSpot'))
+  item.innerHTML = '<span class="material-icons" aria-hidden="true">add</span>'
+  item.addEventListener('click', onOpenSlotClick)
+  return item
+}
+
+function paintAbsent(absent: Player[]): void {
+  const section = document.getElementById('absent-section')
+  const grid = document.getElementById('absent-grid')
+  if (!section || !grid) return
+  section.hidden = absent.length === 0
+  grid.innerHTML = ''
+  for (const player of [...absent].sort((a, b) => a.jerseyNumber - b.jerseyNumber)) {
+    const item = document.createElement('button')
+    item.type = 'button'
+    item.className = 'player-grid-item substitute absent'
+    item.innerHTML = `
+      <span class="live-tile-name">${escapeHtml(player.name)}</span>
+      <span class="live-tile-num">${player.jerseyNumber}</span>`
+    item.addEventListener('click', () => void onAbsentClick(player))
+    grid.appendChild(item)
+  }
+}
+
+async function onAbsentClick(player: Player): Promise<void> {
+  clearPendingSub()
+  const ok = await askConfirm({
+    title: t('arrivedTitle'),
+    message: t('arrivedAsk', { name: player.name }),
+    confirmLabel: t('confirm'),
+    cancelLabel: t('cancel'),
+  })
+  if (!ok) return
+  if (!markLivePlayerArrived(player.id).ok) return
+  renderLiveGame()
+  showMessage(t('arrivedDone', { name: player.name }), 'success')
+}
+
+function onOpenSlotClick(): void {
+  cancelActionTapTimer()
+  if (pendingRole === 'bench' && pendingSubId) {
+    enterFromBench(pendingSubId)
+    return
+  }
+  if (pendingRole === 'open') {
+    clearPendingSub()
+    paintLiveRosters()
+    return
+  }
+  pendingSubId = null
+  pendingRole = 'open'
+  paintLiveRosters()
+  showMessage(t('openSpotHint'), 'info')
+}
+
+function enterFromBench(playerId: string): void {
+  clearPendingSub()
+  const result = enterLivePlayer(playerId)
+  if (!result.ok) {
+    showMessage(result.reason === 'no_open_spot' ? t('enterNoOpenSpot') : subFailMessage(result.reason), 'error')
+    paintLiveRosters()
+    return
+  }
+  const player = getCurrentTeam()?.players.find((p) => p.id === playerId)
+  renderLiveGame()
+  showMessage(
+    t('enteredDone', { name: player?.name ?? '', pos: result.position ? spotLabel(result.position) : '' }),
+    'success',
+  )
 }
 
 function liveTile(
@@ -249,7 +342,9 @@ function liveTile(
   if (pendingSubId === player.id) item.classList.add('sub-selected')
   const canComeOn = !usedOff && !(stats && playerIsUnavailable(stats))
   const canGoOff = !(stats && stats.redCards > 0)
-  if (pendingRole === 'field' && role === 'bench' && canComeOn) item.classList.add('sub-target')
+  if ((pendingRole === 'field' || pendingRole === 'open') && role === 'bench' && canComeOn) {
+    item.classList.add('sub-target')
+  }
   if (pendingRole === 'bench' && role === 'field' && canGoOff) item.classList.add('sub-target')
   const pos = role === 'field' && fieldPosition ? spotLabel(fieldPosition) : ''
   item.innerHTML = `
@@ -265,11 +360,18 @@ function liveTile(
 
 function onTileClick(player: Player, role: 'field' | 'bench'): void {
   cancelActionTapTimer()
+  if (pendingRole === 'open') {
+    if (role === 'bench') {
+      enterFromBench(player.id)
+      return
+    }
+    clearPendingSub()
+  }
   const now = Date.now()
   const doubleTap = lastTapId === player.id && now - lastTapAt <= DOUBLE_TAP_MS
   const decision = coachLiveTap({
     pendingId: pendingSubId,
-    pendingRole,
+    pendingRole: pendingRole === 'open' ? null : pendingRole,
     playerId: player.id,
     role,
     doubleTap,

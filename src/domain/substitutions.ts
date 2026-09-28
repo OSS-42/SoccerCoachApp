@@ -1,7 +1,9 @@
 import { ELEVEN_V11_PERIODS, EXTRA_TIME_PERIODS, YELLOWS_FOR_RED } from './config'
 import { currentPeriod } from './clock'
+import { FIELD_SPOTS } from './formation'
 import { newId } from './ids'
 import {
+  ON_FIELD_COUNT,
   type Game,
   type GameAction,
   type MatchType,
@@ -142,6 +144,117 @@ export function revertSubstitutionSwap(game: Game, action: GameAction): Game {
       spot.playerId === onId ? { ...spot, playerId: offId } : spot,
     ),
     substitutes: game.substitutes.map((id) => (id === offId ? onId : id)),
+  }
+}
+
+/** Spots left open when the team started (or is still) below full strength. Red cards never reopen a spot. */
+export function openFieldSlots(game: Game): number {
+  return Math.max(0, ON_FIELD_COUNT[game.matchType] - game.formation.length)
+}
+
+export type EnterFail = 'no_open_spot' | 'not_on_bench' | 'unavailable_on' | 'cannot_return'
+
+export function canEnter(game: Game, playerId: string): { ok: true } | { ok: false; reason: EnterFail } {
+  if (openFieldSlots(game) <= 0) return { ok: false, reason: 'no_open_spot' }
+  if (!game.substitutes.includes(playerId)) return { ok: false, reason: 'not_on_bench' }
+  if (playerHasRed(game, playerId) || playerIsInjured(game, playerId)) {
+    return { ok: false, reason: 'unavailable_on' }
+  }
+  if (usedOffPlayerIds(game).has(playerId)) return { ok: false, reason: 'cannot_return' }
+  return { ok: true }
+}
+
+/**
+ * The pitch spot for the player's usual position (`ST` → the `ST-L` spot, labelled ST).
+ * A keeper joining an outfield gap is tagged centre midfield.
+ */
+export function entryPosition(preferred: string | undefined): string {
+  if (!preferred || preferred === 'GK') return 'CM'
+  const spot =
+    FIELD_SPOTS.find((def) => def.position === preferred) ?? FIELD_SPOTS.find((def) => def.label === preferred)
+  return spot?.position ?? 'CM'
+}
+
+/** A bench player fills an open spot. Not a substitution: it does not count toward the official cap. */
+export function applyEnter(
+  game: Game,
+  playerId: string,
+  preferredPosition: string | undefined,
+  gameSecond: number,
+  period?: number,
+): { ok: true; game: Game } | { ok: false; reason: EnterFail } {
+  const allowed = canEnter(game, playerId)
+  if (!allowed.ok) return allowed
+  const position = entryPosition(preferredPosition)
+  const spot = FIELD_SPOTS.find((def) => def.position === position)
+  const action: GameAction = {
+    id: newId('act'),
+    actionType: 'enter',
+    playerId,
+    gameSecond,
+    timestamp: new Date().toISOString(),
+    position,
+    period,
+  }
+  return {
+    ok: true,
+    game: {
+      ...game,
+      formation: [...game.formation, { playerId, position, x: spot?.x ?? 50, y: spot?.y ?? 50 }],
+      substitutes: game.substitutes.filter((id) => id !== playerId),
+      actions: [...game.actions, action],
+    },
+  }
+}
+
+/** Undo an entry if the player is still on the field (not subbed off since). */
+export function revertEnter(game: Game, action: GameAction): Game {
+  const playerId = action.playerId
+  if (!playerId || !game.formation.some((spot) => spot.playerId === playerId)) return game
+  if (game.actions.some((a) => a.actionType === 'substitution' && a.relatedPlayerId === playerId)) return game
+  return {
+    ...game,
+    formation: game.formation.filter((spot) => spot.playerId !== playerId),
+    substitutes: [...game.substitutes, playerId],
+  }
+}
+
+/** A player marked absent before kickoff turns up: absent → bench, logged as late. */
+export function applyArrival(
+  game: Game,
+  playerId: string,
+  gameSecond: number,
+  period?: number,
+): { ok: true; game: Game } | { ok: false } {
+  if (!game.unavailablePlayers.includes(playerId)) return { ok: false }
+  const action: GameAction = {
+    id: newId('act'),
+    actionType: 'late_to_game',
+    playerId,
+    gameSecond,
+    timestamp: new Date().toISOString(),
+    period,
+    arrived: true,
+  }
+  return {
+    ok: true,
+    game: {
+      ...game,
+      unavailablePlayers: game.unavailablePlayers.filter((id) => id !== playerId),
+      substitutes: [...game.substitutes, playerId],
+      actions: [...game.actions, action],
+    },
+  }
+}
+
+/** Undo an arrival while the player is still on the bench. */
+export function revertArrival(game: Game, action: GameAction): Game {
+  const playerId = action.playerId
+  if (!playerId || !game.substitutes.includes(playerId)) return game
+  return {
+    ...game,
+    substitutes: game.substitutes.filter((id) => id !== playerId),
+    unavailablePlayers: [...game.unavailablePlayers, playerId],
   }
 }
 

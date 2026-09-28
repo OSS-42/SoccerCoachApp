@@ -184,6 +184,7 @@ export function renderParentLive(): void {
   }
   const subCount = document.getElementById('live-sub-count')
   if (subCount) subCount.hidden = true
+  document.getElementById('live-sub-row')?.setAttribute('hidden', '')
   document.getElementById('reset-sub')?.setAttribute('hidden', '')
 
   const home = document.getElementById('home-team-name')

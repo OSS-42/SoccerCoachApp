@@ -42,8 +42,8 @@ describe('formation', () => {
       validateFormation(
         seeded.field.map((spot) => ({ ...spot, x: 0, y: 0 })),
         '9v9',
-      ).ok,
-    ).toBe(false)
+      ),
+    ).toMatchObject({ ok: true, short: true, selected: 8, required: 9 })
   })
 
   it('leaves one player off a 7v7 tutorial lineup and always includes a GK', () => {
@@ -63,21 +63,35 @@ describe('formation', () => {
     expect(validateFormation(
       seeded.field.map((spot) => ({ ...spot, x: 0, y: 0 })),
       '7v7',
-    ).ok).toBe(false)
+    )).toMatchObject({ ok: true, short: true })
   })
 
-  it('requires exact on-field count and a GK for 7v7', () => {
+  it('accepts full strength or short-handed down to the official minimum, with a GK', () => {
     const spots = [
       { playerId: '1', position: 'GK', x: 50, y: 91 },
       { playerId: '2', position: 'LB', x: 13, y: 71 },
       { playerId: '3', position: 'CB', x: 50, y: 71 },
       { playerId: '4', position: 'CM', x: 50, y: 45 },
-      { playerId: '5', position: 'CAM', x: 50, y: 35 },
-      { playerId: '6', position: 'LW', x: 13, y: 24 },
     ]
-    expect(validateFormation(spots, '7v7').ok).toBe(false)
-    spots.push({ playerId: '7', position: 'ST-L', x: 35, y: 9 })
-    expect(validateFormation(spots, '7v7')).toEqual({ ok: true })
+    expect(validateFormation(spots, '7v7')).toMatchObject({ ok: false, reason: 'count', min: 5, selected: 4 })
+    spots.push({ playerId: '5', position: 'CAM', x: 50, y: 35 })
+    expect(validateFormation(spots, '7v7')).toEqual({ ok: true, short: true, required: 7, selected: 5 })
+    spots.push({ playerId: '6', position: 'LW', x: 13, y: 24 }, { playerId: '7', position: 'ST-L', x: 35, y: 9 })
+    expect(validateFormation(spots, '7v7')).toEqual({ ok: true, short: false, required: 7, selected: 7 })
+    spots.push({ playerId: '8', position: 'RW', x: 87, y: 24 })
+    expect(validateFormation(spots, '7v7')).toMatchObject({ ok: false, reason: 'count', required: 7, selected: 8 })
+  })
+
+  it.each([
+    ['5v5', 4],
+    ['7v7', 5],
+    ['9v9', 6],
+    ['11v11', 7],
+  ] as const)('%s may start with %i players but not fewer', (matchType, min) => {
+    const team = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({ playerId: `p${i}`, position: i === 0 ? 'GK' : `X-${i}`, x: 0, y: 0 }))
+    expect(validateFormation(team(min), matchType).ok).toBe(true)
+    expect(validateFormation(team(min - 1), matchType).ok).toBe(false)
   })
 
   it('rejects a 7v7 without a goalkeeper', () => {

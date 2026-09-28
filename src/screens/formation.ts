@@ -520,7 +520,7 @@ export function bindFormation(): void {
     clearGameDraft()
     showScreen('game-setup')
   })
-  document.getElementById('start-from-formation')?.addEventListener('click', () => {
+  document.getElementById('start-from-formation')?.addEventListener('click', async () => {
     const draft = getGameDraft()
     if (!draft) return showScreen('game-setup')
     if (tutorialRunning()) fillTutorialFormationIfShort()
@@ -531,12 +531,22 @@ export function bindFormation(): void {
         valid.reason === 'gk'
           ? t('formationNeedGk')
           : t('formationCount', {
+              min: valid.min,
               required: valid.required,
               matchType: draft.matchType,
               selected: valid.selected,
             }),
         'error',
       )
+    }
+    if (valid.short && !tutorialRunning()) {
+      const ok = await askConfirm({
+        title: t('startShortTitle'),
+        message: t('startShortAsk', { count: valid.selected, required: valid.required }),
+        confirmLabel: t('confirm'),
+        cancelLabel: t('cancel'),
+      })
+      if (!ok) return
     }
     const saveDefault = (document.getElementById('save-default-formation') as HTMLInputElement)
       .checked

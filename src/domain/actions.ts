@@ -1,7 +1,7 @@
 import { YELLOWS_FOR_RED } from './config'
 import { newId } from './ids'
 import { isParentGame, replayParentFormation } from './parent'
-import { revertSubstitutionSwap } from './substitutions'
+import { revertArrival, revertEnter, revertSubstitutionSwap } from './substitutions'
 import { emptyLiveStats, type ActionType, type Game, type GameAction, type LiveStats } from './types'
 
 /** Emoji used on live action buttons. Labels come from i18n (`action.*`). */
@@ -24,6 +24,7 @@ export const ACTION_EMOJI: Record<ActionType, string> = {
   note: '📝',
   game_note: '📝',
   substitution: '🔄',
+  enter: '➕',
 }
 
 export const FIELD_PLAYER_ACTIONS: ActionType[] = [
@@ -182,5 +183,7 @@ export function revertAction(game: Game, actionId: string): Game {
     if (isParentGame(next) && removed.playerId) return replayParentFormation(next, removed.playerId)
     return revertSubstitutionSwap(next, removed)
   }
+  if (removed?.actionType === 'enter') return revertEnter(next, removed)
+  if (removed?.actionType === 'late_to_game' && removed.arrived) return revertArrival(next, removed)
   return next
 }

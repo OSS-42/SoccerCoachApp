@@ -1,3 +1,4 @@
+import { t } from '@/i18n'
 import { statsFromActions } from './actions'
 import { playedMinutesByPlayer, playedMinutesByPlayerPosition } from './playingTime'
 import type { Game, Player } from './types'
@@ -22,6 +23,73 @@ export type SeasonRow = {
   ownGoals: number
   minutesPlayed: number
   minutesByPosition: Record<string, number>
+}
+
+export type SeasonCounts = Omit<SeasonRow, 'playerId' | 'name' | 'jerseyNumber' | 'minutesByPosition'>
+
+export type SeasonMetricKind = '' | 'stat-goal' | 'stat-against' | 'stat-yellow' | 'stat-red'
+
+/** The 14 metrics of a season stat card, in display order (shared by the Statistics tab and the PDF). */
+export function seasonMetrics(row: SeasonCounts): { value: number; label: string; kind: SeasonMetricKind }[] {
+  return [
+    { value: row.gamesPlayed, label: t('games'), kind: '' },
+    { value: row.goals, label: t('statShortGoal'), kind: 'stat-goal' },
+    { value: row.assists, label: t('statShortAssist'), kind: '' },
+    { value: row.shots, label: t('statShortShot'), kind: '' },
+    { value: row.saves, label: t('statShortSave'), kind: '' },
+    { value: row.blocks, label: t('statShortBlock'), kind: '' },
+    { value: row.interceptions, label: t('statShortIntercept'), kind: '' },
+    { value: row.goalsAllowed, label: t('goalsAllowedShort'), kind: 'stat-against' },
+    { value: row.fouls, label: t('statShortFoul'), kind: '' },
+    { value: row.yellowCards, label: t('statShortYellow'), kind: 'stat-yellow' },
+    { value: row.redCards, label: t('statShortRed'), kind: 'stat-red' },
+    { value: row.ownGoals, label: t('ownGoalShort'), kind: '' },
+    { value: row.missedGames, label: t('missedGames'), kind: '' },
+    { value: row.lateToGame, label: t('lateToGame'), kind: '' },
+  ]
+}
+
+/** Team card: sums of every player, except games (the most any player played). */
+export function seasonTotals(rows: SeasonRow[]): SeasonCounts {
+  const totals: SeasonCounts = {
+    gamesPlayed: 0,
+    missedGames: 0,
+    lateToGame: 0,
+    goals: 0,
+    assists: 0,
+    saves: 0,
+    goalsAllowed: 0,
+    shots: 0,
+    blocks: 0,
+    interceptions: 0,
+    fouls: 0,
+    yellowCards: 0,
+    redCards: 0,
+    ownGoals: 0,
+    minutesPlayed: 0,
+  }
+  for (const row of rows) {
+    for (const key of Object.keys(totals) as (keyof SeasonCounts)[]) {
+      totals[key] = key === 'gamesPlayed' ? Math.max(totals[key], row[key]) : totals[key] + row[key]
+    }
+  }
+  return totals
+}
+
+export type SeasonRecord = { played: number; wins: number; draws: number; losses: number; goalsFor: number; goalsAgainst: number }
+
+export function seasonRecord(games: Game[], startDate: string | null, endDate: string | null): SeasonRecord {
+  const record: SeasonRecord = { played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 }
+  for (const game of games) {
+    if (!game.isCompleted || !gameInDateRange(game, startDate, endDate)) continue
+    record.played += 1
+    record.goalsFor += game.homeScore
+    record.goalsAgainst += game.awayScore
+    if (game.homeScore > game.awayScore) record.wins += 1
+    else if (game.homeScore < game.awayScore) record.losses += 1
+    else record.draws += 1
+  }
+  return record
 }
 
 export function gameInDateRange(game: Game, startDate: string | null, endDate: string | null): boolean {

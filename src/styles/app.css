@@ -5314,6 +5314,43 @@ html.is-phone-ui #game-tracking:not(.is-parent) .live-tile-mins {
     filter: grayscale(0.35);
 }
 
+#game-tracking .player-grid-item.starter.open-slot {
+    background: transparent;
+    border: 2px dashed rgba(255, 255, 255, 0.45);
+    box-shadow: none;
+    justify-content: center;
+}
+
+#game-tracking .player-grid-item.starter.open-slot .live-tile-name {
+    opacity: 0.8;
+}
+
+.season-pdf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#game-tracking .player-grid-item.starter.open-slot {
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+#game-tracking .player-grid-item.starter.open-slot .material-icons {
+    font-size: 18px;
+}
+
+#game-tracking #absent-section[hidden] {
+    display: none !important;
+}
+
+#game-tracking .player-grid-item.absent {
+    opacity: 0.55;
+    filter: grayscale(0.6);
+}
+
 #game-tracking .live-tile-pos {
     font-size: 10px;
     font-weight: 800;

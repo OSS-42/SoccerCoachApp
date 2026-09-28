@@ -1,6 +1,6 @@
 import { t } from '@/i18n'
 import { POSITION_LABEL_ORDER, spotLabel } from './formation'
-import type { FormationSpot, Game, GameAction } from './types'
+import { ON_FIELD_COUNT, type FormationSpot, type Game, type GameAction } from './types'
 
 /** Walk substitutions backwards from the final XI to recover the kickoff XI. */
 export function reconstructStartingFormation(
@@ -9,6 +9,10 @@ export function reconstructStartingFormation(
 ): FormationSpot[] {
   let spots = formation.map((spot) => ({ ...spot }))
   for (const action of [...actions].reverse()) {
+    if (action.actionType === 'enter' && action.playerId) {
+      spots = spots.filter((spot) => spot.playerId !== action.playerId)
+      continue
+    }
     if (action.actionType !== 'substitution' || !action.playerId || !action.relatedPlayerId) continue
     const onId = action.playerId
     const offId = action.relatedPlayerId
@@ -22,6 +26,13 @@ export function startingPlayerIds(game: Game): Set<string> {
     ? game.startingFormation
     : reconstructStartingFormation(game.formation, game.actions)
   return new Set(spots.map((spot) => spot.playerId))
+}
+
+/** "Started with 9 of 11" when the team kicked off short-handed, else null. */
+export function shortStartLabel(game: Game): string | null {
+  const required = ON_FIELD_COUNT[game.matchType]
+  const count = startingPlayerIds(game).size
+  return count > 0 && count < required ? t('shortStart', { count, required }) : null
 }
 
 function clampSecond(value: number, end: number): number {
@@ -83,6 +94,11 @@ export function playingSecondsByPlayerPosition(game: Game): Map<string, Map<stri
 
   for (const action of game.actions) {
     const at = clampSecond(action.gameSecond, end)
+    if (action.actionType === 'enter' && action.playerId && action.position) {
+      spots = [...spots, { playerId: action.playerId, position: action.position, x: 50, y: 50 }]
+      if (!onSince.has(action.playerId)) onSince.set(action.playerId, { from: at, position: action.position })
+      continue
+    }
     if (action.actionType === 'substitution' && action.playerId && action.relatedPlayerId) {
       const offId = action.relatedPlayerId
       const onId = action.playerId

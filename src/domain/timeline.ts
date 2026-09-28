@@ -38,7 +38,7 @@ export type ReportEvent = {
   second: number
   minute: number
   period: number
-  type: 'goal' | 'goalAllowed' | 'ownGoal' | 'yellow' | 'red' | 'injury' | 'substitution'
+  type: 'goal' | 'goalAllowed' | 'ownGoal' | 'yellow' | 'red' | 'injury' | 'substitution' | 'enter' | 'arrived'
   playerName: string
   assistName: string | null
   relatedName: string | null
@@ -87,6 +87,11 @@ export function substitutionLine(on: string, off: string, position?: string | nu
 export function substitutionSpotLabel(game: Game, actionId: string): string | null {
   let spots = liveSpots(game)
   for (const action of game.actions) {
+    if (action.actionType === 'enter' && action.playerId && action.position) {
+      spots = [...spots, { playerId: action.playerId, position: action.position, x: 50, y: 50 }]
+      if (action.id === actionId) return spotLabel(action.position)
+      continue
+    }
     if (action.actionType !== 'substitution' || !action.playerId || !action.relatedPlayerId) continue
     const applied = takeSpot(spots, action.relatedPlayerId, action.playerId)
     spots = applied.spots
@@ -221,6 +226,23 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
         scoreIndex: null,
         isOpponent: false,
         position: null,
+      })
+    } else if (action.actionType === 'enter' || (action.actionType === 'late_to_game' && action.arrived)) {
+      const entering = action.actionType === 'enter'
+      if (entering && action.playerId && action.position) {
+        spots = [...spots, { playerId: action.playerId, position: action.position, x: 50, y: 50 }]
+      }
+      events.push({
+        second: action.gameSecond,
+        minute,
+        period,
+        type: entering ? 'enter' : 'arrived',
+        playerName: playerName(players, action.playerId) || t('unknownPlayer'),
+        assistName: null,
+        relatedName: null,
+        scoreIndex: null,
+        isOpponent: false,
+        position: entering && action.position ? spotLabel(action.position) : null,
       })
     } else if (action.actionType === 'substitution') {
       const offId = action.relatedPlayerId ?? ''
