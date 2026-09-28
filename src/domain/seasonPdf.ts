@@ -172,7 +172,7 @@ export function buildSeasonStatsPdf(team: Team, range: SeasonRange): jsPDF {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
   const rows = calculateSeasonStats(team.players, team.games, range.start, range.end)
   let y = drawHeader(pdf, team, range)
-  y = drawTeamCard(pdf, team, range, seasonTotals(rows), y)
+  y = drawTeamCard(pdf, team, range, seasonTotals(rows, team.games, range.start, range.end), y)
   rows.forEach((row, index) => {
     const col = index % COLS
     if (col === 0 && index > 0) y += CARD_H + GAP
