@@ -69,10 +69,18 @@ describe('season record and totals', () => {
     expect(seasonRecord(games, '2026-09-10', null)).toMatchObject({ played: 2, wins: 0, draws: 1, losses: 1 })
   })
 
-  it('totals sum every player, but games is the most any player played', () => {
-    const totals = seasonTotals(calculateSeasonStats(players, games))
+  it('team games and minutes come from the matches, not a sum over players', () => {
+    const rows = calculateSeasonStats(players, games)
+    expect(rows.map((r) => r.gamesPlayed)).toEqual([2, 2])
+    expect(rows.reduce((sum, r) => sum + r.minutesPlayed, 0)).toBe(4 * 50)
+    const totals = seasonTotals(rows, games)
     expect(totals.goals).toBe(2)
-    expect(totals.gamesPlayed).toBe(2)
+    expect(totals.gamesPlayed).toBe(3)
+    expect(totals.minutesPlayed).toBe(3 * 50)
+    expect(seasonTotals(calculateSeasonStats(players, games, '2026-09-10', null), games, '2026-09-10', null)).toMatchObject({
+      gamesPlayed: 2,
+      minutesPlayed: 2 * 50,
+    })
     expect(seasonMetrics(totals).map((m) => m.kind).filter(Boolean)).toEqual([
       'stat-goal',
       'stat-against',

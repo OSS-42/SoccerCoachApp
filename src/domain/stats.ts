@@ -49,8 +49,16 @@ export function seasonMetrics(row: SeasonCounts): { value: number; label: string
   ]
 }
 
-/** Team card: sums of every player, except games (the most any player played). */
-export function seasonTotals(rows: SeasonRow[]): SeasonCounts {
+/**
+ * Team card: action counts are summed over every player, but games and minutes are the
+ * team's own (matches played in the range and their total length), not a sum per player.
+ */
+export function seasonTotals(
+  rows: SeasonRow[],
+  games: Game[],
+  startDate: string | null = null,
+  endDate: string | null = null,
+): SeasonCounts {
   const totals: SeasonCounts = {
     gamesPlayed: 0,
     missedGames: 0,
@@ -70,8 +78,14 @@ export function seasonTotals(rows: SeasonRow[]): SeasonCounts {
   }
   for (const row of rows) {
     for (const key of Object.keys(totals) as (keyof SeasonCounts)[]) {
-      totals[key] = key === 'gamesPlayed' ? Math.max(totals[key], row[key]) : totals[key] + row[key]
+      if (key === 'gamesPlayed' || key === 'minutesPlayed') continue
+      totals[key] += row[key]
     }
+  }
+  for (const game of games) {
+    if (!game.isCompleted || !gameInDateRange(game, startDate, endDate)) continue
+    totals.gamesPlayed += 1
+    totals.minutesPlayed += Math.round(Math.max(0, game.elapsedSeconds) / 60)
   }
   return totals
 }

@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.6',
+    items: {
+      en: [
+        'Team stats: the team card now shows the games the team played and their total minutes, instead of adding up every player’s minutes.',
+      ],
+      fr: [
+        'Statistiques d’équipe : la carte d’équipe affiche maintenant les matchs joués par l’équipe et leur durée totale, au lieu d’additionner les minutes de chaque joueur.',
+      ],
+    },
+  },
+  {
     version: '2.5.5',
     items: {
       en: [

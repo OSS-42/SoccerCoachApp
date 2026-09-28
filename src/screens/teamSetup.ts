@@ -111,7 +111,7 @@ function renderStats(): void {
         .map((m) => metric(m.value, m.label, m.kind))
         .join('')}
     </div>`
-  const totals = seasonTotals(rows)
+  const totals = seasonTotals(rows, team.games, start, end)
   container.innerHTML = `
     <div class="season-stats-cards">
       <article class="season-stat-card is-totals">
