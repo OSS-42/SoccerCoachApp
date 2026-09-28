@@ -1,9 +1,9 @@
 {
-  "version": "2.5.4",
+  "version": "2.5.5",
   "minAppVersion": "2.4.50",
-  "notes": "Signed updates required; privacy policy: Capgo statistics disclosure",
+  "notes": "Late arrivals, short-handed start, season PDF, cleaner live header",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "3147174beb3f902e535586d76b27708d375819ffdafbee08a08123b57134db42",
+  "checksum": "cbe4bd575c9bc723eaabb2a2ade68753479f15694bce23927e0c9d4e0ec6f2e0",
   "keyId": "primary-5f3eed95",
-  "signature": "5tsGvVguRAC8pCPoE5awjalIzksBvx08enNBQWs0QH2v3bbnZ0ZpBTqV/zeqDRjJr37NBH5B+8KMLd2TG0pGPA=="
+  "signature": "d+w0sOZ12xVzIEMkHGpe5On5HZIYftoSxxRkYjQunRV+JDUZELIgAPeV3l2CSKW44plmcVR5yHOK9rIcGX2bVA=="
 }
