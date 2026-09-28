@@ -1,9 +1,9 @@
 {
-  "version": "2.5.5",
+  "version": "2.5.6",
   "minAppVersion": "2.4.50",
-  "notes": "Late arrivals, short-handed start, season PDF, cleaner live header",
+  "notes": "Team stats: team card shows the team's games and match minutes",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "cbe4bd575c9bc723eaabb2a2ade68753479f15694bce23927e0c9d4e0ec6f2e0",
+  "checksum": "6e2683d2006f5523cd309ae669954025f6877693ec24f4fd85a3c6e9609be2e5",
   "keyId": "primary-5f3eed95",
-  "signature": "d+w0sOZ12xVzIEMkHGpe5On5HZIYftoSxxRkYjQunRV+JDUZELIgAPeV3l2CSKW44plmcVR5yHOK9rIcGX2bVA=="
+  "signature": "CAYTwRsPKzNSKDza1IDk8zdF3Ob72zutPO7AWVBXH8TepM4bNABjsEkQw+aQn4l1df9rhZDFN7CiVnXOQOVWgw=="
 }
