@@ -154,4 +154,30 @@ describe('report PDF', () => {
     expect(text).toContain('Have not played')
     expect(text).toContain('Bea')
   })
+
+  it('prints the ActionPitch footer and store link on every page', () => {
+    setLocale('en')
+    const players = Array.from({ length: 22 }, (_, i) => player(`p${i}`, `Player ${i}`, i + 1))
+    const formation = players.map((p, i) => ({ playerId: p.id, position: i === 0 ? 'GK' : 'CM', x: 50, y: 50 }))
+    const match = game({ formation, startingFormation: formation })
+    const pdf = buildGameReportPdf(match, team(players, match))
+    const text = pdfText(pdf)
+    const pages = pdf.getNumberOfPages()
+    expect(pages).toBeGreaterThan(1)
+    expect(text.split('Made with ActionPitch').length - 1).toBe(pages)
+    expect(text).toContain('Get the app on the App Store')
+    expect(text).not.toContain('free sideline')
+    expect(text).toContain('/URI (https://apps.apple.com/ca/app/action-pitch/id6810484374)')
+    expect(text).toContain('/Subtype /Image')
+  })
+
+  it('leaves the footer off when promo is false', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1)]
+    const match = game()
+    const text = pdfText(buildGameReportPdf(match, team(players, match), { promo: false }))
+    expect(text).not.toContain('Made with ActionPitch')
+    expect(text).not.toContain('apps.apple.com')
+    expect(text).not.toContain('Get the app on the App Store')
+  })
 })

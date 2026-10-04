@@ -1,12 +1,14 @@
 import { t } from '@/i18n'
 import { VIEW_REPORT_EVENT } from '@/domain/config'
 import { formatClock, parseClockInput } from '@/domain/clock'
+import { isPro } from '@/domain/entitlement'
 import { askConfirm, askPrompt } from '@/ui/confirm'
 import {
   deleteCompletedGames,
   findCompletedGame,
   getCurrentTeam,
   getRole,
+  getSave,
   parentRosterTeam,
   setCompletedGameElapsed,
 } from '@/state/store'
@@ -132,7 +134,7 @@ async function exportReportPdf(gameId: string): Promise<void> {
   try {
     // jsPDF + html2canvas + DOMPurify (~390 kB) load only when a report is exported.
     const { buildGameReportPdf, reportPdfFileName } = await import('@/domain/reportPdf')
-    const pdf = buildGameReportPdf(game, team)
+    const pdf = buildGameReportPdf(game, team, { promo: !isPro(getSave()) })
     const bytes = pdf.output('arraybuffer')
     if (!bytes.byteLength) throw new Error('empty pdf')
     await saveOrSharePdf(bytes, reportPdfFileName(game))
