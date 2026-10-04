@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.7',
+    items: {
+      en: [
+        'PDF reports and season PDFs now end with a small ActionPitch footer and a link to get the app on the App Store, so parents who receive a report can find it.',
+      ],
+      fr: [
+        'Les rapports PDF et le PDF de la saison se terminent maintenant par un petit pied de page ActionPitch avec un lien vers l’App Store, pour que les parents qui reçoivent un rapport trouvent l’app.',
+      ],
+    },
+  },
+  {
     version: '2.5.6',
     items: {
       en: [
