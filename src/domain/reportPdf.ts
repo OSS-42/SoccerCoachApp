@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf'
 import { t } from '@/i18n'
 import { statsFromActions } from './actions'
+import { APP_STORE_URL } from './config'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from './clock'
 import { periodGoalDeltas } from './game'
 import {
@@ -52,6 +53,26 @@ export function fileSafe(value: string): string {
       .replace(/_+/g, '_')
       .replace(/^[_.-]+|[_.-]+$/g, '') || 'opponent'
   )
+}
+
+export type PdfOptions = {
+  /** Print the "Made with ActionPitch" footer and store link on every page. */
+  promo?: boolean
+}
+
+/** Footer in the bottom margin of every page, so it never moves the content. */
+export function addPromoFooter(pdf: jsPDF): void {
+  const label = pdfSafe(t('pdfMadeWith'))
+  const link = APP_STORE_URL.replace(/^https:\/\//, '')
+  const y = PAGE_H - 5
+  for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
+    pdf.setPage(page)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(7)
+    setText(pdf, MUTED)
+    pdf.text(label, MARGIN, y)
+    pdf.textWithLink(link, PAGE_W - MARGIN - pdf.getTextWidth(link), y, { url: APP_STORE_URL })
+  }
 }
 
 export function reportPdfFileName(game: Game): string {
@@ -449,7 +470,7 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
   }
 }
 
-export function buildGameReportPdf(game: Game, team: Team): jsPDF {
+export function buildGameReportPdf(game: Game, team: Team, options: PdfOptions = {}): jsPDF {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
   const doc: Doc = { pdf, y: MARGIN }
   drawScoreHeader(doc, game, team.name)
@@ -457,5 +478,6 @@ export function buildGameReportPdf(game: Game, team: Team): jsPDF {
   drawMatchLog(doc, game, team.players)
   drawNotes(doc, game, team.players)
   drawPlayers(doc, game, team.players)
+  if (options.promo ?? true) addPromoFooter(pdf)
   return pdf
 }

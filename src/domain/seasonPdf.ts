@@ -13,11 +13,13 @@ import {
   PEACH,
   ROSE,
   YELLOW,
+  addPromoFooter,
   fileSafe,
   fit,
   pdfSafe,
   setFill,
   setText,
+  type PdfOptions,
   type RGB,
 } from './reportPdf'
 import {
@@ -168,7 +170,7 @@ function drawPlayerCard(
 }
 
 /** Season stats as shown in Team → Statistics: team card on top, player cards in a 3-column grid. */
-export function buildSeasonStatsPdf(team: Team, range: SeasonRange): jsPDF {
+export function buildSeasonStatsPdf(team: Team, range: SeasonRange, options: PdfOptions = {}): jsPDF {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
   const rows = calculateSeasonStats(team.players, team.games, range.start, range.end)
   let y = drawHeader(pdf, team, range)
@@ -182,5 +184,6 @@ export function buildSeasonStatsPdf(team: Team, range: SeasonRange): jsPDF {
     }
     drawPlayerCard(pdf, row, MARGIN + col * (CARD_W + GAP), y)
   })
+  if (options.promo ?? true) addPromoFooter(pdf)
   return pdf
 }

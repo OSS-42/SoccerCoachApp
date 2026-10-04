@@ -324,6 +324,7 @@ export const en = {
   importError: 'Error importing data. Please check the file format.',
   popupBlocked: 'Pop-up blocked. Allow pop-ups to export PDF.',
   pdfExportFailed: 'Could not export the PDF. Try again.',
+  pdfMadeWith: 'Made with ActionPitch, the free sideline app for soccer coaches',
   noActionsYet: 'No actions recorded yet',
   enterNote: 'Please enter a note',
   cannotAct: 'Cannot perform actions on this player',

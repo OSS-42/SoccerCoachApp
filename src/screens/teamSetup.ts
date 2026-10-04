@@ -1,4 +1,5 @@
 import { t } from '@/i18n'
+import { isPro } from '@/domain/entitlement'
 import { formatPlayedDistribution } from '@/domain/playingTime'
 import { calculateSeasonStats, seasonMetrics, seasonTotals, type SeasonCounts } from '@/domain/stats'
 import { askConfirm, askPrompt } from '@/ui/confirm'
@@ -10,6 +11,7 @@ import {
   deletePlayers,
   editPlayerOnTeam,
   getCurrentTeam,
+  getSave,
   renameTeam,
 } from '@/state/store'
 import { saveOrSharePdf } from '@/lib/shareFile'
@@ -346,7 +348,7 @@ async function exportSeasonPdf(): Promise<void> {
   try {
     // jsPDF loads only when a PDF is requested.
     const { buildSeasonStatsPdf, seasonPdfFileName } = await import('@/domain/seasonPdf')
-    const bytes = buildSeasonStatsPdf(team, range).output('arraybuffer')
+    const bytes = buildSeasonStatsPdf(team, range, { promo: !isPro(getSave()) }).output('arraybuffer')
     await saveOrSharePdf(bytes, seasonPdfFileName(team, range))
   } catch (err) {
     console.error('Season PDF export failed', err)

@@ -29,6 +29,9 @@ export const SAVE_LIVE_KEY = 'soccerCoachApp.v2.live'
 
 export const DEMO_TEAM_ID = 't-demo'
 
+/** Store link printed in the PDF footer. Swap for a landing page once Android is on Google Play. */
+export const APP_STORE_URL = 'https://apps.apple.com/ca/app/action-pitch/id6810484374'
+
 export const DEFAULT_SUB_MINUTES = 6
 export const JERSEY_MIN = 0
 export const JERSEY_MAX = 99
