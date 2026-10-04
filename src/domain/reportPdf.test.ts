@@ -165,7 +165,10 @@ describe('report PDF', () => {
     const pages = pdf.getNumberOfPages()
     expect(pages).toBeGreaterThan(1)
     expect(text.split('Made with ActionPitch').length - 1).toBe(pages)
+    expect(text).toContain('Get the app on the App Store')
+    expect(text).not.toContain('free sideline')
     expect(text).toContain('/URI (https://apps.apple.com/ca/app/action-pitch/id6810484374)')
+    expect(text).toContain('/Subtype /Image')
   })
 
   it('leaves the footer off when promo is false', () => {
@@ -175,5 +178,6 @@ describe('report PDF', () => {
     const text = pdfText(buildGameReportPdf(match, team(players, match), { promo: false }))
     expect(text).not.toContain('Made with ActionPitch')
     expect(text).not.toContain('apps.apple.com')
+    expect(text).not.toContain('Get the app on the App Store')
   })
 })

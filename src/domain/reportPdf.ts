@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf'
 import { t } from '@/i18n'
+import logoPng from '@/assets/pdf-logo.png?inline'
 import { statsFromActions } from './actions'
 import { APP_STORE_URL } from './config'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from './clock'
@@ -63,15 +64,24 @@ export type PdfOptions = {
 /** Footer in the bottom margin of every page, so it never moves the content. */
 export function addPromoFooter(pdf: jsPDF): void {
   const label = pdfSafe(t('pdfMadeWith'))
-  const link = APP_STORE_URL.replace(/^https:\/\//, '')
+  const link = pdfSafe(t('pdfGetApp'))
+  const logo = 5
   const y = PAGE_H - 5
   for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
     pdf.setPage(page)
+    pdf.addImage(logoPng, 'PNG', MARGIN, y - 3.6, logo, logo, 'actionpitch-logo')
+    pdf.link(MARGIN, y - 3.6, logo, logo, { url: APP_STORE_URL })
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(7)
     setText(pdf, MUTED)
-    pdf.text(label, MARGIN, y)
-    pdf.textWithLink(link, PAGE_W - MARGIN - pdf.getTextWidth(link), y, { url: APP_STORE_URL })
+    pdf.text(label, MARGIN + logo + 2, y)
+    pdf.setFont('helvetica', 'bold')
+    setText(pdf, INK)
+    const linkX = PAGE_W - MARGIN - pdf.getTextWidth(link)
+    pdf.textWithLink(link, linkX, y, { url: APP_STORE_URL })
+    pdf.setLineWidth(0.15)
+    pdf.setDrawColor(...INK)
+    pdf.line(linkX, y + 0.6, PAGE_W - MARGIN, y + 0.6)
   }
 }
 
