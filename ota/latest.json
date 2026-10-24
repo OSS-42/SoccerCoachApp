@@ -1,9 +1,9 @@
 {
-  "version": "2.5.7",
+  "version": "2.5.8",
   "minAppVersion": "2.4.50",
-  "notes": "PDF reports and season PDFs now include an ActionPitch footer with an App Store link",
+  "notes": "Editable match report, PDF section picker, grouped swaps, marks out of 10",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "5c54e627d2c8da134ed94a069e1e74a5a3a48a29bb24489231a34fbff0e001ea",
+  "checksum": "6fd61f0fa6d6f1a0d33f1b440cbac69e16d52c3e07e91007a298d5caac34e0b3",
   "keyId": "primary-5f3eed95",
-  "signature": "ahy7dx6AysRNotISnXiNM3vJRa+AVBTmGo24/lh5xFoF5QGVyx+ESMPQpnBAgWt+lI2X2ei/Lqpm6HJUl3ShwQ=="
+  "signature": "vKSyub5qf8iJwPsuQ4/Cdy1Jz+Ig6iUfI4ePRvIH73jvVC15wvI8pdKzxAFqImElCOjkRIRZGCCykPWT8HvSag=="
 }
