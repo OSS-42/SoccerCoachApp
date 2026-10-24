@@ -2715,3 +2715,15 @@ html[data-theme] .pdf-sections-hint {
 html[data-theme] .report-player-comment {
   color: var(--neu-text);
 }
+
+html[data-theme] .match-log-home .log-goal {
+  color: var(--neu-ok);
+}
+
+html[data-theme] .match-log-away .log-goal {
+  color: var(--neu-danger);
+}
+
+html[data-theme] .log-goal .log-assist {
+  color: var(--neu-muted);
+}
