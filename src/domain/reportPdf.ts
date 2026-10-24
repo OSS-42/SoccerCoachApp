@@ -34,6 +34,9 @@ export const CARD: [number, number, number] = [247, 248, 247]
 export const GREEN: [number, number, number] = [76, 175, 80]
 export const RED: [number, number, number] = [229, 57, 53]
 export const LINE: [number, number, number] = [200, 205, 200]
+/** Darker than GREEN so goal text stays readable on white. */
+export const GOAL_GREEN: [number, number, number] = [22, 163, 74]
+export const SUB_RED: [number, number, number] = [225, 29, 72]
 
 export type RGB = [number, number, number]
 
@@ -196,6 +199,28 @@ function drawScoreHeader(doc: Doc, game: Game, teamName: string): void {
   doc.y += 10
 }
 
+/** A small soccer ball: white disc, dark centre patch and seams to the rim. */
+export function drawBall(pdf: jsPDF, cx: number, cy: number, r: number): void {
+  pdf.setDrawColor(...INK)
+  pdf.setLineWidth(0.18)
+  setFill(pdf, [255, 255, 255])
+  pdf.circle(cx, cy, r, 'FD')
+  const inner = r * 0.42
+  const corners: [number, number][] = []
+  for (let i = 0; i < 5; i += 1) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5
+    corners.push([cx + inner * Math.cos(a), cy + inner * Math.sin(a)])
+  }
+  setFill(pdf, INK)
+  const deltas = corners.slice(1).map(([x, y], i) => [x - corners[i][0], y - corners[i][1]])
+  pdf.lines(deltas, corners[0][0], corners[0][1], [1, 1], 'F', true)
+  pdf.setLineWidth(0.14)
+  for (const [x, y] of corners) {
+    const a = Math.atan2(y - cy, x - cx)
+    pdf.line(x, y, cx + r * Math.cos(a), cy + r * Math.sin(a))
+  }
+}
+
 function drawTimeline(doc: Doc, game: Game): void {
   heading(doc, t('shotsTimeline'))
   const chartH = 28
@@ -226,9 +251,7 @@ function drawTimeline(doc: Doc, game: Game): void {
     if (h <= 0) continue
     setFill(pdf, GREEN)
     pdf.rect(cx - barW / 2, midY - h, barW, h, 'F')
-    if (counts.goals > 0) {
-      pdf.circle(cx, midY - h - 1.4, 1.2, 'F')
-    }
+    if (counts.goals > 0) drawBall(pdf, cx, midY - h - 2.1, 1.8)
   }
   for (const [minute, counts] of Object.entries(opponent)) {
     const cx = xAt(Number(minute))
@@ -236,9 +259,7 @@ function drawTimeline(doc: Doc, game: Game): void {
     if (h <= 0) continue
     setFill(pdf, RED)
     pdf.rect(cx - barW / 2, midY, barW, h, 'F')
-    if (counts.goalsAllowed > 0) {
-      pdf.circle(cx, midY + h + 1.4, 1.2, 'F')
-    }
+    if (counts.goalsAllowed > 0) drawBall(pdf, cx, midY + h + 2.1, 1.8)
   }
 
   pdf.setFont('helvetica', 'normal')
@@ -253,24 +274,50 @@ function drawTimeline(doc: Doc, game: Game): void {
   doc.y += chartH + scaleH + 4
 }
 
-function eventLine(event: ReturnType<typeof buildGoalsCardsEvents>[number], score: string): string[] {
+type LogLine = {
+  text: string
+  /** Green triangle for a player coming on, red for one going off. */
+  sub?: 'in' | 'out'
+  goal?: boolean
+}
+
+function eventLines(event: ReturnType<typeof buildGoalsCardsEvents>[number], score: string): LogLine[] {
   if (event.type === 'substitution') {
     const pos = event.position ? ` (${event.position})` : ''
-    return [`> ${event.playerName}${pos}`, `< ${event.relatedName ?? ''}`]
+    return [
+      { text: `${event.playerName}${pos}`, sub: 'in' },
+      { text: event.relatedName ?? '', sub: 'out' },
+    ]
   }
   if (event.type === 'enter') {
     const pos = event.position ? ` (${event.position})` : ''
-    return [`> ${t('cameOn', { name: event.playerName })}${pos}`]
+    return [{ text: `${t('cameOn', { name: event.playerName })}${pos}`, sub: 'in' }]
   }
-  if (event.type === 'arrived') return [t('arrivedLog', { name: event.playerName })]
-  if (event.type === 'ownGoal') return [`${event.playerName} OG ${score}`]
+  if (event.type === 'arrived') return [{ text: t('arrivedLog', { name: event.playerName }) }]
+  if (event.type === 'ownGoal') return [{ text: `${event.playerName} OG ${score}`, goal: true }]
   if (event.type === 'goal' || event.type === 'goalAllowed') {
-    const assist = event.assistName ? [`Assist: ${event.assistName}`] : []
-    return [`Goal ${event.playerName} ${score}`, ...assist]
+    const assist = event.assistName ? [{ text: `Assist: ${event.assistName}` }] : []
+    return [{ text: `Goal ${event.playerName} ${score}`, goal: true }, ...assist]
   }
-  if (event.type === 'yellow') return [`Y  ${event.playerName}`]
-  if (event.type === 'red') return [`R  ${event.playerName}`]
-  return [event.playerName]
+  if (event.type === 'yellow') return [{ text: `Y  ${event.playerName}` }]
+  if (event.type === 'red') return [{ text: `R  ${event.playerName}` }]
+  return [{ text: event.playerName }]
+}
+
+const SUB_MARK_W = 2.4
+const SUB_MARK_GAP = 1.4
+
+/**
+ * Solid triangle pointing at the team's column edge for "in", away from it for "out",
+ * mirrored on the opponent side like the in-app match log.
+ */
+function drawSubMark(pdf: jsPDF, sub: 'in' | 'out', x: number, baseline: number, away: boolean): void {
+  const h = 2.4
+  const top = baseline - 2.6
+  const pointRight = (sub === 'in') !== away
+  setFill(pdf, sub === 'in' ? GOAL_GREEN : SUB_RED)
+  if (pointRight) pdf.triangle(x, top, x, top + h, x + SUB_MARK_W, top + h / 2, 'F')
+  else pdf.triangle(x + SUB_MARK_W, top, x + SUB_MARK_W, top + h, x, top + h / 2, 'F')
 }
 
 function drawPeriodRingPdf(
@@ -335,20 +382,23 @@ function drawMatchLog(doc: Doc, game: Game, players: Player[]): void {
       event.type === 'goal' || event.type === 'ownGoal' || event.type === 'goalAllowed'
         ? `(${home}-${away})`
         : ''
-    const lines = eventLine(event, score).map(pdfSafe)
+    const lines = eventLines(event, score).map((line) => ({ ...line, text: pdfSafe(line.text) }))
     const h = Math.max(6, lines.length * 4.2 + 2)
     ensure(doc, h)
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(8)
     setText(pdf, MUTED)
     pdf.text(`${event.minute}'`, minX, doc.y + 4)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(9)
-    setText(pdf, event.isOpponent ? RED : INK)
     let ty = doc.y + 4
     for (const line of lines) {
-      if (event.isOpponent) pdf.text(fit(pdf, line, colW), awayX, ty, { align: 'right' })
-      else pdf.text(fit(pdf, line, colW), homeX, ty)
+      const away = Boolean(event.isOpponent)
+      pdf.setFont('helvetica', line.goal ? 'bold' : 'normal')
+      pdf.setFontSize(9)
+      setText(pdf, away ? RED : line.goal ? GOAL_GREEN : INK)
+      const indent = line.sub ? SUB_MARK_W + SUB_MARK_GAP : 0
+      if (line.sub) drawSubMark(pdf, line.sub, away ? awayX - SUB_MARK_W : homeX, ty, away)
+      if (away) pdf.text(fit(pdf, line.text, colW - indent), awayX - indent, ty, { align: 'right' })
+      else pdf.text(fit(pdf, line.text, colW - indent), homeX + indent, ty)
       ty += 4.2
     }
     doc.y += h

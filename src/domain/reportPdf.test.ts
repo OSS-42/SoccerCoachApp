@@ -219,4 +219,20 @@ describe('report PDF', () => {
     expect(quiet).not.toContain('Great reflexes')
     expect(quiet).not.toContain('Sick, stayed home')
   })
+
+  it('prints our goals in green and draws balls and sub triangles instead of dots and arrows', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1), player('p2', 'Bea', 9), player('p3', 'Cara', 11)]
+    const match = game({
+      actions: [
+        createAction('goal', 'p2', 120),
+        createAction('substitution', 'p3', 600, { relatedPlayerId: 'p2' }),
+      ],
+    })
+    const text = pdfText(buildGameReportPdf(match, team(players, match), { promo: false }))
+    // GOAL_GREEN text colour for "Goal Bea".
+    expect(text).toContain('0.086 0.639 0.29 rg')
+    expect(text).not.toContain('(> Cara')
+    expect(text).not.toContain('(< Bea')
+  })
 })
