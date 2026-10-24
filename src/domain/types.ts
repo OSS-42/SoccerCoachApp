@@ -173,7 +173,7 @@ export type Game = {
 }
 
 /** Report sections a coach can leave out of the match PDF. The score header is always printed. */
-export const REPORT_SECTIONS = ['timeline', 'matchLog', 'notes', 'players', 'comments', 'dnp'] as const
+export const REPORT_SECTIONS = ['timeline', 'matchLog', 'notes', 'players', 'comments', 'marks', 'dnp'] as const
 
 export type ReportSection = (typeof REPORT_SECTIONS)[number]
 
@@ -185,6 +185,8 @@ export type ReportEdits = {
   /** Whole minutes typed by the coach, replacing the computed playing time. */
   minutes: Record<string, number>
   comments: Record<string, string>
+  /** Coach's mark out of 10 (1–10), only for the players the coach chose to mark. */
+  marks?: Record<string, number>
 }
 
 export type ClockState = {
@@ -202,6 +204,8 @@ export type TeamSettings = {
   defaultSubstitutionSeconds: number | null
   /** Sections unticked the last time a match PDF was exported. */
   pdfHiddenSections?: ReportSection[]
+  /** Marks are opt-in on the PDF: it is often sent to parents. */
+  pdfShowMarks?: boolean
 }
 
 export type Team = {
@@ -224,6 +228,7 @@ export type ParentProfile = {
   kid: Player
   games: Game[]
   pdfHiddenSections?: ReportSection[]
+  pdfShowMarks?: boolean
 }
 
 export type TutorialSave = {

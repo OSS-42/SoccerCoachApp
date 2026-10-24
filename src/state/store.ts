@@ -1,5 +1,11 @@
 import { applyAction, createAction, revertAction } from '@/domain/actions'
-import { MAX_TEAMS, REPORT_COMMENT_MAX_LENGTH, YELLOWS_FOR_RED } from '@/domain/config'
+import {
+  MAX_TEAMS,
+  REPORT_COMMENT_MAX_LENGTH,
+  REPORT_MARK_MAX,
+  REPORT_MARK_MIN,
+  YELLOWS_FOR_RED,
+} from '@/domain/config'
 import {
   commitWallClock,
   currentPeriod,
@@ -810,10 +816,16 @@ export function setCompletedGameElapsed(
 
 function withReportEdits(game: Game, mutator: (edits: ReportEdits) => ReportEdits): Game {
   const current = game.reportEdits ?? { minutes: {}, comments: {} }
-  const next = mutator({ minutes: { ...current.minutes }, comments: { ...current.comments } })
+  const next = mutator({
+    minutes: { ...current.minutes },
+    comments: { ...current.comments },
+    marks: { ...current.marks },
+  })
   const { reportEdits: _old, ...rest } = game
-  if (!Object.keys(next.minutes).length && !Object.keys(next.comments).length) return rest
-  return { ...rest, reportEdits: next }
+  const { marks, ...kept } = next
+  const edits: ReportEdits = marks && Object.keys(marks).length ? { ...kept, marks } : kept
+  if (!Object.keys(edits.minutes).length && !Object.keys(edits.comments).length && !edits.marks) return rest
+  return { ...rest, reportEdits: edits }
 }
 
 /** Set a player's minutes on a finished game. `null`, or the computed value, clears the edit. */
@@ -840,18 +852,40 @@ export function setReportPlayerComment(gameId: string, playerId: string, text: s
   )
 }
 
+/** Mark out of 10 for a player on a finished game. `null` clears it. */
+export function setReportPlayerMark(gameId: string, playerId: string, mark: number | null): boolean {
+  return replaceCompletedGame(gameId, (game) =>
+    withReportEdits(game, (edits) => {
+      const marks = { ...edits.marks }
+      if (mark == null || !Number.isFinite(mark)) delete marks[playerId]
+      else marks[playerId] = Math.min(REPORT_MARK_MAX, Math.max(REPORT_MARK_MIN, Math.round(mark)))
+      return { ...edits, marks }
+    }),
+  )
+}
+
+/** Sections to leave out of a match PDF: saved choice, with marks off unless the coach opted in. */
+export function pdfHiddenSectionsFor(team: Team): ReportSection[] {
+  const hidden = [...(team.settings.pdfHiddenSections ?? [])]
+  if (!team.settings.pdfShowMarks) hidden.push('marks')
+  return hidden
+}
+
 /** Remember which sections were left out, on the team (or parent profile) that owns the game. */
 export function setPdfHiddenSections(gameId: string, hidden: ReportSection[]): void {
   const found = findCompletedGame(gameId)
   if (!found) return
-  const pdfHiddenSections = [...new Set(hidden)]
+  const pdfHiddenSections = [...new Set(hidden)].filter((section) => section !== 'marks')
+  const pdfShowMarks = !hidden.includes('marks')
   if (isParentGame(found.game)) {
-    state = { ...state, parent: { ...getParentProfile(), pdfHiddenSections } }
+    state = { ...state, parent: { ...getParentProfile(), pdfHiddenSections, pdfShowMarks } }
   } else {
     state = {
       ...state,
       teams: state.teams.map((team) =>
-        team.id === found.team.id ? { ...team, settings: { ...team.settings, pdfHiddenSections } } : team,
+        team.id === found.team.id
+          ? { ...team, settings: { ...team.settings, pdfHiddenSections, pdfShowMarks } }
+          : team,
       ),
     }
   }

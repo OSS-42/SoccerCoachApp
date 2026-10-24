@@ -2727,3 +2727,8 @@ html[data-theme] .match-log-away .log-goal {
 html[data-theme] .log-goal .log-assist {
   color: var(--neu-muted);
 }
+
+html[data-theme] .log-swap-title {
+  color: var(--neu-muted);
+  opacity: 1;
+}

@@ -266,3 +266,58 @@ export function buildGoalsCardsEvents(game: Game, players: Player[]): ReportEven
   })
   return events.sort((a, b) => a.period - b.period || a.second - b.second || a.minute - b.minute)
 }
+
+/** Substitutions closer than this to the previous one in the same period form one swap. */
+export const SWAP_WINDOW_SECONDS = 120
+
+export type MatchLogItem =
+  | { kind: 'event'; event: ReportEvent }
+  | {
+      kind: 'swap'
+      /** 1-based count of swaps in the game. */
+      index: number
+      minute: number
+      period: number
+      subs: ReportEvent[]
+    }
+
+function isSwapPart(event: ReportEvent): boolean {
+  return event.type === 'substitution' || event.type === 'enter'
+}
+
+/**
+ * Bundle rotations: two or more substitutions made within SWAP_WINDOW_SECONDS of
+ * each other become one swap, shown where the first one happened. Other events
+ * (goals, cards…) stay as their own lines; a lone substitution stays a plain line.
+ */
+export function groupMatchLog(events: ReportEvent[]): MatchLogItem[] {
+  const clusters: ReportEvent[][] = []
+  let current: ReportEvent[] | null = null
+  for (const event of events) {
+    if (!isSwapPart(event)) continue
+    const last: ReportEvent | undefined = current?.[current.length - 1]
+    if (current && last && last.period === event.period && event.second - last.second <= SWAP_WINDOW_SECONDS) {
+      current.push(event)
+    } else {
+      current = [event]
+      clusters.push(current)
+    }
+  }
+  const swapOf = new Map<ReportEvent, ReportEvent[]>()
+  for (const cluster of clusters) {
+    if (cluster.length > 1) for (const event of cluster) swapOf.set(event, cluster)
+  }
+  const items: MatchLogItem[] = []
+  let swaps = 0
+  for (const event of events) {
+    const cluster = swapOf.get(event)
+    if (!cluster) {
+      items.push({ kind: 'event', event })
+      continue
+    }
+    if (cluster[0] !== event) continue
+    swaps += 1
+    items.push({ kind: 'swap', index: swaps, minute: event.minute, period: event.period, subs: cluster })
+  }
+  return items
+}

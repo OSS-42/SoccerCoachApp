@@ -149,13 +149,14 @@ describe('migrateUnknown', () => {
           id: 't1',
           name: 'A',
           players: [],
-          settings: { pdfHiddenSections: ['timeline', 'bogus', 'timeline'] },
+          settings: { pdfHiddenSections: ['timeline', 'bogus', 'timeline', 'marks'], pdfShowMarks: true },
           games: [
             {
               id: 'g',
               reportEdits: {
                 minutes: { p1: 42.4, p2: 'x', p3: -5 },
                 comments: { p1: '  Strong game ', p2: '', p3: 7 },
+                marks: { p1: 7.6, p2: 0, p3: 'x' },
               },
             },
             { id: 'h', reportEdits: { minutes: {}, comments: {} } },
@@ -164,9 +165,15 @@ describe('migrateUnknown', () => {
       ],
     })
     const [edited, empty] = save.teams[0].games
-    expect(edited.reportEdits).toEqual({ minutes: { p1: 42, p3: 0 }, comments: { p1: 'Strong game' } })
+    expect(edited.reportEdits).toEqual({
+      minutes: { p1: 42, p3: 0 },
+      comments: { p1: 'Strong game' },
+      marks: { p1: 8, p2: 1 },
+    })
     expect(empty.reportEdits).toBeUndefined()
     expect(save.teams[0].settings.pdfHiddenSections).toEqual(['timeline'])
+    expect(save.teams[0].settings.pdfShowMarks).toBe(true)
+    expect(save.parent.pdfShowMarks).toBeUndefined()
     expect(save.parent.pdfHiddenSections).toEqual(['dnp'])
   })
 

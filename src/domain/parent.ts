@@ -133,6 +133,7 @@ export function asParentTeam(profile: ParentProfile, name = 'HOME'): Team {
     settings: {
       defaultSubstitutionSeconds: null,
       ...(profile.pdfHiddenSections ? { pdfHiddenSections: profile.pdfHiddenSections } : {}),
+      ...(profile.pdfShowMarks ? { pdfShowMarks: true } : {}),
     },
     defaultFormations: {},
     defaultUnavailable: {},

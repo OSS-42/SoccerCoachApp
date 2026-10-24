@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { setLocale } from '@/i18n'
 import { periodEndMarksBefore } from './clock'
-import { buildGoalsCardsEvents, buildShotTimeline, substitutionLine } from './timeline'
+import { buildGoalsCardsEvents, buildShotTimeline, groupMatchLog, substitutionLine } from './timeline'
 import type { Game } from './types'
 
 function game(actions: Game['actions']): Game {
@@ -197,3 +197,49 @@ describe('shot timeline', () => {
     expect(events[1]).toMatchObject({ type: 'yellow', isOpponent: true, playerName: 'Opponent' })
   })
 })
+
+describe('grouped swaps', () => {
+  const sub = (on: string, off: string, second: number, period = 1) => ({
+    id: `${on}-${second}`,
+    actionType: 'substitution' as const,
+    playerId: on,
+    relatedPlayerId: off,
+    gameSecond: second,
+    timestamp: '',
+    period,
+  })
+  const players = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((id, i) => ({
+    id,
+    name: id.toUpperCase(),
+    jerseyNumber: i + 1,
+    position: 'CM' as const,
+  }))
+
+  it('bundles substitutions within 2 minutes of each other and numbers the swaps', () => {
+    const match = game([
+      sub('a', 'b', 300),
+      sub('c', 'd', 330),
+      { id: 'goal', actionType: 'goal', playerId: 'e', gameSecond: 360, timestamp: '', period: 1 },
+      sub('e', 'f', 420),
+      sub('b', 'a', 600),
+      sub('d', 'c', 1000),
+      sub('f', 'e', 1100),
+    ])
+    const items = groupMatchLog(buildGoalsCardsEvents(match, players))
+    expect(items.map((item) => (item.kind === 'swap' ? `swap${item.index}:${item.subs.length}` : item.event.type))).toEqual([
+      'swap1:3',
+      'goal',
+      'substitution',
+      'swap2:2',
+    ])
+    const first = items[0]
+    expect(first.kind === 'swap' && first.minute).toBe(5)
+  })
+
+  it('never bundles across a period break', () => {
+    const match = game([sub('a', 'b', 700, 1), sub('c', 'd', 730, 2)])
+    const items = groupMatchLog(buildGoalsCardsEvents(match, players))
+    expect(items.every((item) => item.kind === 'event')).toBe(true)
+  })
+})
+
