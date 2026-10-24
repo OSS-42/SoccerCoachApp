@@ -8,6 +8,21 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.8',
+    items: {
+      en: [
+        'Match report: tap Edit to correct a player’s minutes, add a comment, and give an optional mark out of 10.',
+        'Exporting a match PDF now asks which sections to include and remembers your choice per team. Marks stay off unless you turn them on.',
+        'Match log: substitutions made within 2 minutes are grouped into one swap, and our goals show in green. The PDF now uses soccer balls on the timeline and green/red triangles for substitutions.',
+      ],
+      fr: [
+        'Rapport de match : touchez Modifier pour corriger les minutes d’un joueur, ajouter un commentaire et donner une note sur 10 (facultative).',
+        'L’export PDF d’un match demande maintenant quelles sections inclure et retient votre choix par équipe. Les notes restent masquées tant que vous ne les activez pas.',
+        'Déroulé du match : les changements faits à moins de 2 minutes d’écart sont regroupés en une rotation, et nos buts sont en vert. Le PDF affiche des ballons sur la frise et des triangles vert/rouge pour les changements.',
+      ],
+    },
+  },
+  {
     version: '2.5.7',
     items: {
       en: [
