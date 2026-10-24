@@ -3,7 +3,7 @@ import { emptyParentProfile, isParentGame, replayParentFormation } from './paren
 import { reconstructStartingFormation } from './playingTime'
 import { canSelectTeam, liteHomeTeamId } from './entitlement'
 import { createDefaultTeams, dropEmptyPlaceholderTeams, ensureDemoTeam, isPlayerPosition } from './teams'
-import { JERSEY_MAX, JERSEY_MIN, REPORT_COMMENT_MAX_LENGTH } from './config'
+import { JERSEY_MAX, JERSEY_MIN, REPORT_COMMENT_MAX_LENGTH, REPORT_MARK_MAX, REPORT_MARK_MIN } from './config'
 import {
   APP_VERSION,
   DEFAULT_CLOCK,
@@ -201,8 +201,15 @@ function migrateReportEdits(raw: unknown): ReportEdits | undefined {
     const text = asString(value).trim().slice(0, REPORT_COMMENT_MAX_LENGTH)
     if (text) comments[id] = text
   }
-  if (!Object.keys(minutes).length && !Object.keys(comments).length) return undefined
-  return { minutes, comments }
+  const marks: Record<string, number> = {}
+  for (const [id, value] of Object.entries(asRecord(rec.marks) ?? {})) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      marks[id] = clamp(Math.round(value), REPORT_MARK_MIN, REPORT_MARK_MAX)
+    }
+  }
+  const hasMarks = Object.keys(marks).length > 0
+  if (!Object.keys(minutes).length && !Object.keys(comments).length && !hasMarks) return undefined
+  return hasMarks ? { minutes, comments, marks } : { minutes, comments }
 }
 
 function migrateHiddenSections(raw: unknown): ReportSection[] | undefined {
@@ -210,9 +217,15 @@ function migrateHiddenSections(raw: unknown): ReportSection[] | undefined {
   return [...new Set(raw.filter(isReportSection))]
 }
 
-function withHiddenSections(raw: unknown): { pdfHiddenSections?: ReportSection[] } {
-  const pdfHiddenSections = migrateHiddenSections(raw)
-  return pdfHiddenSections ? { pdfHiddenSections } : {}
+function withPdfChoices(rec: Record<string, unknown> | null): {
+  pdfHiddenSections?: ReportSection[]
+  pdfShowMarks?: boolean
+} {
+  const pdfHiddenSections = migrateHiddenSections(rec?.pdfHiddenSections)?.filter((s) => s !== 'marks')
+  return {
+    ...(pdfHiddenSections ? { pdfHiddenSections } : {}),
+    ...(rec?.pdfShowMarks === true ? { pdfShowMarks: true } : {}),
+  }
 }
 
 function migrateGame(raw: unknown, index: number): Game | null {
@@ -280,7 +293,7 @@ function migrateParent(raw: unknown): ParentProfile {
   const kid = migratePlayer(rec.kid, 0)
   return {
     kid: kid ?? base.kid,
-    ...withHiddenSections(rec.pdfHiddenSections),
+    ...withPdfChoices(rec),
     games: Array.isArray(rec.games)
       ? rec.games
           .map(migrateGame)
@@ -312,7 +325,7 @@ function migrateTeam(raw: unknown, index: number): Team | null {
           : settingsRec?.defaultSubstitutionSeconds != null
             ? asNumber(settingsRec.defaultSubstitutionSeconds)
             : null,
-      ...withHiddenSections(settingsRec?.pdfHiddenSections),
+      ...withPdfChoices(settingsRec),
     },
     defaultFormations: migrateDefaultFormations(rec.defaultFormations ?? rec.formationTemp),
     defaultUnavailable: migrateDefaultUnavailable(rec.defaultUnavailable),

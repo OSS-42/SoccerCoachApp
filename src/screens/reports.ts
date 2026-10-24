@@ -1,5 +1,5 @@
 import { t } from '@/i18n'
-import { VIEW_REPORT_EVENT } from '@/domain/config'
+import { REPORT_MARK_MAX, REPORT_MARK_MIN, VIEW_REPORT_EVENT } from '@/domain/config'
 import { formatClock, parseClockInput } from '@/domain/clock'
 import { isPro } from '@/domain/entitlement'
 import { askConfirm, askPrompt } from '@/ui/confirm'
@@ -11,8 +11,10 @@ import {
   getSave,
   parentRosterTeam,
   setCompletedGameElapsed,
+  pdfHiddenSectionsFor,
   setPdfHiddenSections,
   setReportPlayerComment,
+  setReportPlayerMark,
   setReportPlayerMinutes,
 } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
@@ -107,6 +109,18 @@ function bindReportEditCards(gameId: string): void {
       setReportPlayerComment(gameId, playerId, target.value)
       return
     }
+    if (target instanceof HTMLInputElement && target.classList.contains('report-edit-mark')) {
+      const raw = target.value.trim()
+      const mark = raw === '' ? null : Number(raw)
+      if (mark != null && (!Number.isInteger(mark) || mark < REPORT_MARK_MIN || mark > REPORT_MARK_MAX)) {
+        showMessage(t('invalidMark'), 'error')
+        target.value = target.defaultValue
+        return
+      }
+      setReportPlayerMark(gameId, playerId, mark)
+      target.defaultValue = target.value
+      return
+    }
     if (!(target instanceof HTMLInputElement) || !target.classList.contains('report-edit-minutes')) return
     const computed = Number(card.dataset.computed ?? 0)
     const raw = target.value.trim()
@@ -189,7 +203,7 @@ async function exportReportPdf(gameId: string): Promise<void> {
     showMessage(t('reportMissing'), 'error')
     return
   }
-  const hidden = await askPdfSections(team.settings.pdfHiddenSections ?? [])
+  const hidden = await askPdfSections(pdfHiddenSectionsFor(team))
   if (!hidden) return
   setPdfHiddenSections(gameId, hidden)
   try {

@@ -90,4 +90,13 @@ describe('editable report', () => {
     expect(html).toContain('id="done-edit-report"')
     expect(html).not.toContain('Shots Timeline')
   })
+
+  it('shows a mark badge on the card and a mark field in edit mode', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 8)]
+    const match = game({ reportEdits: { minutes: {}, comments: {}, marks: { p1: 7 } } })
+    expect(buildReportDialogHtml(match, team(players, match))).toContain('<span class="report-mark">7<small>/10</small></span>')
+    expect(buildReportDialogHtml(match, team(players, match), 'edit')).toContain('class="report-edit-mark"')
+  })
 })
+

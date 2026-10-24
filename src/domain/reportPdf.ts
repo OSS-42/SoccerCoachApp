@@ -12,7 +12,7 @@ import {
   playedMinutesByPlayerPosition,
   shortStartLabel,
 } from './playingTime'
-import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from './timeline'
+import { buildGoalsCardsEvents, buildShotTimeline, groupMatchLog, scheduledMinutes, type ReportEvent } from './timeline'
 import type { Game, LiveStats, Player, ReportSection, Team } from './types'
 
 type MetricKey = {
@@ -358,6 +358,37 @@ function drawPeriodMarkPdf(doc: Doc, total: number, filled: number, home: number
   doc.y += 16
 }
 
+const SWAP_ROW_H = 4.2
+
+/** One block per rotation: players on in the left column, players off beside them. */
+function drawSwapPdf(doc: Doc, index: number, minute: number, subs: ReportEvent[], x: number): void {
+  const pdf = doc.pdf
+  const h = 6 + subs.length * SWAP_ROW_H + 2
+  ensure(doc, h)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(8)
+  setText(pdf, MUTED)
+  pdf.text(`${minute}'`, MARGIN, doc.y + 4)
+  pdf.text(pdfSafe(`${t('swapTitle', { n: index })} · ${t('swapCount', { count: subs.length })}`), x, doc.y + 4)
+  const colW = 62
+  const indent = SUB_MARK_W + SUB_MARK_GAP
+  let ty = doc.y + 4 + 5
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(9)
+  setText(pdf, INK)
+  for (const sub of subs) {
+    const pos = sub.position ? ` (${sub.position})` : ''
+    drawSubMark(pdf, 'in', x, ty, false)
+    pdf.text(fit(pdf, `${sub.playerName}${pos}`, colW - indent - 2), x + indent, ty)
+    if (sub.type === 'substitution') {
+      drawSubMark(pdf, 'out', x + colW, ty, false)
+      pdf.text(fit(pdf, sub.relatedName ?? '', colW - indent), x + colW + indent, ty)
+    }
+    ty += SWAP_ROW_H
+  }
+  doc.y += h
+}
+
 function drawMatchLog(doc: Doc, game: Game, players: Player[]): void {
   const events = buildGoalsCardsEvents(game, players)
   if (!events.length) return
@@ -370,12 +401,18 @@ function drawMatchLog(doc: Doc, game: Game, players: Player[]): void {
   let shownPeriod = 1
   let home = 0
   let away = 0
-  for (const event of events) {
-    const marks = periodEndMarksBefore(shownPeriod, event.period)
+  for (const item of groupMatchLog(events)) {
+    const period = item.kind === 'swap' ? item.period : item.event.period
+    const marks = periodEndMarksBefore(shownPeriod, period)
     for (const filled of marks.filled) {
       drawPeriodMarkPdf(doc, game.numPeriods, filled, home, away)
     }
     shownPeriod = marks.shownPeriod
+    if (item.kind === 'swap') {
+      drawSwapPdf(doc, item.index, item.minute, item.subs, homeX)
+      continue
+    }
+    const event = item.event
     if (event.type === 'goal' || (event.type === 'ownGoal' && !event.isOpponent)) home += 1
     if (event.type === 'goalAllowed' || (event.type === 'ownGoal' && event.isOpponent)) away += 1
     const score =
@@ -444,7 +481,7 @@ function metricFill(kind: string, value: number): RGB | null {
   return MINT
 }
 
-type PlayerSections = { cards: boolean; comments: boolean; dnp: boolean }
+type PlayerSections = { cards: boolean; comments: boolean; marks: boolean; dnp: boolean }
 
 const COMMENT_LINE_H = 4
 
@@ -491,6 +528,7 @@ function drawPlayers(doc: Doc, game: Game, players: Player[], show: PlayerSectio
   const metricRows = Math.ceil(metrics.length / cols)
   const baseCardH = 6 + headerH + cellH * metricRows + gap * Math.max(0, metricRows - 1) + 4
   const comments = show.comments ? (game.reportEdits?.comments ?? {}) : {}
+  const marks = show.marks ? (game.reportEdits?.marks ?? {}) : {}
 
   const roster = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
   const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)
@@ -516,8 +554,16 @@ function drawPlayers(doc: Doc, game: Game, players: Player[], show: PlayerSectio
     pdf.setFontSize(8)
     setText(pdf, INK)
     pdf.text(String(player.jerseyNumber), MARGIN + 7, y + 7.6, { align: 'center' })
+    const mark = marks[player.id]
+    const markW = mark == null ? 0 : 16
+    if (mark != null) {
+      setFill(pdf, YELLOW)
+      pdf.roundedRect(MARGIN + CONTENT_W - 3 - markW, y + 3, markW, 7, 1.5, 1.5, 'F')
+      pdf.setFontSize(9)
+      pdf.text(`${mark}/10`, MARGIN + CONTENT_W - 3 - markW / 2, y + 7.8, { align: 'center' })
+    }
     pdf.setFontSize(11)
-    pdf.text(fit(pdf, player.name, CONTENT_W - 12), MARGIN + 13, y + 7.8)
+    pdf.text(fit(pdf, player.name, CONTENT_W - 16 - markW), MARGIN + 13, y + 7.8)
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(7)
     setText(pdf, MUTED)
@@ -589,6 +635,7 @@ export function buildGameReportPdf(game: Game, team: Team, options: GameReportPd
   drawPlayers(doc, game, team.players, {
     cards: show('players'),
     comments: show('comments'),
+    marks: show('marks'),
     dnp: show('dnp'),
   })
   if (options.promo ?? true) addPromoFooter(pdf)

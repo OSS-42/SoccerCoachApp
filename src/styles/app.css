@@ -4094,6 +4094,25 @@ html.is-wide-ui {
     border-left: 8px solid #e11d48;
 }
 
+.match-log-row.is-swap {
+    grid-template-columns: 3.2rem 1fr;
+}
+
+.log-swap-title {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.log-swap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 12px;
+    row-gap: 2px;
+}
+
 .log-pos {
     font-size: 11px;
     font-weight: 650;
@@ -4227,6 +4246,27 @@ html.is-wide-ui {
     margin-top: 2px;
 }
 
+.report-mark {
+    margin-left: auto;
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    background: rgba(253, 230, 138, 0.9);
+    color: #111318;
+}
+
+.report-mark small {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.report-edit-minutes-row .report-edit-mark {
+    width: 5.5rem;
+}
+
 .report-edited-tag {
     display: inline-block;
     margin-left: 4px;
@@ -4252,6 +4292,7 @@ html.is-wide-ui {
 }
 
 .report-edit-minutes-row label {
+    min-width: 7.5rem;
     font-size: 13px;
     font-weight: 700;
 }

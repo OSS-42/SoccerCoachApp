@@ -2,7 +2,12 @@ import { t } from '@/i18n'
 import { statsFromActions } from '@/domain/actions'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
-import { REPORT_COMMENT_MAX_LENGTH, TIMELINE_MARK_EVERY_MINUTES } from '@/domain/config'
+import {
+  REPORT_COMMENT_MAX_LENGTH,
+  REPORT_MARK_MAX,
+  REPORT_MARK_MIN,
+  TIMELINE_MARK_EVERY_MINUTES,
+} from '@/domain/config'
 import {
   computedMinutesByPlayer,
   editedMinutes,
@@ -11,7 +16,13 @@ import {
   playedMinutesByPlayerPosition,
   shortStartLabel,
 } from '@/domain/playingTime'
-import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from '@/domain/timeline'
+import {
+  buildGoalsCardsEvents,
+  buildShotTimeline,
+  groupMatchLog,
+  scheduledMinutes,
+  type ReportEvent,
+} from '@/domain/timeline'
 import type { Game, Player, Team } from '@/domain/types'
 import { escapeHtml } from '@/ui/dom'
 
@@ -142,6 +153,24 @@ function renderPeriodMark(total: number, filled: number, home: number, away: num
   </div>`
 }
 
+function renderSwap(index: number, minute: number, subs: ReportEvent[]): string {
+  const rows = subs
+    .map((sub) => {
+      const pos = sub.position ? ` <span class="log-pos">${escapeHtml(sub.position)}</span>` : ''
+      const off = sub.type === 'substitution' ? escapeHtml(sub.relatedName || t('unknownPlayer')) : ''
+      return `<div class="log-sub-in">${escapeHtml(sub.playerName)}${pos}</div>
+        <div class="${off ? 'log-sub-out' : 'log-swap-empty'}">${off}</div>`
+    })
+    .join('')
+  return `<div class="match-log-row is-home is-swap">
+    <span class="match-log-min">${minute}'</span>
+    <div class="log-swap">
+      <div class="log-swap-title">${escapeHtml(t('swapTitle', { n: index }))} · ${escapeHtml(t('swapCount', { count: subs.length }))}</div>
+      <div class="log-swap-grid">${rows}</div>
+    </div>
+  </div>`
+}
+
 function renderMatchLog(game: Game, players: Player[]): string {
   const events = buildGoalsCardsEvents(game, players)
   if (!events.length) {
@@ -151,12 +180,18 @@ function renderMatchLog(game: Game, players: Player[]): string {
   let shownPeriod = 1
   let home = 0
   let away = 0
-  for (const event of events) {
-    const marks = periodEndMarksBefore(shownPeriod, event.period)
+  for (const item of groupMatchLog(events)) {
+    const period = item.kind === 'swap' ? item.period : item.event.period
+    const marks = periodEndMarksBefore(shownPeriod, period)
     for (const filled of marks.filled) {
       rows.push(renderPeriodMark(game.numPeriods, filled, home, away))
     }
     shownPeriod = marks.shownPeriod
+    if (item.kind === 'swap') {
+      rows.push(renderSwap(item.index, item.minute, item.subs))
+      continue
+    }
+    const event = item.event
     if (event.type === 'goal' || (event.type === 'ownGoal' && !event.isOpponent)) home += 1
     if (event.type === 'goalAllowed' || (event.type === 'ownGoal' && event.isOpponent)) away += 1
     const score =
@@ -224,6 +259,10 @@ function renderScoreHeader(game: Game, team: Team): string {
     </div>`
 }
 
+function renderMark(mark: number | undefined): string {
+  return mark == null ? '' : `<span class="report-mark">${mark}<small>/10</small></span>`
+}
+
 function renderComment(text: string | undefined): string {
   return text ? `<p class="report-player-comment">${escapeHtml(text)}</p>` : ''
 }
@@ -236,6 +275,7 @@ function renderPlayers(game: Game, team: Team): string {
   const minutes = playedMinutesByPlayer(game)
   const minutesByPos = playedMinutesByPlayerPosition(game)
   const comments = game.reportEdits?.comments ?? {}
+  const marks = game.reportEdits?.marks ?? {}
   const roster = sortedRoster(team)
   const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)
   const dnpRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) === 0)
@@ -252,6 +292,7 @@ function renderPlayers(game: Game, team: Team): string {
         <header>
           <span class="stat-jersey">${player.jerseyNumber}</span>
           <span class="stat-card-name">${escapeHtml(player.name)}</span>
+          ${renderMark(marks[player.id])}
         </header>
         <p class="stat-played-line">${escapeHtml(dist)}${tag}</p>
         <div class="report-stat-grid">
@@ -298,6 +339,7 @@ function renderEditCards(game: Game, team: Team): string {
   const computed = computedMinutesByPlayer(game)
   const minutes = playedMinutesByPlayer(game)
   const comments = game.reportEdits?.comments ?? {}
+  const marks = game.reportEdits?.marks ?? {}
   const roster = sortedRoster(team)
   const ordered = [
     ...roster.filter((player) => (minutes.get(player.id) ?? 0) > 0),
@@ -318,6 +360,10 @@ function renderEditCards(game: Game, team: Team): string {
           <input type="number" id="report-edit-min-${id}" class="report-edit-minutes" inputmode="numeric" min="0" max="999" step="1" value="${minutes.get(player.id) ?? 0}" />
           <span class="report-edit-computed">${escapeHtml(t('computedMinutes', { min: tracked }))}</span>
           <button type="button" class="secondary-btn report-edit-reset"${edited ? '' : ' hidden'}>${escapeHtml(t('resetMinutes'))}</button>
+        </div>
+        <div class="report-edit-minutes-row">
+          <label for="report-edit-mark-${id}">${escapeHtml(t('markLabel'))}</label>
+          <input type="number" id="report-edit-mark-${id}" class="report-edit-mark" inputmode="numeric" min="${REPORT_MARK_MIN}" max="${REPORT_MARK_MAX}" step="1" placeholder="${escapeHtml(t('markPlaceholder'))}" value="${marks[player.id] ?? ''}" />
         </div>
         <textarea class="report-edit-comment" rows="2" maxlength="${REPORT_COMMENT_MAX_LENGTH}" placeholder="${escapeHtml(t('playerCommentPlaceholder'))}">${escapeHtml(comments[player.id] ?? '')}</textarea>
       </article>`

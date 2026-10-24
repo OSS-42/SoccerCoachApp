@@ -235,4 +235,33 @@ describe('report PDF', () => {
     expect(text).not.toContain('(> Cara')
     expect(text).not.toContain('(< Bea')
   })
+
+  it('prints a mark only when the Marks section is switched on', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1)]
+    const match = game({ reportEdits: { minutes: {}, comments: {}, marks: { p1: 8 } } })
+    const shown = pdfText(buildGameReportPdf(match, team(players, match), { promo: false }))
+    expect(shown).toContain('(8/10)')
+    const hidden = pdfText(buildGameReportPdf(match, team(players, match), { promo: false, hidden: ['marks'] }))
+    expect(hidden).not.toContain('(8/10)')
+  })
+
+  it('prints rotations as one swap block', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1), player('p2', 'Bea', 9), player('p3', 'Cara', 11), player('p4', 'Dee', 4)]
+    const match = game({
+      formation: [
+        { playerId: 'p1', position: 'GK', x: 50, y: 90 },
+        { playerId: 'p2', position: 'ST', x: 50, y: 20 },
+      ],
+      actions: [
+        createAction('substitution', 'p3', 600, { relatedPlayerId: 'p2' }),
+        createAction('substitution', 'p4', 640, { relatedPlayerId: 'p1' }),
+      ],
+    })
+    const text = pdfText(buildGameReportPdf(match, team(players, match), { promo: false }))
+    expect(text).toContain('Swap 1')
+    expect(text).toContain('2 changes')
+  })
 })
+

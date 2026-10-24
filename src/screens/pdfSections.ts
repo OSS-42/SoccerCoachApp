@@ -8,6 +8,7 @@ const SECTION_LABELS: Record<ReportSection, MessageKey> = {
   notes: 'notes',
   players: 'playerStatistics',
   comments: 'pdfSectionComments',
+  marks: 'pdfSectionMarks',
   dnp: 'didNotPlay',
 }
 

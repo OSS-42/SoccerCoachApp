@@ -7,8 +7,10 @@ import {
   findCompletedGame,
   getSave,
   hydrate,
+  pdfHiddenSectionsFor,
   setPdfHiddenSections,
   setReportPlayerComment,
+  setReportPlayerMark,
   setReportPlayerMinutes,
 } from './store'
 
@@ -71,9 +73,27 @@ describe('report edits', () => {
 
   it('remembers PDF sections on the team that owns the game', () => {
     startWith()
-    setPdfHiddenSections('g1', ['timeline', 'dnp'])
+    setPdfHiddenSections('g1', ['timeline', 'dnp', 'marks'])
     const teams = getSave().teams
     expect(teams.find((t) => t.id === 't2')?.settings.pdfHiddenSections).toEqual(['timeline', 'dnp'])
     expect(teams.find((t) => t.id === 't1')?.settings.pdfHiddenSections).toBeUndefined()
+  })
+
+  it('leaves marks out of the PDF until the coach switches them on', () => {
+    startWith()
+    const team = () => getSave().teams.find((t) => t.id === 't2')!
+    expect(pdfHiddenSectionsFor(team())).toEqual(['marks'])
+    setPdfHiddenSections('g1', ['notes'])
+    expect(pdfHiddenSectionsFor(team())).toEqual(['notes'])
+    setPdfHiddenSections('g1', ['notes', 'marks'])
+    expect(pdfHiddenSectionsFor(team())).toEqual(['notes', 'marks'])
+  })
+
+  it('saves a mark from 1 to 10 and clears it', () => {
+    startWith()
+    setReportPlayerMark('g1', 'p1', 14)
+    expect(edits()?.marks).toEqual({ p1: 10 })
+    setReportPlayerMark('g1', 'p1', null)
+    expect(edits()).toBeUndefined()
   })
 })
