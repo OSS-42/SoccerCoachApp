@@ -1,9 +1,11 @@
 import { t } from '@/i18n'
 import { statsFromActions } from '@/domain/actions'
-import { TIMELINE_MARK_EVERY_MINUTES } from '@/domain/config'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from '@/domain/clock'
 import { periodGoalDeltas } from '@/domain/game'
+import { REPORT_COMMENT_MAX_LENGTH, TIMELINE_MARK_EVERY_MINUTES } from '@/domain/config'
 import {
+  computedMinutesByPlayer,
+  editedMinutes,
   formatPlayedDistribution,
   playedMinutesByPlayer,
   playedMinutesByPlayerPosition,
@@ -200,56 +202,11 @@ function metric(value: number, label: string, kind = ''): string {
     </div>`
 }
 
-export function buildReportDialogHtml(game: Game, team: Team): string {
+function renderScoreHeader(game: Game, team: Team): string {
   const periodLines = periodGoalDeltas(game)
     .map((p, i) => `<div class="period-score-line">${t('periodLine', { n: i + 1, home: p.home, away: p.away })}</div>`)
     .join('')
-  const minutes = playedMinutesByPlayer(game)
-  const minutesByPos = playedMinutesByPlayerPosition(game)
-  const roster = [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
-  const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)
-  const dnpRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) === 0)
-  const cards = playedRoster
-    .map((player) => {
-      const stats = statsFromActions(game.actions, player.id)
-      const played = minutes.get(player.id) ?? 0
-      const dist = formatPlayedDistribution(minutesByPos.get(player.id), played)
-      return `<article class="report-stat-card">
-        <header>
-          <span class="stat-jersey">${player.jerseyNumber}</span>
-          <span class="stat-card-name">${escapeHtml(player.name)}</span>
-        </header>
-        <p class="stat-played-line">${escapeHtml(dist)}</p>
-        <div class="report-stat-grid">
-          ${metric(stats.goals, t('statShortGoal'), 'stat-goal')}
-          ${metric(stats.assists, t('statShortAssist'))}
-          ${metric(stats.shotOnGoal, t('statShortShot'))}
-          ${metric(stats.saves, t('statShortSave'))}
-          ${metric(stats.blockedShot, t('statShortBlock'))}
-          ${metric(stats.interceptions, t('statShortIntercept'))}
-          ${metric(stats.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
-          ${metric(stats.faults, t('statShortFoul'))}
-          ${metric(stats.yellowCards, t('statShortYellow'), 'stat-yellow')}
-          ${metric(stats.redCards, t('statShortRed'), 'stat-red')}
-          ${metric(stats.ownGoals, t('ownGoalShort'))}
-        </div>
-      </article>`
-    })
-    .join('')
-  const dnp = dnpRoster.length
-    ? `<h3>${t('didNotPlay')}</h3>
-      <div class="report-dnp">${dnpRoster
-        .map(
-          (player) =>
-            `<span class="report-dnp-chip"><span class="stat-jersey">${player.jerseyNumber}</span>${escapeHtml(player.name)}</span>`,
-        )
-        .join('')}</div>`
-    : ''
-  return `
-    <div class="report-toolbar">
-      <button class="secondary-btn" id="close-open-report-top">${t('close')}</button>
-    </div>
-    <div class="report-header-score">
+  return `<div class="report-header-score">
       <div class="team-section team-left">
         <div class="team-name">${escapeHtml(team.name)}</div>
         <div class="team-score">${game.homeScore}</div>
@@ -264,7 +221,132 @@ export function buildReportDialogHtml(game: Game, team: Team): string {
       <div>${escapeHtml(game.date)} · ${game.matchType} · ${formatClock(game.elapsedSeconds)}${
         shortStartLabel(game) ? ` · ${escapeHtml(shortStartLabel(game) ?? '')}` : ''
       }</div>
+    </div>`
+}
+
+function renderComment(text: string | undefined): string {
+  return text ? `<p class="report-player-comment">${escapeHtml(text)}</p>` : ''
+}
+
+function sortedRoster(team: Team): Player[] {
+  return [...team.players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+}
+
+function renderPlayers(game: Game, team: Team): string {
+  const minutes = playedMinutesByPlayer(game)
+  const minutesByPos = playedMinutesByPlayerPosition(game)
+  const comments = game.reportEdits?.comments ?? {}
+  const roster = sortedRoster(team)
+  const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)
+  const dnpRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) === 0)
+  const cards = playedRoster
+    .map((player) => {
+      const stats = statsFromActions(game.actions, player.id)
+      const played = minutes.get(player.id) ?? 0
+      const edited = editedMinutes(game, player.id) != null
+      const dist = edited
+        ? formatPlayedDistribution(undefined, played)
+        : formatPlayedDistribution(minutesByPos.get(player.id), played)
+      const tag = edited ? ` <span class="report-edited-tag">${escapeHtml(t('minutesEditedTag'))}</span>` : ''
+      return `<article class="report-stat-card">
+        <header>
+          <span class="stat-jersey">${player.jerseyNumber}</span>
+          <span class="stat-card-name">${escapeHtml(player.name)}</span>
+        </header>
+        <p class="stat-played-line">${escapeHtml(dist)}${tag}</p>
+        <div class="report-stat-grid">
+          ${metric(stats.goals, t('statShortGoal'), 'stat-goal')}
+          ${metric(stats.assists, t('statShortAssist'))}
+          ${metric(stats.shotOnGoal, t('statShortShot'))}
+          ${metric(stats.saves, t('statShortSave'))}
+          ${metric(stats.blockedShot, t('statShortBlock'))}
+          ${metric(stats.interceptions, t('statShortIntercept'))}
+          ${metric(stats.goalsAllowed, t('goalsAllowedShort'), 'stat-against')}
+          ${metric(stats.faults, t('statShortFoul'))}
+          ${metric(stats.yellowCards, t('statShortYellow'), 'stat-yellow')}
+          ${metric(stats.redCards, t('statShortRed'), 'stat-red')}
+          ${metric(stats.ownGoals, t('ownGoalShort'))}
+        </div>
+        ${renderComment(comments[player.id])}
+      </article>`
+    })
+    .join('')
+  const dnpComments = dnpRoster
+    .filter((player) => comments[player.id])
+    .map(
+      (player) => `<div class="report-dnp-comment">
+        <span class="report-note-meta">#${player.jerseyNumber} ${escapeHtml(player.name)}</span>
+        ${renderComment(comments[player.id])}
+      </div>`,
+    )
+    .join('')
+  const dnp = dnpRoster.length
+    ? `<h3>${t('didNotPlay')}</h3>
+      <div class="report-dnp">${dnpRoster
+        .map(
+          (player) =>
+            `<span class="report-dnp-chip"><span class="stat-jersey">${player.jerseyNumber}</span>${escapeHtml(player.name)}</span>`,
+        )
+        .join('')}</div>${dnpComments}`
+    : ''
+  return `<h3>${t('playerStatistics')}</h3>
+    <div class="report-stat-cards">${cards}</div>
+    ${dnp}`
+}
+
+function renderEditCards(game: Game, team: Team): string {
+  const computed = computedMinutesByPlayer(game)
+  const minutes = playedMinutesByPlayer(game)
+  const comments = game.reportEdits?.comments ?? {}
+  const roster = sortedRoster(team)
+  const ordered = [
+    ...roster.filter((player) => (minutes.get(player.id) ?? 0) > 0),
+    ...roster.filter((player) => (minutes.get(player.id) ?? 0) === 0),
+  ]
+  return ordered
+    .map((player) => {
+      const id = escapeHtml(player.id)
+      const edited = editedMinutes(game, player.id) != null
+      const tracked = computed.get(player.id) ?? 0
+      return `<article class="report-stat-card report-edit-card" data-player-id="${id}" data-computed="${tracked}">
+        <header>
+          <span class="stat-jersey">${player.jerseyNumber}</span>
+          <span class="stat-card-name">${escapeHtml(player.name)}</span>
+        </header>
+        <div class="report-edit-minutes-row">
+          <label for="report-edit-min-${id}">${escapeHtml(t('minutesPlayedLabel'))}</label>
+          <input type="number" id="report-edit-min-${id}" class="report-edit-minutes" inputmode="numeric" min="0" max="999" step="1" value="${minutes.get(player.id) ?? 0}" />
+          <span class="report-edit-computed">${escapeHtml(t('computedMinutes', { min: tracked }))}</span>
+          <button type="button" class="secondary-btn report-edit-reset"${edited ? '' : ' hidden'}>${escapeHtml(t('resetMinutes'))}</button>
+        </div>
+        <textarea class="report-edit-comment" rows="2" maxlength="${REPORT_COMMENT_MAX_LENGTH}" placeholder="${escapeHtml(t('playerCommentPlaceholder'))}">${escapeHtml(comments[player.id] ?? '')}</textarea>
+      </article>`
+    })
+    .join('')
+}
+
+export type ReportDialogMode = 'view' | 'edit'
+
+export function buildReportDialogHtml(game: Game, team: Team, mode: ReportDialogMode = 'view'): string {
+  if (mode === 'edit') {
+    return `
+    <div class="report-toolbar">
+      <button class="primary-btn" id="done-edit-report-top">${t('doneEditing')}</button>
     </div>
+    ${renderScoreHeader(game, team)}
+    <p class="report-edit-hint">${escapeHtml(t('reportEditHint'))}</p>
+    <div class="report-stat-cards report-edit-cards" id="report-edit-cards">${renderEditCards(game, team)}</div>
+    <div class="report-actions">
+      <button class="primary-btn" id="done-edit-report">${t('doneEditing')}</button>
+    </div>
+  `
+  }
+  return `
+    <div class="report-toolbar">
+      <button class="secondary-btn" id="edit-open-report">${t('editReport')}</button>
+      <button class="secondary-btn" id="close-open-report-top">${t('close')}</button>
+    </div>
+    ${renderScoreHeader(game, team)}
     ${renderScorers(game, team.players)}
     <div class="report-section timeline-section">
       <h3>${t('shotsTimeline')}</h3>
@@ -274,9 +356,7 @@ export function buildReportDialogHtml(game: Game, team: Team): string {
       ${renderMatchLog(game, team.players)}
     </div>
     ${renderNotes(game, team.players)}
-    <h3>${t('playerStatistics')}</h3>
-    <div class="report-stat-cards">${cards}</div>
-    ${dnp}
+    ${renderPlayers(game, team)}
     <div class="report-actions">
       <button class="secondary-btn" id="print-open-report">${t('exportPdf')}</button>
       <button class="primary-btn" id="close-open-report">${t('close')}</button>

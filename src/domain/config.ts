@@ -36,6 +36,7 @@ export const DEFAULT_SUB_MINUTES = 6
 export const JERSEY_MIN = 0
 export const JERSEY_MAX = 99
 export const NOTE_MAX_LENGTH = 200
+export const REPORT_COMMENT_MAX_LENGTH = 500
 export const YELLOWS_FOR_RED = 2
 export const EXTRA_TIME_PERIODS = 2
 

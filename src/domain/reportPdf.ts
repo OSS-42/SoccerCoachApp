@@ -6,13 +6,14 @@ import { APP_STORE_URL } from './config'
 import { formatClock, periodEndMarksBefore, remainingPeriodEndMarks } from './clock'
 import { periodGoalDeltas } from './game'
 import {
+  editedMinutes,
   formatPlayedDistribution,
   playedMinutesByPlayer,
   playedMinutesByPlayerPosition,
   shortStartLabel,
 } from './playingTime'
 import { buildGoalsCardsEvents, buildShotTimeline, scheduledMinutes } from './timeline'
-import type { Game, LiveStats, Player, Team } from './types'
+import type { Game, LiveStats, Player, ReportSection, Team } from './types'
 
 type MetricKey = {
   [K in keyof LiveStats]: LiveStats[K] extends number ? K : never
@@ -59,6 +60,11 @@ export function fileSafe(value: string): string {
 export type PdfOptions = {
   /** Print the "Made with ActionPitch" footer and store link on every page. */
   promo?: boolean
+}
+
+export type GameReportPdfOptions = PdfOptions & {
+  /** Sections the coach unticked. The score header always prints. */
+  hidden?: readonly ReportSection[]
 }
 
 /** Footer in the bottom margin of every page, so it never moves the content. */
@@ -388,7 +394,29 @@ function metricFill(kind: string, value: number): RGB | null {
   return MINT
 }
 
-function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
+type PlayerSections = { cards: boolean; comments: boolean; dnp: boolean }
+
+const COMMENT_LINE_H = 4
+
+function commentLines(pdf: jsPDF, text: string | undefined, width: number): string[] {
+  if (!text) return []
+  pdf.setFont('helvetica', 'italic')
+  pdf.setFontSize(8.5)
+  return pdf.splitTextToSize(pdfSafe(text), width) as string[]
+}
+
+function drawCommentLines(pdf: jsPDF, lines: string[], x: number, y: number): void {
+  pdf.setFont('helvetica', 'italic')
+  pdf.setFontSize(8.5)
+  setText(pdf, INK)
+  let ly = y
+  for (const line of lines) {
+    pdf.text(line, x, ly)
+    ly += COMMENT_LINE_H
+  }
+}
+
+function drawPlayers(doc: Doc, game: Game, players: Player[], show: PlayerSections): void {
   const pdf = doc.pdf
   const minutes = playedMinutesByPlayer(game)
   const minutesByPos = playedMinutesByPlayerPosition(game)
@@ -411,17 +439,23 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
   const cellH = 9
   const headerH = 16
   const metricRows = Math.ceil(metrics.length / cols)
-  const cardH = 6 + headerH + cellH * metricRows + gap * Math.max(0, metricRows - 1) + 4
+  const baseCardH = 6 + headerH + cellH * metricRows + gap * Math.max(0, metricRows - 1) + 4
+  const comments = show.comments ? (game.reportEdits?.comments ?? {}) : {}
 
   const roster = [...players].sort((a, b) => a.jerseyNumber - b.jerseyNumber)
   const playedRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) > 0)
   const dnpRoster = roster.filter((player) => (minutes.get(player.id) ?? 0) === 0)
-  if (playedRoster.length) heading(doc, t('playerStatistics'))
-  for (const player of playedRoster) {
+  if (show.cards && playedRoster.length) heading(doc, t('playerStatistics'))
+  for (const player of show.cards ? playedRoster : []) {
+    const note = commentLines(pdf, comments[player.id], CONTENT_W - 8)
+    const cardH = baseCardH + (note.length ? note.length * COMMENT_LINE_H + 2 : 0)
     ensure(doc, cardH)
     const stats = statsFromActions(game.actions, player.id)
     const played = minutes.get(player.id) ?? 0
-    const dist = formatPlayedDistribution(minutesByPos.get(player.id), played)
+    const edited = editedMinutes(game, player.id) != null
+    const dist = edited
+      ? `${formatPlayedDistribution(undefined, played)} (${t('minutesEditedTag')})`
+      : formatPlayedDistribution(minutesByPos.get(player.id), played)
     const y = doc.y
     setFill(pdf, CARD)
     pdf.roundedRect(MARGIN, y, CONTENT_W, cardH, 2.5, 2.5, 'F')
@@ -464,9 +498,10 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
       pdf.setFontSize(6)
       pdf.text(fit(pdf, metric.label, cellW - 2), cx + cellW / 2, cy + 7.2, { align: 'center' })
     }
+    if (note.length) drawCommentLines(pdf, note, MARGIN + 4, y + baseCardH)
     doc.y += cardH + 2.2
   }
-  if (!dnpRoster.length) return
+  if (!show.dnp || !dnpRoster.length) return
   heading(doc, t('didNotPlay'))
   pdf.setFont('helvetica', 'normal')
   pdf.setFontSize(9)
@@ -478,16 +513,34 @@ function drawPlayers(doc: Doc, game: Game, players: Player[]): void {
     pdf.text(line, MARGIN, doc.y + 4)
     doc.y += 5
   }
+  for (const player of dnpRoster) {
+    const note = commentLines(pdf, comments[player.id], CONTENT_W - 4)
+    if (!note.length) continue
+    const label = pdfSafe(`#${player.jerseyNumber} ${player.name}`)
+    ensure(doc, 6 + note.length * COMMENT_LINE_H)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(8)
+    setText(pdf, MUTED)
+    pdf.text(label, MARGIN, doc.y + 5)
+    drawCommentLines(pdf, note, MARGIN + 4, doc.y + 9)
+    doc.y += 6 + note.length * COMMENT_LINE_H
+  }
 }
 
-export function buildGameReportPdf(game: Game, team: Team, options: PdfOptions = {}): jsPDF {
+export function buildGameReportPdf(game: Game, team: Team, options: GameReportPdfOptions = {}): jsPDF {
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
   const doc: Doc = { pdf, y: MARGIN }
+  const hidden = new Set(options.hidden ?? [])
+  const show = (section: ReportSection): boolean => !hidden.has(section)
   drawScoreHeader(doc, game, team.name)
-  drawTimeline(doc, game)
-  drawMatchLog(doc, game, team.players)
-  drawNotes(doc, game, team.players)
-  drawPlayers(doc, game, team.players)
+  if (show('timeline')) drawTimeline(doc, game)
+  if (show('matchLog')) drawMatchLog(doc, game, team.players)
+  if (show('notes')) drawNotes(doc, game, team.players)
+  drawPlayers(doc, game, team.players, {
+    cards: show('players'),
+    comments: show('comments'),
+    dnp: show('dnp'),
+  })
   if (options.promo ?? true) addPromoFooter(pdf)
   return pdf
 }

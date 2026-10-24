@@ -168,6 +168,23 @@ export type Game = {
   substitutionRegulation: SubstitutionRegulation
   extraTime: boolean
   source?: GameSource
+  /** Coach corrections made on the report after the final whistle. */
+  reportEdits?: ReportEdits
+}
+
+/** Report sections a coach can leave out of the match PDF. The score header is always printed. */
+export const REPORT_SECTIONS = ['timeline', 'matchLog', 'notes', 'players', 'comments', 'dnp'] as const
+
+export type ReportSection = (typeof REPORT_SECTIONS)[number]
+
+export function isReportSection(value: unknown): value is ReportSection {
+  return (REPORT_SECTIONS as readonly unknown[]).includes(value)
+}
+
+export type ReportEdits = {
+  /** Whole minutes typed by the coach, replacing the computed playing time. */
+  minutes: Record<string, number>
+  comments: Record<string, string>
 }
 
 export type ClockState = {
@@ -183,6 +200,8 @@ export type ClockState = {
 
 export type TeamSettings = {
   defaultSubstitutionSeconds: number | null
+  /** Sections unticked the last time a match PDF was exported. */
+  pdfHiddenSections?: ReportSection[]
 }
 
 export type Team = {
@@ -204,6 +223,7 @@ export type GameSource = 'coach' | 'parent'
 export type ParentProfile = {
   kid: Player
   games: Game[]
+  pdfHiddenSections?: ReportSection[]
 }
 
 export type TutorialSave = {

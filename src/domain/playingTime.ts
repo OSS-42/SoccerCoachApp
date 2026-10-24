@@ -160,10 +160,25 @@ export function playedMinutes(seconds: number): number {
   return Math.max(1, Math.round(seconds / 60))
 }
 
-export function playedMinutesByPlayer(game: Game): Map<string, number> {
+/** Minutes worked out from the substitutions alone, ignoring any coach edit. */
+export function computedMinutesByPlayer(game: Game): Map<string, number> {
   const minutes = new Map<string, number>()
   for (const [playerId, seconds] of playingSecondsByPlayer(game)) {
     minutes.set(playerId, playedMinutes(seconds))
+  }
+  return minutes
+}
+
+/** Minutes the coach typed on the report, or undefined when the computed value stands. */
+export function editedMinutes(game: Game, playerId: string): number | undefined {
+  return game.reportEdits?.minutes[playerId]
+}
+
+/** Minutes shown on reports and counted in season stats: computed, then coach edits on top. */
+export function playedMinutesByPlayer(game: Game): Map<string, number> {
+  const minutes = computedMinutesByPlayer(game)
+  for (const [playerId, value] of Object.entries(game.reportEdits?.minutes ?? {})) {
+    minutes.set(playerId, value)
   }
   return minutes
 }

@@ -1,5 +1,5 @@
 import { applyAction, createAction, revertAction } from '@/domain/actions'
-import { MAX_TEAMS, YELLOWS_FOR_RED } from '@/domain/config'
+import { MAX_TEAMS, REPORT_COMMENT_MAX_LENGTH, YELLOWS_FOR_RED } from '@/domain/config'
 import {
   commitWallClock,
   currentPeriod,
@@ -9,6 +9,7 @@ import {
   wallSubRemaining,
 } from '@/domain/clock'
 import { createGame, completeGame, capturePeriodScore } from '@/domain/game'
+import { computedMinutesByPlayer } from '@/domain/playingTime'
 import {
   asParentTeam,
   createParentGame,
@@ -41,6 +42,8 @@ import {
   type Game,
   type MatchType,
   type PlayerPosition,
+  type ReportEdits,
+  type ReportSection,
   type Team,
 } from '@/domain/types'
 import { setLocale, t, type Locale, type MessageKey } from '@/i18n'
@@ -768,14 +771,11 @@ export function setLiveElapsed(seconds: number): { ok: boolean; message: string 
   return { ok: true, message: t('timeUpdated') }
 }
 
-export function setCompletedGameElapsed(
-  gameId: string,
-  seconds: number,
-): { ok: boolean; message: string } {
+/** Replace a finished game wherever it lives (any coach team or the parent profile). */
+function replaceCompletedGame(gameId: string, mutator: (game: Game) => Game): boolean {
   const found = findCompletedGame(gameId)
-  if (!found) return { ok: false, message: t('reportMissing') }
-  const safe = Math.max(0, Math.floor(seconds))
-  const next = trimPeriodScores(found.game, safe)
+  if (!found) return false
+  const next = mutator(found.game)
   if (isParentGame(found.game)) {
     const parent = getParentProfile()
     state = {
@@ -786,13 +786,76 @@ export function setCompletedGameElapsed(
       },
     }
   } else {
-    updateCurrentTeam((current) => ({
-      ...current,
-      games: current.games.map((g) => (g.id === gameId ? next : g)),
-    }))
+    state = {
+      ...state,
+      teams: state.teams.map((team) =>
+        team.id === found.team.id
+          ? { ...team, games: team.games.map((g) => (g.id === gameId ? next : g)) }
+          : team,
+      ),
+    }
   }
   persist()
-  return { ok: true, message: t('timeUpdated') }
+  return true
+}
+
+export function setCompletedGameElapsed(
+  gameId: string,
+  seconds: number,
+): { ok: boolean; message: string } {
+  const safe = Math.max(0, Math.floor(seconds))
+  const ok = replaceCompletedGame(gameId, (game) => trimPeriodScores(game, safe))
+  return ok ? { ok: true, message: t('timeUpdated') } : { ok: false, message: t('reportMissing') }
+}
+
+function withReportEdits(game: Game, mutator: (edits: ReportEdits) => ReportEdits): Game {
+  const current = game.reportEdits ?? { minutes: {}, comments: {} }
+  const next = mutator({ minutes: { ...current.minutes }, comments: { ...current.comments } })
+  const { reportEdits: _old, ...rest } = game
+  if (!Object.keys(next.minutes).length && !Object.keys(next.comments).length) return rest
+  return { ...rest, reportEdits: next }
+}
+
+/** Set a player's minutes on a finished game. `null`, or the computed value, clears the edit. */
+export function setReportPlayerMinutes(gameId: string, playerId: string, minutes: number | null): boolean {
+  return replaceCompletedGame(gameId, (game) =>
+    withReportEdits(game, (edits) => {
+      const computed = computedMinutesByPlayer(game).get(playerId) ?? 0
+      const value = minutes == null ? null : Math.max(0, Math.round(minutes))
+      if (value == null || value === computed) delete edits.minutes[playerId]
+      else edits.minutes[playerId] = value
+      return edits
+    }),
+  )
+}
+
+export function setReportPlayerComment(gameId: string, playerId: string, text: string): boolean {
+  return replaceCompletedGame(gameId, (game) =>
+    withReportEdits(game, (edits) => {
+      const value = text.trim().slice(0, REPORT_COMMENT_MAX_LENGTH)
+      if (value) edits.comments[playerId] = value
+      else delete edits.comments[playerId]
+      return edits
+    }),
+  )
+}
+
+/** Remember which sections were left out, on the team (or parent profile) that owns the game. */
+export function setPdfHiddenSections(gameId: string, hidden: ReportSection[]): void {
+  const found = findCompletedGame(gameId)
+  if (!found) return
+  const pdfHiddenSections = [...new Set(hidden)]
+  if (isParentGame(found.game)) {
+    state = { ...state, parent: { ...getParentProfile(), pdfHiddenSections } }
+  } else {
+    state = {
+      ...state,
+      teams: state.teams.map((team) =>
+        team.id === found.team.id ? { ...team, settings: { ...team.settings, pdfHiddenSections } } : team,
+      ),
+    }
+  }
+  persist()
 }
 
 export function resetAllData(): void {
