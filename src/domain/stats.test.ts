@@ -89,4 +89,13 @@ describe('season stats', () => {
     expect(rows.find((r) => r.playerId === 'p1')?.minutesPlayed).toBe(15)
     expect(rows.find((r) => r.playerId === 'p2')?.minutesPlayed).toBe(0)
   })
+
+  it('counts minutes the coach edited on the report', () => {
+    const rows = calculateSeasonStats(players, [
+      completed({ id: 'g1', elapsedSeconds: 600, reportEdits: { minutes: { p1: 4, p2: 6 }, comments: {} } }),
+      completed({ id: 'g2', elapsedSeconds: 300 }),
+    ])
+    expect(rows.find((r) => r.playerId === 'p1')?.minutesPlayed).toBe(9)
+    expect(rows.find((r) => r.playerId === 'p2')?.minutesPlayed).toBe(6)
+  })
 })

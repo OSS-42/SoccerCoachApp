@@ -3,13 +3,14 @@ import { emptyParentProfile, isParentGame, replayParentFormation } from './paren
 import { reconstructStartingFormation } from './playingTime'
 import { canSelectTeam, liteHomeTeamId } from './entitlement'
 import { createDefaultTeams, dropEmptyPlaceholderTeams, ensureDemoTeam, isPlayerPosition } from './teams'
-import { JERSEY_MAX, JERSEY_MIN } from './config'
+import { JERSEY_MAX, JERSEY_MIN, REPORT_COMMENT_MAX_LENGTH } from './config'
 import {
   APP_VERSION,
   DEFAULT_CLOCK,
   DEFAULT_SUB_MINUTES,
   MATCH_TYPES,
   SAVE_VERSION,
+  isReportSection,
   type ActionType,
   type AppSave,
   type ClockState,
@@ -22,6 +23,8 @@ import {
   type AppTheme,
   type SubstitutionRegulation,
   type PlayerPosition,
+  type ReportEdits,
+  type ReportSection,
   type ParentProfile,
   type AppRole,
   type Team,
@@ -184,6 +187,34 @@ function migrateFormation(raw: unknown): FormationSpot[] {
     .filter((s): s is FormationSpot => Boolean(s))
 }
 
+function migrateReportEdits(raw: unknown): ReportEdits | undefined {
+  const rec = asRecord(raw)
+  if (!rec) return undefined
+  const minutes: Record<string, number> = {}
+  for (const [id, value] of Object.entries(asRecord(rec.minutes) ?? {})) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      minutes[id] = clamp(Math.round(value), 0, Math.ceil(MAX_GAME_SECONDS / 60))
+    }
+  }
+  const comments: Record<string, string> = {}
+  for (const [id, value] of Object.entries(asRecord(rec.comments) ?? {})) {
+    const text = asString(value).trim().slice(0, REPORT_COMMENT_MAX_LENGTH)
+    if (text) comments[id] = text
+  }
+  if (!Object.keys(minutes).length && !Object.keys(comments).length) return undefined
+  return { minutes, comments }
+}
+
+function migrateHiddenSections(raw: unknown): ReportSection[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  return [...new Set(raw.filter(isReportSection))]
+}
+
+function withHiddenSections(raw: unknown): { pdfHiddenSections?: ReportSection[] } {
+  const pdfHiddenSections = migrateHiddenSections(raw)
+  return pdfHiddenSections ? { pdfHiddenSections } : {}
+}
+
 function migrateGame(raw: unknown, index: number): Game | null {
   const rec = asRecord(raw)
   if (!rec) return null
@@ -194,6 +225,7 @@ function migrateGame(raw: unknown, index: number): Game | null {
     ? rec.actions.map(migrateAction).filter((a): a is GameAction => Boolean(a))
     : []
   const startingSaved = migrateFormation(rec.startingFormation)
+  const reportEdits = migrateReportEdits(rec.reportEdits)
   return {
     id: asId(rec.id, `game_legacy_${index}`),
     date: asString(rec.date, new Date().toISOString().slice(0, 10)),
@@ -233,6 +265,7 @@ function migrateGame(raw: unknown, index: number): Game | null {
     substitutionRegulation: asRegulation(rec.substitutionRegulation) ?? 'rolling',
     extraTime: asBool(rec.extraTime, false),
     source: rec.source === 'parent' ? 'parent' : 'coach',
+    ...(reportEdits ? { reportEdits } : {}),
   }
 }
 
@@ -247,6 +280,7 @@ function migrateParent(raw: unknown): ParentProfile {
   const kid = migratePlayer(rec.kid, 0)
   return {
     kid: kid ?? base.kid,
+    ...withHiddenSections(rec.pdfHiddenSections),
     games: Array.isArray(rec.games)
       ? rec.games
           .map(migrateGame)
@@ -278,6 +312,7 @@ function migrateTeam(raw: unknown, index: number): Team | null {
           : settingsRec?.defaultSubstitutionSeconds != null
             ? asNumber(settingsRec.defaultSubstitutionSeconds)
             : null,
+      ...withHiddenSections(settingsRec?.pdfHiddenSections),
     },
     defaultFormations: migrateDefaultFormations(rec.defaultFormations ?? rec.formationTemp),
     defaultUnavailable: migrateDefaultUnavailable(rec.defaultUnavailable),

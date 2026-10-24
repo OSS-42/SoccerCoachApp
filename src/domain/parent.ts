@@ -130,7 +130,10 @@ export function asParentTeam(profile: ParentProfile, name = 'HOME'): Team {
     name,
     players: kid.name ? [kid] : [],
     games: profile.games,
-    settings: { defaultSubstitutionSeconds: null },
+    settings: {
+      defaultSubstitutionSeconds: null,
+      ...(profile.pdfHiddenSections ? { pdfHiddenSections: profile.pdfHiddenSections } : {}),
+    },
     defaultFormations: {},
     defaultUnavailable: {},
   }

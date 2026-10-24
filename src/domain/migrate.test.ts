@@ -141,6 +141,35 @@ describe('migrateUnknown', () => {
     })
   })
 
+  it('keeps report edits and PDF section choices, dropping bad values', () => {
+    const save = migrateUnknown({
+      parent: { kid: { id: 'kid', name: 'LEA', jerseyNumber: 7 }, games: [], pdfHiddenSections: ['dnp'] },
+      teams: [
+        {
+          id: 't1',
+          name: 'A',
+          players: [],
+          settings: { pdfHiddenSections: ['timeline', 'bogus', 'timeline'] },
+          games: [
+            {
+              id: 'g',
+              reportEdits: {
+                minutes: { p1: 42.4, p2: 'x', p3: -5 },
+                comments: { p1: '  Strong game ', p2: '', p3: 7 },
+              },
+            },
+            { id: 'h', reportEdits: { minutes: {}, comments: {} } },
+          ],
+        },
+      ],
+    })
+    const [edited, empty] = save.teams[0].games
+    expect(edited.reportEdits).toEqual({ minutes: { p1: 42, p3: 0 }, comments: { p1: 'Strong game' } })
+    expect(empty.reportEdits).toBeUndefined()
+    expect(save.teams[0].settings.pdfHiddenSections).toEqual(['timeline'])
+    expect(save.parent.pdfHiddenSections).toEqual(['dnp'])
+  })
+
   it('reconstructs the kickoff XI when startingFormation is missing', () => {
     const save = migrateUnknown({
       teams: [

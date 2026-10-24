@@ -61,3 +61,33 @@ describe('end-game report stats cards', () => {
     expect(html).toMatch(/<span class="stat-metric-value">2<\/span>\s*<span class="stat-metric-label">Intercept<\/span>/)
   })
 })
+
+describe('editable report', () => {
+  it('shows edited minutes with a tag, and player comments, in the report', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 8), player('p2', 'Bea', 4)]
+    const match = game({
+      reportEdits: { minutes: { p1: 9, p2: 3 }, comments: { p1: 'Pressed <well>' } },
+    })
+    const html = buildReportDialogHtml(match, team(players, match))
+    expect(html).toContain('Total: 9&#39;')
+    expect(html).toContain('report-edited-tag')
+    expect(html).toContain('Pressed &lt;well&gt;')
+    // Bea got minutes typed in, so she moves out of "did not play" into a card.
+    expect(html).not.toContain('Have not played')
+    expect(html).toContain('id="edit-open-report"')
+  })
+
+  it('edit mode lists every player with minutes and comment fields', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 8), player('p2', 'Bea', 4)]
+    const match = game({ reportEdits: { minutes: {}, comments: { p2: 'Next time' } } })
+    const html = buildReportDialogHtml(match, team(players, match), 'edit')
+    expect(html.match(/class="report-stat-card report-edit-card"/g)).toHaveLength(2)
+    expect(html).toContain('data-player-id="p1" data-computed="12"')
+    expect(html).toContain('data-player-id="p2" data-computed="0"')
+    expect(html).toContain('>Next time</textarea>')
+    expect(html).toContain('id="done-edit-report"')
+    expect(html).not.toContain('Shots Timeline')
+  })
+})

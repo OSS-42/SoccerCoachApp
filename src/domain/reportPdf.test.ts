@@ -180,4 +180,43 @@ describe('report PDF', () => {
     expect(text).not.toContain('apps.apple.com')
     expect(text).not.toContain('Get the app on the App Store')
   })
+
+  it('leaves out the sections the coach unticked but always keeps the score', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1), player('p2', 'Bea', 9), player('p3', 'Cara', 11)]
+    const match = game({
+      actions: [createAction('game_note', null, 600, { noteText: 'Watch the left wing' })],
+    })
+    const text = pdfText(
+      buildGameReportPdf(match, team(players, match), {
+        promo: false,
+        hidden: ['timeline', 'notes', 'players', 'dnp'],
+      }),
+    )
+    expect(text).toContain('RIVALS')
+    expect(text).not.toContain('Shots Timeline')
+    expect(text).not.toContain('Watch the left wing')
+    expect(text).not.toContain('Player Statistics')
+    expect(text).not.toContain('Have not played')
+  })
+
+  it('prints edited minutes and player comments, unless comments are unticked', () => {
+    setLocale('en')
+    const players = [player('p1', 'Ada', 1), player('p2', 'Bea', 9), player('p3', 'Cara', 11)]
+    const match = game({
+      reportEdits: {
+        minutes: { p2: 30 },
+        comments: { p1: 'Great reflexes', p3: 'Sick, stayed home' },
+      },
+    })
+    const text = pdfText(buildGameReportPdf(match, team(players, match), { promo: false }))
+    expect(text).toContain("Total: 30' \\(edited\\)")
+    expect(text).toContain('Great reflexes')
+    expect(text).toContain('Sick, stayed home')
+    const quiet = pdfText(
+      buildGameReportPdf(match, team(players, match), { promo: false, hidden: ['comments'] }),
+    )
+    expect(quiet).not.toContain('Great reflexes')
+    expect(quiet).not.toContain('Sick, stayed home')
+  })
 })

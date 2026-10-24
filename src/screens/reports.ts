@@ -11,13 +11,17 @@ import {
   getSave,
   parentRosterTeam,
   setCompletedGameElapsed,
+  setPdfHiddenSections,
+  setReportPlayerComment,
+  setReportPlayerMinutes,
 } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
 import { showMessage } from '@/ui/message'
 import { saveOrSharePdf } from '@/lib/shareFile'
 import { notifyTutorialEvent } from '@/ui/tutorialBus'
 import { fillTeamSelectors } from './shared'
-import { buildReportDialogHtml } from './reportView'
+import { askPdfSections } from './pdfSections'
+import { buildReportDialogHtml, type ReportDialogMode } from './reportView'
 
 function selectedReportIds(): string[] {
   return [...document.querySelectorAll<HTMLInputElement>('.report-checkbox:checked')]
@@ -86,7 +90,51 @@ export function renderReports(): void {
   updateReportSelectBar()
 }
 
-export function viewReport(gameId: string): void {
+function bindReportEditCards(gameId: string): void {
+  const cards = document.getElementById('report-edit-cards')
+  if (!cards) return
+  const cardOf = (target: EventTarget | null) => (target as HTMLElement | null)?.closest<HTMLElement>('.report-edit-card')
+  const showReset = (card: HTMLElement, edited: boolean) => {
+    const reset = card.querySelector<HTMLButtonElement>('.report-edit-reset')
+    if (reset) reset.hidden = !edited
+  }
+  cards.addEventListener('change', (event) => {
+    const target = event.target as HTMLElement
+    const card = cardOf(target)
+    const playerId = card?.dataset.playerId
+    if (!card || !playerId) return
+    if (target instanceof HTMLTextAreaElement) {
+      setReportPlayerComment(gameId, playerId, target.value)
+      return
+    }
+    if (!(target instanceof HTMLInputElement) || !target.classList.contains('report-edit-minutes')) return
+    const computed = Number(card.dataset.computed ?? 0)
+    const raw = target.value.trim()
+    const minutes = raw === '' ? null : Number(raw)
+    if (minutes != null && (!Number.isFinite(minutes) || minutes < 0)) {
+      showMessage(t('invalidMinutes'), 'error')
+      target.value = String(computed)
+      return
+    }
+    setReportPlayerMinutes(gameId, playerId, minutes)
+    const value = minutes == null ? computed : Math.round(minutes)
+    target.value = String(value)
+    showReset(card, value !== computed)
+  })
+  cards.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement
+    if (!target.classList.contains('report-edit-reset')) return
+    const card = cardOf(target)
+    const playerId = card?.dataset.playerId
+    if (!card || !playerId) return
+    setReportPlayerMinutes(gameId, playerId, null)
+    const input = card.querySelector<HTMLInputElement>('.report-edit-minutes')
+    if (input) input.value = card.dataset.computed ?? '0'
+    showReset(card, false)
+  })
+}
+
+export function viewReport(gameId: string, mode: ReportDialogMode = 'view'): void {
   const found = findCompletedGame(gameId)
   const team = found?.team
   const game = found?.game
@@ -95,13 +143,23 @@ export function viewReport(gameId: string): void {
     showMessage(t('reportMissing'), 'error')
     return
   }
-  dialog.innerHTML = buildReportDialogHtml(game, team)
+  dialog.innerHTML = buildReportDialogHtml(game, team, mode)
+  dialog.scrollTop = 0
   const closeReport = () => toggleDialog('report-dialog', false)
   document.getElementById('close-open-report')?.addEventListener('click', closeReport)
   document.getElementById('close-open-report-top')?.addEventListener('click', closeReport)
   document.getElementById('print-open-report')?.addEventListener('click', () => {
     void exportReportPdf(gameId)
   })
+  document.getElementById('edit-open-report')?.addEventListener('click', () => viewReport(gameId, 'edit'))
+  const finishEditing = () => {
+    // Blurring commits the field being typed in (its change event) before the view re-renders.
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+    viewReport(gameId, 'view')
+  }
+  document.getElementById('done-edit-report')?.addEventListener('click', finishEditing)
+  document.getElementById('done-edit-report-top')?.addEventListener('click', finishEditing)
+  bindReportEditCards(gameId)
   document.getElementById('report-header-info')?.addEventListener('click', async () => {
     const raw = await askPrompt({
       title: t('editTimeTitle'),
@@ -118,7 +176,7 @@ export function viewReport(gameId: string): void {
     }
     const result = setCompletedGameElapsed(gameId, seconds)
     showMessage(result.message, result.ok ? 'success' : 'error')
-    if (result.ok) viewReport(gameId)
+    if (result.ok) viewReport(gameId, mode)
   })
   toggleDialog('report-dialog', true)
 }
@@ -131,10 +189,13 @@ async function exportReportPdf(gameId: string): Promise<void> {
     showMessage(t('reportMissing'), 'error')
     return
   }
+  const hidden = await askPdfSections(team.settings.pdfHiddenSections ?? [])
+  if (!hidden) return
+  setPdfHiddenSections(gameId, hidden)
   try {
     // jsPDF + html2canvas + DOMPurify (~390 kB) load only when a report is exported.
     const { buildGameReportPdf, reportPdfFileName } = await import('@/domain/reportPdf')
-    const pdf = buildGameReportPdf(game, team, { promo: !isPro(getSave()) })
+    const pdf = buildGameReportPdf(game, team, { promo: !isPro(getSave()), hidden })
     const bytes = pdf.output('arraybuffer')
     if (!bytes.byteLength) throw new Error('empty pdf')
     await saveOrSharePdf(bytes, reportPdfFileName(game))

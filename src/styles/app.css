@@ -4206,7 +4206,108 @@ html.is-wide-ui {
 .report-toolbar {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin: 0 0 10px;
+}
+
+.report-player-comment {
+    margin: 8px 0 0;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.report-dnp-comment {
+    margin: 0 0 10px;
+}
+
+.report-dnp-comment .report-player-comment {
+    margin-top: 2px;
+}
+
+.report-edited-tag {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(253, 230, 138, 0.35);
+}
+
+.report-edit-hint {
+    margin: 12px 0;
+    font-size: 13px;
+    opacity: 0.75;
+}
+
+.report-edit-minutes-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+}
+
+.report-edit-minutes-row label {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.report-edit-minutes-row .report-edit-minutes {
+    width: 5.5rem;
+}
+
+.report-edit-computed {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.report-edit-reset {
+    margin-left: auto;
+    min-height: 36px;
+    padding: 4px 12px;
+}
+
+.report-edit-reset[hidden] {
+    display: none;
+}
+
+.report-edit-comment {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    font: inherit;
+}
+
+.pdf-sections-hint {
+    margin: 0 0 12px;
+    font-size: 13px;
+    opacity: 0.75;
+}
+
+.pdf-sections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pdf-section-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.pdf-section-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--neu-accent, #3ddc97);
 }
 
 .report-dnp {

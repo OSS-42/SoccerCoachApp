@@ -2700,3 +2700,18 @@ html.is-ios.is-phone-ui[data-theme] #formation-setup .formation-field-surface .p
   width: clamp(28px, 14cqmin, 46px);
   height: clamp(28px, 14cqmin, 46px);
 }
+
+html[data-theme] .report-edited-tag {
+  color: var(--neu-text);
+}
+
+html[data-theme] .report-edit-hint,
+html[data-theme] .report-edit-computed,
+html[data-theme] .pdf-sections-hint {
+  color: var(--neu-muted);
+  opacity: 1;
+}
+
+html[data-theme] .report-player-comment {
+  color: var(--neu-text);
+}
