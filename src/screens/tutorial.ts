@@ -381,7 +381,7 @@ const PARENT_STEPS: Step[] = [
     body: 'tutParentGoalBody',
     target: () =>
       document.querySelector<HTMLElement>(
-        '#parent-pitch .player-slot[data-player-id], #parent-bench-slot[data-player-id]',
+        '#parent-pitch [data-player-id], #parent-bench-slot [data-player-id]',
       ),
     allowTarget: true,
     wait: 'goal',
@@ -395,7 +395,7 @@ const PARENT_STEPS: Step[] = [
     body: 'tutParentYellowBody',
     target: () =>
       document.querySelector<HTMLElement>(
-        '#parent-pitch .player-slot[data-player-id], #parent-bench-slot[data-player-id]',
+        '#parent-pitch [data-player-id], #parent-bench-slot [data-player-id]',
       ),
     allowTarget: true,
     wait: 'yellow',

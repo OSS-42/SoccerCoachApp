@@ -23,6 +23,13 @@ describe('migrateUnknown', () => {
     expect(migrateUnknown({ teams, introVideo: false }).introVideo).toBe(false)
   })
 
+  it('keeps the field view only when the save chose it', () => {
+    const teams = [{ id: 't1', name: 'A', players: [], games: [], settings: {} }]
+    expect(migrateUnknown({ teams }).liveView).toBe('grid')
+    expect(migrateUnknown({ teams, liveView: 'field' }).liveView).toBe('field')
+    expect(migrateUnknown({ teams, liveView: 'pitch' }).liveView).toBe('grid')
+  })
+
   it('keeps the selected team and an in-progress game', () => {
     const save = migrateUnknown({
       currentTeamId: 't2',

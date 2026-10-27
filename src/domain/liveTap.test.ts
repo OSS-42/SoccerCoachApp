@@ -63,13 +63,25 @@ describe('coachLiveTap', () => {
     ).not.toBe('schedule-actions')
   })
 
-  it('retargets when tapping another player on the same side', () => {
+  it('swaps positions when tapping another field player', () => {
     expect(
       coachLiveTap({
         pendingId: 'a',
         pendingRole: 'field',
         playerId: 'c',
         role: 'field',
+        doubleTap: false,
+      }),
+    ).toEqual({ action: 'swap-positions' })
+  })
+
+  it('retargets when tapping another bench player', () => {
+    expect(
+      coachLiveTap({
+        pendingId: 'a',
+        pendingRole: 'bench',
+        playerId: 'c',
+        role: 'bench',
         doubleTap: false,
       }),
     ).toEqual({ action: 'retarget' })

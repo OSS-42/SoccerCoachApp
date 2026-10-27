@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createAction, revertAction } from './actions'
 import {
+  applyPositionSwap,
   applySubstitution,
   beginExtraTime,
   canSubstitute,
@@ -170,5 +171,24 @@ describe('substitutions', () => {
     expect(undone.formation.map((s) => s.playerId)).toEqual(['p1', 'p2'])
     expect(undone.substitutes).toEqual(['p3', 'p4'])
     expect(undone.actions).toHaveLength(0)
+  })
+})
+
+describe('applyPositionSwap', () => {
+  it('trades the spots of two field players without logging a substitution', () => {
+    const before = game()
+    const result = applyPositionSwap(before, 'p1', 'p2')
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.game.formation.find((s) => s.position === 'GK')?.playerId).toBe('p2')
+    expect(result.game.formation.find((s) => s.position === 'P1')?.playerId).toBe('p1')
+    expect(result.game.actions).toEqual([])
+    expect(substitutionCount(result.game)).toBe(0)
+    expect(result.game.substitutes).toEqual(before.substitutes)
+  })
+
+  it('refuses a bench player or the same player', () => {
+    expect(applyPositionSwap(game(), 'p1', 'p3')).toEqual({ ok: false, reason: 'not_on_field' })
+    expect(applyPositionSwap(game(), 'p1', 'p1')).toEqual({ ok: false, reason: 'same_player' })
   })
 })

@@ -27,6 +27,7 @@ import {
 import {
   applyArrival,
   applyEnter,
+  applyPositionSwap,
   applySubstitution,
   beginExtraTime as unlockExtraTime,
 } from '@/domain/substitutions'
@@ -46,6 +47,7 @@ import {
   type AppTheme,
   type FormationSpot,
   type Game,
+  type LiveView,
   type MatchType,
   type PlayerPosition,
   type ReportEdits,
@@ -169,6 +171,11 @@ export function setTheme(theme: AppTheme): void {
 
 export function setIntroVideo(introVideo: boolean): void {
   state = { ...state, introVideo }
+  persist()
+}
+
+export function setLiveView(liveView: LiveView): void {
+  state = { ...state, liveView }
   persist()
 }
 
@@ -529,6 +536,16 @@ export function substituteLivePlayers(
   return { ok: true }
 }
 
+/** Two field players trade spots. Not a substitution, so the sub timer and the official cap are untouched. */
+export function swapLivePositions(aId: string, bId: string): { ok: boolean; reason?: string } {
+  if (!state.currentGame) return { ok: false, reason: 'no_game' }
+  const result = applyPositionSwap(state.currentGame, aId, bId)
+  if (!result.ok) return { ok: false, reason: result.reason }
+  state = { ...state, currentGame: result.game }
+  persist()
+  return { ok: true }
+}
+
 /** A player marked absent at kickoff arrives: they go to the bench and the late arrival is logged. */
 export function markLivePlayerArrived(playerId: string): { ok: boolean } {
   if (!state.currentGame) return { ok: false }
@@ -721,6 +738,7 @@ export function importBackup(
       role: state.role,
       roleChosen: state.roleChosen,
       introVideo: state.introVideo,
+      liveView: state.liveView,
       appVersion: APP_VERSION,
       saveVersion: SAVE_VERSION,
       updatedAt: new Date().toISOString(),
@@ -902,12 +920,13 @@ export function resetAllData(): void {
   const language = state.language
   const theme = state.theme
   const introVideo = state.introVideo
+  const liveView = state.liveView
   clearSaves()
   void deleteSaveMirror()
   const next = freshSave()
   setLocale(language)
   applyTheme(theme)
-  state = { ...next, currentTeamId: DEMO_TEAM_ID, language, theme, introVideo }
+  state = { ...next, currentTeamId: DEMO_TEAM_ID, language, theme, introVideo, liveView }
   persist()
 }
 

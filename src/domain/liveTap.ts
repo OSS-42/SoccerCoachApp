@@ -4,6 +4,7 @@ export type CoachLiveTap =
   | { action: 'arm' }
   | { action: 'cancel' }
   | { action: 'swap' }
+  | { action: 'swap-positions' }
   | { action: 'retarget' }
   | { action: 'schedule-actions' }
 
@@ -18,6 +19,7 @@ export type ParentLiveTap =
  * Live-game tile tap:
  * - Double-tap arms switch mode.
  * - While armed, a single tap swaps, retargets, or cancels. Actions never open.
+ * - Two field players trade positions; a second bench player becomes the new pick.
  * - While idle, a single tap schedules the action panel.
  */
 export function coachLiveTap(input: {
@@ -30,6 +32,7 @@ export function coachLiveTap(input: {
   if (input.pendingId) {
     if (input.playerId === input.pendingId) return { action: 'cancel' }
     if (input.pendingRole && input.pendingRole !== input.role) return { action: 'swap' }
+    if (input.pendingRole === 'field' && input.role === 'field') return { action: 'swap-positions' }
     return { action: 'retarget' }
   }
   if (input.doubleTap) return { action: 'arm' }
