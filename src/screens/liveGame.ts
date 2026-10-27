@@ -11,6 +11,7 @@ import {
 import { DOUBLE_TAP_MS, NOTE_MAX_LENGTH, VIEW_REPORT_EVENT } from '@/domain/config'
 import { coachLiveTap } from '@/domain/liveTap'
 import { fieldSpotDepth, spotLabel } from '@/domain/formation'
+import { benchColumns, halfFieldSpot } from '@/domain/halfField'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { formatClock, isLastLivePeriod, livePeriodNumber, parseClockInput } from '@/domain/clock'
 import {
@@ -41,18 +42,28 @@ import {
   recordLiveAction,
   resetSubTimer,
   setLiveElapsed,
+  setLiveView,
   startExtraTime,
   substituteLivePlayers,
+  swapLivePositions,
   undoLiveAction,
 } from '@/state/store'
 import { escapeHtml, toggleDialog } from '@/ui/dom'
+import { benchChip, halfToken, mountHalfPitch, switchButtonHtml } from '@/ui/halfPitch'
 import { showMessage } from '@/ui/message'
 import { showScreen } from '@/ui/nav'
-import { notifyTutorialEvent, tutorialLiveGate } from '@/ui/tutorialBus'
-import { renderParentLive, resetParentLiveUi, spectatorNeedsPosition } from './parentLive'
+import { notifyTutorialEvent, tutorialLiveGate, tutorialRunning } from '@/ui/tutorialBus'
+import {
+  armParentMoveFromActions,
+  renderParentLive,
+  resetParentLiveUi,
+  spectatorNeedsPosition,
+} from './parentLive'
 import { homeForRole } from './roleSelect'
 
 let pendingPlayer: Player | null = null
+/** Field or bench, for the player whose action sheet is open. */
+let pendingPlayerRole: 'field' | 'bench' = 'field'
 let pendingSubId: string | null = null
 /** 'open' = an open spot was tapped first; the next bench tap puts that player on. */
 let pendingRole: 'field' | 'bench' | 'open' | null = null
@@ -199,12 +210,34 @@ function paintSubCount(): void {
   value.textContent = `${substitutionCount(game)}/${cap}`
 }
 
+/** The tour points at the grid, so it always runs in grid view. */
+function coachLiveView(): 'grid' | 'field' {
+  if (tutorialRunning()) return 'grid'
+  return getSave().liveView === 'field' ? 'field' : 'grid'
+}
+
+function syncLiveViewToggle(view: 'grid' | 'field'): void {
+  document.querySelectorAll<HTMLElement>('#live-view-toggle [data-live-view]').forEach((btn) => {
+    btn.setAttribute('aria-pressed', String(btn.dataset.liveView === view))
+  })
+  const rosters = document.getElementById('live-rosters')
+  const field = document.getElementById('live-field')
+  if (rosters) rosters.hidden = view === 'field'
+  if (field) field.hidden = view !== 'field'
+}
+
 function paintLiveRosters(): void {
   const fieldGrid = document.getElementById('on-field-grid')
   const benchGrid = document.getElementById('bench-grid')
   const game = getCurrentGame()
   const team = getCurrentTeam()
   if (!fieldGrid || !benchGrid || !game || !team) return
+  const view = coachLiveView()
+  syncLiveViewToggle(view)
+  if (view === 'field') {
+    paintLiveField()
+    return
+  }
   fieldGrid.innerHTML = ''
   benchGrid.innerHTML = ''
   const onField = new Map(game.formation.map((f) => [f.playerId, f.position]))
@@ -328,24 +361,11 @@ function liveTile(
   fieldPosition?: string,
   playedMinutes = 0,
 ): HTMLElement {
-  const game = getCurrentGame()
   const item = document.createElement('div')
-  const stats = game ? statsFromActions(game.actions, player.id) : null
   item.className = `player-grid-item ${role === 'field' ? 'starter' : 'substitute'}`
   item.dataset.playerId = player.id
   item.dataset.role = role
-  if (isGk) item.classList.add('is-gk')
-  if (stats?.injured) item.classList.add('injured')
-  else if (stats && stats.redCards > 0) item.classList.add('red-card')
-  else if (stats && stats.yellowCards > 0) item.classList.add('yellow-card')
-  if (usedOff) item.classList.add('used-off')
-  if (pendingSubId === player.id) item.classList.add('sub-selected')
-  const canComeOn = !usedOff && !(stats && playerIsUnavailable(stats))
-  const canGoOff = !(stats && stats.redCards > 0)
-  if ((pendingRole === 'field' || pendingRole === 'open') && role === 'bench' && canComeOn) {
-    item.classList.add('sub-target')
-  }
-  if (pendingRole === 'bench' && role === 'field' && canGoOff) item.classList.add('sub-target')
+  item.classList.add(...liveStateClasses(player, role, usedOff, isGk))
   const pos = role === 'field' && fieldPosition ? spotLabel(fieldPosition) : ''
   item.innerHTML = `
     <span class="live-tile-name">${escapeHtml(player.name)}</span>
@@ -356,6 +376,100 @@ function liveTile(
   `
   item.addEventListener('click', () => onTileClick(player, role))
   return item
+}
+
+/** Card, switch and availability classes shared by grid tiles, field tokens and bench chips. */
+function liveStateClasses(player: Player, role: 'field' | 'bench', usedOff: boolean, isGk: boolean): string[] {
+  const game = getCurrentGame()
+  const stats = game ? statsFromActions(game.actions, player.id) : null
+  const classes: string[] = []
+  if (isGk) classes.push('is-gk')
+  if (stats?.injured) classes.push('injured')
+  else if (stats && stats.redCards > 0) classes.push('red-card')
+  else if (stats && stats.yellowCards > 0) classes.push('yellow-card')
+  if (usedOff) classes.push('used-off')
+  if (pendingSubId === player.id) classes.push('sub-selected')
+  const canComeOn = !usedOff && !(stats && playerIsUnavailable(stats))
+  const canGoOff = !(stats && stats.redCards > 0)
+  if ((pendingRole === 'field' || pendingRole === 'open') && role === 'bench' && canComeOn) {
+    classes.push('sub-target')
+  }
+  if ((pendingRole === 'bench' || pendingRole === 'field') && role === 'field' && canGoOff && pendingSubId !== player.id) {
+    classes.push('sub-target')
+  }
+  return classes
+}
+
+/** Players on their spots over our half, the bench underneath in jersey order. */
+function paintLiveField(): void {
+  const pitch = document.getElementById('live-pitch')
+  const benchGrid = document.getElementById('live-bench-grid')
+  const count = document.getElementById('live-bench-count')
+  const game = getCurrentGame()
+  const team = getCurrentTeam()
+  if (!pitch || !benchGrid || !game || !team) return
+  const layer = mountHalfPitch(pitch)
+  const usedOff = usedOffPlayerIds(game)
+  const minutes = playedMinutesByPlayer({ ...game, elapsedSeconds: liveElapsedSeconds() })
+  const byId = new Map(team.players.map((player) => [player.id, player]))
+  layer.replaceChildren()
+  for (const spot of game.formation) {
+    const player = byId.get(spot.playerId)
+    if (!player || game.unavailablePlayers.includes(player.id)) continue
+    const isGk = spot.position === 'GK'
+    const token = halfToken({
+      playerId: player.id,
+      jersey: player.jerseyNumber,
+      name: player.name,
+      position: spotLabel(spot.position),
+      ...halfFieldSpot(spot.position),
+      minutes: minutes.get(player.id) ?? 0,
+      classes: liveStateClasses(player, 'field', usedOff.has(player.id), isGk),
+    })
+    token.addEventListener('click', () => onTileClick(player, 'field'))
+    layer.appendChild(token)
+  }
+  pitch.classList.toggle('is-armed', pendingSubId != null)
+
+  const onField = new Set(game.formation.map((spot) => spot.playerId))
+  const bench = team.players
+    .filter((player) => !onField.has(player.id) && !game.unavailablePlayers.includes(player.id))
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  const absent = team.players
+    .filter((player) => game.unavailablePlayers.includes(player.id))
+    .sort((a, b) => a.jerseyNumber - b.jerseyNumber)
+  const open = openFieldSlots(game)
+  benchGrid.replaceChildren()
+  benchGrid.style.setProperty('--bench-cols', String(benchColumns(bench.length + absent.length + open)))
+  for (let i = 0; i < open; i++) {
+    const slot = document.createElement('button')
+    slot.type = 'button'
+    slot.className = 'bench-chip open-slot'
+    if (pendingRole === 'bench') slot.classList.add('sub-target')
+    if (pendingRole === 'open') slot.classList.add('sub-selected')
+    slot.setAttribute('aria-label', t('openSpot'))
+    slot.innerHTML = '<span class="material-icons" aria-hidden="true">add</span>'
+    slot.addEventListener('click', onOpenSlotClick)
+    benchGrid.appendChild(slot)
+  }
+  for (const player of bench) {
+    const chip = benchChip({
+      playerId: player.id,
+      jersey: player.jerseyNumber,
+      name: player.name,
+      minutes: minutes.get(player.id) ?? 0,
+      classes: liveStateClasses(player, 'bench', usedOff.has(player.id), false),
+    })
+    chip.addEventListener('click', () => onTileClick(player, 'bench'))
+    benchGrid.appendChild(chip)
+  }
+  for (const player of absent) {
+    const chip = benchChip({ playerId: player.id, jersey: player.jerseyNumber, name: player.name, classes: ['absent'] })
+    chip.addEventListener('click', () => void onAbsentClick(player))
+    benchGrid.appendChild(chip)
+  }
+  if (count) count.textContent = t('benchCount', { count: bench.length })
+  benchGrid.closest('.live-bench')?.classList.toggle('is-armed', pendingSubId != null)
 }
 
 function onTileClick(player: Player, role: 'field' | 'bench'): void {
@@ -445,6 +559,30 @@ function handleLiveTile(player: Player, role: 'field' | 'bench'): void {
     return
   }
 
+  if (pendingSubId && pendingRole === 'field' && role === 'field' && pendingSubId !== player.id) {
+    const fromId = pendingSubId
+    const game = getCurrentGame()
+    const fromPos = game?.formation.find((spot) => spot.playerId === fromId)?.position
+    const toPos = game?.formation.find((spot) => spot.playerId === player.id)?.position
+    const from = getCurrentTeam()?.players.find((p) => p.id === fromId)
+    clearPendingSub()
+    if (!swapLivePositions(fromId, player.id).ok) {
+      paintLiveRosters()
+      return
+    }
+    renderLiveGame()
+    showMessage(
+      t('positionsSwapped', {
+        a: from?.jerseyNumber ?? '',
+        posA: toPos ? spotLabel(toPos) : '',
+        b: player.jerseyNumber,
+        posB: fromPos ? spotLabel(fromPos) : '',
+      }),
+      'success',
+    )
+    return
+  }
+
   if (pendingSubId === player.id) {
     clearPendingSub()
     paintLiveRosters()
@@ -481,6 +619,7 @@ function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
     return
   }
   pendingPlayer = player
+  pendingPlayerRole = role
   const name = document.getElementById('action-player-name')
   if (name) name.textContent = player.name
   const available = role === 'bench' ? BENCH_PLAYER_ACTIONS : FIELD_PLAYER_ACTIONS
@@ -494,8 +633,19 @@ function openActions(player: Player, role: 'field' | 'bench' = 'field'): void {
           `<button class="action-btn" data-action="${type}"><span class="stat-emoji">${ACTION_EMOJI[type]}</span> ${actionLabel(type)}</button>`,
       )
       .join('')
+    if (!gate) buttons.insertAdjacentHTML('beforeend', switchButtonHtml('switchPlayer'))
   }
   toggleDialog('player-action-dialog', true)
+}
+
+/** Same as double-tapping the player: arms a switch from the action sheet. */
+function armSwitchFromActions(): void {
+  const player = pendingPlayer
+  const role = pendingPlayerRole
+  closeActionDialog()
+  if (!player) return
+  clearPendingSub()
+  handleLiveTile(player, role)
 }
 
 function closeActionDialog(): void {
@@ -651,6 +801,11 @@ export function bindLiveGame(): void {
   })
 
   document.getElementById('action-buttons')?.addEventListener('click', (event) => {
+    if ((event.target as HTMLElement).closest('[data-switch]')) {
+      if (isParentLive()) armParentMoveFromActions()
+      else armSwitchFromActions()
+      return
+    }
     const btn = (event.target as HTMLElement).closest<HTMLElement>('[data-action]')
     const actor = liveActor()
     if (!btn || !actor) return
@@ -753,6 +908,15 @@ export function bindLiveGame(): void {
     if (text) commit('game_note', null, text)
   })
   document.getElementById('open-action-review')?.addEventListener('click', renderActionReview)
+  document.getElementById('live-view-toggle')?.addEventListener('click', (event) => {
+    const btn = (event.target as HTMLElement).closest<HTMLElement>('[data-live-view]')
+    const view = btn?.dataset.liveView
+    if (view !== 'field' && view !== 'grid') return
+    if (tutorialRunning()) return
+    clearPendingSub()
+    setLiveView(view)
+    paintLiveRosters()
+  })
   document.getElementById('close-action-review')?.addEventListener('click', () => {
     toggleDialog('action-review-dialog', false)
   })

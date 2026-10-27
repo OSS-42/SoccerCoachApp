@@ -437,32 +437,42 @@
         </div>
         <div class="controls-row">
           <div class="game-controls">
-            <button class="control-btn play-btn" id="play-clock">
+            <button class="control-btn play-btn" id="play-clock" aria-label="Play" data-i18n-label="play">
               <span class="material-icons" aria-hidden="true">play_arrow</span> <span data-i18n="play">Play</span>
             </button>
-            <button class="control-btn pause-btn" id="pause-clock">
+            <button class="control-btn pause-btn" id="pause-clock" aria-label="Pause" data-i18n-label="pause">
               <span class="material-icons" aria-hidden="true">pause</span> <span data-i18n="pause">Pause</span>
             </button>
-            <button class="control-btn stop-btn" id="stop-period">
+            <button class="control-btn stop-btn" id="stop-period" aria-label="Stop" data-i18n-label="stop">
               <span class="material-icons" aria-hidden="true">stop</span> <span data-i18n="stop">Stop</span>
             </button>
             <button class="control-btn reset-btn" id="reset-sub">
               <span class="material-icons" aria-hidden="true">replay</span> <span data-i18n="resetSub">Reset Sub</span>
             </button>
-            <button class="control-btn end-game-btn" id="end-game" data-i18n="endGame">End Game</button>
-            <button class="control-btn action-review-btn" id="open-action-review">
-              <span class="material-icons" aria-hidden="true">rule</span> <span data-i18n="actionReview">Action Review</span>
-            </button>
             <button class="control-btn opponent-btn" id="open-opponent-action">
               <span class="material-icons" aria-hidden="true">sports_soccer</span> <span data-i18n="opponentAction">Opponent</span>
             </button>
+            <button class="control-btn action-review-btn" id="open-action-review">
+              <span class="material-icons" aria-hidden="true">rule</span> <span data-i18n="actionReview">Action Review</span>
+            </button>
+            <button class="control-btn end-game-btn" id="end-game" data-i18n="endGame">End Game</button>
             <button class="control-btn note-btn" id="open-game-note">
               <span class="material-icons" aria-hidden="true">note_add</span> <span data-i18n="gameNote">Game Note</span>
             </button>
           </div>
         </div>
-        <p class="screen-hint" id="live-hint-coach" data-i18n="hintLiveCoach">Tap a player for actions. Double-tap to switch, then tap a player on the other side.</p>
-        <p class="screen-hint" id="live-hint-parent" data-i18n="hintLiveParent">Tap {name} for actions. Double-tap to move, then tap a pitch slot or the bench.</p>
+        <div class="live-hint-row">
+          <p class="screen-hint" id="live-hint-coach" data-i18n="hintLiveCoach">Tap a player for actions. Double-tap to switch, then tap who swaps with them.</p>
+          <p class="screen-hint" id="live-hint-parent" data-i18n="hintLiveParent">Tap {name} for actions. Double-tap to move, then tap a spot or the bench.</p>
+          <div class="live-view-toggle" id="live-view-toggle" role="group" aria-label="Live view" data-i18n-label="liveView">
+            <button type="button" data-live-view="field" aria-pressed="false" aria-label="Field view" data-i18n-label="liveViewField">
+              <span class="material-icons" aria-hidden="true">stadium</span>
+            </button>
+            <button type="button" data-live-view="grid" aria-pressed="true" aria-label="Grid view" data-i18n-label="liveViewGrid">
+              <span class="material-icons" aria-hidden="true">grid_view</span>
+            </button>
+          </div>
+        </div>
         <div class="live-rosters" id="live-rosters">
           <section class="live-roster-section">
             <h3 data-i18n="onField">On field</h3>
@@ -477,14 +487,24 @@
             <div class="player-grid" id="absent-grid"></div>
           </section>
         </div>
-        <div id="parent-live-board" class="parent-live-board" hidden>
-          <div class="parent-pitch-row">
-            <div class="parent-bench-col">
-              <h4 data-i18n="bench">Bench</h4>
-              <div id="parent-bench-slot" class="bench-slot"></div>
+        <div class="live-field" id="live-field" hidden>
+          <div class="half-pitch" id="live-pitch"></div>
+          <section class="live-bench">
+            <div class="live-bench-head">
+              <h3 data-i18n="bench">Bench</h3>
+              <span id="live-bench-count"></span>
             </div>
-            <div class="formation-field" id="parent-pitch"></div>
-          </div>
+            <div class="live-bench-grid" id="live-bench-grid"></div>
+          </section>
+        </div>
+        <div id="parent-live-board" class="parent-live-board live-field" hidden>
+          <div class="half-pitch" id="parent-pitch"></div>
+          <section class="live-bench">
+            <div class="live-bench-head">
+              <h3 data-i18n="bench">Bench</h3>
+            </div>
+            <div class="live-bench-grid" id="parent-bench-slot"></div>
+          </section>
         </div>
       </div>
 

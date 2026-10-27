@@ -236,6 +236,9 @@ export type TutorialSave = {
   parentRev: number | null
 }
 
+/** Live roster layout for the coach: today's grid, or players on a half field. */
+export type LiveView = 'grid' | 'field'
+
 export type AppSave = {
   saveVersion: typeof SAVE_VERSION
   appVersion: string
@@ -244,6 +247,8 @@ export type AppSave = {
   theme: AppTheme
   /** Play the intro video at launch. Off skips straight to the app. */
   introVideo: boolean
+  /** Coach live screen layout. Missing on older saves means the grid. */
+  liveView?: LiveView
   entitlement: AppEntitlement
   role: AppRole
   roleChosen: boolean

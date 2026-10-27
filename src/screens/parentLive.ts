@@ -2,10 +2,12 @@ import { FIELD_PLAYER_ACTIONS, BENCH_PLAYER_ACTIONS, ACTION_EMOJI, statsFromActi
 import { DOUBLE_TAP_MS } from '@/domain/config'
 import { parentLiveTap } from '@/domain/liveTap'
 import { fieldSpotDefs, spotLabel } from '@/domain/formation'
+import { halfFieldSpot } from '@/domain/halfField'
+import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { formatClock, livePeriodNumber } from '@/domain/clock'
 import { kidOnField } from '@/domain/parent'
 import { actionLabel, t } from '@/i18n'
-import type { ActionType, LiveStats, Player } from '@/domain/types'
+import type { ActionType, Game, LiveStats, Player } from '@/domain/types'
 import {
   getCurrentGame,
   getParentProfile,
@@ -15,7 +17,8 @@ import {
   recordLiveAction,
 } from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
-import { escapeHtml, toggleDialog } from '@/ui/dom'
+import { toggleDialog } from '@/ui/dom'
+import { benchChip, halfToken, mountHalfPitch, switchButtonHtml } from '@/ui/halfPitch'
 import { showMessage } from '@/ui/message'
 import { notifyTutorialEvent, tutorialLiveGate } from '@/ui/tutorialBus'
 
@@ -29,33 +32,6 @@ function kid(): Player {
 
 function kidLabel(): string {
   return kid().name.trim() || t('kidFallback')
-}
-
-function applyCardLook(el: HTMLElement, stats: LiveStats | null): void {
-  el.classList.toggle('injured', Boolean(stats?.injured))
-  el.classList.toggle('red-card', Boolean(stats && stats.redCards > 0 && !stats.injured))
-  el.classList.toggle(
-    'yellow-card',
-    Boolean(stats && stats.yellowCards > 0 && stats.redCards === 0 && !stats.injured),
-  )
-}
-
-function paintSlot(slot: HTMLElement, player: Player | null, positionLabel: string, stats: LiveStats | null): void {
-  slot.classList.toggle('occupied', Boolean(player))
-  slot.classList.toggle('sub-selected', Boolean(player) && moveArmed)
-  slot.classList.toggle('sub-target', !player && moveArmed)
-  applyCardLook(slot, player ? stats : null)
-  if (!player) {
-    delete slot.dataset.playerId
-    slot.innerHTML = `<span class="spot-label">${escapeHtml(positionLabel)}</span>`
-    return
-  }
-  slot.dataset.playerId = player.id
-  slot.innerHTML = `<span class="player-number player-number-placed">
-    <span class="spot-pos">${escapeHtml(positionLabel)}</span>
-    <span class="jersey-num">${player.jerseyNumber}</span>
-    <span class="player-name-field">${escapeHtml(player.name)}</span>
-  </span>`
 }
 
 function closeKidActions(): void {
@@ -94,8 +70,18 @@ function openKidActions(role: 'field' | 'bench'): void {
           `<button class="action-btn" data-action="${type}"><span class="stat-emoji">${ACTION_EMOJI[type]}</span> ${actionLabel(type)}</button>`,
       )
       .join('')
+    if (!gate) buttons.insertAdjacentHTML('beforeend', switchButtonHtml('movePlayer'))
   }
   toggleDialog('player-action-dialog', true)
+}
+
+/** The Move button in the kid's action sheet: same as a double-tap. */
+export function armParentMoveFromActions(): void {
+  closeKidActions()
+  cancelKidTapTimer()
+  lastTapAt = 0
+  moveArmed = true
+  renderParentLive()
 }
 
 function clearMove(): void {
@@ -165,7 +151,6 @@ function onDestTap(dest: string | null): void {
 
 export function renderParentLive(): void {
   const game = getCurrentGame()
-  const player = kid()
   const board = document.getElementById('parent-live-board')
   const rosters = document.getElementById('live-rosters')
   const tracking = document.getElementById('game-tracking')
@@ -174,6 +159,7 @@ export function renderParentLive(): void {
   const parentHint = document.getElementById('live-hint-parent')
   if (parentHint) parentHint.textContent = t('hintLiveParent', { name: kidLabel() })
   if (rosters) rosters.hidden = true
+  document.getElementById('live-field')?.setAttribute('hidden', '')
   if (board) board.hidden = false
   document.getElementById('parent-home-plus')?.removeAttribute('hidden')
   document.getElementById('parent-away-plus')?.removeAttribute('hidden')
@@ -205,55 +191,73 @@ export function renderParentLive(): void {
     })
   }
 
-  const pitch = document.getElementById('parent-pitch')
-  if (pitch && !pitch.querySelector('.formation-field-surface')) {
-    pitch.innerHTML = ''
-    const surface = document.createElement('div')
-    surface.className = 'formation-field-surface'
-    for (const spot of fieldSpotDefs()) {
-      const slot = document.createElement('div')
-      slot.className = `player-slot${spot.position === 'GK' ? ' gk-slot' : spot.position === 'SW' ? ' sw-slot' : ''}`
-      slot.dataset.position = spot.position
-      slot.style.position = 'absolute'
-      slot.style.left = `${spot.x}%`
-      slot.style.top = `${spot.y}%`
-      slot.addEventListener('click', () => {
-        const live = getCurrentGame()
-        if (!live) return
-        const on = kidOnField(live, kid().id)
-        if (on?.position === spot.position) onKidTap('field')
-        else onDestTap(spot.position)
-      })
-      surface.appendChild(slot)
-    }
-    pitch.appendChild(surface)
-  }
+  paintParentField(game)
+}
 
+/** The kid on a half field with every open spot to move to, and the bench underneath. */
+function paintParentField(game: Game): void {
+  const player = kid()
+  const pitch = document.getElementById('parent-pitch')
+  const bench = document.getElementById('parent-bench-slot')
   const on = kidOnField(game, player.id)
   const stats = statsFromActions(game.actions, player.id)
-  pitch?.querySelectorAll<HTMLElement>('.player-slot').forEach((slot) => {
-    const pos = slot.dataset.position ?? ''
-    const here = on?.position === pos
-    paintSlot(slot, here ? player : null, spotLabel(pos), stats)
-  })
-
-  const bench = document.getElementById('parent-bench-slot')
-  if (bench) {
-    bench.classList.toggle('occupied', !on)
-    bench.classList.toggle('sub-selected', !on && moveArmed)
-    bench.classList.toggle('sub-target', Boolean(on) && moveArmed)
-    applyCardLook(bench, on ? null : stats)
+  const minutes = playedMinutesByPlayer({ ...game, elapsedSeconds: liveElapsedSeconds() }).get(player.id) ?? 0
+  if (pitch) {
+    const layer = mountHalfPitch(pitch)
+    layer.replaceChildren()
+    pitch.classList.toggle('is-armed', moveArmed)
+    for (const spot of fieldSpotDefs()) {
+      if (spot.position === on?.position) continue
+      const slot = document.createElement('button')
+      slot.type = 'button'
+      slot.className = `hf-open-spot${moveArmed ? ' sub-target' : ''}`
+      const at = halfFieldSpot(spot.position)
+      slot.style.left = `${at.left}%`
+      slot.style.top = `${at.top}%`
+      slot.textContent = spot.label
+      slot.addEventListener('click', () => onDestTap(spot.position))
+      layer.appendChild(slot)
+    }
     if (on) {
-      delete bench.dataset.playerId
-      bench.innerHTML = ''
-    } else {
-      bench.dataset.playerId = player.id
-      bench.innerHTML = `<span class="player-number">
-        <span class="player-name-bench">${escapeHtml(player.name)}</span>
-        <span class="jersey-num">${player.jerseyNumber}</span>
-      </span>`
+      const token = halfToken({
+        playerId: player.id,
+        jersey: player.jerseyNumber,
+        name: player.name,
+        position: spotLabel(on.position),
+        ...halfFieldSpot(on.position),
+        minutes,
+        classes: [...cardClasses(stats), ...(on.position === 'GK' ? ['is-gk'] : []), ...(moveArmed ? ['sub-selected'] : [])],
+      })
+      token.addEventListener('click', () => onKidTap('field'))
+      layer.appendChild(token)
     }
   }
+  if (bench) {
+    bench.classList.toggle('sub-target', Boolean(on) && moveArmed)
+    if (on) {
+      const drop = document.createElement('span')
+      drop.className = `bench-chip bench-drop${moveArmed ? ' sub-target' : ''}`
+      drop.textContent = t('bench')
+      bench.replaceChildren(drop)
+    } else {
+      bench.replaceChildren(
+        benchChip({
+          playerId: player.id,
+          jersey: player.jerseyNumber,
+          name: player.name,
+          minutes,
+          classes: [...cardClasses(stats), ...(moveArmed ? ['sub-selected'] : [])],
+        }),
+      )
+    }
+  }
+}
+
+function cardClasses(stats: LiveStats | null): string[] {
+  if (stats?.injured) return ['injured']
+  if (stats && stats.redCards > 0) return ['red-card']
+  if (stats && stats.yellowCards > 0) return ['yellow-card']
+  return []
 }
 
 export function spectatorNeedsPosition(): boolean {

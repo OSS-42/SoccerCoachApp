@@ -113,9 +113,17 @@ export const fr: Record<keyof typeof en, string> = {
   tipFormation: 'Touchez un joueur, puis une place (terrain, banc ou out) pour le poser ou l’échanger. Pas de glisser-déposer.',
   hintFormation: 'Touchez un joueur, puis une place (terrain, banc ou out) pour le poser ou l’échanger. Pas de glisser-déposer.',
   hintLiveCoach:
-    'Touchez un joueur pour une action. Double-touchez pour un changement, puis touchez un joueur de l’autre côté.',
+    'Touchez un joueur pour une action. Double-touchez pour un changement, puis touchez le joueur à échanger.',
   hintLiveParent:
     'Touchez {name} pour une action. Double-touchez pour déplacer, puis touchez une place ou le banc.',
+  liveView: 'Affichage du match',
+  liveViewField: 'Vue terrain',
+  liveViewGrid: 'Vue grille',
+  benchCount: '{count} joueurs',
+  attack: 'Attaque',
+  switchPlayer: 'Changer',
+  movePlayer: 'Déplacer',
+  positionsSwapped: '#{a} en {posA}, #{b} en {posB}',
   subDone: 'n°{off} sort, n°{on} entre',
   subCannotReturn: 'Ce joueur ne peut pas revenir en match officiel.',
   subCapReached: 'Plus de changement disponible ({cap} utilisés).',

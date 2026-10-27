@@ -749,69 +749,6 @@ html[data-theme] .parent-score-btn {
   border: 1px solid var(--neu-line);
 }
 
-html[data-theme] #parent-bench-slot.sub-target,
-html[data-theme] #parent-pitch .player-slot.sub-target {
-  outline: 2px solid var(--neu-accent);
-}
-
-html[data-theme] #parent-pitch .player-slot.yellow-card .player-number,
-html[data-theme] #parent-pitch .player-slot.yellow-card .player-number-placed,
-html[data-theme] #parent-pitch .gk-slot.yellow-card .player-number-placed,
-html[data-theme] #parent-bench-slot.yellow-card .player-number {
-  background: var(--pill-yellow) !important;
-  background-image: none !important;
-  color: var(--pill-ink);
-  border-color: transparent;
-}
-
-html[data-theme] #parent-pitch .player-slot.red-card .player-number,
-html[data-theme] #parent-pitch .player-slot.red-card .player-number-placed,
-html[data-theme] #parent-pitch .gk-slot.red-card .player-number-placed,
-html[data-theme] #parent-bench-slot.red-card .player-number {
-  background: var(--pill-rose) !important;
-  background-image: none !important;
-  color: var(--pill-ink);
-  border-color: transparent;
-}
-
-html[data-theme] #parent-pitch .player-slot.yellow-card .jersey-num,
-html[data-theme] #parent-pitch .player-slot.yellow-card .player-name-field,
-html[data-theme] #parent-pitch .player-slot.yellow-card .spot-pos,
-html[data-theme] #parent-pitch .player-slot.red-card .jersey-num,
-html[data-theme] #parent-pitch .player-slot.red-card .player-name-field,
-html[data-theme] #parent-pitch .player-slot.red-card .spot-pos,
-html[data-theme] #parent-bench-slot.yellow-card .jersey-num,
-html[data-theme] #parent-bench-slot.yellow-card .player-name-bench,
-html[data-theme] #parent-bench-slot.red-card .jersey-num,
-html[data-theme] #parent-bench-slot.red-card .player-name-bench {
-  color: var(--pill-ink) !important;
-}
-
-html[data-theme] #parent-pitch .player-slot.sub-selected,
-html[data-theme] #parent-bench-slot.sub-selected {
-  outline: 2px solid var(--live-pause);
-}
-
-html[data-theme] #parent-pitch.formation-field {
-  display: grid;
-  place-items: center;
-  container-type: size;
-  overflow: hidden;
-}
-
-html[data-theme] #parent-pitch .formation-field-surface {
-  position: relative;
-  inset: auto;
-  width: min(100%, calc(100cqh * var(--pitch-ratio)));
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: var(--pitch-ratio);
-  margin: 0;
-  background-size: 100% 100%;
-  container-type: size;
-}
-
 html[data-theme] .changelog-entry h3 {
   color: var(--neu-muted);
 }
@@ -2731,4 +2668,446 @@ html[data-theme] .log-goal .log-assist {
 html[data-theme] .log-swap-title {
   color: var(--neu-muted);
   opacity: 1;
+}
+
+/* ---------- Live: compact controls ----------
+   Play / Pause / Stop are icon-only so all buttons fit in two rows (coach and parent).
+   End Game sits on the second row, away from Stop. */
+html[data-theme] #game-tracking .game-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+html[data-theme] #game-tracking .game-controls .control-btn {
+  flex: 1 1 64px;
+  width: auto;
+  min-width: 0;
+  padding: 10px 8px;
+  justify-content: center;
+  line-height: 1.15;
+}
+
+html[data-theme] #game-tracking .game-controls .control-btn[hidden] {
+  display: none !important;
+}
+
+html[data-theme] #game-tracking .game-controls :is(.play-btn, .pause-btn, .stop-btn) {
+  flex: 0 0 48px;
+  padding: 0;
+}
+
+html[data-theme] #game-tracking .game-controls :is(.play-btn, .pause-btn, .stop-btn) > span:not(.material-icons) {
+  display: none;
+}
+
+html[data-theme] #game-tracking .game-controls :is(.play-btn, .pause-btn, .stop-btn) .material-icons {
+  font-size: 26px;
+}
+
+/* ---------- Live: hint + Field / Grid toggle on one row ---------- */
+#game-tracking .live-hint-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin: 0 12px 8px;
+  flex: 0 0 auto;
+}
+
+#game-tracking .live-hint-row .screen-hint {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#game-tracking .live-hint-row .screen-hint[hidden],
+#game-tracking .live-rosters[hidden],
+#game-tracking.is-parent .live-view-toggle,
+#game-tracking.is-parent #live-field,
+#game-tracking .live-field[hidden] {
+  display: none !important;
+}
+
+.live-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--neu-bg-2);
+  flex: 0 0 auto;
+}
+
+.live-view-toggle button {
+  border: 0;
+  background: none;
+  color: var(--neu-muted);
+  border-radius: 8px;
+  padding: 6px 7px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.live-view-toggle button .material-icons {
+  font-size: 18px;
+}
+
+.live-view-toggle button[aria-pressed='true'] {
+  background: var(--neu-card);
+  color: var(--neu-text);
+  box-shadow: var(--neu-raised-sm);
+}
+
+/* ---------- Live: half field (coach field view and parent) ---------- */
+#game-tracking .live-field {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px 10px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Up to 270px tall; it gives up height only when a short screen needs room for the bench. */
+.half-pitch {
+  --grass-a: #1f7a1f;
+  --grass-b: #23862a;
+  --chalk: rgba(255, 255, 255, 0.92);
+  position: relative;
+  width: 100%;
+  flex: 0 1 270px;
+  max-height: 270px;
+  min-height: 140px;
+  border-radius: 14px;
+  overflow: hidden;
+  container-type: size;
+  box-shadow: var(--neu-raised-sm);
+}
+
+html[data-theme='dark'] .half-pitch {
+  --grass-a: #17621b;
+  --grass-b: #1b6d20;
+  --chalk: rgba(255, 255, 255, 0.85);
+}
+
+.half-pitch .hf-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.half-pitch .hf-grass { fill: var(--grass-a); }
+.half-pitch .hf-grass.alt { fill: var(--grass-b); }
+.half-pitch .hf-chalk { stroke: var(--chalk); }
+.half-pitch .hf-dot { fill: var(--chalk); }
+
+.half-pitch .hf-attack {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.half-pitch .hf-attack .material-icons {
+  font-size: 13px;
+}
+
+.half-pitch .hf-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.hf-token {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hf-disc {
+  position: relative;
+  width: clamp(30px, 13cqmin, 46px);
+  height: clamp(30px, 13cqmin, 46px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pill-mint);
+  color: var(--pill-ink);
+  font-size: clamp(14px, 5.2cqmin, 19px);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 -3px 0 rgba(0, 0, 0, 0.08);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.hf-token.is-gk .hf-disc { background: var(--pill-gk); }
+.hf-token.yellow-card .hf-disc { background: var(--pill-yellow); }
+.hf-token.red-card .hf-disc { background: var(--pill-rose); }
+.hf-token.injured .hf-disc { background: var(--pill-used); }
+.hf-token.used-off { opacity: 0.48; }
+
+.hf-pos {
+  position: absolute;
+  top: -7px;
+  left: -9px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: rgba(6, 32, 20, 0.85);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.hf-mins {
+  position: absolute;
+  right: -10px;
+  bottom: -4px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--pill-ink);
+  font-size: 9.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.hf-name {
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.hf-token.sub-selected .hf-disc {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px var(--live-stop), 0 0 0 9px rgba(255, 159, 67, 0.35);
+}
+
+.hf-token.sub-target .hf-disc {
+  box-shadow: 0 0 0 3px var(--neu-accent);
+}
+
+.half-pitch.is-armed .hf-token:not(.sub-selected):not(.sub-target),
+.live-bench.is-armed .bench-chip:not(.sub-selected):not(.sub-target) {
+  opacity: 0.45;
+}
+
+/* Short screens squeeze the field: drop the position tags (the spot already says it) and tighten names. */
+@container (max-height: 220px) {
+  .hf-pos {
+    display: none;
+  }
+
+  .hf-token {
+    gap: 1px;
+  }
+
+  .hf-name {
+    font-size: 9px;
+  }
+
+  .hf-disc {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+}
+
+/* Parent: open spots the kid can move to. */
+.hf-open-spot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: clamp(18px, 7cqmin, 24px);
+  height: clamp(18px, 7cqmin, 24px);
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.75);
+  font: 800 7px Roboto, Arial, sans-serif;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.hf-open-spot.sub-target {
+  border: 2px solid var(--neu-accent);
+  background: rgba(61, 220, 151, 0.25);
+  color: #fff;
+}
+
+/* ---------- Live: bench under the field ---------- */
+.live-bench {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--neu-card);
+  box-shadow: var(--neu-raised-sm);
+}
+
+.live-bench-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.live-bench-head h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--neu-text);
+}
+
+.live-bench-head span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--neu-muted);
+}
+
+.live-bench-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--bench-cols, 4), minmax(0, 1fr));
+  gap: 5px;
+}
+
+.bench-chip {
+  position: relative;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 2px 5px;
+  border: 0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--pill-mint);
+  color: var(--pill-ink);
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.bench-chip-num {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.bench-chip-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.bench-chip-mins {
+  font-size: 9px;
+  font-weight: 800;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.bench-chip.is-gk { background: var(--pill-gk); }
+.bench-chip.yellow-card { background: var(--pill-yellow); }
+.bench-chip.red-card { background: var(--pill-rose); }
+.bench-chip.injured,
+.bench-chip.absent { background: var(--pill-used); opacity: 0.6; }
+.bench-chip.used-off { opacity: 0.48; }
+.bench-chip.sub-selected { box-shadow: 0 0 0 3px var(--live-stop); transform: translateY(-2px); }
+.bench-chip.sub-target { box-shadow: 0 0 0 3px var(--neu-accent); }
+
+.bench-chip.open-slot,
+.bench-chip.bench-drop {
+  background: transparent;
+  border: 2px dashed var(--neu-muted);
+  color: var(--neu-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bench-chip.open-slot.sub-target,
+.bench-chip.bench-drop.sub-target {
+  border-color: var(--neu-accent);
+  color: var(--neu-accent);
+  box-shadow: none;
+}
+
+#parent-bench-slot {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: 0;
+}
+
+/* Action sheet: Switch / Move does what a double-tap does. */
+html[data-theme] .action-btn.switch-action-btn {
+  background: var(--live-stop);
+  color: var(--pill-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hf-disc,
+  .bench-chip {
+    transition: none;
+  }
+}
+
+/* Narrow phones (and the web's phone column): labels need the room more than the icons do. */
+#game-tracking .controls-row {
+  container-type: inline-size;
+}
+
+@container (max-width: 345px) {
+  html[data-theme] #game-tracking .game-controls :is(.reset-btn, .opponent-btn, .action-review-btn, .note-btn) .material-icons {
+    display: none;
+  }
 }

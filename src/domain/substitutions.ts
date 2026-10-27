@@ -131,6 +131,30 @@ export function applySubstitution(
   }
 }
 
+/**
+ * Two players on the field trade spots. Not a substitution: it is not logged and
+ * does not count toward the official cap.
+ */
+export function applyPositionSwap(
+  game: Game,
+  aId: string,
+  bId: string,
+): { ok: true; game: Game } | { ok: false; reason: 'same_player' | 'not_on_field' } {
+  if (aId === bId) return { ok: false, reason: 'same_player' }
+  const a = game.formation.find((spot) => spot.playerId === aId)
+  const b = game.formation.find((spot) => spot.playerId === bId)
+  if (!a || !b) return { ok: false, reason: 'not_on_field' }
+  return {
+    ok: true,
+    game: {
+      ...game,
+      formation: game.formation.map((spot) =>
+        spot.playerId === aId ? { ...spot, playerId: bId } : spot.playerId === bId ? { ...spot, playerId: aId } : spot,
+      ),
+    },
+  }
+}
+
 /** Undo the formation swap for a substitution if those two players are still swapped. */
 export function revertSubstitutionSwap(game: Game, action: GameAction): Game {
   const onId = action.playerId
