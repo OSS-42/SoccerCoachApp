@@ -175,6 +175,8 @@ export const fr: Record<keyof typeof en, string> = {
   appearance: 'Apparence',
   themeDark: 'Sombre',
   themeLight: 'Clair',
+  startup: 'Démarrage',
+  playIntroVideo: 'Jouer la vidéo d’intro au démarrage',
   language: 'Langue',
   english: 'English',
   french: 'Français',

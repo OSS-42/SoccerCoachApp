@@ -9,11 +9,18 @@ describe('migrateUnknown', () => {
     expect(save.teams[1].players).toHaveLength(23)
     expect(save.currentGame).toBeNull()
     expect(save.theme).toBe('dark')
+    expect(save.introVideo).toBe(true)
     expect(save.roleChosen).toBe(false)
     expect(save.role).toBe('coach')
     expect(save.parent.kid.id).toBe('parent-kid')
     expect(save.tutorial).toEqual({ coachRev: null, parentRev: null })
     expect(save.changelogSeenVersion).toBeNull()
+  })
+
+  it('keeps the intro video on unless the save turned it off', () => {
+    const teams = [{ id: 't1', name: 'A', players: [], games: [], settings: {} }]
+    expect(migrateUnknown({ teams }).introVideo).toBe(true)
+    expect(migrateUnknown({ teams, introVideo: false }).introVideo).toBe(false)
   })
 
   it('keeps the selected team and an in-progress game', () => {

@@ -173,6 +173,8 @@ export const en = {
   appearance: 'Appearance',
   themeDark: 'Dark',
   themeLight: 'Light',
+  startup: 'Startup',
+  playIntroVideo: 'Play intro video at launch',
   language: 'Language',
   english: 'English',
   french: 'Français',

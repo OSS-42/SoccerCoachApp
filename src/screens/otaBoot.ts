@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { APP_NAME, OTA_AFTER_CONFIRM_MS, OTA_BOOT_TIMEOUT_MS } from '@/domain/config'
 import { runOtaIfNeeded, type OtaProgress } from '@/ota/runOta'
 import { showScreen } from '@/ui/nav'
-import { primeIntroVideo, startIntro } from './intro'
+import { enterIntro, primeIntroVideo } from './intro'
 
 function paint(progress: OtaProgress): void {
   const message = document.getElementById('ota-message')
@@ -29,8 +29,7 @@ export function isNativeApp(): boolean {
 export async function bootWithOta(): Promise<void> {
   primeIntroVideo()
   if (!isNativeApp()) {
-    showScreen('intro-screen', { history: 'replace' })
-    startIntro()
+    enterIntro()
     return
   }
 
@@ -62,6 +61,5 @@ export async function bootWithOta(): Promise<void> {
 
   await sleep(OTA_AFTER_CONFIRM_MS)
 
-  showScreen('intro-screen', { history: 'replace' })
-  startIntro()
+  enterIntro()
 }

@@ -167,6 +167,11 @@ export function setTheme(theme: AppTheme): void {
   persist()
 }
 
+export function setIntroVideo(introVideo: boolean): void {
+  state = { ...state, introVideo }
+  persist()
+}
+
 export function subscribe(listener: Listener): () => void {
   listeners.add(listener)
   return () => listeners.delete(listener)
@@ -715,6 +720,7 @@ export function importBackup(
       entitlement: state.entitlement,
       role: state.role,
       roleChosen: state.roleChosen,
+      introVideo: state.introVideo,
       appVersion: APP_VERSION,
       saveVersion: SAVE_VERSION,
       updatedAt: new Date().toISOString(),
@@ -895,12 +901,13 @@ export function setPdfHiddenSections(gameId: string, hidden: ReportSection[]): v
 export function resetAllData(): void {
   const language = state.language
   const theme = state.theme
+  const introVideo = state.introVideo
   clearSaves()
   void deleteSaveMirror()
   const next = freshSave()
   setLocale(language)
   applyTheme(theme)
-  state = { ...next, currentTeamId: DEMO_TEAM_ID, language, theme }
+  state = { ...next, currentTeamId: DEMO_TEAM_ID, language, theme, introVideo }
   persist()
 }
 
