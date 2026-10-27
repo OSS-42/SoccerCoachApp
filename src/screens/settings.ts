@@ -13,6 +13,7 @@ import {
   importBackup,
   resetAllData,
   setDefaultSubstitution,
+  setIntroVideo,
   setLanguage,
   setTheme,
 } from '@/state/store'
@@ -57,6 +58,8 @@ export function renderSettings(): void {
   document.querySelectorAll<HTMLInputElement>('input[name="theme"]').forEach((radio) => {
     radio.checked = radio.value === theme
   })
+  const introVideo = document.getElementById('setting-intro-video') as HTMLInputElement | null
+  if (introVideo) introVideo.checked = getSave().introVideo !== false
   const version = document.getElementById('settings-app-version')
   if (version) version.textContent = APP_VERSION
   const parent = getRole() === 'parent'
@@ -82,6 +85,9 @@ export function bindSettings(): void {
       setTheme(radio.value)
       renderSettings()
     })
+  })
+  document.getElementById('setting-intro-video')?.addEventListener('change', (event) => {
+    setIntroVideo((event.target as HTMLInputElement).checked)
   })
   document.getElementById('open-changelog')?.addEventListener('click', () => {
     openWhatsNew()

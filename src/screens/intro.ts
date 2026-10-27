@@ -1,10 +1,16 @@
 import introVideo from '@/assets/intro_ActionPitch.mp4'
 import { APP_VERSION, INTRO_BUTTON_DELAY_MS, INTRO_MS } from '@/domain/config'
+import { getSave } from '@/state/store'
+import { showScreen } from '@/ui/nav'
 import { goAfterIntro } from './roleSelect'
 import { maybeResumeOnboarding } from './tutorial'
 
 let introStarted = false
 let introPrimed = false
+
+function introEnabled(): boolean {
+  return getSave().introVideo !== false
+}
 
 function introEl(): HTMLVideoElement | null {
   return document.getElementById('intro-video') as HTMLVideoElement | null
@@ -25,7 +31,7 @@ function armVideo(video: HTMLVideoElement): void {
 
 /** Fetch + attach the intro file during OTA so the first frame is ready. */
 export function primeIntroVideo(): void {
-  if (introPrimed) return
+  if (introPrimed || !introEnabled()) return
   introPrimed = true
   const video = introEl()
   if (video) {
@@ -54,6 +60,17 @@ export function bindIntro(): void {
     maybeResumeOnboarding()
   })
   primeIntroVideo()
+}
+
+/** Show the intro screen, or go straight to the app when the video is turned off in Settings. */
+export function enterIntro(): void {
+  if (!introEnabled()) {
+    goAfterIntro()
+    maybeResumeOnboarding()
+    return
+  }
+  showScreen('intro-screen', { history: 'replace' })
+  startIntro()
 }
 
 /** Start the 6s splash. Safe to call once after OTA (native) or immediately (web). */

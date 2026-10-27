@@ -242,6 +242,8 @@ export type AppSave = {
   updatedAt: string
   language: AppLanguage
   theme: AppTheme
+  /** Play the intro video at launch. Off skips straight to the app. */
+  introVideo: boolean
   entitlement: AppEntitlement
   role: AppRole
   roleChosen: boolean
