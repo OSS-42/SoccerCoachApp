@@ -1,9 +1,9 @@
 {
-  "version": "2.5.9",
+  "version": "2.5.10",
   "minAppVersion": "2.4.50",
-  "notes": "new live game screen visualization, to help player switchs. Options to disable the intro video",
+  "notes": "Live game: field view fills the screen height; compact 4-column control buttons",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "428eb4475467eddccf011b51cd8da913db110426c9c9e08e5adb9d9fea94800d",
+  "checksum": "e07d368872668f773b0c18b135aef04033867b5e9bd3a5b2b3ea142f208e7777",
   "keyId": "primary-5f3eed95",
-  "signature": "V4uCU93JgU80CKX2c8JbpnM/wv70GirUpcQJcBdHr5nZwD5izwCoXN+yS2to5OMpMotRfLChuoUiLexx7q/LBQ=="
+  "signature": "whIOuJJ/oB1G3igW/5QodPJGqetdVnpMeMCOXKIje/w2yZsv1EqIj3AwxlkUUkH+/C/cC4Frv0dy3H6qSGQC2w=="
 }
