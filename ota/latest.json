@@ -1,9 +1,9 @@
 {
-  "version": "2.5.10",
+  "version": "2.5.11",
   "minAppVersion": "2.4.50",
-  "notes": "Live game: field view fills the screen height; compact 4-column control buttons",
+  "notes": "Live game: whole pitch with lineup-screen spots; compact grid tiles",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "e07d368872668f773b0c18b135aef04033867b5e9bd3a5b2b3ea142f208e7777",
+  "checksum": "12afec8eda88f7993551224323a39d221c274dc1f1309deaebf5447480ca7fa5",
   "keyId": "primary-5f3eed95",
-  "signature": "whIOuJJ/oB1G3igW/5QodPJGqetdVnpMeMCOXKIje/w2yZsv1EqIj3AwxlkUUkH+/C/cC4Frv0dy3H6qSGQC2w=="
+  "signature": "CB+yhy9kpCBo9i8jOstX0mzDxtAO53jMgcUZZcgHPt5D2avMUCza5Sz6bJfbluaL4fo7NiFQJKcsWzSXgIzxiA=="
 }
