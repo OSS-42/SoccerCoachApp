@@ -1,9 +1,9 @@
 {
-  "version": "2.5.8",
+  "version": "2.5.9",
   "minAppVersion": "2.4.50",
-  "notes": "Editable match report, PDF section picker, grouped swaps, marks out of 10",
+  "notes": "new live game screen visualization, to help player switchs. Options to disable the intro video",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "6fd61f0fa6d6f1a0d33f1b440cbac69e16d52c3e07e91007a298d5caac34e0b3",
+  "checksum": "428eb4475467eddccf011b51cd8da913db110426c9c9e08e5adb9d9fea94800d",
   "keyId": "primary-5f3eed95",
-  "signature": "vKSyub5qf8iJwPsuQ4/Cdy1Jz+Ig6iUfI4ePRvIH73jvVC15wvI8pdKzxAFqImElCOjkRIRZGCCykPWT8HvSag=="
+  "signature": "V4uCU93JgU80CKX2c8JbpnM/wv70GirUpcQJcBdHr5nZwD5izwCoXN+yS2to5OMpMotRfLChuoUiLexx7q/LBQ=="
 }
