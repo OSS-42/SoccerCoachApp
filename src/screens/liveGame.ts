@@ -11,7 +11,7 @@ import {
 import { DOUBLE_TAP_MS, NOTE_MAX_LENGTH, VIEW_REPORT_EVENT } from '@/domain/config'
 import { coachLiveTap } from '@/domain/liveTap'
 import { fieldSpotDepth, spotLabel } from '@/domain/formation'
-import { benchColumns, halfFieldSpot } from '@/domain/halfField'
+import { benchColumns, liveFieldSpot } from '@/domain/halfField'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { formatClock, isLastLivePeriod, livePeriodNumber, parseClockInput } from '@/domain/clock'
 import {
@@ -422,7 +422,7 @@ function paintLiveField(): void {
       jersey: player.jerseyNumber,
       name: player.name,
       position: spotLabel(spot.position),
-      ...halfFieldSpot(spot.position),
+      ...liveFieldSpot(spot.position),
       minutes: minutes.get(player.id) ?? 0,
       classes: liveStateClasses(player, 'field', usedOff.has(player.id), isGk),
     })

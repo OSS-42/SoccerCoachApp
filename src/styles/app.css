@@ -4984,8 +4984,10 @@ html.is-phone-ui #game-tracking:not(.is-parent) .live-rosters {
     gap: 4px;
     padding-bottom: 8px;
 }
+/* Sections take the height their tiles need and only shrink when a big roster needs the room;
+   a small roster leaves space below instead of stretching the tiles. */
 html.is-phone-ui #game-tracking:not(.is-parent) .live-roster-section {
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -4995,14 +4997,14 @@ html.is-phone-ui #game-tracking:not(.is-parent) .live-roster-section h3 {
     margin: 0 10px 4px;
 }
 html.is-phone-ui #game-tracking:not(.is-parent) .player-grid {
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-height: 0;
     overflow: hidden;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-auto-rows: minmax(0, 1fr);
+    grid-auto-rows: minmax(40px, 72px);
     gap: 6px;
     padding: 0 10px 6px;
-    align-content: stretch;
+    align-content: start;
 }
 html.is-phone-ui #game-tracking:not(.is-parent) .player-grid-item {
     max-width: none;

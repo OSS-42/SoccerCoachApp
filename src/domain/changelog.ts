@@ -8,6 +8,19 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.11',
+    items: {
+      en: [
+        'Live game: the Field view now shows the whole pitch, with every player on the same spot as on the lineup screen.',
+        'Live game: in Grid view, tiles keep a compact size instead of stretching when there are only a few players.',
+      ],
+      fr: [
+        'Match en direct : la vue Terrain montre maintenant le terrain entier, avec chaque joueur à la même place que sur l’écran de composition.',
+        'Match en direct : en vue Grille, les tuiles gardent une taille compacte au lieu de s’étirer quand il y a peu de joueurs.',
+      ],
+    },
+  },
+  {
     version: '2.5.10',
     items: {
       en: [

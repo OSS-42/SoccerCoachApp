@@ -1,4 +1,4 @@
-import { halfFieldMarkings } from '@/domain/halfField'
+import { liveFieldMarkings } from '@/domain/halfField'
 import { t } from '@/i18n'
 import { escapeHtml } from './dom'
 
@@ -8,7 +8,7 @@ const watched = new WeakSet<HTMLElement>()
 function drawLines(pitch: HTMLElement): void {
   const svg = pitch.querySelector<SVGSVGElement>('svg.hf-lines')
   if (!svg) return
-  const { viewBox, lines } = halfFieldMarkings(pitch.clientWidth, pitch.clientHeight)
+  const { viewBox, lines } = liveFieldMarkings(pitch.clientWidth, pitch.clientHeight)
   svg.setAttribute('viewBox', viewBox)
   svg.innerHTML = lines
 }

@@ -2,7 +2,7 @@ import { FIELD_PLAYER_ACTIONS, BENCH_PLAYER_ACTIONS, ACTION_EMOJI, statsFromActi
 import { DOUBLE_TAP_MS } from '@/domain/config'
 import { parentLiveTap } from '@/domain/liveTap'
 import { fieldSpotDefs, spotLabel } from '@/domain/formation'
-import { halfFieldSpot } from '@/domain/halfField'
+import { liveFieldSpot } from '@/domain/halfField'
 import { playedMinutesByPlayer } from '@/domain/playingTime'
 import { formatClock, livePeriodNumber } from '@/domain/clock'
 import { kidOnField } from '@/domain/parent'
@@ -211,7 +211,7 @@ function paintParentField(game: Game): void {
       const slot = document.createElement('button')
       slot.type = 'button'
       slot.className = `hf-open-spot${moveArmed ? ' sub-target' : ''}`
-      const at = halfFieldSpot(spot.position)
+      const at = liveFieldSpot(spot.position)
       slot.style.left = `${at.left}%`
       slot.style.top = `${at.top}%`
       slot.textContent = spot.label
@@ -224,7 +224,7 @@ function paintParentField(game: Game): void {
         jersey: player.jerseyNumber,
         name: player.name,
         position: spotLabel(on.position),
-        ...halfFieldSpot(on.position),
+        ...liveFieldSpot(on.position),
         minutes,
         classes: [...cardClasses(stats), ...(on.position === 'GK' ? ['is-gk'] : []), ...(moveArmed ? ['sub-selected'] : [])],
       })

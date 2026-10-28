@@ -1,24 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import { FIELD_SPOTS } from './formation'
-import { benchColumns, halfFieldMarkings, halfFieldSpot, halfFieldTop } from './halfField'
+import { benchColumns, liveFieldMarkings, liveFieldSpot } from './halfField'
 
-describe('halfFieldTop', () => {
-  it('keeps every spot inside the half with room for labels', () => {
+describe('liveFieldSpot', () => {
+  it('uses the formation screen spot for every position', () => {
     for (const spot of FIELD_SPOTS) {
-      const top = halfFieldTop(spot.y)
-      expect(top).toBeGreaterThanOrEqual(12)
-      expect(top).toBeLessThanOrEqual(88)
+      expect(liveFieldSpot(spot.position)).toEqual({ left: spot.x, top: spot.y })
     }
   })
 
   it('keeps the attack at the top and the keeper at the bottom', () => {
-    expect(halfFieldSpot('ST-L').top).toBeLessThan(halfFieldSpot('CM').top)
-    expect(halfFieldSpot('CM').top).toBeLessThan(halfFieldSpot('GK').top)
+    expect(liveFieldSpot('ST-L').top).toBeLessThan(liveFieldSpot('CM').top)
+    expect(liveFieldSpot('CM').top).toBeLessThan(liveFieldSpot('GK').top)
   })
 
   it('falls back to the label, then centre midfield', () => {
-    expect(halfFieldSpot('ST')).toEqual(halfFieldSpot('ST-L'))
-    expect(halfFieldSpot('P9')).toEqual(halfFieldSpot('CM'))
+    expect(liveFieldSpot('ST')).toEqual(liveFieldSpot('ST-L'))
+    expect(liveFieldSpot('P9')).toEqual(liveFieldSpot('CM'))
   })
 })
 
@@ -33,13 +31,17 @@ describe('benchColumns', () => {
   })
 })
 
-describe('halfFieldMarkings', () => {
+describe('liveFieldMarkings', () => {
   it('matches the field aspect so circles stay round', () => {
-    expect(halfFieldMarkings(340, 170).viewBox).toBe('0 0 68 34')
-    expect(halfFieldMarkings(370, 270).viewBox).toBe('0 0 68 49.62')
+    expect(liveFieldMarkings(340, 400).viewBox).toBe('0 0 68 80')
+    expect(liveFieldMarkings(346, 390).viewBox).toBe('0 0 68 76.65')
   })
 
-  it('falls back to a square-ish half before layout', () => {
-    expect(halfFieldMarkings(0, 0).viewBox).toBe('0 0 68 66')
+  it('never draws a pitch too short for both boxes and the centre circle', () => {
+    expect(liveFieldMarkings(400, 200).viewBox).toBe('0 0 68 60')
+  })
+
+  it('falls back to a full-size pitch before layout', () => {
+    expect(liveFieldMarkings(0, 0).viewBox).toBe('0 0 68 105')
   })
 })
