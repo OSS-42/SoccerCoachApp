@@ -11,10 +11,10 @@ export const CHANGELOG: ChangelogEntry[] = [
     version: '2.5.10',
     items: {
       en: [
-        'Live game: the Field view now uses the whole screen height. On taller phones the field, players and buttons are bigger, and short phones still fit without scrolling.',
+        'Live game: the Field view now uses the whole screen height. On taller phones the field and players are bigger, buttons keep one compact size, and short phones still fit without scrolling.',
       ],
       fr: [
-        'Match en direct : la vue Terrain utilise maintenant toute la hauteur de l’écran. Sur les grands téléphones, le terrain, les joueurs et les boutons sont plus gros, et tout tient encore sans défiler sur les petits écrans.',
+        'Match en direct : la vue Terrain utilise maintenant toute la hauteur de l’écran. Sur les grands téléphones, le terrain et les joueurs sont plus gros, les boutons gardent une taille compacte, et tout tient encore sans défiler sur les petits écrans.',
       ],
     },
   },
