@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.10',
+    items: {
+      en: [
+        'Live game: the Field view now uses the whole screen height. On taller phones the field, players and buttons are bigger, and short phones still fit without scrolling.',
+      ],
+      fr: [
+        'Match en direct : la vue Terrain utilise maintenant toute la hauteur de l’écran. Sur les grands téléphones, le terrain, les joueurs et les boutons sont plus gros, et tout tient encore sans défiler sur les petits écrans.',
+      ],
+    },
+  },
+  {
     version: '2.5.9',
     items: {
       en: [
