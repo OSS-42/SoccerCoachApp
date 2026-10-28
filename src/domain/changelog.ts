@@ -8,6 +8,21 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.9',
+    items: {
+      en: [
+        'Live game: new Field view. Tap the Field / Grid toggle to see players on their spots over our half, with the bench below. While switching, tap another field player to swap their positions (not counted as a substitution). Parents get the same half field.',
+        'Live controls: Play, Pause and Stop are now icons so everything fits on screen, and End Game sits away from Stop.',
+        'Settings → Startup: turn off the intro video at launch.',
+      ],
+      fr: [
+        'Match en direct : nouvelle vue Terrain. Touchez le bouton Terrain / Grille pour voir les joueurs à leur place sur notre demi-terrain, avec le banc en dessous. Pendant un échange, touchez un autre joueur sur le terrain pour inverser leurs positions (pas compté comme un changement). Les parents ont le même demi-terrain.',
+        'Contrôles du match : Play, Pause et Stop sont maintenant des icônes pour que tout tienne à l’écran, et Fin du match est éloigné de Stop.',
+        'Réglages → Démarrage : désactivez la vidéo d’intro au lancement.',
+      ],
+    },
+  },
+  {
     version: '2.5.8',
     items: {
       en: [
