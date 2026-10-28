@@ -2671,25 +2671,44 @@ html[data-theme] .log-swap-title {
 }
 
 /* ---------- Live: compact controls ----------
-   Play / Pause / Stop are icon-only so all buttons fit in two rows (coach and parent).
-   End Game sits on the second row, away from Stop. */
+   A fixed grid so every label gets the same room at any width:
+   coach  = Play Pause Stop Reset / Opponent Review Note End (4 columns),
+   parent = Play Pause Stop / Review Note End (3 columns).
+   End Game is last, away from Stop. One fixed height: spare height goes to the field. */
 html[data-theme] #game-tracking .game-controls {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
+html[data-theme] #game-tracking.is-parent .game-controls {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 html[data-theme] #game-tracking .game-controls .control-btn {
-  flex: 1 1 64px;
-  width: auto;
+  grid-column: auto;
+  width: 100%;
   min-width: 0;
-  /* One fixed height on every phone: spare height goes to the field, not the buttons. */
   min-height: 48px;
   height: 48px;
-  padding: 0 8px;
+  padding: 0 4px;
   border-radius: 14px !important;
   justify-content: center;
-  line-height: 1.15;
+  gap: 4px;
+  /* Scales with the row width (.controls-row is a size container) so long French labels fit. */
+  font-size: clamp(12px, 3.4cqi, 15px);
+  line-height: 1.1;
+  text-align: center;
+  overflow: hidden;
+  hyphens: auto;
+}
+
+html[data-theme] #game-tracking .game-controls .control-btn > span:not(.material-icons) {
+  min-width: 0;
+}
+
+html[data-theme] #game-tracking .game-controls .end-game-btn {
+  order: 1;
 }
 
 html[data-theme] #game-tracking .game-controls .control-btn[hidden] {
@@ -2697,7 +2716,6 @@ html[data-theme] #game-tracking .game-controls .control-btn[hidden] {
 }
 
 html[data-theme] #game-tracking .game-controls :is(.play-btn, .pause-btn, .stop-btn) {
-  flex: 0 0 48px;
   padding: 0;
 }
 
@@ -2706,7 +2724,7 @@ html[data-theme] #game-tracking .game-controls :is(.play-btn, .pause-btn, .stop-
 }
 
 html[data-theme] #game-tracking .game-controls :is(.play-btn, .pause-btn, .stop-btn) .material-icons {
-  font-size: 26px;
+  font-size: 28px;
 }
 
 /* ---------- Live: hint + Field / Grid toggle on one row ---------- */
@@ -3106,12 +3124,12 @@ html[data-theme] .action-btn.switch-action-btn {
   }
 }
 
-/* Narrow phones (and the web's phone column): labels need the room more than the icons do. */
+/* Phones (and the web's phone column): labels need the room more than the icons do. */
 #game-tracking .controls-row {
   container-type: inline-size;
 }
 
-@container (max-width: 345px) {
+@container (max-width: 560px) {
   html[data-theme] #game-tracking .game-controls :is(.reset-btn, .opponent-btn, .action-review-btn, .note-btn) .material-icons {
     display: none;
   }
