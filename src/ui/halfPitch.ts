@@ -41,6 +41,16 @@ export function mountHalfPitch(pitch: HTMLElement): HTMLElement {
   return layer
 }
 
+/**
+ * Puts a token on its formation spot, nudged inside the touchlines so the edge spots
+ * (strikers, wingers, keeper) keep their position tag and name visible.
+ */
+export function placeOnPitch(el: HTMLElement, left: number, top: number): void {
+  // The token (disc + name) is centred on the spot; its position tag pokes 7px above it.
+  el.style.left = `clamp(30px, ${left}%, calc(100% - 30px))`
+  el.style.top = `clamp(38px, ${top}%, calc(100% - 32px))`
+}
+
 export function halfToken(input: {
   playerId: string
   jersey: number
@@ -55,8 +65,7 @@ export function halfToken(input: {
   token.type = 'button'
   token.className = ['hf-token', ...(input.classes ?? [])].join(' ')
   token.dataset.playerId = input.playerId
-  token.style.left = `${input.left}%`
-  token.style.top = `${input.top}%`
+  placeOnPitch(token, input.left, input.top)
   token.setAttribute('aria-label', `${input.name} ${input.jersey} ${input.position}`)
   const mins = input.minutes == null ? '' : `<span class="hf-mins">${input.minutes}'</span>`
   token.innerHTML = `<span class="hf-disc">${input.jersey}<span class="hf-pos">${escapeHtml(input.position)}</span>${mins}</span><span class="hf-name">${escapeHtml(input.name)}</span>`

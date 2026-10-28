@@ -2900,7 +2900,7 @@ html[data-theme='dark'] .half-pitch {
 .hf-pos {
   position: absolute;
   top: -7px;
-  left: -9px;
+  left: -6px;
   padding: 2px 4px;
   border-radius: 5px;
   background: rgba(6, 32, 20, 0.85);
@@ -2912,7 +2912,7 @@ html[data-theme='dark'] .half-pitch {
 
 .hf-mins {
   position: absolute;
-  right: -10px;
+  right: -6px;
   bottom: -4px;
   padding: 2px 4px;
   border-radius: 6px;
@@ -2924,8 +2924,9 @@ html[data-theme='dark'] .half-pitch {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* Spots sit 18% apart (LCB, CB, RCB): names stay inside that so neighbours never touch. */
 .hf-name {
-  max-width: 74px;
+  max-width: min(74px, 17cqw);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

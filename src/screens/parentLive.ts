@@ -18,7 +18,7 @@ import {
 } from '@/state/store'
 import { askConfirm } from '@/ui/confirm'
 import { toggleDialog } from '@/ui/dom'
-import { benchChip, halfToken, mountHalfPitch, switchButtonHtml } from '@/ui/halfPitch'
+import { benchChip, halfToken, mountHalfPitch, placeOnPitch, switchButtonHtml } from '@/ui/halfPitch'
 import { showMessage } from '@/ui/message'
 import { notifyTutorialEvent, tutorialLiveGate } from '@/ui/tutorialBus'
 
@@ -212,8 +212,7 @@ function paintParentField(game: Game): void {
       slot.type = 'button'
       slot.className = `hf-open-spot${moveArmed ? ' sub-target' : ''}`
       const at = liveFieldSpot(spot.position)
-      slot.style.left = `${at.left}%`
-      slot.style.top = `${at.top}%`
+      placeOnPitch(slot, at.left, at.top)
       slot.textContent = spot.label
       slot.addEventListener('click', () => onDestTap(spot.position))
       layer.appendChild(slot)
