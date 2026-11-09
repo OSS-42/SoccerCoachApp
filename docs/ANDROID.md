@@ -49,7 +49,7 @@ bash scripts/ota-nginx-enable-sca.sh
 
 ## When you still need a new APK
 
-Rebuild the native APK for Capacitor plugins, `appId`, icons, or Gradle/SDK changes. Web content ships through OTA.
+Rebuild the native APK for Capacitor plugins, `appId`, icons, `AndroidManifest.xml` (for example the portrait lock), or Gradle/SDK changes. OTA only replaces the web bundle, so a phone keeps the manifest of the APK it was installed from. Web content ships through OTA.
 
 ```bash
 npm run android:apk
