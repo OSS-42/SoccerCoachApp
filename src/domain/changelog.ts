@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.12',
+    items: {
+      en: [
+        'Android: the app now stays in portrait, including on foldables and tablets. Install the new APK to get it, since this change can’t arrive as an automatic update.',
+      ],
+      fr: [
+        'Android : l’app reste maintenant en mode portrait, y compris sur les pliables et les tablettes. Installez le nouvel APK pour en profiter, car ce changement ne peut pas arriver par une mise à jour automatique.',
+      ],
+    },
+  },
+  {
     version: '2.5.11',
     items: {
       en: [
