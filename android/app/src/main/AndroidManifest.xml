@@ -18,6 +18,12 @@
             android:screenOrientation="portrait"
             android:exported="true">
 
+            <!-- Android 16 ignores screenOrientation on large screens (sw >= 600dp:
+                 tablets, unfolded foldables). This keeps the portrait lock there too. -->
+            <property
+                android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+                android:value="true" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
