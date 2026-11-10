@@ -1,9 +1,9 @@
 {
-  "version": "2.5.11",
+  "version": "2.5.12",
   "minAppVersion": "2.4.50",
-  "notes": "Live game: whole pitch with lineup-screen spots; compact grid tiles",
+  "notes": "Android: portrait lock on all screens",
   "bundleUrl": "https://cdn-studiophoenix.net/sca/live/dist.zip",
-  "checksum": "12afec8eda88f7993551224323a39d221c274dc1f1309deaebf5447480ca7fa5",
+  "checksum": "e0b7358cc1e5f8cf437c9bd62a6768ce30c585b9b7f9f4095f7e0c38dfcd0b3a",
   "keyId": "primary-5f3eed95",
-  "signature": "CB+yhy9kpCBo9i8jOstX0mzDxtAO53jMgcUZZcgHPt5D2avMUCza5Sz6bJfbluaL4fo7NiFQJKcsWzSXgIzxiA=="
+  "signature": "dR9h8dr5Qau9VTKKFOmIbtZNJyqyZCcQYA3KW1NqgLZ35xbQUKH5hXDKb3sJ75WVo912iX2LPK0cqLhy9lLbfQ=="
 }
