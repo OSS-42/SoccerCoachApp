@@ -464,4 +464,5 @@ export const fr: Record<keyof typeof en, string> = {
   tutParentSettingsHereBody: 'Langue, thème, sauvegarde et Revoir le tutoriel sont ici.',
   tutParentDoneBody: 'Vous êtes prêt. Vous pouvez revoir ce tour dans Réglages.',
   tutDoneTitle: 'Vous êtes prêt !',
+  rotateToPortrait: 'Tournez votre téléphone à la verticale pour utiliser ActionPitch.',
 }

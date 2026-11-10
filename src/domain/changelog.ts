@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.13',
+    items: {
+      en: [
+        'Phones: the app stays in portrait. If you turn your phone sideways, a screen asks you to turn it back upright. This works even without installing a new APK.',
+      ],
+      fr: [
+        'Téléphones : l’app reste en mode portrait. Si vous tournez votre téléphone sur le côté, un écran vous demande de le remettre à la verticale. Cela fonctionne même sans installer un nouvel APK.',
+      ],
+    },
+  },
+  {
     version: '2.5.12',
     items: {
       en: [

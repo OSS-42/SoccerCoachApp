@@ -25,11 +25,13 @@ if (Capacitor.isNativePlatform()) {
   document.documentElement.classList.add('is-phone-ui')
 }
 
-const lockPortrait = (
-  screen.orientation as ScreenOrientation & { lock?: (mode: string) => Promise<void> }
-).lock
-void lockPortrait?.('portrait').catch(() => {
-  /* browsers often allow lock only in fullscreen; Android uses the manifest */
+// Native shells lock portrait in AndroidManifest.xml / Info.plist. Phones on an older APK
+// don't have that lock, so CSS (.rotate-guard) covers the app in landscape on phones.
+const orientation = screen.orientation as
+  | (ScreenOrientation & { lock?: (mode: string) => Promise<void> })
+  | undefined
+void orientation?.lock?.('portrait').catch(() => {
+  /* browsers often allow lock only in fullscreen */
 })
 import { applyDomTranslations, t } from '@/i18n'
 import {

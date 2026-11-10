@@ -458,4 +458,5 @@ export const en = {
   tutParentSettingsHereBody: 'Language, theme, backup, and Replay tutorial live here.',
   tutParentDoneBody: 'You are all set. Replay this tour anytime from Settings.',
   tutDoneTitle: 'You are all set!',
+  rotateToPortrait: 'Turn your phone upright to use ActionPitch.',
 } as const
