@@ -8,6 +8,17 @@ export type ChangelogEntry = {
 /** Newest first. Settings shows the first two. Update this when shipping an OTA. */
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '2.5.13',
+    items: {
+      en: [
+        'Android: stronger portrait lock that also blocks the system’s rotation and resize overrides. Install the new APK to get it.',
+      ],
+      fr: [
+        'Android : verrouillage portrait renforcé, qui bloque aussi les forçages de rotation et de redimensionnement du système. Installez le nouvel APK pour en profiter.',
+      ],
+    },
+  },
+  {
     version: '2.5.12',
     items: {
       en: [
